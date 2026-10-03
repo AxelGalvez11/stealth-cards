@@ -312,10 +312,19 @@ table and every call the web's own test makes to both node and the engine and co
 checks the app's `guide.js` is the same file as `web/guide.js`, runs the page's saving logic against a stand-in server, and the page's rules (`ios/tests/swift/notes`: a blank
 note, the shortcuts, Enter, Backspace, Tab, Aa, the marks, links, pasting, toggles and folds and what this Mac remembers, and what is saved: 101 checks), and that its icons are web/notes.js's.
 
-**The Notes page** (`Screens/Guide.swift`, the canvas's `PhoneGuide`; opened by a tap on the deck page's Notes, `Route.guide` with `nav.guideAt` for the caret): back, the deck's name,
-the quiet saving line and ⋯ (Make cards from this page or what is selected, Older versions, Rename page, Delete page, which asks first), the pages as pills and + for a new one
-(a new page is called by its first heading until it's renamed). It saves as it is typed (`Data/GuideEditor.swift`: 700 ms after the last key, one save after another, Saving… and
-Saved at the top, what went wrong in the same place, "This page is full." over 40,000 characters). Pictures go up like a card's.
+**The deck page's Notes tab** (V176, V185: `NotesTree` in `Screens/DeckMaterials.swift`, the canvas's `PhoneDeckNotes`) is a list of the deck's notes, a tree like Notion's pages:
+the main note once it has words, then every page that isn't inside another; the pages inside a note sit under it, 20 points further in, with an arrow on the note that hides or
+shows them (open to start; a hidden note says "N pages inside"). A row is the page glyph on a gray circle, the title (the Guide's first heading) and its first words (`NoteText`,
+the board's nbHead and nbPreview). A tap opens that page; for the deck's owner, + on a row makes a page inside it, and New note ends the list (the main note while it has no words,
+otherwise a note at the top: `nav.newNote(deckId:inside:)`, made by the Notes page on arrival). "No notes yet" when there are none. A guide page has a `parent` ("main", a page's
+id, or "" at the top; `MakeGuidePage.parent`, `Store.guideAddPage(parent:)`).
+
+**The Notes page** (`Screens/Guide.swift`, the canvas's `PhoneGuide`, `PhoneGuidePages` and `PhoneGuideNested`; opened from the deck page's Notes, `Route.guide` with `nav.guideAt` for
+the caret): back, the deck's name, the quiet saving line and ⋯ (Make cards from this page or what is selected, Add a page inside, Older versions, Rename page, Delete page, which
+asks first), and the page's path (`GuidePath`: the notes it sits inside, then itself in bold, each a tap away). Under the note, the pages inside it and Add a page inside
+(`GuidePagesInside`), which makes a page inside the open one (a new page is called by its first heading until it's renamed); deleting a page moves the pages inside it up to
+where it was. A deck you only study opens its Notes page to read (no ⋯, no Add a page inside, nothing to write in). It saves as it is typed (`Data/GuideEditor.swift`: 700 ms after
+the last key, one save after another, Saving… and Saved at the top, what went wrong in the same place, "This page is full." over 40,000 characters). Pictures go up like a card's.
 
 **The outline** (`NotesRail` and `NotesOutline` in `Design/NotesViews.swift`; web/notes.js's `outline` on the web; the owner, 2026-10-02: "add that thing notion has where it shows a
 rail tree of sections"): with two headings or more, a quiet rail of short lines sits at the page's right (12, 9 and 6 points wide by level, 2 tall, 6 apart; the section being read
@@ -323,7 +332,7 @@ in the words' color), 12 points under the top of the Notes page as it scrolls. A
 its level, the one being read in bold); a heading scrolls there (`GuideAnchors.bring`, at once with Reduce Motion) and closes it, opening a folded section or closed toggle it is
 in, as its ▸ does. The headings come from the page's own blocks (`NotesPage.outline`), so a heading typed joins it at once; each heading's line registers itself with the outline
 (`NotesLine`, by its block), which finds the one being read and scrolls to one. The rail is hidden while the keyboard is up. A shared deck's Notes (`GuideCard` with `shared`)
-have it once they show in full, staying a little under the top of the screen as the page scrolls by; the deck page's Notes tab has none.
+have it once they show in full, staying a little under the top of the screen as the page scrolls by; the deck page's Notes tab (a list) has none.
 
 **Sources** (`Data/GuideData.swift`, `Screens/DeckMaterials.swift`): the list (name, kind, pages or minutes, cards, date, newest first) and a source opened as a sheet: a recording
 plays at the card's time (a long one is kept as several files: the viewer walks their seconds, as the web does, and plays the part that covers the time at the second inside it:

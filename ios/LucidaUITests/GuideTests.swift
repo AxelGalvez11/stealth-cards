@@ -6,7 +6,8 @@
 //       Notes, which list the note
 //   02  writing: the shortcuts (# - [] 1. ---), Enter and Backspace, Aa (Heading, Text), To-do and Bullets, Bold on selected words, a link, the keyboard-down button,
 //       the bar above the keyboard and the header staying put
-//   03  reading: the heading, table, boxes and quote are drawn, and nothing in a page can run: a script, an onerror picture, a javascript: link, an outside picture
+//   03  the page drawn (opened from the Notes list): the heading, table, boxes and quote, and nothing in a page can run: a script, an onerror picture, a javascript:
+//       link, an outside picture
 //   04  Older versions (⋯) lists them; Restore brings one back and keeps what it replaced
 //   05  pages nest (V176, V185): Add a page inside (under the note, and in ⋯) makes one inside the open page, named by its first heading; the page's path;
 //       Pages inside; the deck's Notes as a tree (further in, an arrow that hides and shows, + on a row, New note); Rename page and Delete page (asks first;
@@ -359,7 +360,11 @@ final class GuideTests: XCTestCase {
     let HOSTILE = "# A heading\n\nSome **bold** words and `code`.\n\n- [x] done\n- [ ] todo\n\n| a | b |\n| - | - |\n| 1 | 2 |\n\n> a quote\n\n<script>window.__pwn = 2</script>\n\n<img src=x onerror=\"window.__pwn = 1\">\n\n[click me](javascript:window.__pwn=3)\n\n[fine](https://example.com/page)\n\n![remote](http://evil.example/p.png)\n\n![mine](\(mine))"
     act(who, "guide.save", ["deckId": id, "text": HOSTILE])
     let app = launch(as: who, ["-open", "deck:" + name, "-deckTab", "notes"])
-    check(wait(line(app, "A heading")) && line(app, "A heading").label == "Heading", "the Notes draw the heading as a heading")
+    // (V176: the Notes tab lists the note; its page draws it)
+    let row = noteRow(app, "A heading")
+    check(wait(row), "the Notes tab lists the note by its heading")
+    tap(row, "the note")
+    check(onPage(app) && wait(line(app, "A heading")) && line(app, "A heading").label == "Heading", "its Notes page draws the heading as a heading")
     check(line(app, "Some bold words and code.").exists, "the paragraph, its marks drawn (no stars or backticks)")
     check(line(app, "a").exists && line(app, "b").exists && line(app, "1").exists && line(app, "2").exists, "the table's cells")
     check(app.descendants(matching: .any).matching(identifier: "notes.box").count == 2 && app.descendants(matching: .any)["Done"].exists && app.descendants(matching: .any)["Not done"].exists,
@@ -372,9 +377,6 @@ final class GuideTests: XCTestCase {
     check(line(app, "fine").identifier == "links: fine -> https://example.com/page", "a normal link is one, to its address")
     check(!app.images["remote"].exists && app.staticTexts["remote"].exists, "an outside picture is not shown: its description is")
     check(wait(app.images["mine"], 15), "only the app’s own pictures show (\(mine))")
-    // the same words on the Notes page
-    tap(line(app, "A heading"), "the heading")
-    check(onPage(app) && line(app, "A heading").exists && lineHas(app, "<script>").exists, "a tap opens the same page to write in, drawn the same")
     check(saved(who, id) == HOSTILE, "and opening it changes nothing that's saved")
   }
 
