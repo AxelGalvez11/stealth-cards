@@ -1,7 +1,6 @@
 // Asking about a card in Explain (the owner, 2026-10-02, on Web · Review · Explain: "add a chatcomposer so user can ask question"). Every Explain
-// panel (a flashcard's, Learn mode's, and each question's on a practice test's results) ends with a calm one-line composer, a rounded field
-// "Ask about this card" and a round send button (the old Make box's field). A question shows as a short bubble on the right and its answer comes
-// in under it in the explanation's own text style; later ones stack below, the panel scrolls, and the composer stays at its bottom. Enter sends
+// panel (a flashcard's and Learn mode's) ends with a calm one-line composer, a rounded field "Ask about this card" and a round send button
+// (the old Make box's field). A question shows as a short bubble on the right and its answer comes in under it in the explanation's own text style; later ones stack below, the panel scrolls, and the composer stays at its bottom. Enter sends
 // and Shift+Enter makes a new line. On a phone's web page the composer rides on the keyboard while it would be under it (visualViewport, the
 // Notes bar's way: web/notes.js). Each question is one of the day's explanations (Free gets FREE_EXPLAINS, web/plans.mjs), so "N free
 // explanations left today" goes down by one; once they're used up the composer shows the upgrade line instead. Closing Explain forgets the
@@ -15,18 +14,16 @@ export const CHAT_SAMPLE = {
   // Learn mode's choice question (a drug makes the inner membrane leak protons)
   learn: { q: 'Where does the energy go instead?', a: 'It comes out as heat. The protons still flow back into the matrix, just not through ATP synthase, so the energy that would have made ATP warms the cell. Brown fat does this on purpose to keep you warm.' },
   // Learn mode's written answer (the Golgi apparatus)
-  type: { q: 'Where do the vesicles go next?', a: 'Most go to the cell’s outer membrane and let their proteins out of the cell. Others carry enzymes to the lysosomes, and some wait inside until a signal tells the cell to release them.' },
-  // The practice test's question 3 (which organelle makes most of the cell's ATP)
-  test: { q: 'How does it make the ATP?', a: 'It runs the electron transport chain on its inner membrane, which pumps protons out and builds a gradient. ATP synthase lets them flow back in and uses that flow to make ATP.' }
+  type: { q: 'Where do the vesicles go next?', a: 'Most go to the cell’s outer membrane and let their proteins out of the cell. Others carry enzymes to the lysosomes, and some wait inside until a signal tells the cell to release them.' }
 };
 
 // The longest question (the server cuts there too) and the field's tallest (four lines, then it scrolls).
 export const CHAT_MAX = 500;
 const GROW = { phone: 102, web: 92 };
 
-// The pieces' markup. `X` is where the board keeps the conversation's values ('ex.chat' on a flashcard and in Learn mode, 'r.chat' on a test
-// question), `c` the panel's colors (template holes: text, muted, bubble, field, again, btn, btnFg) and `o` its sizes: `phone` (16 px in the
-// field, so a phone doesn't zoom in), `fs` the explanation's text size, `gap` the panel's gap and `pad` its side padding.
+// The pieces' markup. `X` is where the board keeps the conversation's values ('ex.chat' on a flashcard and in Learn mode), `c` the panel's
+// colors (template holes: text, muted, bubble, field, again, btn, btnFg) and `o` its sizes: `phone` (16 px in the field, so a phone doesn't
+// zoom in), `fs` the explanation's text size, `gap` the panel's gap and `pad` its side padding.
 export function chatMarkup({ svg, I }, X, c, o) {
   const fs = o.fs, gap = o.gap, side = Math.max(6, o.pad - 10);
   // Each question as a short bubble on the right, and under it its answer in the explanation's own style (or "Thinking…", or what went wrong).
@@ -57,10 +54,10 @@ export const CHAT_METHOD = `componentWillUnmount() {
   if (db && db.act && db.act.followUpClear) for (const id of this.chatIds || []) db.act.followUpClear(id);
 }`;
 
-// The conversation's values for a board's renderVals (`db` and `this` are the board's). `key` keeps each panel's typing apart (a test has one
-// panel a question), `id` is the card, `question` how Learn mode or the test asked it, `exv` db's view of the card's explanation (its `turns` and
-// the day's `limit`), and `o`: `show` (the explanation is on screen, so the composer can be), `sample` (the canvas's question and answer),
-// `asked` (the canvas shows the sample asked), `pal` (the send button's colors: on, onFg, off, offFg), `phone` (a phone's board) and `proHref`.
+// The conversation's values for a board's renderVals (`db` and `this` are the board's). `key` keeps each panel's typing apart, `id` is the
+// card, `question` how Learn mode asked it, `exv` db's view of the card's explanation (its `turns` and the day's `limit`), and `o`: `show`
+// (the explanation is on screen, so the composer can be), `sample` (the canvas's question and answer), `asked` (the canvas shows the sample
+// asked), `pal` (the send button's colors: on, onFg, off, offFg), `phone` (a phone's board) and `proHref`.
 // On the canvas a question typed gets the board's sample answer.
 export const CHAT_JS = String.raw`const chatView = (key, id, question, exv, o) => {
     exv = exv || {};

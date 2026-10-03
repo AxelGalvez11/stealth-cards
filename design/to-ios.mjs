@@ -1,13 +1,12 @@
 // Copies what the iPhone app (ios/) shares with the design canvas into Swift: the theme colors, the icons, the gradient
 // palettes (plus the site's Midnight, for the Learn sheet's deep top), the onboarding's icons and moving background, tag colors, the sign-in wall's cards, and the canvas's sample data
-// (its sample sound's waveform, Pro's deep stats, the study network's sample: net-sample.mjs, and the practice test's), the themes' list,
+// (its sample sound's waveform, Pro's deep stats, and the study network's sample: net-sample.mjs), the themes' list,
 // and the motion timings (motion.mjs); and copies the Guide's engine (web/guide.js) into the app's resources. Run it after changing any of those.
 import { readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import { PALETTES, PALETTE_NAMES, SITE_PALETTES } from './surfaces.mjs';
 import { WALL_CARDS } from './wall.mjs';
 import { SAMPLE, SAMPLE_WAVE, SAMPLE_INSIGHTS } from './mock.mjs';
 import { NET_SAMPLE } from './net-sample.mjs';
-import { TEST_SAMPLE } from './test-boards.mjs';
 import { CHAT_SAMPLE } from './chat.mjs';
 import { G_LOGO, APPLE_LOGO } from './logos.mjs';
 import { THEMES } from '../web/themes/index.js';
@@ -129,11 +128,8 @@ ${Object.entries(logos).map(([k, v]) => `    ${str(k)}: (${str(v.vb)}, [${v.path
   /// The study network's sample data (design/net-sample.mjs): people, shared decks, Discover, profiles, and news.
   static let netSampleJSON = ${str(JSON.stringify(NET_SAMPLE))}
 
-  /// The practice test's sample (design/test-boards.mjs TEST_SAMPLE): its questions, answers, and results, for the design screens.
-  static let testSampleJSON = ${str(JSON.stringify(TEST_SAMPLE))}
-
   /// One question asked about a card in Explain and its answer, for each design screen that shows one (design/chat.mjs CHAT_SAMPLE: review, learn,
-  /// type, test).
+  /// type).
   static let chatSample: [String: (q: String, a: String)] = [${Object.entries(CHAT_SAMPLE).map(([k, v]) => `${str(k)}: (${str(v.q)}, ${str(v.a)})`).join(', ')}]
 
   /// The themes (web/themes/index.js), in the order Settings › Theme shows them: key, the name of its boards, its name, and its short name.

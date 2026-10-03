@@ -104,18 +104,6 @@ PROP_SETS.push({ level: 'College' }, { subject: 'Biology' }, { school: 'Stanford
   { shared: 'Public', settingsOpen: true, settingsTab: 'Sharing', pick: 'School', pickQ: 'stan' }, { shared: 'Public', settingsOpen: true, settingsTab: 'Sharing', pick: 'School', pickQ: 'my own college' },
   { shared: 'Link only', settingsOpen: true, settingsTab: 'Sharing' }, { shared: 'Public', settingsOpen: true, settingsTab: 'Sharing', dark: true, pick: 'School', pickQ: 'stan' });
 
-// The practice test: each state the canvas can show (set up; each kind of question; its Submit and Leave questions; the results, all
-// of them or the ones missed), with and without the timer, in dark and gray, the question list open on a phone, the results with an
-// explanation open and a written answer counted, the set-up on other choices and over a folder.
-PROP_SETS.push({ screen: 'Set up' }, { screen: 'Multiple choice' }, { screen: 'True or false' }, { screen: 'Fill in the blank' }, { screen: 'Written' }, { screen: 'Matching' }, { screen: 'Submit' }, { screen: 'Leave' },
-  { screen: 'Results' }, { screen: 'Results · missed' }, { screen: 'Multiple choice', timed: false }, { screen: 'Matching', dark: true, dim: true }, { screen: 'Results', dark: true }, { screen: 'Submit', dark: true },
-  { screen: 'Multiple choice', $state: { sheet: true } }, { screen: 'Results', $state: { exOpen: { 3: true }, exOn: { 3: true } } }, { screen: 'Results', $state: { counted: { 18: true } } },
-  { screen: 'Set up', $state: { kinds: ['mc'], count: 10, limit: 20 } }, { screen: 'Set up', folderId: 'f1' }, { screen: 'Set up', dark: true, dim: true }, { screen: 'Written', $state: { m: { type: '' } } },
-  { screen: 'Matching', $state: { m: { match: { 0: 1, 1: 3, 2: 4, 3: 0, 4: 2 } } } },
-  // a question's explanation open, with a question asked about it (design/chat.mjs), light and dark, and one typed on the canvas
-  { screen: 'Results', explainOpen: true }, { screen: 'Results', explainOpen: true, followUp: true }, { screen: 'Results', explainOpen: true, followUp: true, dark: true },
-  { screen: 'Results', explainOpen: true, $state: { chatDraft: { r3: 'Why?' }, chatMock: { r3: [{ q: 'Why?', a: 'Because.' }] } } });
-
 // The questions that ask before a delete (Lucida's own dialog, design/ui.mjs): each one open, light, dark and gray.
 for (const ask of Object.keys(ASK_SAMPLES)) PROP_SETS.push({ ask }, { ask, dark: true }, { ask, dark: true, dim: true });
 // Settings' lists (Lucida's own dropdown, a sheet on the iPhone): each one open.
