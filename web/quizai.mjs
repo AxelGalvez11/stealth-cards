@@ -1,7 +1,7 @@
 // Lucida's own quiz questions for Learn mode: one question for each of up to 20 cards, written by DeepSeek through OpenRouter
 // (the owner's key, OPENROUTER_API_KEY) with the same models and hosts as Explain (ai.mjs). Only a card's front, back and
 // note go to the AI. Each question is saved on its card (store.mjs saveQuiz) in the shape of the questions an AI app writes
-// over MCP (add_quiz), marked as Lucida's, so a card is paid for once and Learn mode and the practice test reuse the question.
+// over MCP (add_quiz), marked as Lucida's, so a card is paid for once and Learn mode reuses the question.
 import R from './rich.js';
 
 export const BATCH = 20;

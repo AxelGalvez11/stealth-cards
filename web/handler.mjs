@@ -60,8 +60,9 @@ const held = () => {
 // What the app gets: the library, plus who is signed in (online), and whether Pro is on (so this computer can show the
 // Free app too, with LUCIDA_PLAN=free; see store.mjs).
 // `quizLeft`: how many batches of Lucida's own Learn mode questions are left today (the app asks for none when it's 0). A deck's Guide
-// keeps older versions, which the app asks for one deck at a time; `make` is what making cards can do for this person.
-const view = me => { const { guideHistory, make: _bookkeeping, ...rest } = state(); return { ...rest, me, aiOn: aiReady(), pro: isPro(), explainLimit: explainLimitNow(isPro()), quizLeft: aiReady() ? quizLeft(new Date().toISOString().slice(0, 10), isPro() ? PRO_QUIZ_BATCHES : FREE_QUIZ_BATCHES) : 0, make: make.makeInfo(isPro()) }; };
+// keeps older versions, which the app asks for one deck at a time; `make` is what making cards can do for this person. Old practice test
+// results (`tests`, from before 2026-10-03) stay on the server, unused.
+const view = me => { const { guideHistory, make: _bookkeeping, tests: _oldTests, ...rest } = state(); return { ...rest, me, aiOn: aiReady(), pro: isPro(), explainLimit: explainLimitNow(isPro()), quizLeft: aiReady() ? quizLeft(new Date().toISOString().slice(0, 10), isPro() ? PRO_QUIZ_BATCHES : FREE_QUIZ_BATCHES) : 0, make: make.makeInfo(isPro()) }; };
 // The study network's actions (see social.mjs), each run in the signed-in person's library.
 const SOCIAL = {
   'profile.ensure': (uid, me) => social.ensureProfile(uid, me).then(p => ({ handle: p.handle })),
@@ -567,7 +568,7 @@ async function askReq(res, uid, me, a) {
 }
 
 // Lucida's own questions for Learn mode (quizai.mjs): up to 20 of the asked-for cards that have none yet get one each, saved on the cards, so a
-// card is paid for once and Learn mode and the practice test reuse the question. A request is one batch of the day (Free gets
+// card is paid for once and Learn mode reuses the question. A request is one batch of the day (Free gets
 // FREE_QUIZ_BATCHES, Pro PRO_QUIZ_BATCHES); with nothing to write, no batch is used. The AI is asked between two saves, so it's never
 // asked twice when another change lands at the same moment, a failed batch is given back, and questions that came to a card meanwhile
 // (an AI app's) are kept.
