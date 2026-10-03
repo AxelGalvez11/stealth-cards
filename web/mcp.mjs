@@ -24,7 +24,6 @@ const isNew = c => c.srs.state === 'new' && !c.paused && !c.pending;
 const PRO_TOOL = 'This is part of Lucida Pro. The learner can go Pro at lucida.cards/pricing to get it.';
 const day = t => { const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 const examOut = d => { const x = d.exam && examStatus(state().cards.filter(c => c.deckId === d.id), d, Date.now()); return x ? { date: d.exam, days_left: x.days, cards_to_review_first: x.toReview, not_studied_yet: x.total - x.seen } : undefined; };
-const TEST_WORDS = { mc: 'multiple choice', tf: 'true or false', blank: 'fill in the blank', match: 'matching', type: 'written' };
 const forgotten = c => ((c.srs.lapses || 0) ? c.srs.lapses : undefined);
 const cardOut = c => ({ id: c.id, deck: (deckBy(c.deckId) || {}).name, kind: c.kind === 'cloze' ? 'fill in the blank' : c.kind, front: c.front || undefined, back: c.back || undefined,
   text: c.text || undefined, note: c.note || undefined, image: c.image || undefined, audio: c.audio || undefined, speak: c.speak || undefined, lang: c.lang || undefined,
@@ -230,18 +229,6 @@ const TOOLS = [
         why: { type: 'string', description: 'One or two sentences on why the answer is right.' } }, required: ['kind', 'question', 'answer'] } },
       explanation: { type: 'string', description: 'Optional: two to four plain sentences explaining the card’s answer.' } }, required: ['card'] } } }, required: ['quizzes'] },
     run: (a, who) => { const r = apply({ type: 'card.quiz', quizzes: a.quizzes }, who); return r.questions || (a.quizzes || []).some(q => q.explanation) ? text('Saved ' + r.questions + ' question' + (r.questions === 1 ? '' : 's') + '. Learn mode uses them next time.') : fail('None of those questions could be used. Check the card ids, and give each choice question three wrong answers.'); } },
-  { name: 'get_test_results', perm: 'read', description: 'Get the learner’s practice test results, newest first: for each test its date, deck (or folder), score, time taken, and the questions they missed, each with the learner’s answer, the right answer and the card’s id. Use it to see what the learner doesn’t know yet, then quiz them or fix those cards. Practice tests never change when cards come back for review. Takes a deck or folder name (or id), or none for every test, and how many tests to give (5 by default, up to 50).',
-    inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck or folder name, or id. Leave out for every test.' }, limit: { type: 'number', description: 'How many tests, up to 50. Default 5.' } } },
-    run: a => {
-      const S = state(), d = a.deck ? deckBy(a.deck) : null, f = a.deck && !d ? S.folders.find(x => x.id === a.deck || x.name.toLowerCase() === String(a.deck).trim().toLowerCase()) : null;
-      if (a.deck && !d && !f) return fail('No deck or folder called ' + a.deck);
-      const mine = (S.tests || []).filter(t => (!d || t.deckId === d.id) && (!f || t.folderId === f.id)), n = Math.min(50, Math.max(1, Math.round(a.limit || 5)));
-      const missed = it => it.k === 'match'
-        ? { kind: TEST_WORDS.match, pairs_missed: (it.pairs || []).filter(p => !p.ok).map(p => ({ card: p.card, term: p.q, learner_matched: p.a || 'no answer', right_answer: p.r })) }
-        : { card: it.card, kind: TEST_WORDS[it.k], question: it.claim ? it.q + ' (true or false: ' + it.claim + ')' : it.q, learner_answered: it.a || 'no answer', right_answer: it.r };
-      return text({ total: mine.length, tests: mine.slice(0, n).map(t => ({ date: day(t.at), deck: t.name, questions: t.n, right: t.right, percent: t.pct, time_taken: Math.floor(t.took / 60) + ':' + String(t.took % 60).padStart(2, '0'),
-        time_limit_minutes: t.limit || undefined, time_ran_out: t.timeUp || undefined, missed: t.items ? t.items.filter(x => !x.ok).map(missed) : 'not kept for older tests' })) });
-    } },
   { name: 'delete_cards', perm: 'del', description: 'Delete cards for good, with every review of them. When the learner asked to check AI changes first, a delete waits for them to agree. Use list_cards to find card ids.', inputSchema: { type: 'object', properties: { ids: { type: 'array', items: { type: 'string' }, minItems: 1 } }, required: ['ids'] },
     run: (a, who) => {
       const cs = (a.ids || []).map(id => state().cards.find(c => c.id === id)).filter(Boolean), theirs = cs.map(c => deckBy(c.deckId)).find(d => d && d.link && d.link.mode === 'study' && !d.link.gone);
@@ -343,7 +330,6 @@ const META = {
   get_stats: { title: 'Get study stats', scope: 'cards:read', ro: true, destructive: false, open: false, idem: true },
   get_weak_spots: { title: 'Find weak spots', scope: 'cards:read', ro: true, destructive: false, open: false, idem: true },
   get_review_history: { title: 'Get review history', scope: 'cards:read', ro: true, destructive: false, open: false, idem: true },
-  get_test_results: { title: 'Get practice test results', scope: 'cards:read', ro: true, destructive: false, open: false, idem: true },
   create_deck: { title: 'Create a deck', scope: 'cards:write', ro: false, destructive: false, open: false, idem: false },
   update_deck: { title: 'Change a deck', scope: 'cards:write', ro: false, destructive: true, open: false, idem: true },
   add_cards: { title: 'Add cards', scope: 'cards:write', ro: false, destructive: false, open: false, idem: false },
@@ -387,7 +373,7 @@ async function handle(m, sid, ctx) {
             ' Image cards show a picture: a link, a file the learner uploaded in the chat, or a file on this computer. Audio cards read words aloud (put them in "speak" and the language in "lang"); use them for languages and pronunciation.' +
             ' Learn mode quizzes the learner on a deck: add_quiz gives cards better questions (multiple choice with plausible wrong answers, or true or false) and an explanation. Decks can sit in folders and have a cover picture and a background (update_deck).' +
             ' A deck can have a Guide, its notes page in Markdown with toggles (":::toggle Its title" ... ":::"; get_guide, update_guide, and extra pages with list_guide_pages and add_guide_page); a shared deck shows it on its public page.' +
-            ' To help with what the learner finds hard, get_weak_spots lists their weakest tags and hardest cards (with ids to quiz them or fix the cards), and get_review_history sums up their recent reviews. get_test_results shows their practice tests: the scores and the questions they missed.' });
+            ' To help with what the learner finds hard, get_weak_spots lists their weakest tags and hardest cards (with ids to quiz them or fix the cards), and get_review_history sums up their recent reviews.' });
       }
       case 'ping': return ok({});
       case 'tools/list': return ok({ tools: allowed().map(t => listed(t, ctx.oauth)) });

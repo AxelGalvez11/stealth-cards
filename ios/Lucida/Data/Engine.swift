@@ -188,10 +188,7 @@ struct Engine {
     let byId = Dictionary(S.decks.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
     var last: [String: Int] = [:]
     if set == "hard" { for l in S.logs { if let r = l.rating, r != 0 { last[l.cardId] = r } } }
-    // "cards:<ids>": cards picked by their ids (the ones missed in a practice test), up to 100.
-    let ids: Set<String>? = set.hasPrefix("cards:") ? Set(set.dropFirst(6).split(separator: ",").map(String.init)) : nil
     func pick(_ c: Card) -> Bool {
-      if let ids { return ids.contains(c.id) }
       if set == "hard" { return c.srs.state != "new" && difficulty(c, deck: byId[c.deckId], last: last[c.id]) == "hard" }
       if set == "leech" { return Sched.isLeech(c, byId[c.deckId]) }
       if set.hasPrefix("tag:") { return c.srs.state != "new" && c.tags.contains(String(set.dropFirst(4))) }
@@ -199,11 +196,11 @@ struct Engine {
     }
     let cs = S.cards.filter { Engine.studyable($0) && byId[$0.deckId] != nil && pick($0) }
     let by = { (c: Card) in Sched.recallAt(c, now) ?? 1 }
-    return Array(cs.enumerated().sorted { by($0.element) != by($1.element) ? by($0.element) < by($1.element) : $0.offset < $1.offset }.map(\.element).prefix(ids != nil ? 100 : 50))
+    return Array(cs.enumerated().sorted { by($0.element) != by($1.element) ? by($0.element) < by($1.element) : $0.offset < $1.offset }.map(\.element).prefix(50))
   }
   static func setName(_ set: String?) -> String {
     guard let set else { return "" }
-    return set == "hard" ? "Hardest cards" : set == "leech" ? "Cards you keep forgetting" : set.hasPrefix("tag:") ? String(set.dropFirst(4)) : set.hasPrefix("cards:") ? "Missed in the test" : ""
+    return set == "hard" ? "Hardest cards" : set == "leech" ? "Cards you keep forgetting" : set.hasPrefix("tag:") ? String(set.dropFirst(4)) : ""
   }
 
   func isHard(_ c: Card) -> Bool { c.srs.lapses > 0 || c.srs.state == "relearning" || (c.srs.state == "review" && c.srs.d >= 7) }

@@ -675,9 +675,8 @@ renderVals0() {
   const allOptions = [{ id: '', label: 'All decks', dot: t.muted }, ...folders.map(f => ({ id: 'f:' + f.id, label: f.name, dot: t.text })), ...all.map(d => ({ id: d.id, label: d.name, dot: grad(d).base }))];
   const deckOptions = allOptions.filter(o => !dq || o.label.toLowerCase().includes(dq)), pickedName = (allOptions.find(o => o.id === pick) || allOptions[0]).label;
   const title = folder ? folder.name : 'Library';
-  const testVals = { testHref: db.mock ? 'WebTest.dc.html' : folder ? '/library/folder/' + folder.id + '/test' : '', canTest: !!folder && decks.length > 0 };
-  return {
-    t, ...chrome, ...testVals, grain: String(this.props.grain ?? 0.7), decks, title, atTop, inFolder: !!folder, libraryHref: db.mock ? board('Decks') : '/library',
+    return {
+    t, ...chrome, grain: String(this.props.grain ?? 0.7), decks, title, atTop, inFolder: !!folder, libraryHref: db.mock ? board('Decks') : '/library',
     query: s.q || '', setQuery: e => this.setState({ q: e && e.target ? e.target.value : '', shown: 60 }), searchHint: cards ? 'Search all cards' : folder ? 'Search this folder' : 'Search decks and cards',
     modes: [['Decks', !cards, db.mock ? board('Decks') : '/library'], ['All cards', cards, db.mock ? board('LibraryCards') : '/library/cards']]
       .map(([label, on, href]) => ({ label, href, current: on ? 'page' : 'false', ...seg(on) })),
@@ -687,7 +686,7 @@ renderVals0() {
     newFolder: () => openNaming('new'), renameFolder: () => openNaming('rename'),
     removeFolder: () => folder && act.deleteFolder(folder.id), notInFolder: !folder,
     // A folder's own actions sit in one ⋯ menu: New deck, Rename, and Remove folder in red (the owner, 2026-10-02: "collapse new deck, remove
-    // folder, and rename into one dropdown menu"); its practice test is gone from the folder page. Prop folderMenu draws the menu open.
+    // folder, and rename into one dropdown menu"); practice tests are gone from Lucida (the owner, 2026-10-03). Prop folderMenu draws the menu open.
     folderMenu: (() => { const open = s.folderMenu != null ? !!s.folderMenu : !!this.props.folderMenu, shut = () => this.setState({ folderMenu: false });
       return { open, expanded: open ? 'true' : 'false', toggle: () => this.setState({ folderMenu: !open }), close: shut,
         rename: () => { shut(); openNaming('rename'); }, remove: () => { shut(); if (folder) act.deleteFolder(folder.id); } }; })(),

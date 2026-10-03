@@ -338,14 +338,10 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
   // keep forgetting, or a tag's cards you've studied.
   function setCards(set) {
     const t = now(), by = c => recallAt(c, t) ?? 1;
-    // 'cards:<ids>': cards picked by their ids (the ones missed in a practice test), up to 100.
-    const ids = set.startsWith('cards:') ? new Set(set.slice(6).split(',')) : null;
-    const pickOf = ids ? c => ids.has(c.id) : set === 'hard' ? c => c.srs.state !== 'new' && difficulty(c) === 'hard' : set === 'leech' ? c => isLeech(c, deckById(c.deckId)) : set.startsWith('tag:') ? c => c.srs.state !== 'new' && c.tags.includes(set.slice(4)) : () => false;
-    return S.cards.filter(c => studyable(c) && deckById(c.deckId) && pickOf(c)).sort((a, b) => by(a) - by(b)).slice(0, ids ? 100 : 50);
+    const pickOf = set === 'hard' ? c => c.srs.state !== 'new' && difficulty(c) === 'hard' : set === 'leech' ? c => isLeech(c, deckById(c.deckId)) : set.startsWith('tag:') ? c => c.srs.state !== 'new' && c.tags.includes(set.slice(4)) : () => false;
+    return S.cards.filter(c => studyable(c) && deckById(c.deckId) && pickOf(c)).sort((a, b) => by(a) - by(b)).slice(0, 50);
   }
-  const setName = set => (set === 'hard' ? 'Hardest cards' : set === 'leech' ? 'Cards you keep forgetting' : set && set.startsWith('tag:') ? set.slice(4) : set && set.startsWith('cards:') ? 'Missed in the test' : '');
-  // Where a review of a set ends: the Stats page, or (the cards missed in a test) back to the test's results.
-  const setBack = set => (set && set.startsWith('cards:') ? (testing && testOk() ? (testing.phase === 'results' ? scopeHere(testing) : scopeBack(testing)) : '/library') : '/stats');
+  const setName = set => (set === 'hard' ? 'Hardest cards' : set === 'leech' ? 'Cards you keep forgetting' : set && set.startsWith('tag:') ? set.slice(4) : '');
   // A card as review shows it. Text stays as written (see rich.js); the screen draws the formatting.
   // A fill-in-the-blank card asks one blank (cloze is its number) or all of them (-1).
   function face(c) {
@@ -535,14 +531,12 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
   }
   // Wrong answers that look like the right one: other cards' answers of about the same length, from the same deck.
   // A box of a picture gets the picture's other labels first.
-  // A deck's cards that can be asked (until the next change), with their answers: building many questions at once (a test) asks
-  // for these again and again. `cap`: of a long list of other answers, only this many (picked at random) are looked through.
+  // A deck's cards that can be asked (until the next change), with their answers.
   const learnIn = id => memo['l' + id] || (memo['l' + id] = cardsOf(id).filter(learnable).map(c => ({ c, a: answerOf(c) })));
-  function distractors(c, n, cap = Infinity) {
+  function distractors(c, n) {
     const right = answerOf(c).toLowerCase(), deck = learnIn(c.deckId).filter(x => x.c.id !== c.id), same = deck.filter(x => x.c.kind === c.kind);
     const o = occOf(c), near = o ? [...new Set(o.boxes.map(b => String(b.label || '').trim()))].filter(a => a && a.toLowerCase() !== right) : [];
     let pool = [...new Set((same.length > n ? same : deck).map(x => x.a))].filter(a => a && a.toLowerCase() !== right && !near.includes(a));
-    if (pool.length > cap) pool = shuffle(pool).slice(0, cap);
     pool.sort((a, b) => Math.abs(a.length - right.length) - Math.abs(b.length - right.length));
     return [...shuffle(near), ...shuffle(pool.slice(0, n * 2))].slice(0, n);
   }
@@ -560,7 +554,7 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
   // Questions written for a card (the learner's AI app over MCP, add_quiz, or Lucida's own AI, below), of one kind.
   const aiQuiz = (c, kind) => (c.quiz || []).filter(x => x.kind === kind);
   // Lucida's own questions (quizai.mjs, POST /api/quiz): when the cards coming up in Learn mode have no question yet, up to 20 are written at once
-  // and saved on the cards, where Learn mode and the practice test find them. Nobody waits: until they arrive the question builders ask as
+  // and saved on the cards, where Learn mode finds them. Nobody waits: until they arrive the question builders ask as
   // always, and when the AI is off or the day's batches are used up nothing is asked and nothing is shown. About 5 questions from the end of
   // the ones written, the next 20 are asked for.
   let quizBusy = false, quizOff = false, quizRetryAt = 0;
@@ -618,21 +612,21 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
   }
   // A choice question for a card (multiple choice or true or false): an AI-written one when the card has one of this kind (most of
   // the time; now and then the card's own words), else the card's words with other cards' answers. A fill-in-the-blank card is a
-  // "blank" question when `blank` is on. Learn mode and the practice test both ask this way.
-  function choiceQuestion(c, kind, blank, cap) {
+  // "blank" question when `blank` is on.
+  function choiceQuestion(c, kind, blank) {
     const cid = c.id, ai = kind === 'tf' ? aiQuiz(c, 'true_false') : kind === 'mc' ? aiQuiz(c, 'choice') : kind === 'blank' ? aiQuiz(c, 'blank') : [];
     // (A blank that isn't a fill-in-the-blank card exists only as the written question, so that is always the one asked.)
-    if (ai.length && (Math.random() < .8 || !distractors(c, 1, cap).length || (kind === 'blank' && c.kind !== 'cloze'))) {
+    if (ai.length && (Math.random() < .8 || !distractors(c, 1).length || (kind === 'blank' && c.kind !== 'cloze'))) {
       const x = oneOf(ai);
       if (kind === 'tf') return { type: 'choice', kind, id: cid, text: 'True or false?', claim: x.question, options: ['True', 'False'], right: x.answer === 'true' ? 0 : 1, pick: null, why: x.why, ai: true };
       const options = shuffle([x.answer, ...x.wrong]);
       return { type: 'choice', kind, id: cid, text: x.question, options, right: options.indexOf(x.answer), pick: null, why: x.why, ai: true };
     }
     if (kind === 'tf') {
-      const truth = Math.random() < .5, claim = truth ? answerOf(c) : distractors(c, 1, cap)[0];
+      const truth = Math.random() < .5, claim = truth ? answerOf(c) : distractors(c, 1)[0];
       return { type: 'choice', kind, id: cid, claim, options: ['True', 'False'], right: truth ? 0 : 1, pick: null };
     }
-    const options = shuffle([answerOf(c), ...distractors(c, 3, cap)]);
+    const options = shuffle([answerOf(c), ...distractors(c, 3)]);
     return { type: 'choice', kind: c.kind === 'cloze' && blank ? 'blank' : kind, id: cid, options, right: options.indexOf(answerOf(c)), pick: null };
   }
   function mark(cid, ok, kind) {
@@ -663,186 +657,6 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
     const parts = [answer, ...String(answer).split(/[,;/]|\bor\b/), inParens].filter(Boolean).map(norm).filter(Boolean);
     return parts.some(p => p === t || lev(p, t) <= Math.max(p.length > 4 ? 1 : 0, Math.floor(p.length / 7)));
   }
-  // ---------- Practice test ----------
-  // A calm test of a deck's cards (or of every deck in a folder), like an exam: numbered questions you can go back through and flag, a
-  // quiet timer when you asked for one, nothing said about right or wrong until you submit, then your score with every question and its
-  // right answer. The questions are Learn mode's (choiceQuestion, and the ones your AI wrote for the cards), and a written answer gets
-  // Learn's spelling check. A test never changes when a card comes back for review (it logs no review). The test in progress keeps
-  // itself on this device, so a reload picks it up where it was; a finished one is saved with the library (test.save), where the deck's
-  // page lists it and AI apps can read it.
-  const TEST_KEY = 'lucida.test', TEST_ORDER = ['mc', 'tf', 'blank', 'match', 'type'], LETTERS = 'ABCDEFGH', TEST_CAP = 300;
-  const TEST_NAME = { mc: 'Multiple choice', tf: 'True or false', blank: 'Fill in the blank', match: 'Matching', type: 'Written' };
-  const TEST_CHIPS = [['mc', 'Multiple choice'], ['tf', 'True or false'], ['type', 'Written'], ['match', 'Matching'], ['blank', 'Fill in the blank']];
-  let testing = (() => { try { const x = JSON.parse(localStorage.getItem(TEST_KEY) || 'null'); return x && x.v === 1 ? x : null; } catch { return null; } })();
-  let testSaving = null, testClock = '', testBeat = 0;
-  const saveTest = () => { try { if (testing) localStorage.setItem(TEST_KEY, JSON.stringify(testing)); else localStorage.removeItem(TEST_KEY); } catch { /* private window */ } };
-  // What a test is of: a deck, or every deck in a folder (not the ones you paused).
-  const scopeOf = s => (s && s.folderId ? { folderId: s.folderId } : { deckId: (s && s.deckId) || '' });
-  const scopeDecks = s => (s.folderId ? S.decks.filter(d => d.folder === s.folderId && !d.paused) : [deckById(s.deckId)].filter(Boolean));
-  const scopeName = s => (s.folderId ? (S.folders.find(f => f.id === s.folderId) || {}).name : (deckById(s.deckId) || {}).name) || '';
-  const scopeBack = s => (s.folderId ? '/library/folder/' + s.folderId : '/deck/' + s.deckId);
-  const scopeHere = s => '/test/' + (s.folderId ? 'folder/' + s.folderId : s.deckId);
-  const sameScope = (a, b) => (a.folderId || '') === (b.folderId || '') && (a.deckId || '') === (b.deckId || '');
-  const testOk = () => !!testing && (testing.folderId ? S.folders.some(f => f.id === testing.folderId) : !!deckById(testing.deckId));
-  // The cards a test can ask (with their words and answers, see learnIn), and how many different answers a deck has.
-  const testPool = s => scopeDecks(s).flatMap(d => learnIn(d.id).map(x => ({ ...x, q: learnText(x.c) })));
-  const answersN = id => memo['n' + id] || (memo['n' + id] = new Set(learnIn(id).map(x => x.a.toLowerCase())).size);
-  const shortE = e => e.c.kind !== 'image' && e.q.length <= 70 && e.a.length <= 60;
-  const testScore = items => { const right = items.filter(x => x.ok).length; return { n: items.length, right, pct: items.length ? Math.round(right / items.length * 100) : 0 }; };
-  const clock = sec => { const s = Math.max(0, Math.round(sec)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), r = s % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(r).padStart(2, '0'); };
-  const dayLabel = t => { const d = new Date(t); return SHORT_MONTHS[d.getMonth()] + ' ' + d.getDate() + (d.getFullYear() !== new Date(now()).getFullYear() ? ', ' + d.getFullYear() : ''); };
-  // The kinds a card can be asked in, quickly: a choice or a true-or-false needs another answer in its deck (or a question your AI wrote),
-  // a blank is a fill-in-the-blank card, writing needs a short answer, matching short words. A fill-in-the-blank card is a "blank" question
-  // when blanks are on, not a plain choice.
-  function testKinds(e, on, matchOk) {
-    const c = e.c, more = answersN(c.deckId) >= 2, ks = [];
-    if (on('mc') && !(c.kind === 'cloze' && on('blank')) && (more || aiQuiz(c, 'choice').length)) ks.push('mc');
-    if (on('tf') && (more || aiQuiz(c, 'true_false').length)) ks.push('tf');
-    if (on('blank') && ((c.kind === 'cloze' && more) || aiQuiz(c, 'blank').length)) ks.push('blank');
-    if (on('type') && e.a.length <= 40) ks.push('type');
-    if (matchOk && shortE(e)) ks.push('match');
-    return ks;
-  }
-  // Which cards go in a test of these kinds, shuffled: each with the kinds it fits. Only matching fits: groups of its own (matchOnly).
-  function testTargets(pool, kinds) {
-    const on = k => kinds.includes(k), shorts = pool.filter(shortE), matchOk = on('match') && shorts.length >= 4;
-    const all = shuffle(pool).map(e => ({ e, ks: testKinds(e, on, matchOk) })).filter(x => x.ks.length);
-    return { targets: all, shorts, matchOk, matchOnly: matchOk && all.every(x => x.ks.length === 1 && x.ks[0] === 'match') };
-  }
-  // Four or five cards with different answers, out of `rest` (they leave it).
-  function takeGroup(rest, size) {
-    const seen = new Set(), got = [];
-    for (const e of rest) { const a = e.a.toLowerCase(); if (!seen.has(a)) { seen.add(a); got.push(e); if (got.length >= size) break; } }
-    if (got.length < 4) return [];
-    got.forEach(e => rest.splice(rest.indexOf(e), 1));
-    return got;
-  }
-  const groupSize = left => (left >= 10 ? 5 : left >= 8 ? 4 : Math.min(5, left));
-  function matchGroups(shorts, want) {
-    const rest = shuffle(shorts), groups = [];
-    while (rest.length >= 4 && (!want || groups.length < want)) { const g = takeGroup(rest, groupSize(rest.length)); if (!g.length) break; groups.push(g); }
-    return groups;
-  }
-  const pictureOf = c => { const o = occOf(c); return { image: c.kind === 'image' && c.image ? c.image : '', occ: o ? { boxes: o.boxes, ask: o.i, mode: o.mode } : null }; };
-  const matchQuestion = group => {
-    const terms = shuffle(group).map(e => ({ id: e.c.id, label: e.q, answer: e.a }));
-    return { type: 'match', kind: 'match', id: group[0].c.id, terms, defs: shuffle(terms.map(t => ({ id: t.id, label: t.answer }))) };
-  };
-  // One question of one kind for a card, or null when it can't be made fairly (then the card gets another kind).
-  function testQuestion(e, kind, shorts) {
-    const c = e.c;
-    if (kind === 'type') return { type: 'type', kind, id: c.id, text: e.q, answer: e.a, ...pictureOf(c) };
-    if (kind === 'match') {
-      const near = shorts.filter(x => x.c.id !== c.id && x.c.deckId === c.deckId), from = (near.length >= 3 ? near : shorts.filter(x => x.c.id !== c.id)), seen = new Set([e.a.toLowerCase()]), group = [e];
-      for (const x of shuffle(from)) { const a = x.a.toLowerCase(); if (seen.has(a)) continue; seen.add(a); group.push(x); if (group.length >= 5) break; }
-      return group.length >= 4 ? matchQuestion(group) : null;
-    }
-    const q = choiceQuestion(c, kind, kind === 'blank', 300);
-    if (q.options.length < 2 || q.right < 0 || (q.kind === 'tf' && !q.claim)) return null;
-    delete q.pick;
-    return { ...q, text: q.text || e.q, ...pictureOf(c) };
-  }
-  // The questions of a new test. `want`: how many (0 for every card, up to TEST_CAP). Each question has a card of its own; a matching
-  // question has four or five pairs (its card and others from the deck) and is one question. The kinds are balanced, and each kind is
-  // a section (multiple choice, true or false, fill in the blank, matching, written) with its questions in random order.
-  function testQuestions(pool, kinds, want) {
-    const on = k => kinds.includes(k), { targets, shorts, matchOk, matchOnly } = testTargets(pool, kinds), cap = Math.min(want || TEST_CAP, TEST_CAP);
-    if (matchOnly) return matchGroups(shorts, cap).map(matchQuestion);
-    const picks = targets.slice(0, cap), count = {}, bump = k => { count[k] = (count[k] || 0) + 1; };
-    // About one matching question in (kinds + 3); a card that fits nothing else is matching whether or not it's in that count.
-    let m = matchOk ? Math.min(picks.filter(x => x.ks.includes('match')).length, Math.max(1, Math.round(picks.length / (kinds.length + 3)))) : 0;
-    for (const x of picks) if (m > 0 && x.ks.includes('match')) { x.kind = 'match'; m--; bump('match'); }
-    for (const x of picks) {
-      if (x.kind) continue;
-      const ks = x.ks.filter(k => k !== 'match'), low = ks.length ? Math.min(...ks.map(k => count[k] || 0)) : 0;
-      x.kind = ks.length ? oneOf(ks.filter(k => (count[k] || 0) === low)) : 'match'; bump(x.kind);
-    }
-    const qs = [];
-    for (const x of picks) {
-      let q = null;
-      for (const k of [x.kind, ...x.ks.filter(k => k !== x.kind && k !== 'match')]) { q = testQuestion(x.e, k, shorts); if (q) break; }
-      if (q) qs.push(q);
-    }
-    return TEST_ORDER.flatMap(k => shuffle(qs.filter(q => q.kind === k)));
-  }
-  // How many questions a test of these kinds can have (the set-up screen offers 10, 20 and 30 up to this, and All).
-  function testAvailable(pool, kinds) {
-    const { targets, shorts, matchOnly } = testTargets(pool, kinds);
-    return matchOnly ? matchGroups(shorts, 0).length : Math.min(targets.length, TEST_CAP);
-  }
-  // The same questions again with their answers in another order (Retake the ones I missed).
-  const reshuffled = q => {
-    if (q.type === 'match') return { ...q, terms: shuffle(q.terms), defs: shuffle(q.defs) };
-    if (q.type !== 'choice' || q.kind === 'tf') return q;
-    const right = q.options[q.right], options = shuffle(q.options);
-    return { ...q, options, right: options.indexOf(right) };
-  };
-  // Has this question got an answer? (Matching: every one of its words.)
-  const answered = (q, a) => (q.type === 'choice' ? a != null : q.type === 'type' ? String(a || '').trim() !== '' : !!a && q.terms.every(t => a[t.id]));
-  // The score of a test: each question's answer, graded. Choices and matching are exact (a matching question is right only when every pair
-  // is); written answers forgive case, accents, and small typos (closeEnough, Learn's check).
-  function testItems(T) {
-    return T.questions.map((q, i) => {
-      const a = T.answers[i], n = i + 1;
-      if (q.type === 'match') {
-        const pairs = q.terms.map(t => { const d = a && a[t.id] ? q.defs.find(x => x.id === a[t.id]) : null; return { card: t.id, q: t.label, a: d ? d.label : '', r: t.answer, ok: !!a && a[t.id] === t.id }; });
-        return { n, k: 'match', card: q.id, q: 'Match each one to its answer.', a: '', r: '', ok: pairs.every(p => p.ok), pairs };
-      }
-      if (q.type === 'type') { const typed = String(a || '').trim(); return { n, k: q.kind, card: q.id, q: q.text, a: typed, r: q.answer, ok: !!typed && closeEnough(typed, q.answer) }; }
-      return { n, k: q.kind, card: q.id, q: q.text, ...(q.claim ? { claim: q.claim } : {}), a: a == null ? '' : q.options[a], r: q.options[q.right], ok: a === q.right };
-    });
-  }
-  // Time spent counts only while the test is open and showing; a gap (the tab hidden, the computer asleep) isn't counted.
-  function tickTest() {
-    const T = testing; if (!T || T.phase !== 'taking') return;
-    const t = now(); if (!document.hidden) T.spent += Math.min(Math.max(0, t - T.tick), 2500); T.tick = t;
-  }
-  const testLeft = T => (T.limit ? Math.max(0, T.limit * 60 - Math.floor(T.spent / 1000)) : null);
-  function submitTest(timeUp) {
-    const T = testing; if (!T || T.phase !== 'taking') return;
-    tickTest();
-    const items = testItems(T), took = Math.round((T.limit ? Math.min(T.spent, T.limit * 60000) : T.spent) / 1000);
-    T.phase = 'results'; T.result = { items, took, timeUp: !!timeUp, ...testScore(items) };
-    saveTest(); changed();
-    testSaving = send('test.save', { test: { ...scopeOf(T), took, limit: T.limit, timeUp: !!timeUp, kinds: T.kinds, items } }, false, true)
-      .then(r => { if (testing === T && T.result) { T.result.savedId = r.id; saveTest(); } return r; }).catch(() => null);
-  }
-  setInterval(() => {
-    const T = testing; if (!T || T.phase !== 'taking' || !testOk()) return;
-    tickTest();
-    if (T.limit && T.spent >= T.limit * 60000) return submitTest(true);
-    const shown = T.limit ? clock(testLeft(T)) : '';
-    if (shown !== testClock) { testClock = shown; onChange(); }
-    if (++testBeat % 5 === 0) saveTest();
-  }, 1000);
-  // The test is saved as the page goes (a reload, a closed tab). (Where db.js runs in Node, as in the iPhone parity oracle, there's no bare addEventListener.)
-  const keep = () => { tickTest(); saveTest(); };
-  if (typeof addEventListener === 'function') addEventListener('pagehide', keep);
-  document.addEventListener('visibilitychange', () => { if (document.hidden) keep(); });
-  // What the screen shows: the question you're on and your place in the test, or the results once it's submitted.
-  function testView() {
-    if (!testing || !testOk()) return null;
-    const T = testing, n = T.questions.length, base = { deckId: T.deckId || '', folderId: T.folderId || '', name: T.name, back: T.back, here: scopeHere(T), n, limit: T.limit };
-    if (T.phase === 'results') {
-      const R = T.result;
-      return { ...base, phase: 'results', pct: R.pct, right: R.right, took: R.took, tookLabel: clock(R.took), timeUp: !!R.timeUp, missed: R.items.filter(x => !x.ok).length,
-        rows: R.items.map(x => { const c = cardById(x.card); return { ...x, kindLabel: TEST_NAME[x.k], notAnswered: x.k !== 'match' && !x.a, canCount: x.k === 'type' && !x.ok && !!x.a, ex: c ? explainOf(c) : { on: false } }; }) };
-    }
-    const i = T.at, q = T.questions[i], a = T.answers[i], done = T.questions.map((x, j) => answered(x, T.answers[j]));
-    const view = { type: q.type, kind: q.kind, kindLabel: TEST_NAME[q.kind], text: q.text || 'Match each one to its answer.', claim: q.claim || '', image: q.image || '', occ: q.occ || null };
-    if (q.type === 'choice') view.options = q.options.map((label, j) => ({ label, picked: a === j }));
-    else if (q.type === 'type') view.typed = String(a || '');
-    else {
-      const asked = a || {};
-      view.defs = q.defs.map((d, j) => ({ id: d.id, letter: LETTERS[j], label: d.label, by: q.terms.findIndex(t => asked[t.id] === d.id) + 1 }));
-      view.terms = q.terms.map((t, j) => ({ id: t.id, n: j + 1, label: t.label, picked: asked[t.id] ? LETTERS[q.defs.findIndex(d => d.id === asked[t.id])] : '', chips: q.defs.map((d, k) => ({ id: d.id, letter: LETTERS[k], on: asked[t.id] === d.id })) }));
-    }
-    return { ...base, phase: 'taking', i, number: i + 1, q: view, flagged: !!T.flags[i], answered: done.filter(Boolean).length, flags: Object.values(T.flags).filter(Boolean).length,
-      unanswered: done.filter(x => !x).length, canBack: i > 0, last: i === n - 1, left: testLeft(T), clock: T.limit ? clock(testLeft(T)) : '',
-      nav: T.questions.map((x, j) => ({ n: j + 1, answered: done[j], flagged: !!T.flags[j], current: j === i })) };
-  }
-  // The Practice tests on a deck's page (or a folder's): when, how it went, newest first.
-  const pastTests = s => (S.tests || []).filter(t => (s.folderId ? t.folderId === s.folderId : t.deckId === s.deckId)).slice(0, 5).map(t => ({ id: t.id, at: t.at, day: dayLabel(t.at), n: t.n, right: t.right, pct: t.pct, line: t.right + ' of ' + t.n }));
   // ---------- Live ----------
   // A card plays live when it can make a fair question: it has an answer, and there are wrong answers to go with it
   // (other cards' answers, or ones the learner's AI wrote). Sound cards don't play (a room can't all hear one phone).
@@ -1035,56 +849,6 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
       if ((q.type === 'choice' && q.pick == null) || (q.type === 'type' && !q.checked) || (q.type === 'match' && q.done.length < q.ids.length)) return;
       nextQuestion(); saveLearn(); changed();
     },
-    // Practice test (see above): start one from a deck or a folder (`s`: { deckId } or { folderId }) with `o`: { count (a number, or 0 for
-    // every card), kinds, limit (minutes, 0 for none) }; answer, move about, flag; submit; and what to do with the results.
-    startTest: (s, o = {}) => {
-      const sc = scopeOf(s), pool = testPool(sc), kinds = TEST_ORDER.filter(k => (o.kinds || []).includes(k));
-      const qs = pool.length && kinds.length ? testQuestions(pool, kinds, +o.count || 0) : [];
-      if (!qs.length) return false;
-      const t = now();
-      testing = { v: 1, ...sc, name: scopeName(sc), back: scopeBack(sc), count: +o.count || 0, kinds, limit: [10, 20, 30].includes(+o.limit) ? +o.limit : 0, questions: qs, answers: {}, flags: {}, at: 0, started: t, spent: 0, tick: t, phase: 'taking', result: null };
-      testClock = ''; saveTest(); go(scopeHere(sc));
-      return true;
-    },
-    testChoose: j => { const T = testing, q = T && T.phase === 'taking' && T.questions[T.at]; if (!q || q.type !== 'choice' || !(j >= 0 && j < q.options.length)) return; T.answers[T.at] = j; saveTest(); changed(); },
-    // One word of a matching question gets a letter (the same letter again takes it back; a letter someone else had moves to this word).
-    testMatch: (term, def) => {
-      const T = testing, q = T && T.phase === 'taking' && T.questions[T.at];
-      if (!q || q.type !== 'match' || !q.terms.some(t => t.id === term) || !q.defs.some(d => d.id === def)) return;
-      const a = T.answers[T.at] = { ...(T.answers[T.at] || {}) };
-      if (a[term] === def) delete a[term];
-      else { for (const k of Object.keys(a)) if (a[k] === def) delete a[k]; a[term] = def; }
-      saveTest(); changed();
-    },
-    testType: text => { const T = testing, q = T && T.phase === 'taking' && T.questions[T.at]; if (!q || q.type !== 'type') return; T.answers[T.at] = String(text || '').slice(0, 300); saveTest(); onChange(); },
-    testGo: i => { const T = testing; if (!T || T.phase !== 'taking' || !(i >= 0 && i < T.questions.length)) return; tickTest(); T.at = i; saveTest(); changed(); },
-    testFlag: () => { const T = testing; if (!T || T.phase !== 'taking') return; if (T.flags[T.at]) delete T.flags[T.at]; else T.flags[T.at] = true; saveTest(); changed(); },
-    testSubmit: () => submitTest(false),
-    // Leaving a test, or Done on its results: it's gone from this device (a finished test is saved already).
-    testLeave: () => { testing = null; testSaving = null; saveTest(); changed(); },
-    // The spelling check missed a written answer (another word for the same thing): count it as right after all, and save that.
-    testCount: async n => {
-      const T = testing, R = T && T.result, it = R && R.items.find(x => x.n === n);
-      if (!it || it.ok || it.k !== 'type' || !it.a) return;
-      it.ok = true; it.counted = true; Object.assign(R, testScore(R.items)); saveTest(); changed();
-      const id = R.savedId || ((await testSaving) || {}).id;
-      if (id) send('test.fix', { id, n }, false, true).catch(() => {});
-    },
-    // The questions that were missed (all over again, with their answers in another order), as a new test.
-    testRetake: () => {
-      const T = testing, R = T && T.result; if (!R) return;
-      const bad = new Set(R.items.filter(x => !x.ok).map(x => x.n - 1)), qs = T.questions.filter((_, i) => bad.has(i)).map(reshuffled);
-      if (!qs.length) return;
-      const t = now();
-      testing = { ...T, questions: qs, answers: {}, flags: {}, at: 0, started: t, spent: 0, tick: t, phase: 'taking', result: null };
-      testClock = ''; testSaving = null; saveTest(); changed();
-    },
-    // The cards that were missed (the wrong pairs of a matching question), as a review of just those: grading counts, like any review.
-    testStudy: () => {
-      const T = testing, R = T && T.result; if (!R) return;
-      const ids = [...new Set(R.items.filter(x => !x.ok).flatMap(x => (x.k === 'match' ? x.pairs.filter(p => !p.ok).map(p => p.card) : [x.card])))].filter(id => { const c = cardById(id); return c && studyable(c); });
-      if (ids.length) go('/review?set=' + encodeURIComponent('cards:' + ids.join(',')));
-    },
     exportAll: () => download('lucida.json', JSON.stringify({ decks: S.decks, cards: S.cards, logs: S.logs }, null, 1), 'application/json'),
     resetAll: async () => { if (!(await ask({ title: 'Delete all your data?', line: 'Every deck, card and review goes' + (S.me ? ', and your profile and shared decks' : ' on this computer') + '. This can’t be undone.', action: 'Delete my data', danger: true }))) return; await send('data.reset'); session = null; go('/'); },
     signOut: async () => { await fetch('/api/auth/signout', { method: 'POST' }).catch(() => {}); toSignIn(); },
@@ -1111,7 +875,7 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
       } catch { explainErr[cardId] = 'Couldn’t reach Lucida. Try again.'; }
       explaining[cardId] = false; changed();
     },
-    // A question about a card in Explain (`question`: how Learn mode or the test asked the card). It shows at once, waiting for its answer;
+    // A question about a card in Explain (`question`: how Learn mode asked the card). It shows at once, waiting for its answer;
     // the answer, or what went wrong, comes in under it. Each one is one of the day's explanations; when they're used up the question goes
     // and the composer shows the server's words instead. The conversation so far goes with it, and nothing is kept: closing Explain clears it.
     followUp: async (cardId, q, question) => {
@@ -1342,7 +1106,7 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
       // X goes straight back to the deck's page, or to the Library from its review of every deck (the owner: "clicking 'x' on
       // flashcards or learn should take one back to decks not to the finish screen"). Every grade is saved already.
       const base = { deckId: d.id, done, left: q.length, total: done + q.length, counts, mode: d.grading, prog: S.settings.prog, piles: (d.piles || []).map(p => ({ name: p.name, n: cardsOf(d.id).filter(c => c.pile === p.name).length })),
-        endHref: set ? setBack(set) : id ? '/deck/' + id : '/library', setName: setName(set) };
+        endHref: set ? '/stats' : id ? '/deck/' + id : '/library', setName: setName(set) };
       if (!cur) return { ...base, empty: true, card: null, queue: 'rev', iv: { again: '', hard: '', good: '', easy: '' }, fsrsOn: false, editHref: '' };
       const c = cur.card, t = now(), pv = scheduled(d) ? preview(c.srs, t, { goal: GOAL, maxDays: MAX_DAYS, steps: d.steps, w: wOf() }) : null;
       autoplay(c);
@@ -1360,12 +1124,6 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
         .filter(([k, , n]) => n > 0 || k === 'all').map(([k, label, n]) => ({ id: k, label, n }));
     },
     learnOn: id => !!(learnOk() && learning.deckId === id && !learning.done),
-    // Practice test: the one in progress (or its results), the setup's numbers for a deck or folder (`s`: { deckId } or { folderId }) and the
-    // kinds turned on, and a deck's or folder's past results.
-    test: testView,
-    testPlan: (s, kinds) => { const sc = scopeOf(s), pool = testPool(sc); return { name: scopeName(sc), cards: pool.length, available: testAvailable(pool, kinds) }; },
-    testKinds: () => TEST_CHIPS,
-    tests: s => pastTests(scopeOf(s)),
     // Live: the cards a deck can play live (like learnSets), the big screen's game, and a phone's.
     liveSets: id => {
       const cs = cardsOf(id).filter(liveable), uses = {};
@@ -1389,10 +1147,10 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
       return { pct: rated.length ? Math.round(rated.filter(x => x.rating > 1).length / rated.length * 100) : 100, goal: Math.round(GOAL * 100),
         cards: g.length, minutes: session ? Math.max(1, Math.round((now() - session.started) / MIN)) : 0, fresh: g.filter(x => x.was === 'new').length, split,
         streak: streaks().streak, next: nx ? nx.short + ' · ' + nx.n : 'Nothing due',
-        moreHref: left ? reviewHref(session.deckId, session.pile, session.set) : session && session.set ? setBack(session.set) : d ? '/deck/' + d.id + '/card' : '/library', moreLabel: left ? 'Keep going · ' + left + ' left' : session && session.set ? (session.set.startsWith('cards:') ? 'Back to the test' : 'Back to stats') : 'Add cards',
+        moreHref: left ? reviewHref(session.deckId, session.pile, session.set) : session && session.set ? '/stats' : d ? '/deck/' + d.id + '/card' : '/library', moreLabel: left ? 'Keep going · ' + left + ' left' : session && session.set ? 'Back to stats' : 'Add cards',
         // Done goes back to the deck the session was from (the owner: "finishing a deck takes one back to 'today' page and
         // not deck page"), or to the Library after reviewing every deck.
-        doneHref: session && session.set ? setBack(session.set) : d ? '/deck/' + d.id : '/library',
+        doneHref: session && session.set ? '/stats' : d ? '/deck/' + d.id : '/library',
         // Each pile: how many cards went in this time, how many are in it now, and a link to go over it.
         sorted: piled.length, onlyPiles: piled.length > 0 && !rated.length,
         piles: names.map(name => ({ name, n: piled.filter(x => x.pile === name).length, total: (d ? cardsOf(d.id) : S.cards).filter(c => c.pile === name).length, href: reviewHref(session && session.deckId, name) })) };

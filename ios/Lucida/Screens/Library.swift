@@ -264,7 +264,7 @@ struct LibraryScreen: View {
   }
 
   /// A folder's page: back, its ⋯ menu (New deck, Rename, Remove folder: the owner, 2026-10-02, "collapse new deck, remove folder, and rename
-  /// into one dropdown menu"), then its name. Its practice test is gone from here.
+  /// into one dropdown menu"), then its name.
   private func folderTop(_ f: LibFolder) -> some View {
     VStack(alignment: .leading, spacing: 14) {
       HStack(spacing: 8) {

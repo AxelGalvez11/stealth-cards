@@ -1,13 +1,12 @@
 // Explain (PhoneReviewExplain, and under the "why" line in Learn mode): once a card is turned over or a question is
 // answered, Lucida's AI can explain the answer. It shows only when the server has AI set up (or the card already has
 // an explanation); it's written once and kept on the card, and Free gets a few a day. On a flashcard its button is round,
-// in the top bar beside the review's settings (Review.swift), and in Learn mode the same one just after its gear (Learn.swift); the
-// practice test's results use ExplainButton on each question.
+// in the top bar beside the review's settings (Review.swift), and in Learn mode the same one just after its gear (Learn.swift).
 // Under the explanation, a composer asks about the card (the owner, 2026-10-02: "add a chatcomposer so user can ask question"; the boards'
 // design/chat.mjs): "Ask about this card" and a round Send. A question is a short bubble on the right and its answer comes under it in the
 // explanation's own text style; each one is one of the day's explanations, and once they're used up the composer is the upgrade line. The
 // conversation is never saved: closing the explanation forgets it. While it's being typed in, the composer sits on top of the keyboard (each
-// screen makes room the way the Notes bar does: Review.swift, Learn.swift, PracticeTest.swift).
+// screen makes room the way the Notes bar does: Review.swift, Learn.swift).
 import SwiftUI
 
 /// A card's explanation as a screen shows it (db.js explainOf), with the questions asked about it and, once the day's explanations are used
@@ -128,27 +127,6 @@ struct ExplainLook {
   /// Learn mode: its white cards (near-black at night).
   static func learn(_ k: LearnLook) -> ExplainLook {
     ExplainLook(bg: k.card, ink: k.ink, ink2: k.ink2, closeBg: k.track, btn: k.btn, btnFg: k.btnFg, shadow: k.shadow, closeSize: 26, gap: 6, radius: 18, fill: k.track, off: k.track)
-  }
-  /// The practice test's results: a light gray box in the question's row.
-  static func test(_ t: Theme) -> ExplainLook {
-    ExplainLook(bg: t.surf, ink: t.text, ink2: t.muted, closeBg: t.bg, btn: t.inv, btnFg: t.invText, closeSize: 28, gap: 6, radius: 16, fill: t.bg, off: t.surf2)
-  }
-}
-
-/// The practice test's results' Explain on each question (a sparkle and "Explain", or "Explanation" once there is one).
-struct ExplainButton: View {
-  @Environment(\.theme) private var t
-  let label: String
-  var look: ExplainLook? = nil
-  let action: () -> Void
-  var body: some View {
-    Button(action: action) {
-      HStack(spacing: 6) { Icon("sparkle", 14, 2); Text(label).css(13, .semibold) }
-        .foregroundStyle(look?.ink ?? t.text)
-        .padding(.leading, 12).padding(.trailing, 14).frame(height: 34)
-        .background(Capsule().fill(look?.bg ?? t.surf).learnShadow(look?.shadow))
-    }
-    .buttonStyle(.press)
   }
 }
 

@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Asking about a card in Explain (the composer under the explanation: Review, Learn mode, the practice test's results), end to end
+# Asking about a card in Explain (the composer under the explanation: Review and Learn mode), end to end
 # (LucidaUITests/AskTests.swift): taps through the app as made-up people on a fresh copy of the server on this Mac, whose AI is the stand-in
 # ios/tools/explain-stub.mjs (it writes explanations and answers questions about the card). It starts web/server.mjs on PORT (3976) with an
 # empty data folder and the stand-in on AIPORT (3977), runs the test on a simulator, prints each check, and stops both.

@@ -19,7 +19,6 @@ import { SCREENS, KINDS, shotFile, visualsOf, CONNECT_FIGS } from './visuals.mjs
 import { THEMES } from '../web/themes/index.js';
 import { THEME_KEYS, themeCss, themeFonts, themeStatic } from './themes.mjs';
 import { LEVELS, YEARS, SUBJECTS } from '../web/school.js';
-import testKit from './test-boards.mjs';
 import { makeBoards, deckBlocks, publicGuideBlocks, PUBLIC_GUIDE_JS, deckMaterialsJs, NOTE_TREE_CSS, MAKE_STEPS, GUIDE_CSS, GUIDE_STATES, MATERIALS_MOCK, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
 import { DIAGRAM_METHOD, DIAGRAM_CSS, PUBLIC_DIAGRAMS_JS, publicDiagramBlocks } from './diagrams.mjs';
 import { CHAT_SAMPLE, chatMarkup, CHAT_CSS, CHAT_JS, CHAT_METHOD } from './chat.mjs';
@@ -230,10 +229,9 @@ const I = {
   calendar: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
   pauseRing: '<circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/>',
   again: '<path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/>',
-  // Bringing something in (Import cards), a school (Get verified, the admin page), and flagging a question (the practice test).
+  // Bringing something in (Import cards), and a school (Get verified, the admin page).
   enter: '<path d="M14 4h3.5A2.5 2.5 0 0 1 20 6.5v11a2.5 2.5 0 0 1-2.5 2.5H14"/><path d="M9.5 16l4-4-4-4M13.5 12H4"/>',
   cap: '<path d="M2.5 9.5L12 5l9.5 4.5L12 14z"/><path d="M6.5 11.5V16c0 1.3 2.5 3 5.5 3s5.5-1.7 5.5-3v-4.5M21.5 9.5v5"/>',
-  flag: '<path d="M5.5 21V4.5M5.5 4.5h11l-2.2 4 2.2 4h-11"/>',
   // The sidebar's button (collapse it to a rail, open it again), and Settings' Help & legal.
   sidebar: '<rect x="3" y="4.5" width="18" height="15" rx="4"/><path d="M9.5 4.5v15"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5M12 17h.01"/>',
@@ -321,9 +319,6 @@ const pill = (label, { inv = false, href = '', icon = '', h = 36, onClick = '' }
   const inner = `${icon ? svg(I[icon], 16, 2) : ''}${label}`;
   return href ? `<a href="${href}" class="sc-press" style="${st}">${inner}</a>` : `<button type="button"${onClick ? ` onClick="${onClick}"` : ''} class="sc-press" style="${st}">${inner}</button>`;
 };
-// The practice test's boards and its small pieces on the deck page and a folder's page (design/test-boards.mjs). The image helpers are
-// defined further down, so they're read when a board is made.
-const TEST = testKit({ svg, I, FONT, MONO, DB_JS, T, get OCC_JS() { return OCC_JS; }, get OCC_BOXES() { return OCC_BOXES; }, get CELL() { return CELL; } });
 // The Pro badge, beside what Pro adds (Settings → Plan, Learn mode and Pro scheduling on Free).
 const PRO_BADGE = '<span style="height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: linear-gradient(90deg, #7E94FB, #2CB2EA); color: #FFFFFF; font-size: 12px; font-weight: 700; letter-spacing: .01em;">Pro</span>';
 const eyebrow = txt => `<div style="font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">${txt}</div>`;
@@ -904,9 +899,8 @@ renderVals() {
   const allOptions = [{ id: '', label: 'All decks', dot: t.muted }, ...folders.map(f => ({ id: 'f:' + f.id, label: f.name, dot: t.text })), ...all.map(d => ({ id: d.id, label: d.name, dot: grad(d).base }))];
   const deckOptions = allOptions.filter(o => !dq || o.label.toLowerCase().includes(dq)), pickedName = (allOptions.find(o => o.id === pick) || allOptions[0]).label;
   const title = folder ? folder.name : 'Library';
-  ${TEST.folderJs}
-  return {
-    t, ...chrome, ...testVals, grain: String(this.props.grain ?? 0.7), decks, title, atTop, inFolder: !!folder, libraryHref: db.mock ? board('Decks') : '/library',
+    return {
+    t, ...chrome, grain: String(this.props.grain ?? 0.7), decks, title, atTop, inFolder: !!folder, libraryHref: db.mock ? board('Decks') : '/library',
     query: s.q || '', setQuery: e => this.setState({ q: e && e.target ? e.target.value : '', shown: 60 }), searchHint: cards ? 'Search all cards' : folder ? 'Search this folder' : 'Search decks and cards',
     modes: [['Decks', !cards, db.mock ? board('Decks') : '/library'], ['All cards', cards, db.mock ? board('LibraryCards') : '/library/cards']]
       .map(([label, on, href]) => ({ label, href, current: on ? 'page' : 'false', ...seg(on) })),
@@ -916,7 +910,7 @@ renderVals() {
     newFolder: () => openNaming('new'), renameFolder: () => openNaming('rename'),
     removeFolder: () => folder && act.deleteFolder(folder.id), notInFolder: !folder,
     // A folder's own actions sit in one ⋯ menu: New deck, Rename, and Remove folder in red (the owner, 2026-10-02: "collapse new deck, remove
-    // folder, and rename into one dropdown menu"); its practice test is gone from the folder page. Prop folderMenu draws the menu open.
+    // folder, and rename into one dropdown menu"); practice tests are gone from Lucida (the owner, 2026-10-03). Prop folderMenu draws the menu open.
     folderMenu: (() => { const open = s.folderMenu != null ? !!s.folderMenu : !!this.props.folderMenu, shut = () => this.setState({ folderMenu: false });
       return { open, expanded: open ? 'true' : 'false', toggle: () => this.setState({ folderMenu: !open }), close: shut,
         rename: () => { shut(); openNaming('rename'); }, remove: () => { shut(); if (folder) act.deleteFolder(folder.id); } }; })(),
@@ -1438,7 +1432,7 @@ const CELL = (w, h, pointer = true, sw = 2) => `<svg width="${w}" height="${h}" 
 // fill-in-the-blank card. A box's place and size are fractions of the picture (0 to 1), so it fits the picture at any
 // size, and each box has a label: what's under it, the answer. "What to hide": only the box being asked (the rest of
 // the picture shows), or every box, with one asked.
-// How the boxes look on a card (review, Cards to check, Learn, the practice test, and Live's big screen): every box that
+// How the boxes look on a card (review, Cards to check, Learn, and Live's big screen): every box that
 // hides a part is yellow (the owner, 2026-10-02: "for hidden boxes can you make the box color yellow?"), one yellow that
 // reads on a light picture and a dark one, with black numbers on it (OCC: the editor's boxes and the iPhone's are the
 // same). The asked box has an edge inside it in the screen's own outline color (c.edge: black on a light card, white on a
@@ -8885,10 +8879,6 @@ const files = {
   'PhoneQuizType': ['iPhone · Learn mode · type the answer', phoneQuizType, { props: { ...DARK, explainOpen: { editor: 'boolean', default: false }, followUp: { editor: 'boolean', default: false } }, logic: TYPE_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizDone': ['iPhone · Learn mode · all learned', phoneQuizDone, { props: DARK, logic: QUIZ_DONE_LOGIC(true), css: LEARN_CSS, w: PW, h: PH }],
   'PhoneQuizSettings': ['iPhone · Learn mode · settings (the deck’s background)', attrOf('PhoneQuiz', PW, PH, 'settings-open="{{yes}}"'), { logic: darkLogic, css: LEARN_CSS, w: PW, h: PH }],
-  // Practice test: one board each, with the state picker (Tweaks) on the canvas: Set up, each kind of question, its two questions
-  // (Submit, Leave), and the results (all of them, or just the ones missed). Dark and gray come with the Tweaks.
-  'WebTest': ['Web · Practice test', TEST.board(false), { props: TEST.props, logic: TEST.logic(false), css: TEST.css, w: W, h: H }],
-  'PhoneTest': ['iPhone · Practice test', TEST.board(true), { props: TEST.props, logic: TEST.logic(true), css: TEST.css, w: PW, h: PH }],
   'LiveSetup': ['Live · host · set up', liveSetup, { props: { ...DARK, liveFrom: { editor: 'enum', default: 'A deck', options: LIVE_FROM }, topic: { editor: 'string', default: '' } }, logic: LIVE_SETUP_LOGIC, w: W, h: H }],
   'LiveLobby': ['Live · big screen · lobby (join code)', liveLobby, { props: { ...DARK, grain: MESH('Iris').grain, empty: { editor: 'boolean', default: false } }, logic: LIVE_HOST_LOGIC, css: LIVE_CSS, w: W, h: H }],
   'LiveLobbyEmpty': ['Live · big screen · lobby, nobody in yet', attrOf('LiveLobby', W, H, 'empty="{{yes}}"'), { logic: darkLogic, css: LIVE_CSS, w: W, h: H }],
