@@ -3,7 +3,7 @@
 // people, so any one can run alone (ONLY=OwnUITests/test4Camera ios/tools/e2e-ownui.sh):
 //   1  The questions that ask before something is deleted or left are Lucida's own sheet (a title, a line, Cancel and the answer, red when it deletes):
 //      Remove folder, Delete deck, Delete card and Sign out; Cancel and a tap outside keep everything; no system alert, confirmation dialog or sheet.
-//   2  Settings' lists (New cards a day, Remember goal, Daily reminder) and the language of made cards open Lucida's list sheet: no system menu, a pick saves.
+//   2  Settings' lists (New cards a day, Daily reminder) and the language of made cards open Lucida's list sheet: no system menu, a pick saves.
 //   3  A deck's exam date opens Lucida's calendar (no system date picker): a day is picked, saved, and taken off again.
 //   4  Take a photo opens Lucida's own camera screen (a simulator has no camera: `-fakeCamera` gives it a picture to take): shutter, Retake, Use photo, the
 //      flash and the switch between the cameras; the picture goes into Make cards as a file.
@@ -120,7 +120,7 @@ final class OwnUITests: AppCase {
     let who = "ownl" + run
     person(who, "Lena List")
     var app = launch(as: who, ["-open", "settings"])
-    for (label, option, key, want) in [("New cards a day", "10", "perDay", 10), ("Remember goal", "85%", "goal", 85)] {
+    for (label, option, key, want) in [("New cards a day", "10", "perDay", 10)] {
       let row = buttonStarting(app, label)
       scrollTo(app, row)
       tap(row, label)

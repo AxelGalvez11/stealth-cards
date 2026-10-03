@@ -182,25 +182,25 @@ export default [
  },
  {
   "name": "PhoneActivity",
-  "title": "iPhone · News",
+  "title": "iPhone · Notifications",
   "w": 390,
   "h": 844
  },
  {
   "name": "PhoneActivityDark",
-  "title": "iPhone · News (dark)",
+  "title": "iPhone · Notifications (dark)",
   "w": 390,
   "h": 844
  },
  {
   "name": "PhoneActivityEmpty",
-  "title": "iPhone · News · nothing new",
+  "title": "iPhone · Notifications · nothing new",
   "w": 390,
   "h": 844
  },
  {
   "name": "PhoneActivityGray",
-  "title": "iPhone · News (dark, gray)",
+  "title": "iPhone · Notifications (dark, gray)",
   "w": 390,
   "h": 844
  },
@@ -453,12 +453,6 @@ export default [
  {
   "name": "PhoneLibraryGray",
   "title": "iPhone · Library (dark, gray)",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneLibraryLeeches",
-  "title": "iPhone · Library · all cards · cards you keep forgetting (Pause all)",
   "w": 390,
   "h": 844
  },
@@ -1748,25 +1742,25 @@ export default [
  },
  {
   "name": "WebActivity",
-  "title": "Web · News",
+  "title": "Web · Notifications",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebActivityDark",
-  "title": "Web · News (dark)",
+  "title": "Web · Notifications (dark)",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebActivityEmpty",
-  "title": "Web · News · nothing new",
+  "title": "Web · Notifications · nothing new",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebActivityGray",
-  "title": "Web · News (dark, gray)",
+  "title": "Web · Notifications (dark, gray)",
   "w": 1440,
   "h": 900
  },
@@ -2163,12 +2157,6 @@ export default [
  {
   "name": "WebLibraryGray",
   "title": "Web · Library (dark, gray)",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebLibraryLeeches",
-  "title": "Web · Library · all cards · cards you keep forgetting (Pause all)",
   "w": 1440,
   "h": 900
  },

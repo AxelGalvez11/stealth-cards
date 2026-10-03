@@ -1,11 +1,14 @@
 // Lucida's scheduling rules on top of FSRS (fsrs.js), shared by the app (db.js), the server (store.mjs), and AI apps
 // (mcp.mjs), so all three agree on what comes up: cards you paused never do, cards you keep forgetting get marked, an
-// exam date brings cards up early, and a memory goal has a price in reviews a day.
+// exam date brings cards up early, and every deck is held to the same memory goal.
 import { recall, gapOf, dayAt } from './fsrs.js';
 
 const DAY = 86400000;
-// A deck's longest gap (its gapIdx picks one), in days.
+// A deck's longest gap (its gapIdx picks one), in days. Decks no longer choose one (below), but old data keeps its gapIdx.
 export const GAPS = [30, 90, 180, 365, 730, 1825, 3650];
+// Every deck is held to a 90% chance of remembering, with a year at most between reviews: there's nothing to set (the owner,
+// 2026-10-02: "remove all of this… for all screens in iphone and web"). A deck's stored goal and gapIdx are ignored.
+export const GOAL = 0.9, MAX_DAYS = 365;
 // FSRS picks when a deck's cards come back, unless it grades with piles or has FSRS turned off.
 // FSRS always schedules 4 grades and check / x; piles only sort cards. A deck's old `fsrs: false` no longer turns it off (the owner, 2026-10-02:
 // "4 grades and check and x modes should always be FSRS").
@@ -35,7 +38,7 @@ export const examDay = d => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec((d && d
 export const examIn = (d, now) => { const t = examDay(d); return t == null ? null : Math.round((t - dayAt(now)) / DAY); };
 // The goal a card is held to `n` days before the exam.
 export const examGoal = (d, n) => {
-  const g = ((d && d.goal) || 90) / 100, top = Math.max(g, EXAM_GOAL);
+  const g = GOAL, top = Math.max(g, EXAM_GOAL);
   return n == null || n < 0 || n > EXAM_DAYS ? g : g + (top - g) * (1 - n / EXAM_DAYS);
 };
 // Whether an exam brings this card up at `now` (a card you've learned, whose memory slipped under the exam's goal).
@@ -89,7 +92,7 @@ export function examStatus(cards, d, now) {
 // a forgotten one about once more, and the deck's new cards a day start on top. It's the steady rate, cheap enough to
 // work out again at every step of the goal.
 export function workload(cards, d, goal) {
-  const maxDays = GAPS[d.gapIdx ?? 3];
+  const maxDays = MAX_DAYS;
   let rate = 0, left = 0;
   for (const c of cards) {
     if (c.pending || c.paused) continue;

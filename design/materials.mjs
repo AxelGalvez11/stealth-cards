@@ -336,33 +336,32 @@ export const GUIDE_CSS = NOTES_CSS;
 // ---------- what the deck pages carry: Guide, Sources, a source opened, and the small menu of links the Library's + uses ----------
 // `phone` draws the iPhone page's version. Each returns a piece of template; `DECK_MATERIALS_JS` is the logic they read (it goes in each deck
 // board's renderVals, and its `gs` goes in what it returns).
+// A note's icon (a page) and New note's +, in the Notes list and a page's Pages inside.
+const NOTE_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>';
+const PLUS_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+
 export function deckBlocks(H, phone) {
   const { svg, I, MONO } = H;
   const icon = (name, size = 16, w = 2) => svg(I[name] || EXTRA[name], size, w);
   const small = (label, handler, ic, attrs = '') => `<button type="button" onClick="{{${handler}}}" ${attrs} style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.bg}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${ic ? icon(ic, 14, 2) : ''}${label}</button>`;
-  const link = (label, href, ic) => `<a href="${href}" style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.bg}}; color: {{t.text}}; font-size: 13px; font-weight: 600;">${ic ? icon(ic, 14, 2) : ''}${label}</a>`;
-  // The Notes tab: the page of notes as it reads (web/notes.js), with its pages as tabs. For its owner a press on the words opens it to write in, there, and an
-  // empty one is a blank note waiting (a heading and a line); Make cards makes cards from it.
+  const link = (label, href, ic) => `<a href="${href}" style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font-size: 13px; font-weight: 600;">${ic ? icon(ic, 14, 2) : ''}${label}</a>`;
+  // The Notes tab: a list of the deck's notes, like the Cards tab (the owner, 2026-10-02: Notes is a list, and pages nest like Notion). Each opens
+  // as its own page; the main note is listed once it has words, then every page that isn't inside another. Its owner gets New note.
+  const noteRow = phone ? `<a href="{{n.href}}" style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid {{t.line}}; color: {{t.text}};"><span style="width: 32px; height: 32px; flex-shrink: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center;">${NOTE_SVG}</span><span style="min-width: 0; display: flex; flex-direction: column; gap: 3px;"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{n.title}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{n.sub}}</span></span></a>` : `<a href="{{n.href}}" style="display: grid; grid-template-columns: 36px minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; align-items: center; height: 64px; border-bottom: 1px solid {{t.line}}; font-size: 14px; color: {{t.text}};"><span style="width: 32px; height: 32px; border-radius: 16px; background: {{t.surf}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center;">${NOTE_SVG}</span><span style="min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{n.title}}</span><span style="font-size: 12px; color: {{t.muted}};">{{n.line}}</span></span><span style="color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{n.preview}}</span></a>`;
+  const newNote = phone ? `<a href="{{gs.newNoteHref}}" style="display: flex; align-items: center; gap: 12px; padding: 12px 0; font-size: 15px; font-weight: 500; color: {{t.muted}};"><span style="width: 32px; height: 32px; flex-shrink: 0; box-sizing: border-box; border-radius: 16px; border: 1px dashed {{t.line}}; display: flex; align-items: center; justify-content: center;">${PLUS_SVG}</span><span>New note</span></a>` : `<a href="{{gs.newNoteHref}}" style="display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 16px; align-items: center; height: 56px; font-size: 14px; font-weight: 500; color: {{t.muted}};"><span style="width: 32px; height: 32px; box-sizing: border-box; border-radius: 16px; border: 1px dashed {{t.line}}; display: flex; align-items: center; justify-content: center;">${PLUS_SVG}</span><span>New note</span></a>`;
   const guide = `<sc-if value="{{gs.guideShow}}" hint-placeholder-val="{{ true }}">
-    <section aria-label="Notes" style="min-width: 0; box-sizing: border-box; padding: ${phone ? '16px 18px 18px 24px' : '18px 28px 22px 30px'}; border-radius: ${phone ? 22 : 24}px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 12px;">
-      <sc-if value="{{gs.hasBar}}" hint-placeholder-val="{{ true }}"><div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-        <sc-if value="{{gs.hasTabs}}" hint-placeholder-val="{{ true }}"><div role="group" aria-label="Pages" style="display: flex; gap: 4px; flex-wrap: wrap;"><sc-for list="{{gs.tabs}}" as="g" hint-placeholder-count="3"><button type="button" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}" style="height: 30px; max-width: 200px; padding: 0 13px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{g.title}}</button></sc-for></div></sc-if>
-        <span style="flex-grow: 1;"></span>
-        <sc-if value="{{gs.canMake}}" hint-placeholder-val="{{ true }}">${link('Make cards', '{{gs.makeHref}}', 'sparkle')}</sc-if>
-      </div></sc-if>
-      <div ref="{{gs.ref}}" data-sc-own data-phone="${phone ? 'yes' : ''}" style="${NOTES_VARS('t.bg')}"></div>
-    </section>
+    <section aria-label="Notes" style="min-width: 0; display: flex; flex-direction: column;"><sc-if value="{{gs.notesNone}}" hint-placeholder-val="{{ false }}"><div style="padding: 16px 0; border-bottom: 1px solid {{t.line}}; font-size: 14px; color: {{t.muted}};">No notes yet</div></sc-if><sc-for list="{{gs.notes}}" as="n" hint-placeholder-count="3">${noteRow}</sc-for><sc-if value="{{gs.canEdit}}" hint-placeholder-val="{{ true }}">${newNote}</sc-if></section>
   </sc-if>`;
   // The deck page's sections, right under its header: Sources (what the cards were made from; only for the deck's owner), Cards, Notes (the Guide
   // and its pages) and Diagrams. A section with a count shows it (sources, cards, diagrams).
   const tabs = `<sc-if value="{{gs.showSections}}" hint-placeholder-val="{{ true }}"><div role="tablist" aria-label="Deck sections" style="flex-shrink: 0; display: flex; gap: ${phone ? 22 : 28}px; border-bottom: 1px solid {{t.line}}; overflow-x: auto; scrollbar-width: none;"><sc-for list="{{gs.sections}}" as="x" hint-placeholder-count="3"><button type="button" role="tab" aria-selected="{{x.selected}}" onClick="{{x.pick}}" style="position: relative; height: ${phone ? 44 : 46}px; padding: 0; flex-shrink: 0; display: inline-flex; align-items: center; gap: 7px; border: 0; background: transparent; color: {{x.fg}}; font: inherit; font-size: 15px; font-weight: 600; white-space: nowrap; cursor: pointer;"><span>{{x.label}}</span><span aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; border-radius: 1px; background: {{x.bar}};"></span></button></sc-for></div></sc-if>`;
   const sources = `<sc-if value="{{gs.sourcesShow}}" hint-placeholder-val="{{ true }}">
-    <section aria-label="Sources" style="min-width: 0; box-sizing: border-box; padding: ${phone ? '18px 18px 10px' : '20px 20px 10px'}; border-radius: ${phone ? 22 : 24}px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 6px;">
+    <section aria-label="Sources" style="min-width: 0; box-sizing: border-box; padding: 0; display: flex; flex-direction: column; gap: 6px;">
       <div style="display: flex; align-items: center; gap: 10px; min-height: 34px;"><span style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">Sources</span><span style="font-family: ${MONO}; font-size: 12px; color: {{t.muted}};">{{gs.sourceCount}}</span><span style="flex-grow: 1;"></span><sc-if value="{{gs.canEdit}}" hint-placeholder-val="{{ true }}">${link('Make cards', '{{gs.makeHref}}', 'sparkle')}</sc-if></div>
       <sc-if value="{{gs.sourcesNone}}" hint-placeholder-val="{{ false }}"><div style="padding: 14px 0 20px; border-top: 1px solid {{t.line}};"><span style="font-size: 14px; color: {{t.muted}};">Nothing here yet</span></div></sc-if>
       <div style="display: flex; flex-direction: column;"><sc-for list="{{gs.sources}}" as="s" hint-placeholder-count="3">
         <button type="button" onClick="{{s.open}}" aria-label="Open {{s.name}}" style="min-height: 60px; box-sizing: border-box; padding: 8px 0; display: flex; align-items: center; gap: 12px; border: 0; border-top: 1px solid {{t.line}}; background: transparent; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;">
-          <span style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 18px; background: {{t.bg}}; display: flex; align-items: center; justify-content: center;"><sc-if value="{{s.isFile}}" hint-placeholder-val="{{ true }}">${icon('file', 17, 1.8)}</sc-if><sc-if value="{{s.isPhoto}}" hint-placeholder-val="{{ false }}">${icon('image', 17, 1.8)}</sc-if><sc-if value="{{s.isRecording}}" hint-placeholder-val="{{ false }}">${icon('mic', 17, 1.8)}</sc-if><sc-if value="{{s.isVideo}}" hint-placeholder-val="{{ false }}">${icon('youtube', 17, 1.8)}</sc-if><sc-if value="{{s.isText}}" hint-placeholder-val="{{ false }}">${icon('paste', 17, 1.8)}</sc-if><sc-if value="{{s.isTopic}}" hint-placeholder-val="{{ false }}">${icon('sparkle', 17, 1.8)}</sc-if></span>
+          <span style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;"><sc-if value="{{s.isFile}}" hint-placeholder-val="{{ true }}">${icon('file', 17, 1.8)}</sc-if><sc-if value="{{s.isPhoto}}" hint-placeholder-val="{{ false }}">${icon('image', 17, 1.8)}</sc-if><sc-if value="{{s.isRecording}}" hint-placeholder-val="{{ false }}">${icon('mic', 17, 1.8)}</sc-if><sc-if value="{{s.isVideo}}" hint-placeholder-val="{{ false }}">${icon('youtube', 17, 1.8)}</sc-if><sc-if value="{{s.isText}}" hint-placeholder-val="{{ false }}">${icon('paste', 17, 1.8)}</sc-if><sc-if value="{{s.isTopic}}" hint-placeholder-val="{{ false }}">${icon('sparkle', 17, 1.8)}</sc-if></span>
           <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;"><span style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{s.name}}</span><span style="font-size: 12px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{s.line}}</span></span>
           <span style="display: flex; color: {{t.muted}};">${icon('chev', 15, 2)}</span>
         </button></sc-for></div>
@@ -439,9 +438,13 @@ export const DECK_MATERIALS_JS = String.raw`
     // Sources first (the owner, 2026-10-02: "sources should be the first tab, so sources, cards, notes, diagrams"); the page still opens on Cards.
     const tabList = [...(sourcesTab ? [{ id: 'sources', label: 'Sources', count: sourceRows.length ? String(sourceRows.length) : '' }] : []), { id: 'cards', label: 'Cards', count: String(cardsN) }, ...(notesTab ? [{ id: 'notes', label: 'Notes', count: '' }] : []), ...(dgTab ? [{ id: 'diagrams', label: 'Diagrams', count: dgRows.length ? String(dgRows.length) : '' }] : [])]
       .map(x => ({ ...x, selected: x.id === tab ? 'true' : 'false', fg: x.id === tab ? t.text : t.muted, bar: x.id === tab ? t.text : 'transparent', pick: () => this.setState({ tab: x.id }) }));
+    const nbPlain = s => String(s || '').split('\n').map(l => l.replace(/^:::toggle\s*/, '').replace(/^:::\s*$/, '').replace(/^#+\s*/, '').replace(/^\s*(?:[-*+]|\d+\.)\s+(?:\[[ xX]\]\s+)?/, '').replace(/\*\*|__|${'`'}/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').trim()).filter(Boolean);
+    const nbHead = s => { const m = /^#\s+(.+)$/m.exec(String(s || '')); return m ? m[1].replace(/\*\*|${'`'}/g, '').trim() : ''; };
+    const nbPreview = s => { const ls = nbPlain(String(s || '').replace(/^#\s+.+$/m, '')); const o = ls.slice(0, 3).join(' · '); return o.length > 150 ? o.slice(0, 147) + '…' : o; };
+    const nbWords = s => nbPlain(s).join(' ').split(/\s+/).filter(Boolean).length;
     const gs = {
       sections: tabList, showSections: tabList.length > 1, showCards: tab === 'cards', noCards: tab === 'cards' && cardsN === 0, sourcesNone: sourceRows.length === 0,
-      guideShow: tab === 'notes', hasText: !!text.trim(), canEdit: G.can, canMake: G.can && !!text.trim(), hasBar: G.pages.length > 0 || (G.can && !!text.trim()),
+      guideShow: tab === 'notes', notes: (() => { const all = [{ id: 'main', title: 'Guide', text: G.text, parent: '' }, ...G.pages]; const top = all.filter(x => x.id === 'main' ? !!G.text.trim() : !x.parent || !all.some(y => y.id === x.parent)); return top.map(x => { const n = G.pages.filter(y => y.parent === x.id).length, w = nbWords(x.text), pv = nbPreview(x.text) || 'Empty'; return { title: (x.id === 'main' ? nbHead(x.text) : x.title) || x.title || 'Untitled', preview: pv, line: ['Note', w ? plural(w, 'word') : '', n ? plural(n, 'page') + ' inside' : ''].filter(Boolean).join(' · '), sub: [n ? plural(n, 'page') + ' inside' : '', pv].filter(Boolean).join(' · '), href: mock ? '@NOTES_BOARD@' : db.href('guide', dk.id) + (x.id === 'main' ? '' : '?page=' + encodeURIComponent(x.id)) }; }); })(), notesNone: !(G.text.trim() || G.pages.length), newNoteHref: mock ? '@NOTES_BOARD@' : db.href('guide', dk.id) + '?new=1', hasText: !!text.trim(), canEdit: G.can, canMake: G.can && !!text.trim(), hasBar: G.pages.length > 0 || (G.can && !!text.trim()),
       makeHref: mock ? 'WebMake.dc.html' : '/make?deck=' + encodeURIComponent(dk.id), guideText: !!G.text.trim(),
       hasTabs: G.pages.length > 0, tabs: [{ id: 'main', title: 'Guide' }, ...G.pages].map(x => ({ title: x.title, pressed: x.id === pageId ? 'true' : 'false', bg: x.id === pageId ? t.bg : 'transparent', fg: x.id === pageId ? t.text : t.muted, pick: () => this.setState({ gpage: x.id }) })),
       // the page as it reads; the owner's opens to write in where it was pressed (and an empty one is a blank note)
@@ -452,6 +455,8 @@ export const DECK_MATERIALS_JS = String.raw`
     ${DIAGRAMS_JS}
     return { gs, vw, dg };
   })(), gs = GS.gs, vw = GS.vw, dg = GS.dg;`;
+// The deck page's logic for the computer's board or the phone's: a note in the Notes list opens that board on the canvas.
+export const deckMaterialsJs = phone => DECK_MATERIALS_JS.replaceAll('@NOTES_BOARD@', phone ? 'PhoneGuide.dc.html' : 'WebGuide.dc.html');
 
 // ---------- the canvas's sample for these boards ----------
 // Only the boards that draw them carry it (their logic calls this.mockMaterials()), so no other board changes. It answers like web/db.js:
@@ -525,7 +530,7 @@ const MATERIALS_MOCK_BASE = String.raw`mockMaterials() {
       '1. NADH gives up its electrons.', '2. Protons are pumped out of the matrix.', '3. They flow back through ATP synthase.', ':::', '', '## Mnemonics', '', '| Phase | Remember it as |', '| --- | --- |',
       '| Prophase | **P**ut your chromosomes in **P**lace |', '| Metaphase | **M**iddle of the cell |', '| Anaphase | **A**part they go |', '| Telophase | **T**wo new cells |', '',
       '> The mitochondrion makes most of the cell’s ATP.', '', 'Questions? Ask in [office hours](https://example.edu/office-hours).', ''].join('\n');
-    const pages = [{ id: 'g1', title: 'Lecture 3 summary', text: '## Lecture 3\n\n:::toggle The **electron transport chain** pumps protons across the inner membrane\n1. NADH gives up its electrons.\n2. Protons are pumped out of the matrix.\n3. ATP synthase lets them flow back and makes ATP.\n:::\n', at: 0 }, { id: 'g2', title: 'Mnemonics', text: '- **PMAT** for the phases of mitosis\n- *Please Do Not Throw Sausage Pizza Away* for the layers\n', at: 0 }];
+    const pages = [{ id: 'g1', title: 'Lecture 3 summary', text: '## Lecture 3\n\n:::toggle The **electron transport chain** pumps protons across the inner membrane\n1. NADH gives up its electrons.\n2. Protons are pumped out of the matrix.\n3. ATP synthase lets them flow back and makes ATP.\n:::\n', at: 0 }, { id: 'g2', parent: 'g1', title: 'Mnemonics', text: '- **PMAT** for the phases of mitosis\n- *Please Do Not Throw Sausage Pizza Away* for the layers\n', at: 0 }];
     const file = (name, type, size, f) => ({ name, href: '/media/' + name, type, size, file: f });
     const sources = [
       { id: 'x1', kind: 'file', name: 'Lecture 3 slides', cards: 24, at: day(8, 18), url: '', text: '', textName: '', seconds: 0, pages: 32, files: [file('sx1-0.pdf', 'application/pdf', 4200000, 'Lecture 3 slides.pdf')], href: '/media/sx1-0.pdf' },
@@ -580,19 +585,21 @@ function guideBoards(H) {
       ${keyRow(keys(10))}${keyRow(keys(9))}${keyRow(key(42) + gap + keys(7) + gap + key(42))}${keyRow(key(87) + key(0) + key(87))}
     </div></sc-if>`;
   const ROUND = 'width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;';
-  // The pages: a pill for the Guide and for each extra page, and + for a new one.
-  const pages = phone => `<sc-if value="{{showTabs}}" hint-placeholder-val="{{ true }}"><div role="group" aria-label="Pages" style="display: flex; align-items: center; gap: 4px; min-width: 0; overflow-x: auto; scrollbar-width: none; ${phone ? 'flex-shrink: 0; padding: 0 16px 4px;' : 'flex-grow: 1;'}"><sc-for list="{{tabs}}" as="g" hint-placeholder-count="3"><button type="button" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}" style="height: 32px; max-width: 220px; flex-shrink: 0; padding: 0 13px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{g.title}}</button></sc-for></div></sc-if>`;
+  // Where the page is: the notes it sits inside, then itself (bold), each a press away (pages nest like Notion's: the owner, 2026-10-02).
+  const path = phone => `<nav aria-label="Page path" style="${phone ? 'display: flex; align-items: center; min-width: 0; overflow-x: auto; scrollbar-width: none; flex-shrink: 0; padding: 0 12px 4px;' : 'display: flex; align-items: center; min-width: 0; overflow: hidden; flex-grow: 1;'}"><sc-for list="{{crumbs}}" as="c" hint-placeholder-count="2"><sc-if value="{{c.sep}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="flex-shrink: 0; padding: 0 2px; color: {{t.muted}}; font-size: 14px;">/</span></sc-if><button type="button" onClick="{{c.pick}}" aria-current="{{c.current}}" style="height: 32px; min-width: 0; max-width: 240px; flex-shrink: 1; padding: 0 8px; border: 0; border-radius: 10px; background: transparent; color: {{c.fg}}; font: inherit; font-size: 14px; font-weight: {{c.weight}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{c.title}}</button></sc-for></nav>`;
+  // Under the note: the pages inside it, then Add a page inside.
+  const inside = phone => `<sc-if value="{{hasInside}}" hint-placeholder-val="{{ false }}"><nav aria-label="Pages inside" style="margin-top: 32px; display: flex; flex-direction: column; border-top: 1px solid {{t.line}};"><sc-for list="{{inside}}" as="n" hint-placeholder-count="2"><button type="button" onClick="{{n.pick}}" style="width: 100%; min-height: ${phone ? 64 : 60}px; padding: 8px 0; display: flex; align-items: center; gap: 12px; border: 0; border-bottom: 1px solid {{t.line}}; background: transparent; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;"><span style="width: 32px; height: 32px; flex-shrink: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center;">${NOTE_SVG}</span><span style="min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{n.title}}</span><span style="font-size: 12px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{n.preview}}</span></span></button></sc-for></nav></sc-if><sc-if value="{{canAddPage}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{addPage}}" style="margin-top: {{addTop}}; height: 48px; padding: 0; display: flex; align-items: center; gap: 12px; border: 0; background: transparent; color: {{t.muted}}; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer;"><span style="width: 32px; height: 32px; flex-shrink: 0; box-sizing: border-box; border-radius: 16px; border: 1px dashed {{t.line}}; display: flex; align-items: center; justify-content: center;">${PLUS_SVG}</span>Add a page inside</button></sc-if>`;
   const item = (handler, ic, label, danger) => `<button type="button" role="menuitem" onClick="{{${handler}}}" style="height: 40px; flex-shrink: 0; padding: 0 10px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; color: ${danger ? '{{t.again}}' : '{{t.text}}'}; font: inherit; font-size: 14px; font-weight: 500; text-align: left; cursor: pointer;"><span style="display: flex; flex-shrink: 0;">${icon(ic, 16, 2)}</span><span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${label}</span></button>`;
   // ⋯: what else a page can do (Lucida's own menu: Escape or a press outside closes it, web/app.js).
   const more = `<div style="position: relative; flex-shrink: 0;"><button type="button" onClick="{{toggleMore}}" aria-label="More" data-tip="More" aria-haspopup="menu" aria-expanded="{{moreExpanded}}" style="${ROUND} background: {{moreBg}};">${icon('more', 18, 2)}</button><sc-if value="{{moreOpen}}" hint-placeholder-val="{{ false }}"><div role="menu" aria-label="More" data-sc-pop style="position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; width: 252px; box-sizing: border-box; padding: 6px; border-radius: 18px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 0 0 1px {{t.line}}, 0 18px 44px rgba(0,0,0,.22); display: flex; flex-direction: column; gap: 2px; text-shadow: none;">
-      ${item('makeCards', 'sparkle', '{{makeLabel}}')}<sc-if value="{{canAddPage}}" hint-placeholder-val="{{ true }}">${item('addPage', 'plus', 'New page')}</sc-if>${item('openHistory', 'history', 'Older versions')}<sc-if value="{{pageTools}}" hint-placeholder-val="{{ false }}">${item('startRename', 'pencil', 'Rename page')}${item('deletePage', 'bin', 'Delete page', true)}</sc-if>
+      ${item('makeCards', 'sparkle', '{{makeLabel}}')}<sc-if value="{{canAddPage}}" hint-placeholder-val="{{ true }}">${item('addPage', 'plus', 'Add a page inside')}</sc-if>${item('openHistory', 'history', 'Older versions')}<sc-if value="{{pageTools}}" hint-placeholder-val="{{ false }}">${item('startRename', 'pencil', 'Rename page')}${item('deletePage', 'bin', 'Delete page', true)}</sc-if>
     </div></sc-if></div>`;
   const saving = `<span aria-live="polite" style="flex-shrink: 0; font-size: 13px; color: {{saveColor}}; white-space: nowrap;">{{saveLabel}}</span>`;
   // the page itself (and, for an extra page being renamed, its name above it)
   const page = phone => `<sc-if value="{{showPage}}" hint-placeholder-val="{{ true }}"><div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: ${phone ? 'none' : 'thin'};">
       <div style="box-sizing: border-box; ${phone ? 'padding: 10px 20px 120px 30px;' : 'max-width: 728px; margin: 0 auto; padding: 30px 54px 140px;'}">
         <sc-if value="{{renaming}}" hint-placeholder-val="{{ false }}"><input type="text" value="{{pageTitle}}" onChange="{{setPageTitle}}" onKeyDown="{{renameKey}}" onBlur="{{endRename}}" ref="{{renameRef}}" aria-label="Page name" placeholder="Page name" autocomplete="off" style="display: block; width: 100%; box-sizing: border-box; margin: 0 0 14px; padding: 8px 12px; border: 0; outline: 0; border-radius: 12px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px; font-weight: 600;"></sc-if>
-        <div ref="{{nbRef}}" data-sc-own style="${NOTES_VARS()}"></div>
+        <div ref="{{nbRef}}" data-sc-own style="${NOTES_VARS()}"></div>${inside(phone)}
       </div>
     </div></sc-if>`;
   // Older versions, in place of the page: each with when it was written, how long it is, the start of it, and Restore.
@@ -615,7 +622,7 @@ ${sidebar('Library')}
   <header style="height: 64px; flex-shrink: 0; box-sizing: border-box; padding: 0 20px 0 24px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid {{t.line}};">
     <a href="{{backHref}}" onClick="{{back}}" aria-label="Back to {{deckName}}" style="height: 36px; max-width: 280px; flex-shrink: 0; box-sizing: border-box; padding: 0 14px 0 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font-size: 13px; font-weight: 600; white-space: nowrap;">${icon('back', 14, 2.2)}<span style="min-width: 0; overflow: hidden; text-overflow: ellipsis;">{{deckName}}</span></a>
     <span aria-hidden="true" style="width: 1px; height: 20px; flex-shrink: 0; margin: 0 6px 0 2px; background: {{t.line}};"></span>
-    ${pages(false)}<sc-if value="{{noTabs}}" hint-placeholder-val="{{ false }}"><span style="flex-grow: 1;"></span></sc-if>
+    ${path(false)}
     ${saving}
     <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}">${more}</sc-if>
   </header>
@@ -632,7 +639,7 @@ ${sidebar('Library')}
       <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}">${more}</sc-if>
     </div>
     <div ref="{{keysRef}}" data-sc-own style="position: absolute; left: 0; right: 0; bottom: {{kb.bottom}}; ${NOTES_VARS()}"></div>
-    ${pages(true)}
+    ${path(true)}
     ${page(true)}${history(true)}
     ${keyboard}
   </div>`;
@@ -640,6 +647,15 @@ ${sidebar('Library')}
   const logic = phone => `
 constructor(props) { super(props); this.state = { histOpen: props.view === 'Older versions', drafts: {}, saving: false, err: '', hist: null, moreOpen: false, renaming: false }; }
 componentWillUnmount() { clearTimeout(this._t); if (this._nbc) this._nbc.flush(); if (this._pending) this._flush(); }
+componentDidMount() { this.newNote(); }
+async newNote() {
+  // New note (the deck's Notes list, ?new=1): the main note while it has no words, otherwise a new note at the top.
+  const p = this.props, db = p.db; if (!p.newPage || !db || db.mock || this._newDone) return; this._newDone = true;
+  const G = db.guide(p.deckId); if (!G.can) return;
+  const id = G.text.trim() ? await db.act.addGuidePage(p.deckId, 'New page', '').catch(() => '') : 'main';
+  if (id && id !== 'main') this.setState({ page: id });
+  db.act.go(db.href('guide', p.deckId) + (id && id !== 'main' ? '?page=' + encodeURIComponent(id) : ''), true);
+}
 renderVals() {
   ${T}${DB_JS}
   const p = this.props, st = this.state, mock = !!db.mock, dm = mock ? this.mockMaterials() : db, am = mock ? dm : db.act, view = mock ? p.view || 'Writing' : '';
@@ -683,6 +699,16 @@ renderVals() {
   const demos = ${JSON.stringify(GUIDE_DEMOS(phone))}, demo = mock ? demos[view] : undefined;
   const image = s => (/^\\/media\\/[\\w-]+\\.(png|jpe?g|gif|webp)$/i.test(s) ? s : '');
   const tabs = [{ id: 'main', title: 'Guide' }, ...extra];
+  const nbPlain = s => String(s || '').split('\\n').map(l => l.replace(/^:::toggle\\s*/, '').replace(/^:::\\s*$/, '').replace(/^#+\\s*/, '').replace(/^\\s*(?:[-*+]|\\d+\\.)\\s+(?:\\[[ xX]\\]\\s+)?/, '').replace(/\\*\\*|__|\`/g, '').replace(/\\[([^\\]]+)\\]\\([^)]*\\)/g, '$1').trim()).filter(Boolean);
+  const nbHead = s => { const m = /^#\\s+(.+)$/m.exec(String(s || '')); return m ? m[1].replace(/\\*\\*|\`/g, '').trim() : ''; };
+  const nbPreview = s => { const ls = nbPlain(String(s || '').replace(/^#\\s+.+$/m, '')); const o = ls.slice(0, 3).join(' · '); return o.length > 150 ? o.slice(0, 147) + '…' : o; };
+  const nbWords = s => nbPlain(s).join(' ').split(/\\s+/).filter(Boolean).length;
+  const nbAll = [{ id: 'main', title: 'Guide', parent: '', text: G.text }, ...extra];
+  const nbOpen = id => async () => { await this._flush(); this.setState({ page: id, histOpen: false, renaming: false }); };
+  const nbTitle = x => (x.id === 'main' ? nbHead(x.text) : x.title) || x.title || 'Untitled';
+  const nbPath = (() => { const out = []; let cur = nbAll.find(x => x.id === pageId), guard = 0; while (cur && guard++ < 12) { out.unshift(cur); cur = cur.parent ? nbAll.find(x => x.id === cur.parent) : null; } return out; })();
+  const crumbs = nbPath.map((x, i) => { const last = i === nbPath.length - 1; return { title: nbTitle(x), sep: i > 0, current: last ? 'page' : 'false', fg: last ? t.text : t.muted, weight: last ? '600' : '500', pick: nbOpen(x.id) }; });
+  const inside = extra.filter(x => x.parent === pageId).map(x => ({ title: nbTitle(x), preview: nbPreview(x.text) || 'Empty', pick: nbOpen(x.id) }));
   // (the canvas's iPhone states where a line is written draw a keyboard, with the bar on it)
   const kbOn = ${phone ? 'true' : 'false'} && mock && !!(demo && demo.keys) && canEdit && !histOpen;
   return {
@@ -692,9 +718,9 @@ renderVals() {
     backHref: mock ? 'WebDeck.dc.html' : '/deck/' + deckId + '?tab=notes',
     back: e => { if (mock || (e && (e.metaKey || e.ctrlKey || e.shiftKey || e.button))) return; if (e && e.preventDefault) e.preventDefault(); done(); },
     kb: { show: kbOn, bottom: kbOn ? '${GUIDE_KEYBOARD_H}px' : '0px', panel: p.dark ? t.surf : t.surf2, key: p.dark ? t.surf2 : t.bg },
-    showTabs: tabs.length > 1, noTabs: tabs.length < 2,
+    showTabs: tabs.length > 1, noTabs: tabs.length < 2, crumbs, inside, hasInside: inside.length > 0, addTop: inside.length ? '0px' : '32px',
     tabs: tabs.map(x => ({ title: x.title, pressed: x.id === pageId ? 'true' : 'false', bg: x.id === pageId ? t.surf : 'transparent', fg: x.id === pageId ? t.text : t.muted, pick: async () => { await this._flush(); this.setState({ page: x.id, histOpen: false, renaming: false }); } })),
-    canAddPage, addPage: async () => { this.setState({ moreOpen: false }); await this._flush(); const id = await am.addGuidePage(deckId, 'New page'); this.setState({ page: id, histOpen: false, renaming: false }); },
+    canAddPage, addPage: async () => { this.setState({ moreOpen: false }); await this._flush(); const id = await am.addGuidePage(deckId, 'New page', pageId); this.setState({ page: id, histOpen: false, renaming: false }); },
     moreOpen: !!st.moreOpen, moreExpanded: st.moreOpen ? 'true' : 'false', moreBg: st.moreOpen ? t.surf : 'transparent', toggleMore: () => this.setState({ moreOpen: !st.moreOpen }),
     pageTools: canEdit && pageId !== 'main',
     makeLabel: 'Make cards from this ' + (pageId === 'main' ? 'guide' : 'page'),

@@ -458,8 +458,6 @@ struct DeckSettingsSheet: View {
   @State private var name: String? = nil
   @State private var pickingCover = false
   /// The goal the settings opened with (the cost of a goal counts from there).
-  @State private var goalFrom: Int? = nil
-  private let gaps = [(30, "1 mo"), (90, "3 mo"), (180, "6 mo"), (365, "1 yr"), (730, "2 yr"), (1825, "5 yr"), (3650, "10 yr")]
 
   var body: some View {
     VStack(alignment: .leading, spacing: 14) {
@@ -600,16 +598,6 @@ struct DeckSettingsSheet: View {
         label("Grade with")
         Segmented(options: [("four", "4 grades"), ("binary", "✓ / ✗"), ("piles", "Piles")], current: d.grading, hPad: 8) { store.updateDeck(d.id, ["grading": $0]) }
       }
-      if fsrsOn {
-        VStack(alignment: .leading, spacing: 12) {
-          if store.isPro { GoalPresets(d: d) }
-          HStack(spacing: 8) {
-            StackedStepper(label: "Remember goal", value: "\(d.goal)%", less: { store.updateDeck(d.id, ["goal": max(70, d.goal - 1)]) }, more: { store.updateDeck(d.id, ["goal": min(97, d.goal + 1)]) })
-            StackedStepper(label: "Longest gap", value: gaps[min(max(d.gapIdx, 0), 6)].1, less: { store.updateDeck(d.id, ["gapIdx": max(0, d.gapIdx - 1)]) }, more: { store.updateDeck(d.id, ["gapIdx": min(6, d.gapIdx + 1)]) })
-          }
-          if store.isPro { WorkloadLine(d: d, from: goalFrom ?? d.goal) }
-        }
-      }
       HStack(spacing: 12) {
         VStack(alignment: .leading, spacing: 2) {
           Text("New cards a day").css(14, .semibold)
@@ -622,7 +610,6 @@ struct DeckSettingsSheet: View {
       if fsrsOn { StudyPro(d: d) }
     }
     .frame(maxHeight: .infinity, alignment: .top)
-    .onAppear { if goalFrom == nil { goalFrom = store.demo && store.props.stepGoal ? 90 : d.goal } }
   }
 }
 

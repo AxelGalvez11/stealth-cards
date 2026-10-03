@@ -141,7 +141,7 @@ The scheduling rules are ports of the web app's: `Data/FSRS.swift` (with a perso
 cards, exam dates, cards you keep forgetting, what a goal costs), `Tune.swift` (Tune to you: the same fit as web/tune.js),
 and `Insights.swift` (Stats' Memory, Weak spots, and Pace). `Screens/StudyPlan.swift` is Deck settings → Studying's Pro
 part, `StatsDeep.swift` the deep tabs, `TuneRow.swift` Settings' Tune to you. Boards: `PhoneDeckSettingsStudy`,
-`PhoneDeckSettingsGoal`, `PhoneDeckSettingsStudyFree`, `PhoneStatsMemory`, `PhoneStatsWeak`, `PhoneStatsPace`,
+`PhoneDeckSettingsStudyFree`, `PhoneStatsMemory`, `PhoneStatsWeak`, `PhoneStatsPace`,
 `PhoneStatsUpgrade`, `PhoneEditorPaused`, `PhoneSettingsFree` (a board's `-tune Off|"Not enough
 reviews"|Tuning` shows the other states of Tune to you).
 
@@ -415,7 +415,7 @@ pick one, and one whose Pro lapsed never draws it. The app tells the test what i
 ## Settings
 
 Settings is one native list, its rows grouped into seven sections with the same names, in the same order, as the web's Settings page: Account (your profile, Edit
-profile, Get verified, Profile picture, Password, Delete account), Plan, Studying (Daily reminder, New cards a day, Remember goal, Schedule with FSRS, Flip
+profile, Get verified, Profile picture, Password, Delete account), Plan, Studying (Daily reminder, New cards a day, Schedule with FSRS, Flip
 animation, Tune to you), Appearance (Appearance, Dark mode, Theme, Card gradients), Connect AI (Connect AI, Check AI cards first, Cards to check), Privacy
 (Blocked people) and Help & legal (Help, Terms of Service, Privacy Policy, which open lucida.cards in the browser). The board is `PhoneSettings` (its `section`
 Tweak is `All`; the web app's narrow screens use its `List` and section states).
@@ -497,8 +497,8 @@ fails on a system `.alert`, `.confirmationDialog`, `Menu`, `Picker`, `DatePicker
   (Settings' account card). The words are the web's (`AskSample` has the canvas's, for `-ask "Delete deck"` on a design screen).
 - **A message** (`ToastHost`, in `RootView`): `store.error` (a save that failed, a picture that couldn't be used) is a quiet pill near the bottom for about five seconds, or until it is
   tapped; VoiceOver says it when it comes. It replaces the system alert.
-- **Lists** open Lucida's list sheet (`Design/PickSheet.swift`, `nav.picker`): Settings' New cards a day, Remember goal and Daily reminder, and the language of made cards in Make cards.
-  `-dropdown "Daily reminder"` (or `"New cards a day"`, `"Remember goal"`) opens one on Settings' design screen; `-board PhoneMake -state "Paste (language list)"` the language list.
+- **Lists** open Lucida's list sheet (`Design/PickSheet.swift`, `nav.picker`): Settings' New cards a day and Daily reminder, and the language of made cards in Make cards.
+  `-dropdown "Daily reminder"` (or `"New cards a day"`) opens one on Settings' design screen; `-board PhoneMake -state "Paste (language list)"` the language list.
 - **A calendar** (`Design/CalendarPicker.swift`, `nav.openCalendar`): a deck's exam date opens a small popover under the button, like the web's: the month and its arrows, the
   days (today ringed, the day picked filled, days before today dimmed), a tap on a day picks it and closes it. `-calendar "Exam date"` (Deck settings → Studying).
 - **The recording's player** (`SourcePlayerView`): a round Play and Pause button, the time, a thin track to touch or drag (and VoiceOver's adjust), the length, and a speed button (1×, 1.25×, 1.5×, 2×, .75×).
