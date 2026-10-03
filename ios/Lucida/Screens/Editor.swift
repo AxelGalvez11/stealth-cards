@@ -1,4 +1,7 @@
 // iPhone · Card editor (PhoneEditor, PhoneEditorImage, PhoneEditorAudio, PhoneEditorRecording): a sheet over the deck.
+// Suggest a change on someone's shared deck opens the same sheet in its suggest mode over the deck's page (PhonePublicDeckSuggest,
+// PhonePublicDeckSuggestNew; the owner, 2026-10-02: "this should be like the editing card window"): Send sends its one card's
+// change to the deck's owner, with a why and Suggest removing it at the bottom.
 // Four kinds of card (basic, fill in the blank, image, audio), tags, and a floating formatting bar over the keyboard,
 // like Notion's. Card text is the same markdown the web app and AI apps write (see Rich.swift): the bar puts **bold**,
 // [[blanks]], and the rest around what you select. An image card can hide parts of its picture behind boxes (each box
@@ -85,6 +88,14 @@ extension Store {
   func deleteCard(_ id: String) async { if !demo { await send("card.delete", ["id": id]) } }
 }
 
+extension CardDraft {
+  /// A shared deck's card, as the editor holds it (Suggest a change).
+  init(shared c: SharedCard) {
+    self.init(kind: c.kind, front: c.front, back: c.back, text: c.text, note: c.note, tags: c.tags, image: c.image, audio: c.audio, wave: c.wave, speak: c.speak,
+              lang: c.lang, auto: c.auto, clozeMode: c.cloze == -1 ? "one" : "each", boxes: c.boxes, occ: c.occ, box: c.box)
+  }
+}
+
 struct EditorSheet: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
@@ -94,7 +105,12 @@ struct EditorSheet: View {
   @StateObject private var keyboard = Keyboard()
   let deckId: String?
   let cardId: String?
-  init(deckId: String?, cardId: String?) { self.deckId = deckId; self.cardId = cardId }
+  /// Suggesting a change: the shared deck's address, and the card it opens on (its id, or one of yours that came from it; "new" or
+  /// "1": a new card).
+  let suggest: DeckAddress?
+  let start: String
+  init(deckId: String?, cardId: String?) { self.deckId = deckId; self.cardId = cardId; suggest = nil; start = "" }
+  init(suggest addr: DeckAddress, start: String) { deckId = nil; cardId = nil; suggest = addr; self.start = start }
 
   enum Field: Hashable { case front, back, text, note, speak }
   @State private var type = "Basic"
@@ -129,8 +145,18 @@ struct EditorSheet: View {
   @FocusState private var focus: Field?
   /// The box whose answer is being typed.
   @FocusState private var labelFocus: String?
+  /// Suggesting: the deck's card it changes (nil: a new card), its id (the canvas's sample card's on a design screen), the why, Suggest
+  /// removing it, and a Send on its way.
+  @State private var shared: SharedCard? = nil
+  @State private var sgCard: String? = nil
+  @State private var why = ""
+  @State private var removing = false
+  @State private var sending = false
+  @FocusState private var whyFocus: Bool
 
   private var deck: DeckVM { store.deck(deckId ?? "") }
+  /// The shared deck's page (suggesting).
+  private var page: PublicDeckPage? { suggest.flatMap { store.netDeckPage($0)?.value } }
 
   var body: some View {
     ZStack(alignment: .bottom) {
@@ -139,9 +165,9 @@ struct EditorSheet: View {
         HStack {
           Button(action: nav.close) { Text("Cancel").css(16).foregroundStyle(t.muted).frame(minHeight: 44) }.buttonStyle(.plain)
           Spacer()
-          Text(cardId == nil ? "New card" : "Edit card").css(17, .semibold)
+          Text(suggest != nil ? (sgCard != nil ? "Suggest a change" : "Suggest a card") : cardId == nil ? "New card" : "Edit card").css(17, .semibold)
           Spacer()
-          Button(action: save) { Text("Save").css(16, .semibold).foregroundStyle(t.text).frame(minHeight: 44) }.buttonStyle(.plain)
+          Button(action: suggest != nil ? send : save) { Text(suggest != nil ? (sending ? "Sending…" : "Send") : "Save").css(16, .semibold).foregroundStyle(t.text).frame(minHeight: 44) }.buttonStyle(.plain)
         }
         // Switching away from Audio while it records throws the recording away.
         Segmented(options: [("Basic", "Basic"), ("Blank", "Blank"), ("Image", "Image"), ("Audio", "Audio")], current: type, height: 36, weight: .medium) { k in
@@ -152,10 +178,10 @@ struct EditorSheet: View {
           ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 16) {
               fields
-              madeFrom
+              if suggest == nil { madeFrom }
               // The deck, then the tags as one group, which goes under the deck when it doesn't fit beside it.
               ChipThenGroup(gap: 6) {
-                HStack(spacing: 6) { Icon("decks", 12, 2); Text(deck.name).css(13, .semibold) }
+                HStack(spacing: 6) { Icon("decks", 12, 2); Text(suggest != nil && !store.demo ? page?.deck.name ?? "" : deck.name).css(13, .semibold) }
                   .padding(.horizontal, 12).frame(height: 32).background(Capsule().fill(t.surf))
                 FlowLayout(spacing: 6, lineSpacing: 6) {
                 ForEach(tags, id: \.self) { g in
@@ -202,12 +228,15 @@ struct EditorSheet: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { withAnimation(.out(0.3)) { proxy.scrollTo(f, anchor: UnitPoint(x: 0.5, y: 0.3)) } }
           }
         }
+        // Suggesting: the why, and Suggest removing it for a card the deck has (SUGGEST_FOOTER).
+        if suggest != nil { SuggestFooter(why: $why, removing: $removing, canRemove: sgCard != nil, focused: $whyFocus) }
       }
       .foregroundStyle(t.text)
-      .padding(.top, 10).padding(.horizontal, 20).padding(.bottom, 34)
+      .padding(.top, 10).padding(.horizontal, 20).padding(.bottom, whyFocus && keyboard.height > 0 ? keyboard.height + 12 : 34)
       if focus != nil && keyboard.height > 0 { formatBar.padding(.horizontal, 10).padding(.bottom, keyboard.height + 12) }
       if tagPicker {
-        TagPicker(all: store.demo ? Array(Generated.tagColors.keys) : store.engine.tags, current: tags, set: { tags = $0 }, close: { tagPicker = false }).background(t.bg)
+        TagPicker(all: store.demo ? Array(Generated.tagColors.keys) : suggest != nil ? Array(Set((page?.cardsList ?? []).flatMap(\.tags))) : store.engine.tags,
+                  current: tags, set: { tags = $0 }, close: { tagPicker = false }).background(t.bg)
       }
     }
     .photosPicker(isPresented: $picking, selection: $photo, matching: .images)
@@ -217,6 +246,7 @@ struct EditorSheet: View {
       Task { if let clip = await store.pickSound(url) { audio = clip.url; wave = clip.wave } }
     }
     .onAppear(perform: load)
+    .onChange(of: page != nil) { _, here in if here && !loaded { load() } }
     // Leaving the editor while it records throws the recording away.
     .onDisappear { if store.isRecording { store.discardRecording() }; store.stopSound() }
   }
@@ -270,14 +300,14 @@ struct EditorSheet: View {
       OccEditor(image: img, ui: picture?.path == img ? picture?.image : Pictures.cached(img), boxes: $boxes, picked: $picked, busy: $boxDrag)
         .task(id: img) { if let got = await Pictures.load(img) { picture = (img, got) } }
     } else {
-      Button { picking = true } label: {
+      Button { if !noMedia() { picking = true } } label: {
         VStack(spacing: 8) { Icon("image", 22, 1.8); Text("Add an image").css(14, .semibold) }.foregroundStyle(t.muted).frame(maxWidth: .infinity).frame(height: 240)
           .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(t.muted, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])))
       }
       .buttonStyle(.plain)
     }
     FlowLayout(spacing: 8, lineSpacing: 8) {
-      SmallButton(label: "Replace image", icon: "image") { picking = true }
+      SmallButton(label: "Replace image", icon: "image") { if !noMedia() { picking = true } }
       if image != nil && boxes.count < 30 { SmallButton(label: "Add a box", icon: "plus") { addBox() } }
       if !boxes.isEmpty { HideSegmented(current: occ) { occ = $0 } }
     }
@@ -387,7 +417,7 @@ struct EditorSheet: View {
     .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(rec ? t.againTint : t.surf).animation(.easeOut(duration: 0.2), value: rec))
     FlowLayout(spacing: 8, lineSpacing: 8) {
       SmallButton(label: rec ? "Stop" : "Record", icon: "mic") { record() }
-      SmallButton(label: "Upload", icon: "upload") { pickingSound = true }
+      SmallButton(label: "Upload", icon: "upload") { if !noMedia() { pickingSound = true } }
       SmallButton(label: "Read it aloud", icon: "audio") { speakOpen.toggle() }
     }
     if speakOpen || !Rich.plain(speak).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -408,7 +438,14 @@ struct EditorSheet: View {
   /// Record, then Stop: the new clip (its link and its waveform) goes on the card.
   private func record() {
     focus = nil
+    if noMedia() { return }
     store.toggleRecord { got in audio = got.url; wave = got.wave }
+  }
+  /// A picture or a sound can't come with a suggestion (the server takes only the deck's own), so suggesting, picking or recording one says so.
+  private func noMedia() -> Bool {
+    guard suggest != nil else { return false }
+    store.error = "A suggestion can’t bring a new picture or sound."
+    return true
   }
 
   /// A card field: gray, rounded, 15px text; a ring while you type in it.
@@ -445,7 +482,7 @@ struct EditorSheet: View {
           barButton("Text style") { styles = true } label: { Text("Aa").font(.geist(19, .medium)).tracking(-0.38) }
           barButton("Make a blank") { if type != "Blank" { type = "Blank" }; wrap("[[", "]]") } label: { Icon("bracket", 22, 1.6) }
           barButton("List") { listLine() } label: { Icon("list", 21, 1.6) }
-          barButton("Add image") { type = "Image"; picking = true } label: { Icon("image", 21, 1.6) }
+          barButton("Add image") { type = "Image"; if !noMedia() { picking = true } } label: { Icon("image", 21, 1.6) }
           // Audio: switch to an audio card, or record when it is one.
           barButton("Record audio") { if type != "Audio" { type = "Audio" } else { record() } } label: { Icon("mic", 21, 1.6) }
           barButton("Math") { wrap("$", "$") } label: { Icon("sqrt", 21, 1.6) }
@@ -492,8 +529,18 @@ struct EditorSheet: View {
   // ---------- loading and saving ----------
   private func load() {
     guard !loaded else { return }
+    var d = store.draft(cardId, type: store.demo ? store.props.cardType : "Basic")
+    if let addr = suggest {
+      let id = ["", "new", "1"].contains(start) ? nil : start
+      if store.demo { sgCard = id; d = store.draft(id, type: store.props.cardType) }
+      else {
+        // (The page is here once the sheet opens from it; if it isn't yet, the card opens when it comes.)
+        guard let p = store.netDeckPage(addr)?.value else { return }
+        let own = id.flatMap { i in store.lib.cards.first { $0.id == i }?.origin }
+        if let c = p.cardsList.first(where: { $0.id == id }) ?? own.flatMap({ o in p.cardsList.first { $0.id == o } }) { shared = c; sgCard = c.id; d = CardDraft(shared: c) }
+      }
+    }
     loaded = true
-    let d = store.draft(cardId, type: store.demo ? store.props.cardType : "Basic")
     type = ["cloze": "Blank", "image": "Image", "audio": "Audio"][d.kind] ?? "Basic"
     front = d.front; back = d.back; text = d.text; note = d.note; tags = d.tags; image = d.image; audio = d.audio; wave = d.wave; speak = d.speak; lang = d.lang
     auto = d.auto; clozeMode = d.clozeMode; boxes = d.boxes; occ = d.occ
@@ -505,18 +552,25 @@ struct EditorSheet: View {
     if store.demo && store.props.editorTyping { DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { focus = .front } }
   }
 
-  private func save() {
+  /// What's missing, in the order you'd fill it in, asked for (its field gets the caret, or the picture picker opens): true when
+  /// something is. A picture with boxes needs no Answer: each box's label is its card's.
+  private func askMissing() -> Bool {
     let kind = ["Blank": "cloze", "Image": "image", "Audio": "audio"][type] ?? "basic"
     let fr = Rich.plain(front).trimmingCharacters(in: .whitespacesAndNewlines), bk = Rich.plain(back).trimmingCharacters(in: .whitespacesAndNewlines)
-    // What's missing, in the order you'd fill it in. A picture with boxes needs no Answer: each box's label is its card's.
     switch kind {
-    case "basic": if fr.isEmpty { focus = .front; return }; if bk.isEmpty { focus = .back; return }
-    case "cloze": if Rich.blanks(text).isEmpty { focus = .text; return }
-    case "image": if image == nil { picking = true; return }; if boxes.isEmpty && bk.isEmpty { focus = .back; return }
+    case "basic": if fr.isEmpty { focus = .front; return true }; if bk.isEmpty { focus = .back; return true }
+    case "cloze": if Rich.blanks(text).isEmpty { focus = .text; return true }
+    case "image": if image == nil { if !noMedia() { picking = true }; return true }; if boxes.isEmpty && bk.isEmpty { focus = .back; return true }
     default:
-      if clip == nil { speakOpen = true; DispatchQueue.main.async { focus = .speak }; return }
-      if bk.isEmpty { focus = .back; return }
+      if clip == nil { speakOpen = true; DispatchQueue.main.async { focus = .speak }; return true }
+      if bk.isEmpty { focus = .back; return true }
     }
+    return false
+  }
+
+  private func save() {
+    let kind = ["Blank": "cloze", "Image": "image", "Audio": "audio"][type] ?? "basic"
+    if askMissing() { return }
     var o: [String: Any] = ["kind": kind, "front": front, "back": back, "text": text, "note": note, "tags": tags, "speak": speak, "auto": auto, "clozeMode": clozeMode]
     o["image"] = image ?? NSNull(); o["audio"] = audio ?? NSNull()
     o["wave"] = audio != nil ? (wave?.json ?? NSNull()) : NSNull()
@@ -525,11 +579,90 @@ struct EditorSheet: View {
     Task { if await store.saveCard(cardId, deckId: deckId ?? "", o) { if cardId == nil { Buzz.shared.light("card added") }; nav.close() } }
   }
 
+  // ---------- suggesting a change ----------
+  /// What this card's change says: the fields that differ from the deck's card (only those go, so what the editor doesn't show stays
+  /// as it is), or a new card's; nil when nothing changed, or a new card has no words. (The fields a suggestion can change:
+  /// web/social.mjs FIELDS.)
+  private func suggestAfter() -> [String: Any]? {
+    let kind = ["Blank": "cloze", "Image": "image", "Audio": "audio"][type] ?? "basic"
+    var now: [String: Any] = ["kind": kind, "front": front, "back": back, "text": text, "note": note, "tags": tags, "speak": speak]
+    if kind == "image" { now["boxes"] = boxes.map(\.json); now["occ"] = occ }
+    guard let c = shared else {
+      guard [front, back, text, speak].contains(where: { !Rich.plain($0).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) else { return nil }
+      return now.filter { k, v in k == "kind" || !(((v as? String)?.isEmpty ?? false) || ((v as? [Any])?.isEmpty ?? false)) }
+    }
+    var was: [String: Any] = ["kind": c.kind, "front": c.front, "back": c.back, "text": c.text, "note": c.note, "tags": c.tags, "speak": c.speak]
+    if c.kind == "image" { was["boxes"] = c.boxes.map(\.json); was["occ"] = c.occ }
+    let json = { (v: Any?) in try? JSONSerialization.data(withJSONObject: [v ?? NSNull()], options: [.sortedKeys]) }
+    let out = now.filter { k, v in json(v) != json(was[k]) }
+    return out.isEmpty ? nil : out
+  }
+  /// Send: this card's change (its new words, the card taken out with Suggest removing it, or a new card) goes to the deck's owner as
+  /// one suggestion, with the why (one card per Send on a phone). Sent, the sheet closes on the deck's page and Lucida's quiet message
+  /// says so; what goes wrong (five suggestions already waiting, say) is the server's words in the quiet message, and the sheet stays
+  /// with the change.
+  private func send() {
+    guard let addr = suggest, !sending, !store.demo, let p = store.netDeckPage(addr)?.value else { return }
+    var changes: [[String: Any]]
+    if let c = shared, removing {
+      let sibs = c.group.map { g in p.cardsList.filter { $0.group == g } } ?? []
+      changes = (sibs.isEmpty ? [c] : sibs).map { ["op": "remove", "card": $0.id] }
+    } else {
+      guard let after = suggestAfter() else { store.error = "Add a change first."; return }
+      if askMissing() { return }
+      changes = [shared.map { ["op": "edit", "card": $0.id, "after": after] } ?? ["op": "add", "after": after]]
+    }
+    focus = nil; whyFocus = false
+    sending = true
+    let message = String(why.trimmingCharacters(in: .whitespacesAndNewlines).prefix(280)), owner = PageText.firstName(p.deck.owner?.name ?? "")
+    Task {
+      do {
+        let taken = try await store.sendSuggestion(p.id, changes, message: message)
+        sending = false
+        nav.close()
+        store.error = taken ? "It’s in the deck now." : "Sent. " + owner + " will see it."
+      } catch {
+        sending = false
+        store.error = error.localizedDescription.nilIfEmpty ?? "Something went wrong. Try again."
+      }
+    }
+  }
+
   /// A picked photo goes to your library's storage (made small enough first, or it says why it didn't); the card keeps
   /// its link.
   private func upload(_ item: PhotosPickerItem?) {
     guard let item, !store.demo else { return }
     Task { if let url = await store.upload(photo: item) { image = url } }
+  }
+}
+
+/// Suggesting a change: a line, then the why ("Why? (optional)", up to 280 letters) and, for a card the deck has, Suggest removing it
+/// (Removing it while it's on), at the bottom of the sheet (design/build.mjs SUGGEST_FOOTER).
+private struct SuggestFooter: View {
+  @Environment(\.theme) private var t
+  @Binding var why: String
+  @Binding var removing: Bool
+  let canRemove: Bool
+  var focused: FocusState<Bool>.Binding
+  var body: some View {
+    VStack(spacing: 0) {
+      Rectangle().fill(t.line).frame(height: 1)
+      HStack(spacing: 10) {
+        TextField("", text: Binding(get: { why }, set: { why = $0.limited(280) }), prompt: Text("Why? (optional)").foregroundStyle(PLACEHOLDER))
+          .font(.geist(15)).foregroundStyle(t.text).submitLabel(.done).focused(focused)
+          .padding(.horizontal, 16).frame(height: 44).background(Capsule().fill(t.surf))
+          .accessibilityLabel("Why? (optional)")
+        if canRemove {
+          Button { removing.toggle() } label: {
+            Text(removing ? "Removing it" : "Suggest removing it").css(14, .semibold).lineLimit(1).foregroundStyle(removing ? t.invText : t.text)
+              .padding(.horizontal, 16).frame(height: 44).background(Capsule().fill(removing ? t.inv : t.surf))
+          }
+          .buttonStyle(.press).fixedSize()
+          .accessibilityAddTraits(removing ? .isSelected : [])
+        }
+      }
+      .padding(.top, 16)
+    }
   }
 }
 

@@ -29,14 +29,28 @@ try {
 } catch { /* no storage: it is kept until the page closes */ }
 // The study network's pages (web/net.js): Discover, a profile (/@alexkim), a shared deck (/@alexkim/cell-biology, or its
 // lasting link /d/<id>), and a deck's History. Anyone can open them, signed in or not.
+// Suggest a change on a shared deck (the owner, 2026-10-02: "this should be like the editing card window") is the card editor in
+// its suggest mode, at the deck page's address and /suggest: on a computer the cards screen, on a phone the editor's sheet over
+// the deck's page, on a card (?card=<id>: the deck's, or one of yours that came from it) or a new one (?card=new). It needs you
+// signed in (signing in comes first, and brings you back), and the deck's owner edits the deck in their library instead. An
+// older link's ?suggest=<card> (or 1, or new) on the deck's page opens it too.
+const suggestOf = (addr, q, P) => {
+  const card = q.get('card') || 'new', fresh = card === 'new' || card === '1';
+  return { suggest: true, name: P === 'Phone' ? 'PhoneEditor' : 'WebCardsScreen', props: { ...addr, suggest: true, cardId: fresh ? '' : card, newCard: fresh, ...(P === 'Phone' ? { keyboard: false } : {}) } };
+};
+const suggestCard = q => { const c = q.get('suggest'); return !c || c === '1' ? 'new' : c; };
 function network(path, q, P) {
   if (path === '/discover') return { name: P + 'Discover', props: { tag: q.get('topic') || '', q: q.get('q') || '', level: q.get('level') || '', subject: q.get('subject') || '', school: q.get('school') || '' } };
-  const m = /^\/@([A-Za-z0-9_.]{3,30})(?:\/([A-Za-z0-9-]{1,60})(\/history)?)?\/?$/.exec(path);
+  const m = /^\/@([A-Za-z0-9_.]{3,30})(?:\/([A-Za-z0-9-]{1,60})(\/history|\/suggest)?)?\/?$/.exec(path);
   if (m && !m[2]) return { name: P + 'Profile', props: { handle: m[1].toLowerCase(), editOpen: q.get('edit') === '1' } };
-  if (m && m[3]) return { name: P + 'History', props: { handle: m[1].toLowerCase(), slug: m[2].toLowerCase() } };
-  if (m) return { name: P + 'PublicDeck', props: { handle: m[1].toLowerCase(), slug: m[2].toLowerCase(), copyOpen: q.get('copy') === '1', suggest: q.get('suggest') || '' } };
-  const d = /^\/d\/(s[a-z0-9]{4,40})$/.exec(path);
-  if (d) return { name: P + 'PublicDeck', props: { id: d[1], copyOpen: q.get('copy') === '1', suggest: q.get('suggest') || '' } };
+  if (m && m[3] === '/history') return { name: P + 'History', props: { handle: m[1].toLowerCase(), slug: m[2].toLowerCase() } };
+  if (m && m[3]) return suggestOf({ handle: m[1].toLowerCase(), slug: m[2].toLowerCase() }, q, P);
+  if (m && q.has('suggest')) return { redirect: '/@' + m[1] + '/' + m[2] + '/suggest?card=' + encodeURIComponent(suggestCard(q)) };
+  if (m) return { name: P + 'PublicDeck', props: { handle: m[1].toLowerCase(), slug: m[2].toLowerCase(), copyOpen: q.get('copy') === '1' } };
+  const d = /^\/d\/(s[a-z0-9]{4,40})(\/suggest)?$/.exec(path);
+  if (d && d[2]) return suggestOf({ sharedId: d[1] }, q, P);
+  if (d && q.has('suggest')) return { redirect: '/d/' + d[1] + '/suggest?card=' + encodeURIComponent(suggestCard(q)) };
+  if (d) return { name: P + 'PublicDeck', props: { id: d[1], copyOpen: q.get('copy') === '1' } };
   // A deck's History by its lasting link (a Link only deck has no other address).
   const dh = /^\/d\/(s[a-z0-9]{4,40})\/history$/.exec(path);
   if (dh) return { name: P + 'History', props: { id: dh[1] } };
@@ -63,8 +77,11 @@ function resolve(path, q) {
   // network's pages anyone can open.
   // (/sign-in/password is the same page with a password box, and /oauth/authorize, where an AI app asks to connect, signs you in
   // first and brings you back to the same request.)
-  if (db.signedOut) return net ? { ...net, props: { ...net.props, signedOut: true } } : path === '/sign-in/code' && db.auth.email() ? { name: P + 'SignInCode' } : path === '/sign-in' ? { name: P + 'SignIn' }
+  if (db.signedOut) return net && net.suggest ? { redirect: '/sign-in?next=' + encodeURIComponent(path + '?' + q.toString()) } : net ? { ...net, props: { ...net.props, signedOut: true } } : path === '/sign-in/code' && db.auth.email() ? { name: P + 'SignInCode' } : path === '/sign-in' ? { name: P + 'SignIn' }
     : path === '/sign-in/password' ? { name: P + 'SignIn', props: { passwordMode: true } } : path === '/oauth/authorize' ? { redirect: '/sign-in?next=' + encodeURIComponent(path + '?' + q.toString()) } : { redirect: '/sign-in' };
+  // (Your own shared deck: Edit cards, on that card.)
+  const own = net && net.suggest && db.decks().find(x => x.shared && (x.shared.id === net.props.sharedId || x.shared.url === '/@' + net.props.handle + '/' + net.props.slug));
+  if (own) return { redirect: '/deck/' + own.id + '/card' + (net.props.cardId ? '/' + encodeURIComponent(net.props.cardId) : '') };
   if (net) return net;
   // You: your profile (it's made the first time you open it). ?edit=1 (Settings → Edit profile) opens it to edit.
   const edit = q.get('edit') === '1';
@@ -445,7 +462,7 @@ async function go(path, push, replace) {
   const was = panels(), pills = snapPills(app);
   app.textContent = '';
   const deck = current.props.deckId && !db.signedOut && db.raw().decks.find(d => d.id === current.props.deckId);
-  document.title = (deck && /^(Web|Phone)Deck/.test(r.name) ? deck.name : s.title.replace(/^(Web|iPhone) · /, '').replace(/ page$/, '').replace(/ · .*$/, '').replace(/ \(.*\)$/, '')) + ' · Lucida';
+  document.title = (deck && /^(Web|Phone)Deck/.test(r.name) ? deck.name : current.props.suggest ? 'Suggest changes' : s.title.replace(/^(Web|iPhone) · /, '').replace(/ page$/, '').replace(/ · .*$/, '').replace(/ \(.*\)$/, '')) + ' · Lucida';
   paint();
   slideOut(was);
   slidePills(app, pills);

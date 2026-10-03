@@ -1035,7 +1035,11 @@ export async function deckPage({ handle, slug, id }, viewer) {
   const faces = people.length ? await rest('/profiles?id=in.' + inList(people) + '&select=id,handle,name,avatar,color,verified') : [];
   return { ...card(sh, o), helpers: (sh.helpers || []).map(h => ({ handle: h.handle, name: h.name })), contributors: (sh.contributors || []).map(h => ({ handle: h.handle, name: h.name, n: h.n })),
     people: faces.map(face),
-    cardsList: rows.map(r => ({ id: r.id, kind: r.data.kind, front: r.data.front, back: r.data.back, text: r.data.text, image: r.data.image, box: r.data.box, boxes: r.data.boxes, cloze: r.data.cloze, tags: r.data.tags || [], source: r.data.source || '', trail: r.data.trail || [] })),
+    // (All of a card, so Suggest a change opens it in the card editor as it is: its note, sound and words read aloud, what a picture hides,
+    // and the cards made with it, one per blank or box.)
+    cardsList: rows.map(r => ({ id: r.id, kind: r.data.kind, front: r.data.front, back: r.data.back, text: r.data.text, note: r.data.note || '', image: r.data.image, audio: r.data.audio || null, wave: r.data.wave || null,
+      speak: r.data.speak || '', lang: r.data.lang || '', auto: r.data.auto !== false, box: r.data.box, boxes: r.data.boxes, occ: r.data.occ || null, cloze: r.data.cloze, group: r.data.group || null,
+      tags: r.data.tags || [], source: r.data.source || '', trail: r.data.trail || [] })),
     moreCards: Math.max(0, (sh.card_count || 0) - rows.length),
     // The Guide (Markdown pages, the first the Guide itself) and how many Sources the deck was made from (a number only).
     guide: sh.guide && Array.isArray(sh.guide.pages) ? { pages: sh.guide.pages.map(p => ({ id: p.id, title: p.title, text: p.text })), sources: sh.guide.sources || 0, diagrams: diagramsCopy(sh.guide) } : null,

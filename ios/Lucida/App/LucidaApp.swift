@@ -358,7 +358,8 @@ extension Board {
     case "PhonePublicDeckStudying": store.demoNet.pages.studying = true; nav.tab = .discover; nav.path = [.publicDeck(Board.sampleDeck())]
     case "PhonePublicDeckOwner": store.demoNet.pages.owner = true; nav.tab = .discover; nav.path = [.publicDeck(Board.sampleDeck())]
     case "PhonePublicDeckCopy": nav.tab = .discover; nav.path = [.publicDeck(Board.sampleDeck(copy: true))]
-    case "PhonePublicDeckSuggest": nav.tab = .discover; nav.path = [.publicDeck(Board.sampleDeck(suggest: "c2"))]
+    // (Its board is the editor's suggest mode on the editor's sample card, k1.)
+    case "PhonePublicDeckSuggest": nav.tab = .discover; nav.path = [.publicDeck(Board.sampleDeck(suggest: "k1"))]
     case "PhonePublicDeckSuggestNew": nav.tab = .discover; nav.path = [.publicDeck(Board.sampleDeck(suggest: "new"))]
     // Report on the deck's page (its sheet open), and a verified teacher's view of it (Check this deck).
     case "PhonePublicDeckReport": store.props.report = true; nav.tab = .discover; nav.path = [.publicDeck(Board.sampleDeck())]
@@ -607,7 +608,8 @@ struct SheetHost: View {
     case .editProfile: SheetOverlay(top: 56, radius: 36, close: nav.close) { EditProfileSheet() }
     case .deckUpdates(let id): SheetOverlay(top: 56, close: nav.close) { DeckUpdatesSheet(deckId: id) }
     case .copyDeck(let a): SheetOverlay(top: nil, radius: 32, close: nav.close) { CopyDeckSheet(addr: a) }
-    case .suggest(let a, let start): SheetOverlay(top: 56, radius: 32, close: nav.close) { SuggestSheet(addr: a, start: start) }
+    // Suggest a change: the card editor's sheet in its suggest mode, over the shared deck's page (canvas V181).
+    case .suggest(let a, let start): SheetOverlay(top: 56, radius: 36, close: nav.close) { EditorSheet(suggest: a, start: start) }
     case .report(let kind, let id, let name): SheetOverlay(top: nil, close: nav.close) { ReportSheet(kind: kind, id: id, name: name) }
     case .verify: SheetOverlay(top: nil, close: nav.close) { VerifySheet() }
     case .goPro: SheetOverlay(top: 56, radius: 32, close: nav.close) { GoProSheet(shop: store.shop) }

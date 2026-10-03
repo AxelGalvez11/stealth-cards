@@ -24,10 +24,12 @@ const PROP_SETS = [
   { settingsOpen: true, settingsTab: 'Studying', free: true }, { settingsOpen: true, settingsTab: 'Studying', free: true, $state: { $m: { deck: { exam: '2026-10-04' } } } }, { settingsOpen: true, settingsTab: 'Studying', stepGoal: true },
   { mode: 'cards', level: 'leech' }, { mode: 'cards', level: 'paused' }, { mode: 'cards', level: 'hard' }, { paused: true }, { cardId: 'k1', paused: true, keyboard: false },
   { tune: 'Not enough reviews' }, { tune: 'Tuning' }, { tune: 'Off' }, { plan: 'Free' },
-  // The study network: a shared deck (yours, one you study, signed out, loading, not shared) with its copy dialog and its
-  // Suggest a change panel in each step, Suggestions for one deck or all of them, and History (opened, going back).
-  { owner: true }, { studying: true }, { copyOpen: true, $state: { cpFolders: true } }, { suggest: 'c2' }, { suggest: 'c3' }, { suggest: 'c4' }, { suggest: 'new' }, { suggest: '1' },
-  { suggest: 'c2', $state: { spRemove: true } }, { suggest: 'new', $state: { spKind: 'cloze' } }, { suggest: 'c2', $state: { spSent: true } }, { signedOut: true }, { loading: true }, { missing: true },
+  // The study network: a shared deck (yours, one you study, signed out, loading, not shared) with its copy dialog, the card
+  // editor's suggest mode (on a card, a new card, Suggest removing it, a why, sending, sent, and what went wrong), Suggestions
+  // for one deck or all of them, and History (opened, going back).
+  { owner: true }, { studying: true }, { copyOpen: true, $state: { cpFolders: true } }, { suggest: true }, { suggest: true, newCard: true }, { suggest: true, cardId: 'k1', keyboard: false },
+  { suggest: true, $state: { sgRemove: true, sgWhy: 'From my TA’s review' } }, { suggest: true, $state: { sgBusy: true } }, { suggest: true, $state: { sgSent: true, sgOk: true, sgLine: 'Sent. Maria will see it.' } },
+  { suggest: true, newCard: true, $state: { sgLine: 'You have 5 suggestions waiting on this deck.' } }, { signedOut: true }, { loading: true }, { missing: true },
   { deckTab: 'History' }, { deckTab: 'People' }, { $state: { openCard: 'c1' } }, { owner: true, $state: { openCard: 'c1' } },
   { deckId: '' }, { pickItem: 'ai' }, { pickItem: 'g1' }, { noSuggestions: true, aiWaiting: false },
   { someoneElse: true, openVersion: 14 }, { openVersion: 12, confirmVersion: 12 }, { openVersion: 9 },
