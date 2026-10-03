@@ -3,7 +3,7 @@
 // canvas's sample data answers (design/mock.mjs), so the same screens run on both: sample data on the canvas,
 // your data here.
 import { preview, waitLabel, dayAt, W } from './fsrs.js';
-import { scheduled, isDue, dueDay, examStatus, workload, isLeech, leechAt, leechAct, recallAt } from './sched.js';
+import { scheduled, isDue, dueDay, examStatus, workload, isLeech, leechAt, leechAct, recallAt, GOAL, MAX_DAYS } from './sched.js';
 import { insights, isGrade } from './insights.js';
 import { histories, TUNE_MIN, TUNE_ITEMS } from './tune.js';
 import R from './rich.js';
@@ -1132,7 +1132,7 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
     // Closing Explain (or the next card coming up) forgets its conversation.
     followUpClear: cardId => { if (!chats[cardId]) return; delete chats[cardId]; changed(); },
     // Goes to a page of the app (a screen that finishes something, like the Guide's Done).
-    go: path => go(path),
+    go: (path, replace) => go(path, replace),
     // The Guide: saved as it's typed (the screen holds the typing; `quiet` so a failed save shows in the page, not as an alert), its extra pages, and
     // older versions coming back. Sources: deleting one removes its files and keeps the cards.
     saveGuide: (deckId, page, text) => {
@@ -1141,7 +1141,7 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
       guideSaves[key] = out.catch(() => {});
       return out;
     },
-    addGuidePage: async (deckId, title) => { const r = await send('guide.page.add', { deckId, title }, false, true); return r.id; },
+    addGuidePage: async (deckId, title, parent = '') => { const r = await send('guide.page.add', { deckId, title, parent }, false, true); return r.id; },
     renameGuidePage: (deckId, page, title) => send('guide.page.rename', { deckId, page, title }, false, true),
     deleteGuidePage: (deckId, page) => send('guide.page.delete', { deckId, page }, false, true),
     restoreGuide: (deckId, page, at) => send('guide.restore', { deckId, page: page || 'main', at }, false, true),
@@ -1344,7 +1344,7 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
       const base = { deckId: d.id, done, left: q.length, total: done + q.length, counts, mode: d.grading, prog: S.settings.prog, piles: (d.piles || []).map(p => ({ name: p.name, n: cardsOf(d.id).filter(c => c.pile === p.name).length })),
         endHref: set ? setBack(set) : id ? '/deck/' + id : '/library', setName: setName(set) };
       if (!cur) return { ...base, empty: true, card: null, queue: 'rev', iv: { again: '', hard: '', good: '', easy: '' }, fsrsOn: false, editHref: '' };
-      const c = cur.card, t = now(), pv = scheduled(d) ? preview(c.srs, t, { goal: d.goal / 100, maxDays: GAPS[d.gapIdx ?? 3], steps: d.steps, w: wOf() }) : null;
+      const c = cur.card, t = now(), pv = scheduled(d) ? preview(c.srs, t, { goal: GOAL, maxDays: MAX_DAYS, steps: d.steps, w: wOf() }) : null;
       autoplay(c);
       const ro = shareOf(d).readOnly;
       return { ...base, empty: false, card: face(c), ex: explainOf(c), queue: cur.lane, fsrsOn: !!pv, editHref: ro ? suggestHref(d, c) : '/deck/' + d.id + '/card/' + c.id + '?from=review', editLabel: ro ? 'Suggest a fix' : 'Edit',
@@ -1386,7 +1386,7 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
       // Cards sorted into piles this session, pile by pile (the deck's piles, plus any others you used).
       const piled = g.filter(x => x.pile), names = d ? (d.piles || []).map(p => p.name) : [];
       piled.forEach(x => { if (!names.includes(x.pile)) names.push(x.pile); });
-      return { pct: rated.length ? Math.round(rated.filter(x => x.rating > 1).length / rated.length * 100) : 100, goal: d ? d.goal : S.settings.goal,
+      return { pct: rated.length ? Math.round(rated.filter(x => x.rating > 1).length / rated.length * 100) : 100, goal: Math.round(GOAL * 100),
         cards: g.length, minutes: session ? Math.max(1, Math.round((now() - session.started) / MIN)) : 0, fresh: g.filter(x => x.was === 'new').length, split,
         streak: streaks().streak, next: nx ? nx.short + ' · ' + nx.n : 'Nothing due',
         moreHref: left ? reviewHref(session.deckId, session.pile, session.set) : session && session.set ? setBack(session.set) : d ? '/deck/' + d.id + '/card' : '/library', moreLabel: left ? 'Keep going · ' + left + ' left' : session && session.set ? (session.set.startsWith('cards:') ? 'Back to the test' : 'Back to stats') : 'Add cards',
@@ -1424,7 +1424,7 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
       const vals = Array.from({ length: 38 * 7 }, (_, i) => counts[dayAt(start, i)] || 0), top = Math.max(1, ...vals);
       const heat = vals.map(v => (!v ? 0 : Math.min(4, 1 + Math.floor(3.999 * v / top))));
       return { streak, best, reviews: logs.length.toLocaleString('en-US'), cards: S.cards.length.toLocaleString('en-US'), ai: S.cards.filter(byAI).length,
-        remembered: rememberedPct(logs), goal: S.settings.goal, heat, forecast: forecast(14, S.decks, true), byDeck: S.decks.map(d => ({ name: d.name, ret: deckStat(d).ret })) };
+        remembered: rememberedPct(logs), goal: Math.round(GOAL * 100), heat, forecast: forecast(14, S.decks, true), byDeck: S.decks.map(d => ({ name: d.name, ret: deckStat(d).ret })) };
     },
     // The AI apps: the ones that called Lucida (S.ai.clients) and the ones that signed in to Lucida (`apps`, each with an id and what it is
     // called; Disconnect ends one). `url` is the address every app is given, with no secret in it (an app signs in there); `privateUrl` is the
@@ -1438,7 +1438,7 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
     make, diagrams,
     guide: id => { const d = deckById(id); if (!d) return { deckId: '', text: '', at: 0, pages: [], can: false, studying: false };
       const g = guideOf(d), ro = shareOf(d).readOnly;
-      return { deckId: d.id, text: g.text || '', at: g.at || 0, pages: (g.pages || []).map(p => ({ id: p.id, title: p.title, text: p.text || '', at: p.at || 0 })), can: !ro, studying: ro }; },
+      return { deckId: d.id, text: g.text || '', at: g.at || 0, pages: (g.pages || []).map(p => ({ id: p.id, parent: p.parent || '', title: p.title, text: p.text || '', at: p.at || 0 })), can: !ro, studying: ro }; },
     guideHistory: async (id, page) => { try { const r = await fetch('/api/guide/history?deck=' + encodeURIComponent(id) + '&page=' + encodeURIComponent(page || 'main'), { cache: 'no-store' }); return r.ok ? (await r.json()).versions || [] : []; } catch { return []; } },
     sources: id => { const d = deckById(id); return d ? (d.sources || []).slice().reverse().map(sourceRow) : []; },
     sourceText: name => { if (!name) return ''; if (sourceTexts[name] === undefined) { sourceTexts[name] = null; fetch('/media/' + encodeURIComponent(name), { cache: 'no-store' }).then(r => (r.ok ? r.text() : '')).then(t => { sourceTexts[name] = t; changed(); }).catch(() => { sourceTexts[name] = ''; }); } return sourceTexts[name]; },

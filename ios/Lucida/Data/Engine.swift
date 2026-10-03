@@ -3,7 +3,7 @@
 import Foundation
 
 let DAY: Double = 86_400_000, MIN: Double = 60_000
-let GAPS = Sched.GAPS
+let GAPS = Sched.GAPS, GOAL = Sched.GOAL, MAX_DAYS = Sched.MAX_DAYS
 let DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 let MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 let SHORT_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]

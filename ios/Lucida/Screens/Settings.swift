@@ -177,9 +177,6 @@ struct SettingsScreen: View {
           divider
           menuRow("New cards a day", "\(s.perDay)", options: ["0", "5", "10", "15", "20", "30", "50"]) { store.setSetting(["perDay": Int($0) ?? 20]) }
           divider
-          menuRow("Remember goal", "\(s.goal)%", options: ["80%", "85%", "90%", "93%", "95%"]) { store.setSetting(["goal": Int($0.dropLast()) ?? 90]) }
-          divider
-          divider
           row("Flip animation") { Toggle48(on: flip, label: "Flip animation") { store.setSetting(["flip": !flip]) } }
           divider
           TuneRow()
@@ -225,12 +222,11 @@ struct SettingsScreen: View {
     .onAppear {
       // (The design screens' Tweaks: Password open, and Delete account's question.)
       if store.demo { pwOpen = store.props.passwordOpen; if !store.props.deleteOpen.isEmpty && nav.sheet == nil { nav.sheet = .deleteAccount } }
-      // (And `-dropdown "Daily reminder"`, "New cards a day" or "Remember goal": the board's dropdown Tweak, a list open.)
+      // (And `-dropdown "Daily reminder"` or "New cards a day": the board's dropdown Tweak, a list open.)
       if store.demo, let d = Board.arg("-dropdown") {
         switch d {
         case "Daily reminder": openList(d, store.reminderValue, [Reminder.off] + Reminder.times) { _ in }
         case "New cards a day": openList(d, "\(store.settings.perDay)", ["0", "5", "10", "15", "20", "30", "50"]) { _ in }
-        case "Remember goal": openList(d, "\(store.settings.goal)%", ["80%", "85%", "90%", "93%", "95%"]) { _ in }
         default: break
         }
       }

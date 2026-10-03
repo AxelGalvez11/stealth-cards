@@ -56,9 +56,8 @@ extension Store {
   func review(_ deckId: String?, pile: String?, set: String? = nil) -> ReviewVM {
     if demo {
       let idx = props.cardIndex + demoGraded, c = Store.demoCards[idx % 4], done = 12 + idx, left = 64 - done
-      let d = deck("cell"), gaps = GAPS, maxGap = gaps[d.gapIdx]
-      let scale = (pow(Double(d.goal) / 100, -2) - 1) / (pow(0.9, -2) - 1)
-      func days(_ b: Double) -> Int { min(maxGap, max(1, Int((b * scale).rounded()))) }
+      let d = deck("cell"), maxGap = MAX_DAYS
+      func days(_ b: Double) -> Int { min(maxGap, max(1, Int(b.rounded()))) }
       func fmt(_ n: Int) -> String { n < 30 ? "\(n)d" : n < 365 ? FSRS.trim((Double(n) / 3).rounded() / 10) + "mo" : FSRS.trim((Double(n) / 36.5).rounded() / 10) + "y" }
       let hardD = days(2), goodD = min(maxGap, max(hardD + 1, days(4))), easyD = min(maxGap, max(goodD + 1, days(9)))
       return ReviewVM(card: c, done: done, left: left, total: 64, lane: ["basic": "rev", "cloze": "new", "image": "new", "audio": "learn"][c.kind] ?? "rev",
@@ -79,7 +78,7 @@ extension Store {
     // When the card came up: how long you take to answer it goes with its grade (db.js shown).
     if shown?.id != c.id { shown = (c.id, nowMs()) }
     if Engine.scheduled(deck) {
-      let now = nowMs(), pv = FSRS.preview(c.srs, now: now, goal: Double(deck.goal) / 100, maxDays: GAPS[min(max(deck.gapIdx, 0), 6)], steps: deck.steps, w: E.tunedW)
+      let now = nowMs(), pv = FSRS.preview(c.srs, now: now, goal: GOAL, maxDays: MAX_DAYS, steps: deck.steps, w: E.tunedW)
       vm.iv = (FSRS.waitLabel(pv[1]!, now), FSRS.waitLabel(pv[2]!, now), FSRS.waitLabel(pv[3]!, now), FSRS.waitLabel(pv[4]!, now))
       vm.fsrsOn = true
     } else { vm.fsrsOn = false }
@@ -118,7 +117,7 @@ extension Store {
     let at = (session?.graded.count ?? 1) - 1
     var body: [String: Any] = ["cardId": cardId, "rating": rating]
     if let ms = shownFor(cardId), ms > 0 { body["ms"] = Int(ms.rounded()) }
-    if Engine.scheduled(d) { lib.cards[i].srs = FSRS.preview(c.srs, now: now, goal: Double(d.goal) / 100, maxDays: GAPS[min(max(d.gapIdx, 0), 6)], steps: d.steps, w: engine.tunedW)[rating]! }
+    if Engine.scheduled(d) { lib.cards[i].srs = FSRS.preview(c.srs, now: now, goal: GOAL, maxDays: MAX_DAYS, steps: d.steps, w: engine.tunedW)[rating]! }
     else { lib.cards[i].srs.reps += 1; lib.cards[i].srs.last = now }
     Task {
       let r = await send("review.grade", body)

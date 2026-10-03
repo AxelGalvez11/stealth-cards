@@ -25,8 +25,8 @@
       ],
       [
         "Remember goal",
-        "90% by default",
-        "70 to 97% for each deck. Pro shows how many reviews a day each goal costs"
+        "90%",
+        "No"
       ],
       [
         "First reviews of a new card",
@@ -36,7 +36,7 @@
       [
         "Longest gap",
         "1 year",
-        "1 month up to 10 years"
+        "No"
       ],
       [
         "New cards a day",
@@ -76,7 +76,7 @@
     {
       "h2": "What FSRS is",
       "paras": [
-        "FSRS stands for Free Spaced Repetition Scheduler. For every card it tracks three numbers: how likely you are to remember the card right now, how many days it takes that chance to fall from 100% to 90% (its stability), and how hard the card is for you. Each answer updates them, and the next review is set for the day your chance of remembering reaches your goal.",
+        "FSRS stands for Free Spaced Repetition Scheduler. For every card it tracks three numbers: how likely you are to remember the card right now, how many days it takes that chance to fall from 100% to 90% (its stability), and how hard the card is for you. Each answer updates them, and the next review is set for the day your chance of remembering falls to 90%.",
         "FSRS is open source, and Anki has offered it since version 23.10. The FSRS project says it needs 20 to 30% fewer reviews than the older SM-2 scheduler for the same amount of remembering, and adds that this figure comes from simulations, not from measuring people.",
         "Lucida uses FSRS version 5, which has 19 parameters. The newest version, FSRS-6, has 21, and Anki has offered it since version 25.07. Lucida doesn’t have it yet."
       ]
@@ -87,7 +87,7 @@
         "**1. See the front and try to answer.** Say or write your answer before you flip. The retrieval practice guide from Agarwal and colleagues says that actually recalling and writing down an answer helps more than flipping the card early.",
         "**2. Flip and say how well you knew it.** Choose Forgot, Hard, Good or Easy. Each button shows how long until you’d see the card again, like 10m, 6d, 12d or 28d.",
         "**3. New cards come back soon.** A new card comes back after 1 minute, then after 10 minutes, and from then on it comes back after days. Press Easy on a new card and it skips the short waits. Short first waits fit Anki’s manual, which recommends learning steps under a day when you use FSRS, because repeating a card many times in one day adds little to long-term memory.",
-        "**4. Your goal sets the gap.** For a card you’ve learned, Lucida picks the whole number of days at which your chance of remembering falls to your goal (90% by default), up to the deck’s longest gap. A card you knew well gets a long gap. A card you found hard gets a shorter one.",
+        "**4. Your chance of remembering sets the gap.** For a card you’ve learned, Lucida picks the whole number of days at which your chance of remembering falls to 90%, up to a year. A card you knew well gets a long gap. A card you found hard gets a shorter one.",
         "**5. Forgot means relearning.** The card comes back after 10 minutes, then with a shorter gap than before. For a card you’ve learned, Hard, Good and Easy each give a gap at least a day longer than the button before.",
         "**6. Cards come due at the start of their day.** Review, at the top of your Library, takes everything due: cards coming back within minutes first, then reviews, then the day’s new cards. Made a slip? Undo puts the last card back."
       ]
@@ -102,8 +102,7 @@
     {
       "h2": "Pick your remember goal",
       "paras": [
-        "The remember goal is the chance you want of remembering a card when it comes back. A higher goal means shorter gaps and more reviews. Anki’s manual says 90% is a good balance, that the workload climbs quickly above 90%, and that above 97% it can be overwhelming. Lucida keeps each deck between 70 and 97%.",
-        "On Pro, each deck shows what a goal costs in reviews a day (Relaxed is 85%, Balanced is 90%, Intense is 95%), so you can see the price before you choose."
+        "The remember goal is the chance you want of remembering a card when it comes back. A higher goal means shorter gaps and more reviews. Anki’s manual says 90% is a good balance, that the workload climbs quickly above 90%, and that above 97% it can be overwhelming. Lucida uses 90% for every deck, so there’s nothing to set."
       ]
     },
     {
@@ -116,7 +115,7 @@
     {
       "h2": "Exam dates (Pro)",
       "paras": [
-        "Add an exam date to a deck. From 30 days before, a card comes up early once your chance of remembering it slips under a target that rises from your deck’s goal to 95% on exam day. So the cards you’d probably forget by then get an extra look, and the whole deck is fresh for the test. Each of those reviews is a normal one, so after the exam your usual schedule carries on.",
+        "Add an exam date to a deck. From 30 days before, a card comes up early once your chance of remembering it slips under a target that rises from 90% to 95% on exam day. So the cards you’d probably forget by then get an extra look, and the whole deck is fresh for the test. Each of those reviews is a normal one, so after the exam your usual schedule carries on.",
         "Stats shows, for each exam deck, the days left, how many cards you’ve seen and learned, and how much of the deck you’d likely remember on the day if you stopped studying now."
       ]
     },
@@ -145,7 +144,7 @@
     },
     {
       "q": "What is FSRS?",
-      "a": "FSRS (Free Spaced Repetition Scheduler) is an open-source algorithm that estimates how likely you are to remember each card and schedules the next review for when that chance reaches your goal. Anki has offered it since version 23.10, and Lucida uses it to plan your reviews."
+      "a": "FSRS (Free Spaced Repetition Scheduler) is an open-source algorithm that estimates how likely you are to remember each card and schedules the next review for when that chance falls to 90%. Anki has offered it since version 23.10, and Lucida uses it to plan your reviews."
     },
     {
       "q": "Is FSRS better than SM-2?",
