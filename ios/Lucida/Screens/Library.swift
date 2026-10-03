@@ -217,6 +217,7 @@ struct LibraryScreen: View {
     .toolbar(.hidden, for: .navigationBar)
     .onAppear {
       if store.demo, let n = store.props.naming { store.props.naming = nil; nav.sheet = .nameFolder(rename: nil, deck: nil, name: n) }
+      if store.demo, store.props.folderMenu, folderId != nil { store.props.folderMenu = false; menu = "folder" }
     }
   }
 
@@ -262,7 +263,8 @@ struct LibraryScreen: View {
     .frame(height: 41)
   }
 
-  /// A folder's page: back, Rename, New deck, then its name.
+  /// A folder's page: back, its ⋯ menu (New deck, Rename, Remove folder: the owner, 2026-10-02, "collapse new deck, remove folder, and rename
+  /// into one dropdown menu"), then its name. Its practice test is gone from here.
   private func folderTop(_ f: LibFolder) -> some View {
     VStack(alignment: .leading, spacing: 14) {
       HStack(spacing: 8) {
@@ -270,15 +272,11 @@ struct LibraryScreen: View {
         round("back", "Library", lit: drag.spotKey == board + "|folder:") { nav.back() }
           .dropPlace(drag, board: board, name: "folder:")
         Spacer(minLength: 0)
-        Button { startNaming(rename: f) } label: {
-          Text("Rename").css(14, .semibold).foregroundStyle(t.text).padding(.horizontal, 16).frame(height: 40).background(Capsule().fill(t.surf))
-        }
-        .buttonStyle(.press)
-        round("plus", "New deck", inv: true) { nav.newDeck() }
+        round("more", "Folder options") { menuQ = ""; menu = menu == "folder" ? nil : "folder" }
+          .anchorPreference(key: MenuAnchors.self, value: .bounds) { ["folder": $0] }
       }
       // A 41-point line, like the browser's (Geist's rounded ascent and descent).
       Text(f.name).css(32, .bold, ls: -0.03, lh: 41 / 32).foregroundStyle(t.text).fixedSize(horizontal: false, vertical: true).accessibilityAddTraits(.isHeader)
-      TestFolderBits(folder: f)
     }
   }
 
@@ -326,13 +324,6 @@ struct LibraryScreen: View {
     let ids = list.map(\.id)
     VStack(spacing: 0) {
       ForEach(list) { deckRow($0, ids: ids) }
-    }
-    if folder != nil {
-      Button { askRemove(folder) } label: {
-        Text("Remove folder").css(14, .semibold).foregroundStyle(t.again).padding(.horizontal, 16).frame(height: 40).contentShape(Capsule())
-      }
-      .buttonStyle(.press)
-      .frame(maxWidth: .infinity)
     }
     if list.isEmpty {
       emptyBox(folder != nil ? "No decks in this folder yet. Drag a deck onto the folder, or use its ⋯ button." : "No decks match.")
@@ -544,12 +535,13 @@ struct LibraryScreen: View {
   @ViewBuilder private func menus(_ anchors: [String: Anchor<CGRect>], _ decks: [LibDeck], _ folders: [LibFolder]) -> some View {
     if let m = menu, let a = anchors[m] {
       GeometryReader { g in
-        let r = g[a], move = m.hasPrefix("move-"), width: CGFloat = move ? 240 : 300
+        let r = g[a], move = m.hasPrefix("move-") || m == "folder", width: CGFloat = m == "folder" ? 220 : move ? 240 : 300
         let x = move ? r.maxX - width : min(r.minX, g.size.width - width - 16)
         ZStack(alignment: .topLeading) {
           Color.black.opacity(0.001).onTapGesture { menu = nil }
           Group {
-            if move, let d = decks.first(where: { "move-" + $0.id == m }) { moveMenu(d, folders) }
+            if m == "folder", let f = folders.first(where: { $0.id == folderId }) { folderMenu(f) }
+            else if move, let d = decks.first(where: { "move-" + $0.id == m }) { moveMenu(d, folders) }
             else if m == "tags" { tagMenu() }
             else { deckMenu(decks, folders) }
           }
@@ -567,6 +559,27 @@ struct LibraryScreen: View {
     }
   }
 
+  /// A folder's ⋯ menu: New deck, Rename, and Remove folder in red (PhoneLibraryFolderMenu).
+  private func folderMenu(_ f: LibFolder) -> some View {
+    VStack(alignment: .leading, spacing: 4) {
+      folderItem("plus", "New deck") { menu = nil; nav.newDeck() }
+      folderItem("pencil", "Rename") { menu = nil; startNaming(rename: f) }
+      folderItem("folder", "Remove folder", danger: true) { menu = nil; askRemove(f) }
+    }
+    .padding(8)
+  }
+  private func folderItem(_ icon: String, _ label: String, danger: Bool = false, _ action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+      HStack(spacing: 10) {
+        Icon(icon, 17, 2).foregroundStyle(danger ? t.again : t.muted)
+        Text(label).css(15, .medium).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
+      }
+      .foregroundStyle(danger ? t.again : t.text).padding(.horizontal, 12).frame(height: 44).contentShape(Rectangle())
+    }
+    .buttonStyle(.press)
+    .accessibilityAddTraits(.isButton)
+  }
+
   /// Move to: Remove from folder (only for a deck that's in one: a deck in none just doesn't get it), then the folders (ticked
   /// where it is), then New folder.
   private func moveMenu(_ d: LibDeck, _ folders: [LibFolder]) -> some View {
@@ -576,11 +589,12 @@ struct LibraryScreen: View {
         let on = d.folder == f.id
         Button { store.moveDeck(d.id, to: f.id); menu = nil } label: {
           HStack(spacing: 10) {
-            Icon("folder", 16, 1.8).foregroundStyle(t.muted)
+            Icon("folder", 16, 1.8).foregroundStyle(f.id == nil ? t.again : t.muted)
             Text(f.name).css(14).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
             if on { Icon("check", 14, 2.4) }
           }
-          .foregroundStyle(t.text).padding(.horizontal, 12).frame(height: 38).contentShape(Rectangle())
+          // (Remove from folder is red: the owner, 2026-10-02.)
+          .foregroundStyle(f.id == nil ? t.again : t.text).padding(.horizontal, 12).frame(height: 38).contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(on ? .isSelected : [])

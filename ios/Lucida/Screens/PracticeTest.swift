@@ -24,19 +24,6 @@ struct TestStartButton: View {
   }
 }
 
-/// A folder's page: how its last test went, and a button to take one over all its decks.
-struct TestFolderBits: View {
-  @Environment(\.theme) private var t
-  @EnvironmentObject private var store: Store
-  let folder: LibFolder
-  var body: some View {
-    let scope = TestScope.folder(folder.id)
-    VStack(alignment: .leading, spacing: 14) {
-      if !folder.decks.isEmpty { TestStartButton(scope: scope) }
-    }
-  }
-}
-
 // ---------- Set up ----------
 
 /// The start of a test: how many questions, which kinds, a time limit, then Start (a sheet over the deck's or folder's page).
