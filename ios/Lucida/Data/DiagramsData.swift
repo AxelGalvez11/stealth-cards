@@ -98,6 +98,8 @@ final class DiagramsFlow: ObservableObject {
   @Published var upError = ""
   /// The deck the upload (or its error) belongs to: another deck's page doesn't show it.
   @Published var upDeck = ""
+  /// The deck page's + › Upload diagram: the deck whose Diagrams card asks where the picture is as soon as it shows (the card has the pickers).
+  @Published var askUpload = ""
   /// What Make cards prepared, until the card editor takes it.
   var prepared: DiagramDraft?
 

@@ -4,13 +4,13 @@
 //   1  The questions that ask before something is deleted or left are Lucida's own sheet (a title, a line, Cancel and the answer, red when it deletes):
 //      Remove folder, Delete deck, Delete card and Sign out; Cancel and a tap outside keep everything; no system alert, confirmation dialog or sheet.
 //   2  Settings' lists (New cards a day, Remember goal, Daily reminder) and the language of made cards open Lucida's list sheet: no system menu, a pick saves.
-//   3  A deck's exam date and a class's due date open Lucida's calendar (no system date picker): a day is picked, saved, and taken off again.
+//   3  A deck's exam date opens Lucida's calendar (no system date picker): a day is picked, saved, and taken off again.
 //   4  Take a photo opens Lucida's own camera screen (a simulator has no camera: `-fakeCamera` gives it a picture to take): shutter, Retake, Use photo, the
 //      flash and the switch between the cameras; the picture goes into Make cards as a file.
 //   5  A save that fails says so in a quiet message (a stand-in in front of the server fails every save while a file exists), never in a system alert.
 //   6  No page ever shows the system's navigation bar, a toolbar, an alert, a date picker or a menu: the five tabs, Settings, Connect AI, a deck and a folder.
-// The recording's player, deleting a source or a Guide page, a class's questions and an AI app's Disconnect are checked in GuideTests, ClassesTests and
-// AccountTests, which ask the same way. Run it with ios/tools/e2e-ownui.sh (it starts a fresh server on port 3993). It only runs when LUCIDA_OWNUI is set.
+// The recording's player, deleting a source or a Guide page, and an AI app's Disconnect are checked in GuideTests and AccountTests, which ask the
+// same way. Run it with ios/tools/e2e-ownui.sh (it starts a fresh server on port 3993). It only runs when LUCIDA_OWNUI is set.
 import XCTest
 
 final class OwnUITests: AppCase {
@@ -156,7 +156,7 @@ final class OwnUITests: AppCase {
     let who = "owncal" + run
     person(who, "Cal Day")
     let deck = deckId(who, "Exam deck", cards: 3)
-    var app = launch(as: who, ["-open", "deck"])
+    let app = launch(as: who, ["-open", "deck"])
     tap(button(app, "Deck settings"), "Deck settings")
     tap(app.buttons["Studying"].firstMatch, "the Studying tab")
     tap(button(app, "Add an exam date"), "Add a date")
@@ -178,34 +178,6 @@ final class OwnUITests: AppCase {
     app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)).tap()
     check(gone(app.buttons["day-" + day], 6), "a tap outside closes it without picking")
     check(((self.decks(who).first { $0["id"] as? String == deck }?["exam"] as? String) ?? "") == "", "and picks nothing")
-
-    // A class's due date (Assign a deck).
-    let t = "ownkl" + run
-    person(t, "Tess Teacher")
-    let tdeck = deckId(t, "Class deck", cards: 3)
-    let k = social(t, "class.make", ["name": "Cal Class", "school": "UC Davis"]), classId = k["id"] as? String ?? "", code = k["code"] as? String ?? ""
-    social(t, "class.addDeck", ["id": classId, "deckId": tdeck])
-    check(!code.isEmpty, "a class to assign in")
-    app = launch(as: t, ["-open", "class:" + code])
-    tap(button(app, "Assign"), "Assign")
-    check(wait(app.staticTexts["Assign a deck"]), "Assign opens its sheet")
-    let date = app.buttons["Date"].firstMatch
-    tap(date, "the Date row")
-    var target = Calendar(identifier: .gregorian).date(byAdding: .day, value: 10, to: Date()) ?? Date()
-    let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; f.locale = Locale(identifier: "en_US_POSIX")
-    var iso = f.string(from: target)
-    if !wait(app.buttons["day-" + iso], 4) { app.buttons["Later month"].tap() }
-    if !app.buttons["day-" + iso].exists { target = Date(); iso = f.string(from: target) }
-    check(wait(app.buttons["day-" + iso]), "the Date row opens Lucida’s calendar")
-    noSystemUI(app, "the due-date calendar")
-    app.buttons["day-" + iso].tap()
-    check(gone(app.buttons["day-" + iso], 6), "a day closes it")
-    // (The sheet's Assign is the lower of the two: the class page's own is still on screen behind it.)
-    let assign = app.buttons.matching(NSPredicate(format: "label == %@", "Assign")).allElementsBoundByIndex.max { $0.frame.minY < $1.frame.minY } ?? app.buttons["Assign"].firstMatch
-    tap(assign, "Assign")
-    check(gone(app.staticTexts["Assign a deck"], 10), "Assign closes the sheet")
-    check(eventually { ((self.get(t, "/api/public/class?code=" + code)["assignments"] as? [[String: Any]])?.first?["due"] as? String) == iso },
-          "the assignment is due the day picked: " + iso)
   }
 
   // ---------- 4: the camera ----------

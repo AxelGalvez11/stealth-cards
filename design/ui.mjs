@@ -48,9 +48,6 @@ export const ASK_SAMPLES = {
   'Delete page': { title: 'Delete the page “Lecture 3 summary”?', line: '', action: 'Delete page', danger: true },
   'Disconnect app': { title: 'Disconnect Claude?', line: 'It can’t use your decks until you connect it again.', action: 'Disconnect', danger: false },
   'New link': { title: 'Make a new link?', line: 'AI apps using the old one stop working until you give them the new one.', action: 'Make a new link', danger: false },
-  'Leave class': { title: 'Leave “BIO 201”?', line: 'The decks you study from it stay in your library.', action: 'Leave class', danger: false },
-  'Delete class': { title: 'Delete “BIO 201”?', line: 'Everyone in it keeps the decks they study.', action: 'Delete class', danger: true },
-  'Take out of class': { title: 'Take Sam Rivera out of the class?', line: '', action: 'Take out', danger: false }
 };
 export const ASK_JS = `askPreview(t, samples) {
   const q = samples[this.props.ask || ''];
@@ -59,7 +56,7 @@ export const ASK_JS = `askPreview(t, samples) {
 // A board's Tweak that opens one of its questions.
 export const askProp = list => ({ editor: 'enum', default: '', options: ['', ...list] });
 
-// ---------- the calendar (a day to pick: an exam, a class's due date) ----------
+// ---------- the calendar (a day to pick: a deck's exam) ----------
 // A small calendar in a popover under what opens it (a sheet is too much for one day): the month and its arrows, the days of the week,
 // the days of the month (today has a ring, the picked day is filled, days before `min` are dimmed and can't be picked), and it works
 // from the keyboard: arrows move a day or a week, Page Up and Page Down a month, Return picks, Escape closes (web/app.js). `k` names a

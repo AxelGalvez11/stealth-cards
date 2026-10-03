@@ -36,7 +36,7 @@ export function snapPills(root) {
 }
 const near = (a, b) => Math.abs(a.left - b.left) < 3 && Math.abs(a.top - b.top) < 3 && Math.abs(a.width - b.width) < 3 && Math.abs(a.height - b.height) < 3;
 // After the page changed: a pill whose choice moved slides from where it was to where it is. (The same group, redrawn in
-// place; or the same group on another page, in the same place, like the Library's Decks, All cards, and Classes.)
+// place; or the same group on another page, in the same place, like the Library's Decks and All cards.)
 const going = new WeakMap();
 export function slidePills(root, snap) {
   if (reduced.matches || !snap || !snap.length) return;

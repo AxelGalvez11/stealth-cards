@@ -356,7 +356,7 @@ const OUTLINE_AT = (x, top) => ` --nb-ol-x: ${x}px; --nb-ol-top: ${top}px;`;
 // Every board that shows a page of notes carries this (it was the rendered Guide's .gd look; a page is drawn by web/notes.js now).
 export const GUIDE_CSS = NOTES_CSS;
 
-// ---------- what the deck pages carry: Guide, Sources, the Add cards menu, and a source opened ----------
+// ---------- what the deck pages carry: Guide, Sources, a source opened, and the small menu of links the Library's + uses ----------
 // `phone` draws the iPhone page's version. Each returns a piece of template; `DECK_MATERIALS_JS` is the logic they read (it goes in each deck
 // board's renderVals, and its `gs` goes in what it returns).
 export function deckBlocks(H, phone) {
@@ -411,9 +411,9 @@ export function deckBlocks(H, phone) {
       ${viewerBody}
     </div>
   </sc-if>`;
-  // Add cards: a new card, cards made from a file, photo, video or topic, or imported ones. A menu on the deck page's top.
-  const ADD_ROWS = [['plus', 'New card', 'Write one yourself', '{{gs.newCardHref}}'], ['sparkle', 'From a file, photo, video or topic', 'Lucida makes the cards', '{{gs.makeHref}}'], ['upload', 'Import cards', 'From Anki, Quizlet or a CSV', '{{gs.importHref}}']];
-  const addMenu = (btn, pos, rows = ADD_ROWS) => `<div style="position: relative;">${btn}<sc-if value="{{gs.addOpen}}" hint-placeholder-val="{{ false }}"><div role="menu" aria-label="Add cards" data-sc-pop style="position: absolute; ${pos} z-index: 30; width: 300px; box-sizing: border-box; padding: 8px; border-radius: 22px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 2px; text-shadow: none;">
+  // A small menu of links beside its button, each row a round icon, a name and a line (the iPhone Library's +: New deck and Import cards). The deck page's
+  // own menus are Study ▾ and + (design/build.mjs STUDY_MENU, ADD_MENU).
+  const addMenu = (btn, pos, rows) => `<div style="position: relative;">${btn}<sc-if value="{{gs.addOpen}}" hint-placeholder-val="{{ false }}"><div role="menu" aria-label="Add cards" data-sc-pop style="position: absolute; ${pos} z-index: 30; width: 300px; box-sizing: border-box; padding: 8px; border-radius: 22px; background: {{t.bg}}; color: {{t.text}}; box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 0 1px {{t.line}}; display: flex; flex-direction: column; gap: 2px; text-shadow: none;">
     ${rows.map(([ic, a, b, h]) => `<a href="${h}" role="menuitem" style="min-height: 52px; box-sizing: border-box; padding: 8px 12px; display: flex; align-items: center; gap: 12px; border-radius: 14px; color: {{t.text}};"><span style="width: 32px; height: 32px; flex-shrink: 0; border-radius: 16px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${icon(ic, 15, 2)}</span><span style="display: flex; flex-direction: column; gap: 1px; min-width: 0;"><span style="font-size: 14px; font-weight: 600; line-height: 1.25;">${a}</span><span style="font-size: 12px; color: {{t.muted}};">${b}</span></span></a>`).join('')}
   </div></sc-if></div>`;
   return { guide, sources, tabs, viewer: viewer(phone), addMenu, ...diagramBlocks(H, phone) };
@@ -465,14 +465,13 @@ export const DECK_MATERIALS_JS = String.raw`
     const gs = {
       sections: tabList, showSections: tabList.length > 1, showCards: tab === 'cards', noCards: tab === 'cards' && cardsN === 0, sourcesNone: sourceRows.length === 0,
       guideShow: tab === 'notes', hasText: !!text.trim(), canEdit: G.can, canMake: G.can && !!text.trim(), hasBar: G.pages.length > 0 || (G.can && !!text.trim()),
-      makeHref: mock ? 'WebMake.dc.html' : '/make?deck=' + encodeURIComponent(dk.id), newCardHref: dk.newCardHref, importHref: db.href('import', dk.id),
+      makeHref: mock ? 'WebMake.dc.html' : '/make?deck=' + encodeURIComponent(dk.id), guideText: !!G.text.trim(),
       hasTabs: G.pages.length > 0, tabs: [{ id: 'main', title: 'Guide' }, ...G.pages].map(x => ({ title: x.title, pressed: x.id === pageId ? 'true' : 'false', bg: x.id === pageId ? t.bg : 'transparent', fg: x.id === pageId ? t.text : t.muted, pick: () => this.setState({ gpage: x.id }) })),
       // the page as it reads; the owner's opens to write in where it was pressed (and an empty one is a blank note)
       ref: el => { if (!el) return; const href = (mock ? 'WebGuide.dc.html' : db.href('guide', dk.id)), q = (pageId === 'main' ? '' : 'page=' + pageId);
         this.notes().mount(el, { md: text, key: (mock ? 'canvas|' : '') + dk.id + '|' + pageId, editable: false, blank: G.can, phone: el.getAttribute('data-phone') === 'yes', outline: true, image: s => (/^\/media\/[\w-]+\.(png|jpe?g|gif|webp)$/i.test(s) ? s : ''),
           onOpen: G.can ? at => { if (mock) return; db.act.go(href + '?' + [q, 'at=' + at.i + ':' + at.off].filter(Boolean).join('&')); } : undefined }); },
-      sourcesShow: tab === 'sources', sourceCount: String(sourceRows.length), sources: sourceRows,
-      addOpen: !!st.addOpen, addExpanded: st.addOpen ? 'true' : 'false', toggleAdd: () => this.setState({ addOpen: !st.addOpen }) };
+      sourcesShow: tab === 'sources', sourceCount: String(sourceRows.length), sources: sourceRows };
     ${DIAGRAMS_JS}
     return { gs, vw, dg };
   })(), gs = GS.gs, vw = GS.vw, dg = GS.dg;`;
@@ -735,7 +734,7 @@ renderVals() {
     showPage: !histOpen, histOpen, versions: histNow, noVersions: histOpen && st.hist !== null && !versions.length, histTitle: 'Older versions of ' + (pageId === 'main' ? 'the Guide' : cur.title),
     // the page (web/notes.js): the same for writing and reading; on the canvas, its states
     nbRef: el => { if (!el) return; this._nbc = this.notes().mount(el, { md: text, key: (mock ? 'canvas|' + view + '|' : '') + key, editable: canEdit, phone: ${phone ? 'true' : 'false'}, image, demo, outline: true,
-      onChange: setText, onPicture: canEdit ? pickPicture : undefined, focusAt: at ? { i: +at[1], off: +at[2] } : !mock && !text.trim() ? { i: 0, off: 0 } : undefined, keysHost: mock ? this._keys : undefined, sheetHost: mock ? this._olHost : undefined }); },
+      onChange: setText, onPicture: canEdit ? pickPicture : undefined, focusAt: at ? { i: +at[1], off: +at[2] } : !mock && !text.trim() ? { i: 0, off: 0 } : !mock && p.at === 'end' ? 'end' : undefined, keysHost: mock ? this._keys : undefined, sheetHost: mock ? this._olHost : undefined }); },
     keysRef: el => { this._keys = el || this._keys; },
     // (on the canvas a phone's outline sheet is drawn over the whole board, in this box)
     olRef: el => { this._olHost = el || this._olHost; }

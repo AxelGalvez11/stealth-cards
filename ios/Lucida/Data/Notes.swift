@@ -179,6 +179,8 @@ final class NotesPage: ObservableObject {
       else if let c = d.caret, c < blocks.count { editing = blocks[c].id; selection = NSRange(location: blocks[c].length, length: 0) }
     }
   }
+  /// The caret at the end of the page's last line of words (the deck page's + › Notes: ready to type at the end).
+  func focusEnd() { if let i = blocks.lastIndex(where: { Notes.text.contains($0.k) || $0.k == "code" }) { focusAt(i, blocks[i].length) } }
   /// The caret goes to block i, at `off` (a press on the reading page opened it there; a blank note starts on its title).
   func focusAt(_ i: Int, _ off: Int) {
     guard !blocks.isEmpty else { return }

@@ -38,7 +38,7 @@ struct StatsScreen: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
-  /// Overview (free), and Pro's Memory, Weak spots, and Pace.
+  /// Overview, Memory, Weak spots, and Pace: all of them Pro (on Free, each shows the upgrade card).
   @State private var tab = "Overview"
 
   var body: some View {
@@ -48,9 +48,12 @@ struct StatsScreen: View {
       if !s.empty {
         Segmented(options: ["Overview", "Memory", "Weak spots", "Pace"].map { ($0, $0) }, current: tab, height: 34, size: 13, gap: 2, hPad: 4) { tab = $0 }
       }
-      if s.empty || tab == "Overview" { overview(s) }
-      else if store.isPro { DeepStats(tab: tab, goal: s.goal) }
-      else { StatsUpgrade(shop: store.shop) }
+      // No reviews yet: the empty page for everyone, as on the web (/stats is StatsEmpty until the first review); after that, Free sees the
+      // upgrade card on every tab.
+      if s.empty { overview(s) }
+      else if !store.isPro { StatsUpgrade(shop: store.shop) }
+      else if tab == "Overview" { overview(s) }
+      else { DeepStats(tab: tab, goal: s.goal) }
     }
     .foregroundStyle(t.text)
     .padding(.horizontal, 20).padding(.top, Screen.top(64)).padding(.bottom, 120)

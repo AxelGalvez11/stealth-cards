@@ -16,10 +16,10 @@ struct DeckVM {
   var style = "mix", round = 0
   var image: String? = nil
   var lineShort = ""
-  /// Flashcards and Learn (the owner: "learn button needs to be 'learn', flashcards need to have flashcards button"):
-  /// Flashcards shows how many cards wait today, and Learn picks up a session you left.
-  var studyLabel = "Flashcards", studyCount = 0
-  var learnLabel = "Learn", resume = false
+  /// What Flashcards has waiting today (cards due, else new cards), for its row in Study's menu, and whether Learn picks up a session you left.
+  var due = 0, fresh = 0, resume = false
+  /// Flashcards' row says "28 due", or "10 new" when nothing is due.
+  var studyNote: String { due > 0 ? "\(due) due" : fresh > 0 ? "\(fresh) new" : "" }
   var rows: [CardRowVM] = []
   /// Its tags (the server keeps them; decks show none since 2026-10-02, only cards have tags): a theme reads them to pick its cover's picture.
   var tags: [String] = []
@@ -62,7 +62,7 @@ extension Store {
       let examDay: String? = { if case .some(let v) = e.exam { return v }; return props.free ? nil : Store.sampleExamDay }()
       if empty { return DeckVM(id: "pharm", name: "Pharmacology", seed: "Pharmacology", lineShort: "No cards yet") }
       let d = DeckVM(id: "cell", name: e.name ?? "Cell Biology", seed: "Cell Biology", style: e.style ?? "mix", round: e.round, image: e.image,
-                     lineShort: "412 cards", studyCount: 28,
+                     lineShort: "412 cards", due: 28, fresh: 10,
                      rows: demoCardOrder.compactMap { id in X.CARDS.first { $0.id == id } }.filter { (demoCardDeck[$0.id] ?? "cell") == "cell" }
                        .map { CardRowVM(id: $0.id, front: $0.front, meta: $0.kind + (isPaused($0.id) ? " · Paused" : ""), tags: $0.tags) },
                      tags: e.tags ?? X.TAGS["cell"] ?? [],
@@ -77,7 +77,7 @@ extension Store {
     let st = E.stat(d), cards = lib.deckCards(d)
     let total = plural(st.total, "card").replacingOccurrences(of: String(st.total), with: grouped(st.total))
     return DeckVM(id: d.id, name: d.name, seed: d.cover.seed ?? d.name, style: d.cover.style ?? "mix", round: d.cover.round, image: d.cover.image,
-                  lineShort: total, studyCount: st.due > 0 ? st.due : st.fresh, resume: learnOn(id),
+                  lineShort: total, due: st.due, fresh: st.fresh, resume: learnOn(id),
                   rows: cards.map { c in CardRowVM(id: c.id, front: Store.listFront(c), meta: (KIND_LABEL[c.kind] ?? "Basic") + (c.pending ? " · Waiting for you" : c.paused ? " · Paused" : ""), tags: c.tags, origin: c.origin) },
                   tags: d.tags, paused: d.paused, grading: d.grading, fsrs: d.fsrs, goal: d.goal, gapIdx: d.gapIdx, steps: d.steps, perDay: d.perDay,
                   exam: st.exam, examDay: d.exam ?? "", leechAt: Sched.leechAt(d), leechAct: Sched.leechAct(d),
@@ -199,11 +199,14 @@ struct DeckScreen: View {
   @State private var tab: String? = nil
   @State private var gpage = "main"
   @State private var gopen = false
+  /// Study's menu (Flashcards, Learn) or +'s (New card, Make cards, Source, Notes, Upload diagram, Make diagram) is open: Lucida's own menu (AddMenu.swift).
+  @State private var studyOpen = false
+  @State private var addOpen = false
   var body: some View {
     let d = store.deck(id), g = store.guide(id), srcs = store.sources(id), dgs = store.diagramRows(id)
     Group {
-      // (A deck with no cards but a Guide, Sources or Diagrams has its page, like the web's.)
-      if d.rows.isEmpty && store.cardCount(id) == 0 && !g.hasAny && srcs.isEmpty && dgs.isEmpty { empty(d) } else { page(d, g, srcs, dgs) }
+      // (A deck with no cards but a Guide, Sources or Diagrams has its page, like the web's, and so does an empty one whose Diagrams its + opened.)
+      if d.rows.isEmpty && store.cardCount(id) == 0 && !g.hasAny && srcs.isEmpty && dgs.isEmpty && tab != "diagrams" { empty(d, g) } else { page(d, g, srcs, dgs) }
     }
     .toolbar(.hidden, for: .navigationBar)
     .onAppear { if store.demo { demoOpen() } }
@@ -219,6 +222,9 @@ struct DeckScreen: View {
   /// A design screen opens as its board's settings say: Notes, Diagrams (a diagram or a sheet open) or Sources, a source open at a card's place, or a deck's settings.
   private func demoOpen() {
     let p = store.props
+    // (`-menu Study|Add`, or PhoneDeckStudyMenu and PhoneDeckAddMenu: that menu open, as the board's `menu` Tweak shows it.)
+    let menu = p.deckMenu.isEmpty ? Board.arg("-menu") ?? "" : p.deckMenu
+    if menu == "Study" { studyOpen = true } else if menu == "Add" { addOpen = true }
     if p.deckSettings != nil { nav.sheet = .deckSettings(id) }
     else if p.guideState == "A source open" { tab = "sources"; nav.sheet = .source(deckId: id, id: "x2", at: "1:00") }
     else if !p.sourceOpen.isEmpty { tab = "sources"; nav.sheet = .source(deckId: id, id: p.sourceOpen, at: p.sourceAt) }
@@ -245,11 +251,8 @@ struct DeckScreen: View {
           if let sh = d.sharing.shared { CoverButton(icon: "globe", label: sh.label, size: 40) { nav.deckPage(sh.url) } }
           CoverButton(icon: "gear", label: "Deck settings") { withAnimation(Motion.sheet) { nav.sheet = .deckSettings(d.id) } }
           if !d.rows.isEmpty { CoverButton(icon: "search", label: "Search") {} }
-          // Your own deck takes material too: Make cards (from a file, a photo, a recording, a link or a topic, into this deck) and New card.
-          if !d.sharing.readOnly {
-            CoverButton(icon: "sparkle", label: "Make cards") { nav.make(deckId: d.id) }
-            CoverButton(icon: "plus", label: "New card") { nav.newCard(deckId: d.id) }
-          }
+          // Your own deck takes material: + opens New card, Make cards, Source, Notes, Upload diagram and Make diagram (addRows).
+          if !d.sharing.readOnly { CoverButton(icon: "plus", label: "Add") { studyOpen = false; addOpen.toggle() }.addMenuAnchor("deck-add") }
           if d.sharing.readOnly, let lk = d.sharing.link { CoverButton(icon: "message", label: "Suggest a change", size: 40) { nav.deckPage(lk.url, suggest: "1") } }
         }
         .padding(.top, Screen.top(54))
@@ -308,27 +311,8 @@ struct DeckScreen: View {
             }
             .buttonStyle(.press)
           }
-          HStack(spacing: 8) {
-            Button { store.startReview(d.id); nav.study(deckId: d.id) } label: {
-              HStack(spacing: 8) {
-                Icon("decks", 17, 2)
-                Text(d.studyLabel).css(17, .semibold).lineLimit(1).fixedSize()
-                if d.studyCount > 0 {
-                  Text(String(d.studyCount)).css(13, .semibold, mono: true).padding(.horizontal, 7).frame(minWidth: 24, minHeight: 24).background(Capsule().fill(Color(white: 0.5).opacity(0.32)))
-                }
-              }
-              .foregroundStyle(t.invText).frame(maxWidth: .infinity).frame(height: 56).background(Capsule().fill(t.inv))
-            }
-            .buttonStyle(.press)
-            .frame(maxWidth: .infinity)
-            .layoutPriority(2)
-            Button { nav.learn(deckId: d.id, resume: d.resume) } label: {
-              HStack(spacing: 8) { Icon("sparkle", 17, 2); Text(d.learnLabel).css(17, .semibold).lineLimit(1).fixedSize() }
-                .foregroundStyle(t.text).frame(maxWidth: .infinity).frame(height: 56).background(Capsule().fill(t.surf))
-            }
-            .buttonStyle(.press)
-            .frame(width: learnWidth)
-          }
+          // Study (Flashcards and Learn, in Lucida's own menu: studyRows); a deck with no cards has nothing to study.
+          if !d.rows.isEmpty { studyButton }
           if items.count > 1 { DeckTabs(items: items, selected: section) { tab = $0 }.id("deck-tabs") }
           if section == "notes" { notes(d, g) }
           if section == "diagrams" { DiagramsCard(flow: store.diagrams, deckId: d.id, rows: dgs, can: g.can) }
@@ -358,7 +342,43 @@ struct DeckScreen: View {
     }
     .ignoresSafeArea(edges: .top)
     .onAppear { boardScroll(proxy) }
+    .addMenu(open: $studyOpen, rows: studyRows(d), id: "deck-study", fill: true, label: "Study")
+    .addMenu(open: $addOpen, rows: addRows(d, g), id: "deck-add", width: 260, label: "Add")
     }
+  }
+
+  /// Study, the deck's main button, as wide as the page (the board's STUDY_BTN): it opens Flashcards and Learn.
+  private var studyButton: some View {
+    Button { addOpen = false; studyOpen.toggle() } label: {
+      HStack(spacing: 8) {
+        Text("Study").css(17, .semibold).lineLimit(1)
+        Icon("chevDown", 16, 2.2).opacity(0.6)
+      }
+      .foregroundStyle(t.invText).frame(maxWidth: .infinity).frame(height: 56).background(Capsule().fill(t.inv))
+    }
+    .buttonStyle(.press)
+    .accessibilityLabel("Study")
+    .addMenuAnchor("deck-study")
+  }
+  /// Study's menu: Flashcards (with what waits today) and Learn, each as its old button did (the iPhone never had Play live: it needs a big screen).
+  private func studyRows(_ d: DeckVM) -> [AddMenuRow] {
+    [AddMenuRow(icon: "decks", title: "Flashcards", line: "", note: d.studyNote) { store.startReview(d.id); nav.study(deckId: d.id) },
+     AddMenuRow(icon: "sparkle", title: "Learn", line: "") { nav.learn(deckId: d.id, resume: d.resume) }]
+  }
+  /// +'s menu, each row the flow that was already there: New card (the card editor), Make cards (the Make flow, into this deck), Source (the Make flow at Upload:
+  /// a source comes in with the cards made from it), Notes (the Notes page: a blank Guide, or the Guide with the caret at its end), and the Diagrams tab's own
+  /// Upload (its card asks Photo library or Files once the tab shows) and Make diagram (its sheet, over the tab).
+  private func addRows(_ d: DeckVM, _ g: GuideVM) -> [AddMenuRow] {
+    let empty = g.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    return [AddMenuRow(icon: "plus", title: "New card", line: "") { nav.newCard(deckId: d.id) },
+            AddMenuRow(icon: "sparkle", title: "Make cards", line: "") { nav.make(deckId: d.id) },
+            AddMenuRow(icon: "file", title: "Source", line: "") { nav.make(kind: "file", deckId: d.id) },
+            AddMenuRow(icon: "pencil", title: "Notes", line: "") { nav.guide(deckId: d.id, at: empty ? "" : "end") },
+            AddMenuRow(icon: "image", title: "Upload diagram", line: "") { tab = "diagrams"; store.diagrams.askUpload = d.id },
+            AddMenuRow(icon: "mindmap", title: "Make diagram", line: "") {
+              tab = "diagrams"; store.diagrams.openSheet()
+              withAnimation(Motion.sheet) { nav.sheet = .makeDiagram(d.id) }
+            }]
   }
 
   /// A design screen starts scrolled to the tabs (`-scrollTo tabs`), to see what is under them (debug builds only).
@@ -401,9 +421,6 @@ struct DeckScreen: View {
     })
   }
 
-  /// The Learn button is half the Study button (flex 2 : 1 with an 8-point gap).
-  private var learnWidth: CGFloat { ((UIScreen.main.bounds.width - 40 - 8) / 3).rounded(.down) }
-
   /// A card's row: its question, then its kind and when it's next (no tag chips since 2026-10-02, like the web's lists).
   private func row(_ r: CardRowVM) -> some View {
     VStack(alignment: .leading, spacing: 3) {
@@ -416,13 +433,14 @@ struct DeckScreen: View {
     .contentShape(Rectangle())
   }
 
-  // PhoneDeckEmpty (a new deck opens here): the header, with "No cards yet" under the name and Make cards and New card on it, and nothing under it
-  // (the owner, 2026-10-02: no Make box or row).
-  private func empty(_ d: DeckVM) -> some View {
+  // PhoneDeckEmpty (a new deck opens here): the header, with "No cards yet" under the name and its + on it (New card, Make cards, Source, Notes, Upload diagram,
+  // Make diagram), and nothing under it (the owner, 2026-10-02: no Make box or row, and no Study: there is nothing to study).
+  private func empty(_ d: DeckVM, _ g: GuideVM) -> some View {
     ScrollView(showsIndicators: false) {
       header(d, sub: "No cards yet").padding(.bottom, 120)
     }
     .ignoresSafeArea(edges: .top)
+    .addMenu(open: $addOpen, rows: addRows(d, g), id: "deck-add", width: 260, label: "Add")
   }
 }
 

@@ -5,7 +5,7 @@
   "description": "Make cards from lectures with Lucida or your own AI, review on an FSRS schedule, hide labels on anatomy pictures, set exam dates. What it can’t do.",
   "h1": "Lucida for medical school",
   "lead": "Lucida is a flashcard app for medical students: it makes cards from your lectures and slides (your own AI can too), FSRS plans the reviews, and image occlusion and fill-in-the-blank cards cover anatomy, histology and facts inside sentences. It can’t open Anki’s .apkg decks or run Anki add-ons, so it fits best if you make your own cards instead of studying someone else’s mega-deck.",
-  "updated": "2026-10-01",
+  "updated": "2026-10-02",
   "sections": [
     {
       "h2": "What the research says about flashcards in medical school",
@@ -19,8 +19,8 @@
       "h2": "Make cards from your lectures",
       "paras": [
         "In Lucida, choose Make cards and add your slides, a PDF, a recording of the lecture, pictures of your notes or pasted text. You pick the deck, how many cards and whether you want basic or fill-in-the-blank cards, and Lucida shows the new cards first, so you can keep, edit or remove each one.",
-        "You can also connect your AI app once (see [AI flashcards](/features/ai-flashcards)), then share a lecture or your notes and ask for cards. For medical school, ask your AI for one fact per card, fill-in-the-blank cards for facts inside sentences (a mechanism, a drug’s target), and a one-line why in each note. Try: “Make flashcards from this lecture for my Pharmacology deck. One fact per card. Use fill-in-the-blank for mechanisms and side effects, and add a one-line why. Tag each card with its drug class.”",
-        "Read every card before you study it. Lucida shows the cards it makes before they are saved, and with your own AI you can turn on Let me check AI cards first. Lucida’s terms say not to rely on Lucida for medical advice. In one 2026 test of cards written from a reader’s highlights (a different job from studying for class), even the best model made cards its authors rated unusable 36% of the time. For medical facts, check the cards against your course material."
+        "You can also connect your AI app once (see [AI flashcards](/features/ai-flashcards)), then share a lecture or your notes and ask for cards. For medical school, ask your AI for one fact per card, fill-in-the-blank cards for facts inside sentences (a mechanism, a drug’s target), and a one-line why in each note. Try: “Make flashcards from this lecture for my Pharmacology deck. One fact per card. Use fill-in-the-blank for mechanisms and side effects, and add a one-line why. Tag each card with its drug family.”",
+        "Read every card before you study it. Lucida shows the cards it makes before they are saved, and with your own AI you can turn on Let me check AI cards first. Lucida’s terms say not to rely on Lucida for medical advice. In one 2026 test of cards written from a reader’s highlights (a different job from studying for a course), even the best model made cards its authors rated unusable 36% of the time. For medical facts, check the cards against your course material."
       ]
     },
     {
@@ -37,7 +37,7 @@
         "**Tag your cards** by system or topic (cardio, renal, biostatistics). Tags give you Learn mode sets, and on Pro the Stats page ranks tags by how much you remember (a tag needs about 8 reviews first) and lists your hardest cards and the cards you keep forgetting.",
         "**Put an exam date on each deck (Pro).** From 30 days out, cards you’d probably forget by exam day come up early, and Stats shows how much of the deck you’d likely remember on the day.",
         "**Let your AI quiz you on weak spots (Pro).** It can read your weak tags and hardest cards and write new questions for them.",
-        "**On Free,** the Stats page shows your streak, your reviews, how much you remember, and how many cards are due each day this week, which is enough to pick a pace."
+        "**On Free,** your Library shows what’s due and how long it takes, which is enough to pick a pace. The Stats page is part of Pro."
       ]
     },
     {
@@ -89,11 +89,11 @@
     },
     {
       "q": "Is Lucida free for medical students?",
-      "a": "Yes. Unlimited decks and cards, FSRS, Learn mode, image occlusion, sharing and live games are free. Pro ($5.99 a month or $49.99 a year, as of September 2026) adds exam dates, weak-spot stats and more."
+      "a": "Yes. Unlimited decks and cards, FSRS, Learn mode, image occlusion, sharing and live games are free. Pro ($5.99 a month or $49.99 a year, as of September 2026) adds Stats, exam dates and more."
     },
     {
-      "q": "Can I share decks with my class?",
-      "a": "Yes. Share a deck by link, or make a class and add the deck. Classmates study it as it is or copy it, and can suggest fixes you take or skip. See [shared decks](/features/shared-decks)."
+      "q": "Can I share decks with classmates?",
+      "a": "Yes. Share a deck by link. Classmates study it as it is or copy it, and can suggest fixes you take or skip. See [shared decks](/features/shared-decks)."
     },
     {
       "q": "Are AI-made medical flashcards accurate?",

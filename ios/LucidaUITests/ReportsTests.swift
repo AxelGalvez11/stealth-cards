@@ -212,10 +212,10 @@ final class ReportsTests: XCTestCase {
     button(app, "Send").tap()
     Thread.sleep(forTimeInterval: 0.8)
     check(!any(app, thanks).exists && adminReport { ($0["deck"] as? [String: Any])?["id"] as? String == w.sharedId } == nil, "Other needs a line: nothing is sent without it")
-    sendReport(app, "deck", reason: "Someone else’s work", line: "These are my class notes")
+    sendReport(app, "deck", reason: "Someone else’s work", line: "These are my lecture notes")
     let rep = adminReport { ($0["deck"] as? [String: Any])?["id"] as? String == w.sharedId }
     let mine = first(rep)
-    check(rep?["kind"] as? String == "deck" && (rep?["reports"] as? [[String: Any]])?.count == 1 && mine?["reason"] as? String == "stolen" && mine?["note"] as? String == "These are my class notes", "the admin page has it, with the reason and the line")
+    check(rep?["kind"] as? String == "deck" && (rep?["reports"] as? [[String: Any]])?.count == 1 && mine?["reason"] as? String == "stolen" && mine?["note"] as? String == "These are my lecture notes", "the admin page has it, with the reason and the line")
     check((mine?["by"] as? [String: Any])?["handle"] as? String == w.MH, "and who sent it")
     check(button(app, "Study").exists && button(app, "Report").exists, "what the page shows after it's sent: the same page, still there")
 

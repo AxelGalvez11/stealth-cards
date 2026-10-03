@@ -1,5 +1,5 @@
 {
- "_art": "63b3283c23",
+ "_art": "72342ec871",
  "home": {
   "file": "og/home.png",
   "fingerprint": "f7bf565639",
@@ -104,7 +104,7 @@
  "features": {
   "file": "og/features.png",
   "fingerprint": "085ab74079",
-  "bytes": 211759,
+  "bytes": 211613,
   "text": [
    "Lucida",
    "Everything Lucida does",
@@ -112,10 +112,10 @@
    "AI flashcards",
    "Learn mode",
    "Shared decks",
-   "Classes",
    "Live games",
    "Image occlusion",
    "Import and export",
+   "And more",
    "And more"
   ],
   "read": 15.8
@@ -309,23 +309,10 @@
   ],
   "read": 12.4
  },
- "features/classes": {
-  "file": "og/features-classes.png",
-  "fingerprint": "f4ab77eb64",
-  "bytes": 163378,
-  "text": [
-   "Lucida",
-   "Classes",
-   "Bio 101",
-   "KQ4 7TD",
-   "Due Friday"
-  ],
-  "read": 17.9
- },
  "features/live-games": {
   "file": "og/features-live-games.png",
   "fingerprint": "60ef6963fa",
-  "bytes": 199939,
+  "bytes": 204073,
   "text": [
    "Lucida",
    "Live games",
@@ -341,7 +328,7 @@
  "features/image-occlusion": {
   "file": "og/features-image-occlusion.png",
   "fingerprint": "9e09c2facf",
-  "bytes": 204609,
+  "bytes": 205640,
   "text": [
    "Lucida",
    "Image occlusion flashcards",
@@ -354,8 +341,8 @@
  },
  "features/import": {
   "file": "og/features-import.png",
-  "fingerprint": "62810ee976",
-  "bytes": 213014,
+  "fingerprint": "d8560d469d",
+  "bytes": 203468,
   "text": [
    "Lucida",
    "Import flashcards",
@@ -364,12 +351,12 @@
    "Definition",
    "Card"
   ],
-  "read": 9.2
+  "read": 11.9
  },
  "for/students": {
   "file": "og/for-students.png",
   "fingerprint": "97240f2693",
-  "bytes": 140102,
+  "bytes": 139519,
   "text": [
    "Lucida",
    "Lucida for students",
@@ -385,7 +372,7 @@
  "for/med-school": {
   "file": "og/for-med-school.png",
   "fingerprint": "3a8c184d67",
-  "bytes": 199313,
+  "bytes": 199645,
   "text": [
    "Lucida",
    "Lucida for medical school",
@@ -398,7 +385,7 @@
  "for/mcat": {
   "file": "og/for-mcat.png",
   "fingerprint": "0c6eafd21d",
-  "bytes": 156466,
+  "bytes": 155614,
   "text": [
    "Lucida",
    "Lucida for the MCAT",
@@ -412,7 +399,7 @@
  "for/language-learning": {
   "file": "og/for-language-learning.png",
   "fingerprint": "654ba13ae7",
-  "bytes": 208180,
+  "bytes": 207711,
   "text": [
    "Lucida",
    "Lucida for language learning",
@@ -428,12 +415,13 @@
  "for/teachers": {
   "file": "og/for-teachers.png",
   "fingerprint": "688acab371",
-  "bytes": 175671,
+  "bytes": 177618,
   "text": [
    "Lucida",
    "Lucida for teachers",
-   "Period 3 · Chemistry",
-   "Moles due Friday",
+   "Chemistry · Unit 3",
+   "Anyone with the link",
+   "28 studying",
    "Live",
    "Quiz: the mole"
   ],
@@ -442,7 +430,7 @@
  "faq": {
   "file": "og/faq.png",
   "fingerprint": "f95fdf43b8",
-  "bytes": 198330,
+  "bytes": 197837,
   "text": [
    "Lucida",
    "Questions about Lucida",

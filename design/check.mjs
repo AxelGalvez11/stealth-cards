@@ -74,14 +74,16 @@ PROP_SETS.push({ state: 'Yearly' }, { state: 'Monthly' }, { state: 'Buying' }, {
 PROP_SETS.push({ reminder: 'Off' }, { reminder: '6:00 PM' }, { reminder: 'Off', dark: true }, { reminderNote: true }, { reminderNote: true, dark: true }, { reminderNote: true, dark: true, dim: true });
 // The web sidebar as the rail of icons (the Library's collapsed Tweak; the mock gives every board with a sidebar the same).
 PROP_SETS.push({ collapsed: true }, { collapsed: true, dark: true }, { collapsed: true, caughtUp: true });
-// The Library's top: with assignments, and with nothing due.
-PROP_SETS.push({ assignments: true }, { assignments: true, caughtUp: true, dark: true });
+// The Library with nothing due.
+PROP_SETS.push({ caughtUp: true, dark: true });
 // Settings' sections: the web page shows one at a time (WebSettings' section), the iPhone's list shows all of them (PhoneSettings, All),
 // and a narrow web screen shows the list of sections (List) or one of them.
 for (const name of ['Account', 'Plan', 'Studying', 'Appearance', 'Connect AI', 'Privacy', 'Help & legal']) PROP_SETS.push({ section: name }, { section: name, dark: true, dim: true }, { section: name, plan: 'Free' });
 PROP_SETS.push({ section: 'All' }, { section: 'List' }, { section: 'List', dark: true }, { section: 'Account', verified: 'Teacher', passwordOpen: true }, { section: 'Account', deleteOpen: 'Asking' }, { section: 'Privacy', noBlocks: true },
   { section: 'Plan', plan: 'Pro, billed by Apple' }, { section: 'Plan', plan: 'Pro, billed on the web' }, { section: 'Plan', plan: 'Pro, ending' }, { section: 'Studying', tune: 'Not enough reviews', reminder: 'Off', reminderNote: true }, { section: 'Studying', tune: 'Tuning' },
   { section: 'All', reminder: 'Off', reminderNote: true }, { section: 'Appearance', photo: 'Your photo', theme: 'aero' });
+// Settings' Get verified (its dialog, a sheet on the iPhone): asking, sent and waiting, light and dark.
+PROP_SETS.push({ section: 'Account', verifyOpen: true }, { section: 'Account', verifyOpen: true, verified: 'Waiting for review' }, { section: 'Account', verifyOpen: true, dark: true, dim: true }, { verifyOpen: true, $state: { verSent: true } });
 // A verified teacher's or school's shared deck page (Check this deck, pressing it, one being pressed, on their own deck,
 // signed out), and your verification in Settings.
 PROP_SETS.push({ verified: 'Teacher' }, { verified: 'School' }, { verified: 'Teacher', $state: { $m: { checked: true } } }, { verified: 'Teacher', $state: { busy: 'check', error: 'That didn’t save.' } },
@@ -112,9 +114,8 @@ PROP_SETS.push({ screen: 'Set up' }, { screen: 'Multiple choice' }, { screen: 'T
 for (const ask of Object.keys(ASK_SAMPLES)) PROP_SETS.push({ ask }, { ask, dark: true }, { ask, dark: true, dim: true });
 // Settings' lists (Lucida's own dropdown, a sheet on the iPhone): each one open.
 for (const dropdown of ['Daily reminder', 'New cards a day', 'Remember goal']) PROP_SETS.push({ dropdown, section: 'Studying' }, { dropdown, section: 'Studying', dark: true, dim: true });
-// Lucida's own calendar (a deck's exam date, a class's due date), open, light and dark.
-PROP_SETS.push({ calendar: 'Exam date', settingsOpen: true, settingsTab: 'Studying' }, { calendar: 'Exam date', settingsOpen: true, settingsTab: 'Studying', dark: true }, { calendar: 'Exam date', settingsOpen: true, settingsTab: 'Studying', free: true },
-  { calendar: 'Due date', panel: 'Assign' }, { calendar: 'Due date', panel: 'Assign', dark: true });
+// Lucida's own calendar (a deck's exam date), open, light and dark.
+PROP_SETS.push({ calendar: 'Exam date', settingsOpen: true, settingsTab: 'Studying' }, { calendar: 'Exam date', settingsOpen: true, settingsTab: 'Studying', dark: true }, { calendar: 'Exam date', settingsOpen: true, settingsTab: 'Studying', free: true });
 // Import cards on the iPhone (PhoneImport's state Tweak, build.mjs IMPORT_STATES): each state, light and dark.
 for (const state of ['Deck chosen', 'Empty', 'Pasted', 'A file picked', 'No cards', 'Importing', 'Error']) PROP_SETS.push({ state }, { state, dark: true });
 // Making cards: every step the Make boards offer, light and dark.
@@ -125,6 +126,8 @@ for (const guide of GUIDE_STATES) PROP_SETS.push({ guide }, { guide, dark: true 
 for (const view of GUIDE_VIEWS) PROP_SETS.push({ view }, { view, dark: true });
 for (const liveFrom of LIVE_FROM) PROP_SETS.push({ liveFrom }, { liveFrom, dark: true });
 for (const topicState of LIVE_TOPIC_STATES) PROP_SETS.push({ topicState });
+// The deck page's Study ▾ and + menus open (its `menu` Tweak), light, dark and gray, on a deck you study from someone and on your copy of one.
+PROP_SETS.push({ menu: 'Study' }, { menu: 'Add' }, { menu: 'Study', dark: true }, { menu: 'Add', dark: true, dim: true }, { menu: 'Add', linked: 'study' }, { menu: 'Study', linked: 'copy' }, { menu: 'Add', guide: 'No guide yet' });
 // A card made from a source says so in the editor (and the deck page's source opens where the card points).
 PROP_SETS.push({ madeFrom: false }, { madeFrom: true, dark: true }, { guide: 'A source open', sourceAt: 'p. 4' }, { guide: 'A source open', sourceAt: 'p. 4', section: 'Sources' });
 

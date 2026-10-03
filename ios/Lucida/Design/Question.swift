@@ -112,10 +112,7 @@ enum AskSample {
       "Delete source": ("Delete “Lecture 4 · Sep 21”?", "Its file goes. The 18 cards made from it stay in the deck.", "Delete", true),
       "Delete page": ("Delete the page “Lecture 3 summary”?", "", "Delete page", true),
       "Disconnect app": ("Disconnect Claude?", "It can’t use your decks until you connect it again.", "Disconnect", false),
-      "New link": ("Make a new link?", "AI apps using the old one stop working until you give them the new one.", "Make a new link", false),
-      "Leave class": ("Leave “BIO 201”?", "The decks you study from it stay in your library.", "Leave class", false),
-      "Delete class": ("Delete “BIO 201”?", "Everyone in it keeps the decks they study.", "Delete class", true),
-      "Take out of class": ("Take Sam Rivera out of the class?", "", "Take out", false)]
+      "New link": ("Make a new link?", "AI apps using the old one stop working until you give them the new one.", "Make a new link", false)]
     guard let (title, line, action, danger) = list[name] else { return nil }
     return AskRequest(title: title, line: line, action: action, danger: danger, go: {})
   }

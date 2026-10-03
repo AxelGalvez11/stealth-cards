@@ -225,6 +225,8 @@ struct DiagramsCard: View {
       guard case .success(let url) = r else { return }
       Task { await flow.upload(store, deckId: deckId, file: url) }
     }
+    // The deck page's + › Upload diagram showed this tab: its Upload, as if pressed.
+    .onChange(of: flow.askUpload, initial: true) { _, d in if !d.isEmpty && d == deckId { flow.askUpload = ""; if can { chooseUpload() } } }
   }
 
   private func open(_ x: DiagramVM) {
