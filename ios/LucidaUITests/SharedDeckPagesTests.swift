@@ -350,7 +350,12 @@ final class SharedDeckPagesTests: XCTestCase {
     check(words(w.alex, w.deck) == alexBefore && words(w.maria, studied) == mariaBefore, "nothing changed in either deck")
     app.terminate()
     app = launch(as: w.alex, ["-open", "suggestions:" + w.deckName])
-    check(wait(buttonStarting(app, "Maria Santos, 1 change"), 12) && app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Maria Santos, 1 change'")).count == 3, "Alex’s Suggestions list has the three")
+    // (The rows come in as the list loads: their number once they're all here.)
+    let rows = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Maria Santos, 1 change'"))
+    _ = wait(rows.firstMatch, 12)
+    let until = Date().addingTimeInterval(6)
+    while rows.count < 3 && Date() < until { Thread.sleep(forTimeInterval: 0.3) }
+    check(rows.count == 3, "Alex’s Suggestions list has the three")
     for i in 0..<3 where !text(app, "“From my TA’s review”").exists {
       tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Maria Santos, 1 change'")).element(boundBy: i))
       _ = wait(text(app, "“From my TA’s review”"), 2)
@@ -380,7 +385,7 @@ final class SharedDeckPagesTests: XCTestCase {
     let glycolysis = listed.first { ($0["front"] as? String)?.contains("glycolysis") == true }?["id"] as? String ?? ""
     app.terminate()
     app = launch(as: w.maria, ["-open", "deckpage:" + w.path + "?suggest=" + powerhouse])
-    check(wait(field(app, "Text")) && (field(app, "Text").value as? String)?.contains("[[mitochondrion]]") == true, "?suggest=<card> opens the sheet on that card")
+    check(suggesting(app) && wait(field(app, "Text")) && (field(app, "Text").value as? String)?.contains("[[mitochondrion]]") == true, "?suggest=<card> opens the sheet on that card")
     tap(button(app, "Cancel"))
     // Five waiting (the fifth through the server): the sixth Send has the server's words, and the sheet stays with the change.
     social(w.maria, "suggestion.send", ["id": w.sharedId, "message": "", "changes": [["op": "edit", "card": glycolysis, "after": ["back": "Cytosol"]]]])
