@@ -48,11 +48,10 @@ struct StatsScreen: View {
       if !s.empty {
         Segmented(options: ["Overview", "Memory", "Weak spots", "Pace"].map { ($0, $0) }, current: tab, height: 34, size: 13, gap: 2, hPad: 4) { tab = $0 }
       }
-      // No reviews yet: the empty page for everyone, as on the web (/stats is StatsEmpty until the first review); after that, Free sees the
-      // upgrade card on every tab.
-      if s.empty { overview(s) }
-      else if !store.isPro { StatsUpgrade(shop: store.shop) }
-      else if tab == "Overview" { overview(s) }
+      // On Free every tab is the upgrade card, reviews or not; "No reviews yet" is only for Pro (as on the web: /stats is StatsEmpty for Pro
+      // until the first review).
+      if !store.isPro { StatsUpgrade(shop: store.shop) }
+      else if s.empty || tab == "Overview" { overview(s) }
       else { DeepStats(tab: tab, goal: s.goal) }
     }
     .foregroundStyle(t.text)

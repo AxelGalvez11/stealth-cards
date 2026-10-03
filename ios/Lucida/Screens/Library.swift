@@ -198,8 +198,6 @@ struct LibraryScreen: View {
   @State private var menu: String? = nil
   @State private var menuQ = ""
   // All cards: the tags every card must have, a deck or folder ("f:<id>"), and how many are shown.
-  /// Cards you keep forgetting ("leech"), or cards you paused ("paused"), on top of those.
-  @State private var state = ""
   @State private var cardTags: [String] = []
   @State private var pick = ""
   @State private var shown = 60
@@ -219,9 +217,6 @@ struct LibraryScreen: View {
     .toolbar(.hidden, for: .navigationBar)
     .onAppear {
       if store.demo, let n = store.props.naming { store.props.naming = nil; nav.sheet = .nameFolder(rename: nil, deck: nil, name: n) }
-      if store.demo, !store.props.libState.isEmpty { state = store.props.libState; store.props.libState = "" }
-      // Stats sends you here to see the cards you keep forgetting.
-      if let want = nav.libFilter { nav.libFilter = nil; if ["leech", "paused"].contains(want) { state = want } }
     }
   }
 
@@ -464,27 +459,10 @@ struct LibraryScreen: View {
         && cardTags.allSatisfy(c.tags.contains)
         && (ql.isEmpty || ([c.front, c.back, c.deckName] + c.tags).joined(separator: " ").lowercased().contains(ql))
     }
-    // Cards you keep forgetting, and cards you paused, filter on top of those.
-    let inState = { (c: LibCard, k: String) -> Bool in k == "leech" ? c.leech : k == "paused" ? c.paused : true }
-    let stateCount = { (k: String) in base.filter { inState($0, k) }.count }
-    let matched = base.filter { inState($0, state) }
-    let toPause = state == "leech" ? matched.filter { !$0.paused } : state == "paused" ? matched : []
+    let matched = base
     FlowLayout(spacing: 8, lineSpacing: 8) {
       menuButton("tags", "Tags")
       menuButton("decks", deckOptions(decks, folders).first { $0.id == pick }?.label ?? "All decks")
-      ForEach([("leech", "Keep forgetting", "again"), ("paused", "Paused", "pauseRing")].filter { state == $0.0 || stateCount($0.0) > 0 }, id: \.0) { k, label, icon in
-        let on = state == k
-        Button { state = on ? "" : k; shown = 60 } label: {
-          HStack(spacing: 7) {
-            Icon(icon, 14, 2)
-            Text(label).css(13, .semibold)
-            Text("\(stateCount(k))").css(11, mono: true).opacity(0.6)
-          }
-          .foregroundStyle(on ? t.invText : t.text).padding(.leading, 12).padding(.trailing, 14).frame(height: 36).background(Capsule().fill(on ? t.inv : t.surf))
-        }
-        .buttonStyle(.press)
-        .accessibilityAddTraits(on ? .isSelected : [])
-      }
       ForEach(cardTags, id: \.self) { g in
         let c = Tags.color(g)
         Button { cardTags.removeAll { $0 == g }; shown = 60 } label: {
@@ -498,12 +476,6 @@ struct LibraryScreen: View {
     HStack(spacing: 8) {
       Text(grouped(matched.count) + (matched.count == 1 ? " card" : " cards")).css(13).foregroundStyle(t.muted)
       Spacer(minLength: 0)
-      if !toPause.isEmpty {
-        Button { store.pauseCards(toPause.map(\.id), state != "paused") } label: {
-          Text(state == "paused" ? "Unpause all" : "Pause all").css(13, .semibold).foregroundStyle(t.invText).padding(.horizontal, 16).frame(height: 32).background(Capsule().fill(t.inv))
-        }
-        .buttonStyle(.press)
-      }
     }
     .frame(minHeight: 24).padding(.horizontal, 4).padding(.top, 2)
     LazyVStack(spacing: 0) {
