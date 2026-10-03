@@ -64,8 +64,9 @@ private struct LittlePill: View {
 /// this phone): its page tabs (when it has pages), Make cards (for its owner, once it has words), and the page. For its owner a tap on the words opens the Notes page
 /// there, and an empty Guide is a blank note waiting (a heading and a line). On a shared deck's page (`shared`: the deck's address, which this phone remembers its
 /// toggles by) it says NOTES, and a long page is cut short with Show more. The caller says which page is showing (`page`, one of `tabs`) and its words; `images`
-/// says which pictures may show (a deck's own, or a shared deck's public ones). At its right, the outline's rail (NotesRail), which stays a little under the top
-/// of the screen as the page scrolls by; on a shared deck's page, once the page shows in full (cut short, Show more comes first).
+/// says which pictures may show (a deck's own, or a shared deck's public ones). On a shared deck's page, once the page shows in full (cut short, Show more comes first),
+/// the outline's rail (NotesRail) sits at its right and stays a little under the top of the screen as the page scrolls by; the deck page's Notes tab has none (it
+/// becomes a list of notes).
 struct GuideCard: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var nav: Nav
@@ -90,7 +91,7 @@ struct GuideCard: View {
   var body: some View {
     let hasText = !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     let long = shared != nil && ((text as NSString).length > 640 || text.split(separator: "\n", omittingEmptySubsequences: false).count > 14)
-    let heads = notes.outline, railOn = heads.count >= 2 && (!long || open)
+    let heads = notes.outline, railOn = shared != nil && heads.count >= 2 && (!long || open)
     let key = shared.map { "shared|" + $0 + "|" + page } ?? ((store.demo ? "canvas|" : "") + deckId + "|" + page)
     VStack(alignment: .leading, spacing: 12) {
       if shared != nil || !tabs.isEmpty || (canEdit && hasText) { GuideCardBar(tabs: tabs, page: $page, open: $open, label: shared != nil, make: canEdit && hasText ? { nav.make(deckId: deckId) } : nil) }

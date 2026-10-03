@@ -59,7 +59,7 @@
         <span style="flex-grow: 1;"></span>
         <sc-if value="{{gs.canMake}}" hint-placeholder-val="{{ true }}"><a href="{{gs.makeHref}}" style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.bg}}; color: {{t.text}}; font-size: 13px; font-weight: 600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>Make cards</a></sc-if>
       </div></sc-if>
-      <div ref="{{gs.ref}}" data-sc-own data-phone="" style="--gd-text: {{t.text}}; --gd-muted: {{t.muted}}; --gd-line: {{t.line}}; --nb-code: {{t.bg}}; --nb-bg: {{t.bg}}; --nb-surf: {{t.surf}}; --nb-surf2: {{t.surf2}}; --nb-dim: {{t.dim}}; --nb-otl-x: 28px; --nb-otl-top: 0px;"></div>
+      <div ref="{{gs.ref}}" data-sc-own data-phone="" style="--gd-text: {{t.text}}; --gd-muted: {{t.muted}}; --gd-line: {{t.line}}; --nb-code: {{t.bg}}; --nb-bg: {{t.bg}}; --nb-surf: {{t.surf}}; --nb-surf2: {{t.surf2}}; --nb-dim: {{t.dim}};"></div>
     </section>
   </sc-if><sc-if value="{{dg.show}}" hint-placeholder-val="{{ true }}">
     <section aria-label="Diagrams" style="min-width: 0; box-sizing: border-box; padding: 20px 20px 22px; border-radius: 24px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 14px;">
@@ -4634,7 +4634,7 @@ renderVals0() {
       hasTabs: G.pages.length > 0, tabs: [{ id: 'main', title: 'Guide' }, ...G.pages].map(x => ({ title: x.title, pressed: x.id === pageId ? 'true' : 'false', bg: x.id === pageId ? t.bg : 'transparent', fg: x.id === pageId ? t.text : t.muted, pick: () => this.setState({ gpage: x.id }) })),
       // the page as it reads; the owner's opens to write in where it was pressed (and an empty one is a blank note)
       ref: el => { if (!el) return; const href = (mock ? 'WebGuide.dc.html' : db.href('guide', dk.id)), q = (pageId === 'main' ? '' : 'page=' + pageId);
-        this.notes().mount(el, { md: text, key: (mock ? 'canvas|' : '') + dk.id + '|' + pageId, editable: false, blank: G.can, phone: el.getAttribute('data-phone') === 'yes', outline: true, image: s => (/^\/media\/[\w-]+\.(png|jpe?g|gif|webp)$/i.test(s) ? s : ''),
+        this.notes().mount(el, { md: text, key: (mock ? 'canvas|' : '') + dk.id + '|' + pageId, editable: false, blank: G.can, phone: el.getAttribute('data-phone') === 'yes', image: s => (/^\/media\/[\w-]+\.(png|jpe?g|gif|webp)$/i.test(s) ? s : ''),
           onOpen: G.can ? at => { if (mock) return; db.act.go(href + '?' + [q, 'at=' + at.i + ':' + at.off].filter(Boolean).join('&')); } : undefined }); },
       sourcesShow: tab === 'sources', sourceCount: String(sourceRows.length), sources: sourceRows };
     

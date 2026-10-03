@@ -317,6 +317,14 @@ the quiet saving line and ⋯ (Make cards from this page or what is selected, Ol
 (a new page is called by its first heading until it's renamed). It saves as it is typed (`Data/GuideEditor.swift`: 700 ms after the last key, one save after another, Saving… and
 Saved at the top, what went wrong in the same place, "This page is full." over 40,000 characters). Pictures go up like a card's.
 
+**The outline** (`NotesRail` and `NotesOutline` in `Design/NotesViews.swift`; web/notes.js's `outline` on the web; the owner, 2026-10-02: "add that thing notion has where it shows a
+rail tree of sections"): with two headings or more, a quiet rail of short lines sits at the page's right (12, 9 and 6 points wide by level, 2 tall, 6 apart; the section being read
+in the words' color), 12 points under the top of the Notes page as it scrolls. A tap opens the headings as a tree in Lucida's own sheet (PickSheet's `tree`: a row further in by
+its level, the one being read in bold); a heading scrolls there (`GuideAnchors.bring`, at once with Reduce Motion) and closes it, opening a folded section or closed toggle it is
+in, as its ▸ does. The headings come from the page's own blocks (`NotesPage.outline`), so a heading typed joins it at once; each heading's line registers itself with the outline
+(`NotesLine`, by its block), which finds the one being read and scrolls to one. The rail is hidden while the keyboard is up. A shared deck's Notes (`GuideCard` with `shared`)
+have it once they show in full, staying a little under the top of the screen as the page scrolls by; the deck page's Notes tab has none.
+
 **Sources** (`Data/GuideData.swift`, `Screens/DeckMaterials.swift`): the list (name, kind, pages or minutes, cards, date, newest first) and a source opened as a sheet: a recording
 plays at the card's time (a long one is kept as several files: the viewer walks their seconds, as the web does, and plays the part that covers the time at the second inside it:
 a card from 1:30:00 of thirteen parts of 550 seconds opens part 10 at 7:30), a PDF opens in PDFKit at its page, slides and Word files in Lucida's own document viewer (`Design/DocumentView.swift`: the phone's web engine draws them, Lucida's loading mark shows meanwhile, and plain text and captions are drawn as text; Quick Look is not used, since its bar, share button and spinner are the system's), a video opens its
@@ -326,7 +334,8 @@ source at that place (the deck's Sources, viewer open; plain words once the sour
 
 Library data: each deck's `guide` and `sources` and each card's `src` come with `/api/state` and are all optional (`MakeModels.swift`), so an older library still opens. The acts are
 `guide.save`, `guide.page.add`, `.rename`, `.delete`, `guide.restore`, `source.delete` (`Store.guide*`); History is `GET /api/guide/history`. The boards: `PhoneGuide` (and Dark, Gray;
-`-state Writing|"Block menu"|"Format bar"|"Toggle open"|"Toggle closed"|"Section folded"|"Blank note"|"Reading on a shared deck"|"Older versions"|"A new page"`), `PhoneDeck` (`-state Cards|Notes|Sources` or `-state "Guide and sources"|"Guide pages"|"Long guide"|"A source
+`-state Writing|"Block menu"|"Format bar"|"Toggle open"|"Toggle closed"|"Section folded"|"Blank note"|"Reading on a shared deck"|"Older versions"|"A new page"|"Outline open"`;
+`PhoneGuideOutline` is the last, the outline's sheet open), `PhoneDeck` (`-state Cards|Notes|Sources` or `-state "Guide and sources"|"Guide pages"|"Long guide"|"A source
 open"|"No guide yet"|"Studying (read only)"`; or `-section`, `-guide`, `-sourceOpen <id>`, `-sourceAt "p. 4"`), `PhonePublicDeck` (`-state` is the Guide setting) and `PhoneEditor`
 (`-madeFrom no` leaves the line out), with the sample in `Design/GuideSample.swift`. More launch arguments (debug builds): `-open guide[:<deck name>[:<page id>]]` opens the Notes page, and
 `-deckTab notes|sources` (with `-deckSource <id>` and `-deckAt "1:30:00"`) asks the open deck page for a section, and a source open at that place (like the web's `?tab=&source=&at=`).
@@ -334,10 +343,11 @@ open"|"No guide yet"|"Studying (read only)"`; or `-section`, `-guide`, `-sourceO
     ios/tools/e2e-guide.sh <simulator id>
 
 starts a fresh server on port 3934 and the stand-in AI on 3939, makes the Sources with the server's own make steps (`ios/tests/js/guide-seed.mjs`: a PDF, a recording of thirteen files, a
-video, pictures, text, a topic, under a Guide with sections, toggles and two pages), and runs `LucidaUITests/GuideTests` in thirteen flows (no Guide and the blank note, writing: the
+video, pictures, text, a topic, under a Guide with sections, toggles and two pages), and runs `LucidaUITests/GuideTests` in fourteen flows (no Guide and the blank note, writing: the
 shortcuts, Enter, Backspace, Aa, To-do, Bullets, Bold and a link from the bar; reading and the hostile text, Older versions and Restore, pages, Make cards from the page, the Notes
 on the deck page (toggles, folds, a link to a heading, a tap that opens the page there), a deck you only study, the Sources and each viewer, "Made from", More cards and Delete, a
-shared deck's page, the Add cards menu and dark mode, and a toggle and a section folding, remembered and never saved into the note). Ports and the simulator: `PORT=3960
+shared deck's page, the Add cards menu and dark mode, a toggle and a section folding, remembered and never saved into the note, and the outline: its rail, its sheet, going to a
+heading (in a closed toggle, in a folded section), a heading typed, no rail while writing, and a shared deck's once shown in full). Ports and the simulator: `PORT=3960
 STUB_PORT=3969 ios/tools/e2e-guide.sh <simulator id>` runs it beside other servers.
 
 Two things worth knowing when writing flows like these: a tap on a card row right after the page was scrolled is ignored on purpose (`HoldOrTap` fails a touch that lands on a

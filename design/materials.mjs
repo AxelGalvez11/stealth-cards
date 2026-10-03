@@ -352,7 +352,8 @@ export const NOTES_CSS = [
 // The colors a page of notes is drawn in, from a board's theme (`code`: what code sits on, the other color of the page it is on; `dim`: behind a phone's sheet).
 export const NOTES_VARS = (code = 't.surf') => `--gd-text: {{t.text}}; --gd-muted: {{t.muted}}; --gd-line: {{t.line}}; --nb-code: {{${code}}}; --nb-bg: {{t.bg}}; --nb-surf: {{t.surf}}; --nb-surf2: {{t.surf2}}; --nb-dim: {{t.dim}};`;
 // Where a page's outline rail sits (web/notes.js): how far right of the note (in the room its box keeps there) and where it stays as the page scrolls (under the
-// top of what scrolls the page, past that box's own room at its top: the deck pages' main has 24 or 36 px, so theirs is 0).
+// top of what scrolls the page, past that box's own room at its top: a shared deck's page has 36 px, so its own is 0). It is on the Notes page and a shared deck's
+// Notes; the deck page's Notes tab has none (it becomes a list of notes: main, 2026-10-02).
 const OUTLINE_AT = (x, top) => ` --nb-otl-x: ${x}px; --nb-otl-top: ${top}px;`;
 // Every board that shows a page of notes carries this (it was the rendered Guide's .gd look; a page is drawn by web/notes.js now).
 export const GUIDE_CSS = NOTES_CSS;
@@ -374,7 +375,7 @@ export function deckBlocks(H, phone) {
         <span style="flex-grow: 1;"></span>
         <sc-if value="{{gs.canMake}}" hint-placeholder-val="{{ true }}">${link('Make cards', '{{gs.makeHref}}', 'sparkle')}</sc-if>
       </div></sc-if>
-      <div ref="{{gs.ref}}" data-sc-own data-phone="${phone ? 'yes' : ''}" style="${NOTES_VARS('t.bg')}${phone ? OUTLINE_AT(18, 16) : OUTLINE_AT(28, 0)}"></div>
+      <div ref="{{gs.ref}}" data-sc-own data-phone="${phone ? 'yes' : ''}" style="${NOTES_VARS('t.bg')}"></div>
     </section>
   </sc-if>`;
   // The deck page's sections, right under its header: Sources (what the cards were made from; only for the deck's owner), Cards, Notes (the Guide
@@ -470,7 +471,7 @@ export const DECK_MATERIALS_JS = String.raw`
       hasTabs: G.pages.length > 0, tabs: [{ id: 'main', title: 'Guide' }, ...G.pages].map(x => ({ title: x.title, pressed: x.id === pageId ? 'true' : 'false', bg: x.id === pageId ? t.bg : 'transparent', fg: x.id === pageId ? t.text : t.muted, pick: () => this.setState({ gpage: x.id }) })),
       // the page as it reads; the owner's opens to write in where it was pressed (and an empty one is a blank note)
       ref: el => { if (!el) return; const href = (mock ? 'WebGuide.dc.html' : db.href('guide', dk.id)), q = (pageId === 'main' ? '' : 'page=' + pageId);
-        this.notes().mount(el, { md: text, key: (mock ? 'canvas|' : '') + dk.id + '|' + pageId, editable: false, blank: G.can, phone: el.getAttribute('data-phone') === 'yes', outline: true, image: s => (/^\/media\/[\w-]+\.(png|jpe?g|gif|webp)$/i.test(s) ? s : ''),
+        this.notes().mount(el, { md: text, key: (mock ? 'canvas|' : '') + dk.id + '|' + pageId, editable: false, blank: G.can, phone: el.getAttribute('data-phone') === 'yes', image: s => (/^\/media\/[\w-]+\.(png|jpe?g|gif|webp)$/i.test(s) ? s : ''),
           onOpen: G.can ? at => { if (mock) return; db.act.go(href + '?' + [q, 'at=' + at.i + ':' + at.off].filter(Boolean).join('&')); } : undefined }); },
       sourcesShow: tab === 'sources', sourceCount: String(sourceRows.length), sources: sourceRows };
     ${DIAGRAMS_JS}

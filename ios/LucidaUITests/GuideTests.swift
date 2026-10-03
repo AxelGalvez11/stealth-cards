@@ -21,7 +21,7 @@
 //       and this phone remembers it (the Notes page and the deck page alike)
 //   14  the outline: the rail of the headings at the Notes page's right; a tap opens their tree in Lucida's own sheet (the current one selected); a heading scrolls
 //       there and closes it (a closed toggle's heading opens it, a folded section's subheading unfolds it); a heading typed joins it; no rail while a line is written;
-//       the deck page's Notes have it too, staying in view as the page scrolls; a shared deck's, once shown in full
+//       none on the deck page's Notes tab; a shared deck's, once shown in full, staying in view as the page scrolls
 // Run it with ios/tools/e2e-guide.sh (it starts a fresh server on port 3934 and the stand-in AI on 3939). It only runs when LUCIDA_GUIDE is set, so the other scripts keep running
 // their own checks alone.
 import XCTest
@@ -809,14 +809,15 @@ final class GuideTests: XCTestCase {
     let names = ["Outline test", "Checklist", "The mitochondrion", "Its two membranes", "Hidden in a toggle", "Mnemonics"]
     var app = openPage(who, deck: name)
     let rail = app.buttons["notes.outline"]
-    check(wait(rail) && rail.label == "Outline" && rail.isHittable, "the Notes page has the outline’s rail")
+    check(wait(rail) && rail.label == "Outline" && rail.frame.height > 1, "the Notes page has the outline’s rail")
     let W = app.windows.firstMatch.frame.width
     check(rail.frame.maxX > W - 30 && rail.frame.minY < 260, "at its right, near the top (at \(pt(rail.frame.minX)), \(pt(rail.frame.minY)))")
     snap("outline-rail")
     // the sheet: the tree, the one being read selected
     func sheet() { tap(app.buttons["notes.outline"], "the rail"); _ = wait(text(app, "Outline"), 6) }
     func row(_ words: String) -> XCUIElement { app.buttons.matching(NSPredicate(format: "label == %@", words)).firstMatch }
-    func near(_ words: String) -> Bool { eventually(6) { let l = self.line(app, words); return l.exists && l.isHittable && l.frame.minY > 60 && l.frame.minY < 300 } }
+    // (by its frame: asking whether a line is hittable while the page still moves can stop the test)
+    func near(_ words: String) -> Bool { eventually(6) { let l = self.line(app, words); return l.exists && l.frame.height > 1 && l.frame.minY > 60 && l.frame.minY < 300 } }
     sheet()
     check(text(app, "Outline").exists && names.allSatisfy { row($0).exists }, "a tap opens Lucida’s own sheet with every heading’s name")
     check(row("Outline test").isSelected && !row("Mnemonics").isSelected, "the one being read is the one picked")
@@ -857,17 +858,10 @@ final class GuideTests: XCTestCase {
     sheet()
     check(row("At the very end").exists, "and the heading just typed is in the tree")
     tap(button(app, "Close"), "Close")
-    // the deck page's Notes: the same rail, staying in view as the page scrolls
+    // the deck page's Notes tab: no rail (it becomes a list of notes)
     done(app)
     check(wait(line(app, "Outline test")) && selected(button(app, "Notes")), "back on the deck page’s Notes")
-    let drail = app.buttons["notes.outline"]
-    check(wait(drail), "the deck page’s Notes have the rail too")
-    tap(drail, "the deck page's rail")
-    check(wait(text(app, "Outline"), 6) && row("Mnemonics").exists && row("At the very end").exists, "its sheet has the same tree")
-    tap(row("Mnemonics"), "Mnemonics")
-    check(gone(text(app, "Outline"), 4) && eventually(6) { let l = self.line(app, "Mnemonics"); return l.exists && l.frame.minY > 40 && l.frame.minY < 300 }, "a heading scrolls the deck page there")
-    check(eventually(4) { drail.exists && drail.isHittable && drail.frame.minY > 40 && drail.frame.minY < 200 }, "and the rail stays in view near the top (at \(pt(drail.frame.minY)))")
-    snap("outline-deck")
+    check(!app.buttons["notes.outline"].exists, "the deck page’s Notes tab has no rail (only the Notes page and a shared deck’s Notes do)")
     // a shared deck's page: cut short there is no rail; Show more, and there is
     let sh = (api(who, "POST", "/api/social", ["type": "deck.share", "deckId": id, "visibility": "public"]).json as? [String: Any])?["result"] as? [String: Any] ?? [:]
     let sid = sh["id"] as? String ?? ""
@@ -876,12 +870,15 @@ final class GuideTests: XCTestCase {
     check(wait(text(app, "NOTES"), 20) && wait(line(app, "Outline test")), "a shared deck’s page reads its Notes")
     check(!app.buttons["notes.outline"].exists, "cut short (Show more), no rail: what is cut off can’t be scrolled to")
     let showMore = button(app, "Show more")
-    if !showMore.isHittable { app.swipeUp() }
+    if wait(showMore, 6) && showMore.frame.maxY > app.windows.firstMatch.frame.height - 40 { app.swipeUp(); Thread.sleep(forTimeInterval: 1) }
     tap(showMore, "Show more")
     check(wait(app.buttons["notes.outline"], 6), "shown in full, the rail is there")
     tap(app.buttons["notes.outline"], "the shared page's rail")
     tap(row("Hidden in a toggle"), "the heading in the toggle")
     check(eventually(6) { let l = self.line(app, "Hidden in a toggle"); return l.exists && l.frame.minY > 40 && l.frame.minY < 300 } && line(app, "Words inside it.").exists, "and a reader can go to any heading (a closed toggle’s too)")
+    let srail = app.buttons["notes.outline"]
+    check(eventually(4) { srail.exists && srail.frame.height > 1 && srail.frame.minY > 40 && srail.frame.minY < 200 }, "and the rail stays in view near the top as the page scrolls (at \(pt(srail.frame.minY)))")
+    snap("outline-shared")
     noLabel(app, "the outline")
   }
 }
