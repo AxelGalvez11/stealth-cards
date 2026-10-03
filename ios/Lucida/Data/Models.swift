@@ -30,7 +30,9 @@ struct Library: Decodable {
   /// by deck id (Data/MakeData.swift).
   var make = MakeInfo()
   var materials: [String: DeckMaterials] = [:]
-  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn, profile, pro, tests, quizLeft, make }
+  /// What Explain shows in its composer's place once the day's explanations are used up (the server's words), or nil while some are left.
+  var explainLimit: ExplainLimit? = nil
+  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn, profile, pro, tests, quizLeft, make, explainLimit }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     rev = c.v(.rev, 0); settings = c.v(.settings, UserSettings()); ai = c.v(.ai, AIState()); folders = c.v(.folders, [])
@@ -38,6 +40,7 @@ struct Library: Decodable {
     pro = c.v(.pro, true)
     tests = c.v(.tests, []); quizLeft = c.v(.quizLeft, nil)
     make = c.v(.make, MakeInfo())
+    explainLimit = c.v(.explainLimit, nil)
     // (Each deck's sources and Guide are read from the same list of decks, apart from Deck itself.)
     for row in c.v(.decks, [DeckMaterials]()) where !row.id.isEmpty && (!row.sources.isEmpty || row.guide != nil || !row.diagrams.isEmpty) { materials[row.id] = row }
   }

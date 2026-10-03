@@ -143,6 +143,10 @@ private struct LearnBody: View {
   @State private var exMock = false
   /// Learn settings (the gear by X): the deck's background, in a sheet.
   @State private var settingsOpen = false
+  /// A question is being typed about the card (the explanation's composer has the keyboard): Next waits under the keyboard and the page
+  /// ends at it, so the composer sits on top of it.
+  @State private var asking = false
+  @StateObject private var keyboard = Keyboard()
 
   var body: some View {
     ZStack {
@@ -158,7 +162,19 @@ private struct LearnBody: View {
       }
     }
     .background(t.bg)
-    .onAppear { if store.demo { settingsOpen = store.props.learnSettings } }
+    .onAppear {
+      guard store.demo else { return }
+      settingsOpen = store.props.learnSettings
+      // (a design screen with its explanation open, and a question asked about it: the boards' explainOpen and followUp Tweaks)
+      if store.props.explainOpen {
+        let typed = store.demoLearn.screen == "type", id = typed ? "typeq" : "q0"
+        exFor = id; exMock = true
+        if store.props.followUp, let q = Generated.chatSample[typed ? "type" : "learn"] { store.chats[id] = [ChatTurn(q: q.q, a: q.a)] }
+      }
+    }
+    // Closing the explanation, the next question, or leaving Learn forgets its questions.
+    .onChange(of: exFor) { old, new in if let old, old != new { store.followUpClear(old) } }
+    .onDisappear { if let id = exFor { store.followUpClear(id) } }
   }
 
   // The deck's background, as in Deck settings: it changes behind the questions as soon as one is picked.
@@ -204,7 +220,7 @@ private struct LearnBody: View {
   /// What a question's explanation looks like right now (the canvas's sample on a design screen).
   private func explanation(_ v: LearnView) -> ExplainVM {
     let sample = v.type == "type" ? Store.demoExplain.type : Store.demoExplain.learn
-    return store.demo ? ExplainVM(on: true, text: exMock ? sample : "", note: exMock ? "2 free explanations left today" : "") : store.explainOf(v.id)
+    return store.demo ? store.demoExplainOf(v.id, text: sample, asked: exMock) : store.explainOf(v.id)
   }
 
   // After an answer, the AI can explain it: Explain (the round button by the gear), then the explanation in its place (under the
@@ -216,8 +232,8 @@ private struct LearnBody: View {
       // fades in, nothing slides)
       Group {
         if exFor == v.id {
-          ExplainPanel(ex: ex, look: .learn(look)) { exFor = nil }
-            .padding(.vertical, 14).padding(.horizontal, 16)
+          ExplainPanel(ex: ex, look: .learn(look), pad: (16, 14), onFocus: { asking = $0 }, close: { exFor = nil },
+                       ask: { q in Task { await store.followUp(v.id, q: q, question: v.text, sample: Generated.chatSample[v.type == "type" ? "type" : "learn"]?.a ?? "") } })
             .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(look.card).learnShadow(look.shadow))
             .id("explanation")
             .transition(.opacity)
@@ -227,43 +243,33 @@ private struct LearnBody: View {
     }
   }
 
-  /// Explain, a round button just after the gear and its size (the owner, 2026-10-02, as on a flashcard: "move it upper right
-  /// similar shape to the flashcard settings"), once the question is answered: pressed while the explanation is open, and pressing
-  /// it again closes it. Its place is kept while the question waits for its answer, so the bar beside it doesn't move. (Matching
-  /// has no explanation.)
+  /// Explain, a round button just before the gear and its size (the owner, 2026-10-02, as on a flashcard: "move it upper right similar shape
+  /// to the flashcard settings"; canvas V179 put the two at the row's end). It shows whenever the card can be explained, faded and disabled
+  /// until the question is answered; pressed while the explanation is open, and pressing it again closes it. (Matching has no explanation.)
   @ViewBuilder private func explainButton(_ v: LearnView) -> some View {
     let ex = explanation(v), answered = v.type == "type" ? v.checked : v.pick != nil
     if v.type != "match" && ex.on && !v.id.isEmpty {
-      if answered {
-        let open = exFor == v.id, k = look
-        Button {
-          if open { exFor = nil; return }
-          exFor = v.id
-          if store.demo { exMock = true } else if ex.text.isEmpty { Task { await store.explain(v.id, question: v.text) } }
-        } label: {
-          Icon("sparkle", 18, 2).foregroundStyle(open ? k.btnFg : k.ink).frame(width: 44, height: 44).background(Circle().fill(open ? k.btn : k.chip))
-        }
-        .buttonStyle(.press).accessibilityLabel("Explain").accessibilityAddTraits(open ? .isSelected : [])
-      } else {
-        Color.clear.frame(width: 44, height: 44)
+      let open = answered && exFor == v.id, k = look
+      Button {
+        guard answered else { return }
+        if open { exFor = nil; return }
+        exFor = v.id
+        if store.demo { exMock = true } else if ex.text.isEmpty { Task { await store.explain(v.id, question: v.text) } }
+      } label: {
+        Icon("sparkle", 18, 2).foregroundStyle(open ? k.btnFg : k.ink).frame(width: 44, height: 44).background(Circle().fill(open ? k.btn : k.chip))
       }
+      .buttonStyle(.press).disabled(!answered).opacity(answered ? 1 : 0.4)
+      .accessibilityLabel("Explain").accessibilityAddTraits(open ? .isSelected : [])
     }
   }
 
-  // The top: stop (back to the deck's page; you can pick up where you stopped), settings, progress through the set
-  // (learned purple, still learning light purple), and the count, on soft glass chips over the sky.
+  // The top (canvas V179): stop (back to the deck's page; you can pick up where you stopped), progress through the set (learned purple,
+  // still learning light purple), the count, then Explain and settings, on soft glass chips over the sky.
   private func top(_ v: LearnView) -> some View {
     let k = look
     return HStack(spacing: 12) {
       Button { nav.leave(to: deckId) } label: { Icon("close", 18, 2).foregroundStyle(k.ink).frame(width: 44, height: 44).background(Circle().fill(k.chip)) }
         .buttonStyle(.press).accessibilityLabel("Stop for now")
-      HStack(spacing: 8) {
-        Button { withAnimation(Motion.sheet) { settingsOpen.toggle() } } label: {
-          Icon("gear", 18, 2).foregroundStyle(settingsOpen ? k.btnFg : k.ink).frame(width: 44, height: 44).background(Circle().fill(settingsOpen ? k.btn : k.chip))
-        }
-        .buttonStyle(.press).accessibilityLabel("Learn settings")
-        explainButton(v)
-      }
       GeometryReader { g in
         HStack(spacing: 0) {
           k.bar.frame(width: g.size.width * CGFloat(v.learned) / CGFloat(max(1, v.total)))
@@ -279,6 +285,14 @@ private struct LearnBody: View {
         .overlay(alignment: .topTrailing) {
           if v.justLearned > 0 { PlusOne(color: k.bar).offset(x: 24, y: -3) }
         }
+      // (canvas V179: Explain, then the gear, at the end of the row)
+      HStack(spacing: 8) {
+        explainButton(v)
+        Button { withAnimation(Motion.sheet) { settingsOpen.toggle() } } label: {
+          Icon("gear", 18, 2).foregroundStyle(settingsOpen ? k.btnFg : k.ink).frame(width: 44, height: 44).background(Circle().fill(settingsOpen ? k.btn : k.chip))
+        }
+        .buttonStyle(.press).accessibilityLabel("Learn settings")
+      }
     }
   }
 
@@ -345,23 +359,28 @@ private struct LearnBody: View {
       ScrollViewReader { proxy in
         ScrollView(showsIndicators: false) { inner.frame(maxWidth: .infinity, alignment: .leading) }
           .scrollBounceBehavior(.basedOnSize)
+          .scrollDismissesKeyboard(.interactively)
           .onChange(of: exFor) { _, open in if open != nil { reveal(proxy) } }
           .onChange(of: store.explaining) { _, _ in if exFor != nil { reveal(proxy) } }
+          // (a question sent, its answer come, or the keyboard up: the explanation's end, where the composer is, stays in view)
+          .onChange(of: store.chats) { _, _ in if exFor != nil { reveal(proxy) } }
+          .onChange(of: keyboard.height) { _, h in if exFor != nil && asking && h > 0 { reveal(proxy, settle: true) } }
+          .onChange(of: asking) { _, on in if exFor != nil && on && keyboard.height > 0 { reveal(proxy, settle: true) } }
       }
-      bottom()
+      if !(asking && keyboard.height > 0) { bottom() }
     }
-    .padding(.top, Screen.top(60)).padding(.horizontal, 16).padding(.bottom, 34)
+    .padding(.top, Screen.top(60)).padding(.horizontal, 16).padding(.bottom, asking && keyboard.height > 0 ? keyboard.height + 8 : 34)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     .background(StudyBackground(bg: store.studyBg(deckId)))
     .ignoresSafeArea(.container)
   }
 
   /// Scrolls the open explanation (the one place it opens: `.id("explanation")`) to the bottom of the screen, at once.
-  private func reveal(_ proxy: ScrollViewProxy) {
-    DispatchQueue.main.async {
-      var tx = Transaction(); tx.disablesAnimations = true
-      withTransaction(tx) { proxy.scrollTo("explanation", anchor: .bottom) }
-    }
+  /// (`settle`: again once the page has made room for the keyboard, which takes a moment)
+  private func reveal(_ proxy: ScrollViewProxy, settle: Bool = false) {
+    let go = { var tx = Transaction(); tx.disablesAnimations = true; withTransaction(tx) { proxy.scrollTo("explanation", anchor: .bottom) } }
+    DispatchQueue.main.async(execute: go)
+    if settle { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: go) }
   }
 
   // A choice question (multiple choice, true or false, fill in the blank). A question the learner's AI wrote brings its

@@ -360,11 +360,15 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
   }
   // AI explanations (Lucida's own AI, a few free a day on Free): asked for from a card once it's answered, and saved on
   // the card, so it's written once. `on`: the server has AI set up, or this card already has one.
-  const explaining = {}, explainErr = {}, explainPro = {};
+  // Questions about the card (Explain's composer, design/chat.mjs): `chats` holds each card's conversation while its explanation is open
+  // ([{ q, a, busy, error }], never saved), and `limit` is what shows in the composer's place once the day's explanations are used up (the
+  // server's words: S.explainLimit, from /api/state and each answer).
+  const explaining = {}, explainErr = {}, explainPro = {}, chats = {};
   let aiLeftToday = null;
   const explainOf = c => { if (!c) return { on: false }; const text = c.explain ? String(c.explain.text || '').replace(/\*\*/g, '') : '';
     return { on: !!S.aiOn || !!text, text, busy: !!explaining[c.id], error: explainErr[c.id] || '', goPro: !!explainPro[c.id],
-      note: text && aiLeftToday != null ? (aiLeftToday === 1 ? '1 free explanation left today' : aiLeftToday + ' free explanations left today') : '' }; };
+      note: text && aiLeftToday != null ? (aiLeftToday === 1 ? '1 free explanation left today' : aiLeftToday + ' free explanations left today') : '',
+      turns: chats[c.id] || [], limit: S.explainLimit || null }; };
   // Deck lists and search use the words without the formatting.
   const flat = md => R.plain(md, { join: ' ', math: 'show' });
   // A box's card: its prompt (or "What's under box 2?") and the box's label.
@@ -1102,11 +1106,31 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
       explaining[cardId] = true; explainErr[cardId] = ''; explainPro[cardId] = false; changed();
       try {
         const r = await fetch('/api/explain', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cardId, question: question || '' }) }), j = await r.json().catch(() => ({}));
-        if (r.ok) { (c.group && c.kind === 'cloze' ? S.cards.filter(x => x.group === c.group) : [c]).forEach(x => { x.explain = { text: j.text, by: 'Lucida' }; }); aiLeftToday = j.free ? j.left : null; }
-        else { explainErr[cardId] = j.error || 'Something went wrong. Try again.'; explainPro[cardId] = !!j.pro; }
+        if (r.ok) { (c.group && c.kind === 'cloze' ? S.cards.filter(x => x.group === c.group) : [c]).forEach(x => { x.explain = { text: j.text, by: 'Lucida' }; }); aiLeftToday = j.free ? j.left : null; if ('limit' in j) S.explainLimit = j.limit || null; }
+        else { explainErr[cardId] = j.error || 'Something went wrong. Try again.'; explainPro[cardId] = !!j.pro; if (r.status === 402) S.explainLimit = { text: explainErr[cardId], goPro: !!j.pro }; }
       } catch { explainErr[cardId] = 'Couldn’t reach Lucida. Try again.'; }
       explaining[cardId] = false; changed();
     },
+    // A question about a card in Explain (`question`: how Learn mode or the test asked the card). It shows at once, waiting for its answer;
+    // the answer, or what went wrong, comes in under it. Each one is one of the day's explanations; when they're used up the question goes
+    // and the composer shows the server's words instead. The conversation so far goes with it, and nothing is kept: closing Explain clears it.
+    followUp: async (cardId, q, question) => {
+      const c = S.cards.find(x => x.id === cardId), words = String(q || '').trim().slice(0, 500);
+      if (!c || !words || (chats[cardId] || []).some(t => t.busy)) return;
+      const turns = (chats[cardId] || []).filter(t => t.a).map(t => ({ q: t.q, a: t.a })), turn = { q: words, a: '', busy: true, error: '' };
+      chats[cardId] = [...(chats[cardId] || []), turn]; changed();
+      let r = null, j = {};
+      try { r = await fetch('/api/explain/ask', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cardId, q: words, turns, question: question || '' }) }); j = await r.json().catch(() => ({})); }
+      catch { r = null; }
+      // (closed meanwhile: the answer has nowhere to go)
+      if (!(chats[cardId] || []).includes(turn)) return;
+      if (r && r.ok && j.text) { turn.a = String(j.text); aiLeftToday = j.free ? j.left : null; if ('limit' in j) S.explainLimit = j.limit || null; }
+      else if (r && r.status === 402) { chats[cardId] = chats[cardId].filter(t => t !== turn); S.explainLimit = { text: j.error || 'That’s today’s free explanations.', goPro: !!j.pro }; }
+      else turn.error = r ? j.error || 'Something went wrong. Try again.' : 'Couldn’t reach Lucida. Try again.';
+      turn.busy = false; chats[cardId] = [...chats[cardId]]; changed();
+    },
+    // Closing Explain (or the next card coming up) forgets its conversation.
+    followUpClear: cardId => { if (!chats[cardId]) return; delete chats[cardId]; changed(); },
     // Goes to a page of the app (a screen that finishes something, like the Guide's Done).
     go: (path, replace) => go(path, replace),
     // The Guide: saved as it's typed (the screen holds the typing; `quiet` so a failed save shows in the page, not as an alert), its extra pages, and

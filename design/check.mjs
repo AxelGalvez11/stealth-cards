@@ -32,7 +32,10 @@ const PROP_SETS = [
   { deckId: '' }, { pickItem: 'ai' }, { pickItem: 'g1' }, { noSuggestions: true, aiWaiting: false },
   { someoneElse: true, openVersion: 14 }, { openVersion: 12, confirmVersion: 12 }, { openVersion: 9 },
   // Explain open: beside a flashcard or a Learn question on a computer, under it on a phone.
-  { startRevealed: true, explainOpen: true, explained: true }, { answered: true, explainOpen: true }, { explainOpen: true, dark: true, startRevealed: true }
+  { startRevealed: true, explainOpen: true, explained: true }, { answered: true, explainOpen: true }, { explainOpen: true, dark: true, startRevealed: true },
+  // and a question asked about the card (design/chat.mjs): the sample answered, something typed, a question asked on the canvas, dark.
+  { startRevealed: true, explainOpen: true, explained: true, followUp: true }, { answered: true, explainOpen: true, followUp: true }, { explainOpen: true, followUp: true, dark: true, startRevealed: true, explained: true },
+  { startRevealed: true, explainOpen: true, explained: true, $state: { chatDraft: { x: 'And why?' }, chatMock: { x: [{ q: 'And why?', a: 'Because.' }] } } }
 ];
 // The study network's pages: loading, signed out, nothing yet, not found, someone else's profile (followed or not),
 // a profile's tabs, Edit profile (with a handle someone has, or one that can't be a handle), and a deck's ⋯ menu.
@@ -108,7 +111,10 @@ PROP_SETS.push({ screen: 'Set up' }, { screen: 'Multiple choice' }, { screen: 'T
   { screen: 'Results' }, { screen: 'Results · missed' }, { screen: 'Multiple choice', timed: false }, { screen: 'Matching', dark: true, dim: true }, { screen: 'Results', dark: true }, { screen: 'Submit', dark: true },
   { screen: 'Multiple choice', $state: { sheet: true } }, { screen: 'Results', $state: { exOpen: { 3: true }, exOn: { 3: true } } }, { screen: 'Results', $state: { counted: { 18: true } } },
   { screen: 'Set up', $state: { kinds: ['mc'], count: 10, limit: 20 } }, { screen: 'Set up', folderId: 'f1' }, { screen: 'Set up', dark: true, dim: true }, { screen: 'Written', $state: { m: { type: '' } } },
-  { screen: 'Matching', $state: { m: { match: { 0: 1, 1: 3, 2: 4, 3: 0, 4: 2 } } } });
+  { screen: 'Matching', $state: { m: { match: { 0: 1, 1: 3, 2: 4, 3: 0, 4: 2 } } } },
+  // a question's explanation open, with a question asked about it (design/chat.mjs), light and dark, and one typed on the canvas
+  { screen: 'Results', explainOpen: true }, { screen: 'Results', explainOpen: true, followUp: true }, { screen: 'Results', explainOpen: true, followUp: true, dark: true },
+  { screen: 'Results', explainOpen: true, $state: { chatDraft: { r3: 'Why?' }, chatMock: { r3: [{ q: 'Why?', a: 'Because.' }] } } });
 
 // The questions that ask before a delete (Lucida's own dialog, design/ui.mjs): each one open, light, dark and gray.
 for (const ask of Object.keys(ASK_SAMPLES)) PROP_SETS.push({ ask }, { ask, dark: true }, { ask, dark: true, dim: true });

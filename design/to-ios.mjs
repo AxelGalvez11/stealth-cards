@@ -8,6 +8,7 @@ import { WALL_CARDS } from './wall.mjs';
 import { SAMPLE, SAMPLE_WAVE, SAMPLE_INSIGHTS } from './mock.mjs';
 import { NET_SAMPLE } from './net-sample.mjs';
 import { TEST_SAMPLE } from './test-boards.mjs';
+import { CHAT_SAMPLE } from './chat.mjs';
 import { G_LOGO, APPLE_LOGO } from './logos.mjs';
 import { THEMES } from '../web/themes/index.js';
 import { PLAN_PRO_PHONE } from './site.mjs';
@@ -130,6 +131,10 @@ ${Object.entries(logos).map(([k, v]) => `    ${str(k)}: (${str(v.vb)}, [${v.path
 
   /// The practice test's sample (design/test-boards.mjs TEST_SAMPLE): its questions, answers, and results, for the design screens.
   static let testSampleJSON = ${str(JSON.stringify(TEST_SAMPLE))}
+
+  /// One question asked about a card in Explain and its answer, for each design screen that shows one (design/chat.mjs CHAT_SAMPLE: review, learn,
+  /// type, test).
+  static let chatSample: [String: (q: String, a: String)] = [${Object.entries(CHAT_SAMPLE).map(([k, v]) => `${str(k)}: (${str(v.q)}, ${str(v.a)})`).join(', ')}]
 
   /// The themes (web/themes/index.js), in the order Settings › Theme shows them: key, the name of its boards, its name, and its short name.
   static let themes: [(key: String, board: String, name: String, short: String)] = [

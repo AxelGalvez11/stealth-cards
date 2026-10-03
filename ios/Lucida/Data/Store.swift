@@ -71,8 +71,10 @@ struct DemoProps {
   /// The card editor: which kind of card, and whether you're typing (the keyboard is up).
   var cardType = "Basic"
   var editorTyping = false
-  /// Review with the AI's explanation open (PhoneReviewExplain).
+  /// Review with the AI's explanation open (PhoneReviewExplain; `-explainOpen` on Learn and the practice test's results too), and a question
+  /// asked about the card and answered (PhoneReviewExplainAsk, `-followUp`: the canvas boards' followUp Tweak).
   var explainOpen = false
+  var followUp = false
   /// The Library with its New folder popup open, this name typed (PhoneLibraryNewFolder).
   var naming: String? = nil
   /// Learn mode with its settings open (PhoneQuizSettings).
@@ -178,6 +180,8 @@ final class Store: ObservableObject {
   @Published var explaining: Set<String> = []
   @Published var explainErr: [String: (error: String, pro: Bool)] = [:]
   @Published var aiLeftToday: Int? = nil
+  /// The questions asked about a card while its explanation is open, by card (Screens/Explain.swift): never saved, and gone when it closes.
+  @Published var chats: [String: [ChatTurn]] = [:]
   /// Signing in: the email a code went to, and which page is showing.
   enum SignInStep { case email, code }
   @Published var signInStep: SignInStep = .email

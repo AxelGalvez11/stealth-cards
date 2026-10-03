@@ -7,6 +7,8 @@
 // timer is a quiet number; nothing says right or wrong until you submit. Motion is quick and subtle (a question slides in 6 px), and
 // off with Reduce Motion. Dark and gray (Tweaks) look like the neighbors'.
 // The canvas's sample test (also copied into the iPhone app by design/to-ios.mjs, for its design screens).
+import { CHAT_SAMPLE, chatMarkup, CHAT_CSS, CHAT_JS, CHAT_METHOD } from './chat.mjs';
+
 export const TEST_SAMPLE = {
   name: 'Cell Biology', cards: 412, n: 20, answered: [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14], flagged: [5, 12], at: { mc: 3, tf: 10, blank: 13, match: 15, type: 18, submit: 20 },
   mc: ['Which organelle packages proteins for secretion?', ['Golgi apparatus', 'Lysosome', 'Nucleus', 'Ribosome']],
@@ -36,8 +38,10 @@ export default function testKit(c) {
   // (OCC_JS, OCC_BOXES, and CELL are read when a board is made, not now: build.mjs defines them further down.)
   const { svg, I, FONT, MONO, DB_JS, T } = c;
   const SCREENS = ['Set up', 'Multiple choice', 'True or false', 'Fill in the blank', 'Written', 'Matching', 'Submit', 'Leave', 'Results', 'Results · missed'];
-  const props = { dark: { editor: 'boolean', default: false }, dim: { editor: 'boolean', default: false }, screen: { editor: 'enum', default: 'Set up', options: SCREENS }, timed: { editor: 'boolean', default: true } };
-  const css = '@keyframes scTA{from{opacity:0;transform:translateY(6px)}}@keyframes scTB{from{opacity:0;transform:translateY(6px)}}'
+  // (explainOpen: the results' question 3 with its explanation open; followUp: a question asked about it, and answered: design/chat.mjs)
+  const props = { dark: { editor: 'boolean', default: false }, dim: { editor: 'boolean', default: false }, screen: { editor: 'enum', default: 'Set up', options: SCREENS }, timed: { editor: 'boolean', default: true },
+    explainOpen: { editor: 'boolean', default: false }, followUp: { editor: 'boolean', default: false } };
+  const css = CHAT_CSS + '@keyframes scTA{from{opacity:0;transform:translateY(6px)}}@keyframes scTB{from{opacity:0;transform:translateY(6px)}}'
     + '.sc-topt{transition:background-color .15s,box-shadow .15s,opacity .15s}.sc-tdot{transition:background-color .15s,color .15s,box-shadow .15s}.sc-tnum{transition:background-color .15s,color .15s}'
     + '.sc-tfield:focus{box-shadow:inset 0 0 0 2px var(--tf,currentColor)!important;outline:0}'
     + '@media (prefers-reduced-motion:reduce){.sc-tq,.sc-topt,.sc-tdot,.sc-tnum,.sc-sheet,.sc-scrim{animation:none!important;transition:none!important}}';
@@ -141,15 +145,20 @@ export default function testKit(c) {
   // ---------- Results ----------
   const mark = `<span style="width: 28px; height: 28px; flex-shrink: 0; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: {{r.markBg}}; color: {{r.markFg}};"><sc-if value="{{r.ok}}" hint-placeholder-val="{{ true }}">${svg(I.check, 15, 2.6)}</sc-if><sc-if value="{{r.bad}}" hint-placeholder-val="{{ false }}">${svg(I.close, 13, 2.6)}</sc-if></span>`;
   const answerLine = (label, value, color = '{{t.text}}') => `<div style="display: flex; gap: 12px; font-size: 15px; line-height: 1.4;"><span style="width: 104px; flex-shrink: 0; color: {{t.muted}};">${label}</span><span style="flex-grow: 1; min-width: 0; color: ${color}; font-weight: 500; overflow-wrap: anywhere;">${value}</span></div>`;
-  const row = phone => `<div data-q="{{r.n}}" style="box-sizing: border-box; padding: ${phone ? '16px' : '20px 24px'}; border-radius: ${phone ? 20 : 24}px; border: 1px solid {{t.line}}; display: flex; flex-direction: column; gap: ${phone ? 10 : 12}px;">
+  // Each explanation ends with the conversation about its question and the composer (design/chat.mjs), in the test's colors.
+  const chat = phone => chatMarkup({ svg, I }, 'r.chat', { text: '{{t.text}}', muted: '{{t.muted}}', bubble: '{{t.bg}}', field: '{{t.bg}}', again: '{{t.again}}', btn: '{{t.inv}}', btnFg: '{{t.invText}}' }, { phone, fs: 15, gap: 6, pad: 16 });
+  const row = phone => `<div data-q="{{r.n}}" ref="{{r.peek}}" style="box-sizing: border-box; padding: ${phone ? '16px' : '20px 24px'}; border-radius: ${phone ? 20 : 24}px; border: 1px solid {{t.line}}; display: flex; flex-direction: column; gap: ${phone ? 10 : 12}px;">
       <div style="display: flex; align-items: center; gap: 12px;"><span style="font-size: 13px; font-weight: 600; color: {{t.muted}}; flex-grow: 1;">{{r.n}} · {{r.kindLabel}}</span>${mark}</div>
       <sc-if value="{{r.hasText}}" hint-placeholder-val="{{ true }}"><div style="font-size: ${phone ? 16 : 17}px; font-weight: 600; line-height: 1.35;">{{r.q}}</div></sc-if>
       <sc-if value="{{r.hasClaim}}" hint-placeholder-val="{{ false }}"><div style="padding: 12px 14px; border-radius: 14px; background: {{t.surf}}; font-size: 15px; font-weight: 600; line-height: 1.35;">{{r.claim}}</div></sc-if>
       <sc-if value="{{r.isPairs}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 8px;"><sc-for list="{{r.pairs}}" as="p" hint-placeholder-count="4"><div style="display: flex; align-items: flex-start; gap: 10px; font-size: 15px; line-height: 1.4;"><span style="width: 20px; height: 20px; margin-top: 1px; flex-shrink: 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: {{p.markBg}}; color: {{p.markFg}};"><sc-if value="{{p.ok}}" hint-placeholder-val="{{ true }}">${svg(I.check, 11, 3)}</sc-if><sc-if value="{{p.bad}}" hint-placeholder-val="{{ false }}">${svg(I.close, 10, 3)}</sc-if></span><span style="flex-grow: 1; min-width: 0;"><span style="font-weight: 600;">{{p.q}}</span> <span style="color: {{t.muted}};">→</span> <span>{{p.a}}</span><sc-if value="{{p.bad}}" hint-placeholder-val="{{ false }}"><span style="display: block; color: {{t.muted}};">Right answer: <span style="color: {{t.text}}; font-weight: 500;">{{p.r}}</span></span></sc-if></span></div></sc-for></div></sc-if>
       <sc-if value="{{r.isSingle}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 6px;">${answerLine('Your answer', '{{r.a}}', '{{r.aColor}}')}<sc-if value="{{r.bad}}" hint-placeholder-val="{{ false }}">${answerLine('Right answer', '{{r.r}}')}</sc-if></div></sc-if>
       <sc-if value="{{r.hasActions}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-wrap: wrap; gap: 8px;"><sc-if value="{{r.canCount}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{r.count}}" class="sc-press" style="height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">Count it as right</button></sc-if><sc-if value="{{r.canExplain}}" hint-placeholder-val="{{ false }}"><sc-if value="{{r.exClosed}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{r.ask}}" class="sc-press" style="height: 34px; padding: 0 14px 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">${svg(I.sparkle, 14, 2)}{{r.exLabel}}</button></sc-if></sc-if></div></sc-if>
-      <sc-if value="{{r.exOpen}}" hint-placeholder-val="{{ false }}"><div role="region" aria-label="Explanation" class="sc-tq" style="box-sizing: border-box; padding: 14px 16px; border-radius: 16px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 6px; animation: scTA .2s cubic-bezier(.2,.8,.2,1) both;"><div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: {{t.muted}};">${svg(I.sparkle, 13, 2)}<span style="flex-grow: 1;">Explained by AI</span><button type="button" onClick="{{r.closeEx}}" aria-label="Close the explanation" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: {{t.bg}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.4)}</button></div>
-        <sc-if value="{{r.exBusy}}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px; color: {{t.muted}};">Thinking…</span></sc-if><sc-if value="{{r.exText}}" hint-placeholder-val="{{ true }}"><span style="font-size: 15px; line-height: 1.5;">{{r.exText}}</span></sc-if><sc-if value="{{r.exError}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; line-height: 1.4; color: {{t.again}};">{{r.exError}}</span></sc-if></div></sc-if>
+      <sc-if value="{{r.exOpen}}" hint-placeholder-val="{{ false }}"><div role="region" aria-label="Explanation" class="sc-tq" style="box-sizing: border-box; border-radius: 16px; background: {{t.surf}}; display: flex; flex-direction: column; overflow: hidden; animation: scTA .2s cubic-bezier(.2,.8,.2,1) both;"><div style="flex-shrink: 0; padding: 14px 16px 0; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: {{t.muted}};">${svg(I.sparkle, 13, 2)}<span style="flex-grow: 1;">Explained by AI</span><button type="button" onClick="{{r.closeEx}}" aria-label="Close the explanation" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: {{t.bg}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.4)}</button></div>
+        <div ref="{{r.chat.end}}" style="box-sizing: border-box; padding: 6px 16px; display: flex; flex-direction: column; gap: 6px;"><sc-if value="{{r.exBusy}}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px; color: {{t.muted}};">Thinking…</span></sc-if><sc-if value="{{r.exText}}" hint-placeholder-val="{{ true }}"><span style="font-size: 15px; line-height: 1.5;">{{r.exText}}</span></sc-if><sc-if value="{{r.exError}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; line-height: 1.4; color: {{t.again}};">{{r.exError}}</span></sc-if>
+        ${chat(phone).turns}
+        <sc-if value="{{r.hasNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: {{t.muted}};">{{r.note}}</span></sc-if></div>
+        ${chat(phone).composer}</div></sc-if>
     </div>`;
   const summaryButtons = `<sc-if value="{{hasMissed}}" hint-placeholder-val="{{ true }}">${btn('Retake the ones I missed', 'retake', { inv: true })}${btn('Study the missed cards now', 'study', { bg: '{{t.bg}}' })}</sc-if><sc-if value="{{noMissed}}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">Every question was right.</span></sc-if>`;
   const filter = `<div role="group" aria-label="Show" style="display: flex; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{filters}}" as="o" hint-placeholder-count="2"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: background-color .15s, color .15s;">{{o.label}}</button></sc-for></div>`;
@@ -191,8 +200,10 @@ export default function testKit(c) {
 
   const logic = phone => `
 constructor(props) { super(props); this.state = {}; }
+${CHAT_METHOD}
 renderVals() { ${DB_JS}
   ${T}
+  ${CHAT_JS}
   ${c.OCC_JS}
   const P = this.props, s = this.state, mock = !!db.mock, live = !mock, X = ${JSON.stringify(SAMPLE)};
   const scope = P.folderId ? { folderId: P.folderId } : { deckId: P.deckId || '' };
@@ -297,7 +308,7 @@ renderVals() { ${DB_JS}
       const counted = s.counted || {}, ok = n => !X.wrong.includes(n) || !!counted[n];
       const rows = X.rows.map((r, j) => { const n = j + 1, pairs = r[5] ? r[5].map(p => ({ q: p[0], a: p[1], r: p[2], ok: p[1] === p[2] })) : null, bad = !ok(n);
         return { n, k: r[0], kindLabel: { mc: 'Multiple choice', tf: 'True or false', blank: 'Fill in the blank', match: 'Matching', type: 'Written' }[r[0]], q: r[1], claim: r[2], a: r[3], r: r[4], ok: !bad, counted: !!counted[n], pairs, notAnswered: !r[3] && !pairs,
-          canCount: r[0] === 'type' && bad && !!r[3], ex: { on: n === 3, text: (s.exOn || {})[n] ? X.explain : '' } }; });
+          canCount: r[0] === 'type' && bad && !!r[3], ex: { on: n === 3, text: (s.exOn || {})[n] || (P.explainOpen && n === 3) ? X.explain : '', note: (s.exOn || {})[n] || (P.explainOpen && n === 3) ? '2 free explanations left today' : '' } }; });
       const right = rows.filter(r => r.ok).length;
       R = { phase: 'results', name: X.name, n: 20, right, pct: Math.round(right / 20 * 100), tookLabel: '14:32', timeUp: false, missed: 20 - right, rows };
     }
@@ -307,15 +318,22 @@ renderVals() { ${DB_JS}
     name: R.name, pct: R.pct, right: R.right, n: R.n, tookLabel: R.tookLabel, timeUp: !!R.timeUp, hasMissed: R.missed > 0, noMissed: R.missed === 0,
     filters: [['all', 'All ' + R.n], ['missed', 'Missed ' + R.missed]].map(([k, label]) => ({ label, ...seg((k === 'missed') === onlyMissed), pick: () => this.setState({ only: k }) })),
     rows: R.rows.filter(r => !onlyMissed || !r.ok).map(r => {
-      const open = !!(s.exOpen || {})[r.n], ex = r.ex || { on: false };
+      const opened = (s.exOpen || {})[r.n], open = opened != null ? !!opened : mock && !!P.explainOpen && r.n === 3, ex = r.ex || { on: false };
+      // The conversation about this question (design/chat.mjs): closing its explanation forgets it.
+      const chat = chatView('r' + r.n, r.card || 'q' + r.n, r.q, ex, { show: open && !!ex.on && !!ex.text && !ex.busy, sample: ${JSON.stringify(CHAT_SAMPLE.test)}, asked: !!P.followUp && r.n === 3,
+        pal: { on: t.inv, onFg: t.invText, off: t.surf2, offFg: t.muted }, phone: ${phone}, proHref: mock ? 'Pricing.dc.html' : 'https://lucida.cards/pricing' });
       return { n: r.n, kindLabel: r.kindLabel, ok: r.ok, bad: !r.ok, markBg: r.ok ? t.goodTint : t.againTint, markFg: r.ok ? t.good : t.again,
         hasText: !!r.q && !(r.k === 'tf' && r.q === 'True or false?' && r.claim), q: r.q, hasClaim: !!r.claim, claim: r.claim || '', isPairs: !!r.pairs, isSingle: !r.pairs, a: r.a || 'No answer', aColor: r.a ? t.text : t.muted, r: r.r,
         pairs: (r.pairs || []).map(p => ({ q: p.q, a: p.a || 'No answer', r: p.r, ok: p.ok, bad: !p.ok, markBg: p.ok ? t.goodTint : t.againTint, markFg: p.ok ? t.good : t.again })),
         canCount: !!r.canCount, count: () => { if (live) db.act.testCount(r.n); else this.setState({ counted: { ...(s.counted || {}), [r.n]: true } }); },
         canExplain: !!ex.on && !r.pairs, exClosed: !open, exLabel: ex.text ? 'Explanation' : 'Explain', hasActions: !!r.canCount || (!!ex.on && !r.pairs),
         ask: () => { this.setState({ exOpen: { ...(s.exOpen || {}), [r.n]: true } }); if (mock) this.setState({ exOn: { ...(s.exOn || {}), [r.n]: true } }); else if (!ex.text && r.card) db.act.explain(r.card, r.q); },
-        closeEx: () => this.setState({ exOpen: { ...(s.exOpen || {}), [r.n]: false } }),
-        exOpen: open && !!ex.on, exBusy: !!ex.busy, exText: ex.busy ? '' : ex.text || '', exError: ex.busy ? '' : ex.error || '' };
+        closeEx: () => { const k = 'r' + r.n; this.setState({ exOpen: { ...(this.state.exOpen || {}), [r.n]: false }, chatDraft: { ...(this.state.chatDraft || {}), [k]: '' }, chatMock: { ...(this.state.chatMock || {}), [k]: [] } }); if (live && r.card) db.act.followUpClear(r.card); },
+        exOpen: open && !!ex.on, exBusy: !!ex.busy, exText: ex.busy ? '' : ex.text || '', exError: ex.busy ? '' : ex.error || '',
+        hasNote: !!ex.note && !!ex.text && !ex.busy && !chat.limited, note: ex.note || '', chat,
+        // (on the canvas, the explanationOpen Tweak brings question 3 into view: its list scrolls there once, as a press on Explain would)
+        peek: el => { if (!el || !mock || !P.explainOpen || r.n !== 3 || this.peeked === el) return; this.peeked = el;
+          for (let p = el.parentElement; p; p = p.parentElement) if (/auto|scroll/.test(getComputedStyle(p).overflowY)) { p.scrollTop = el.getBoundingClientRect().top - p.getBoundingClientRect().top + p.scrollTop - 16; break; } } };
     }),
     retake: () => { if (live) db.act.testRetake(); else go('Multiple choice'); }, study: () => { if (live) db.act.testStudy(); },
     done: () => { if (live) Promise.resolve(db.act.go(R.back)).then(() => db.act.testLeave()); else go('Set up'); }

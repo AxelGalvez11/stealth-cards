@@ -9,6 +9,8 @@ export const UPDATED = 'October 1, 2026';
 
 export const PRIVACY = {
   title: 'Privacy Policy',
+  // (Explain's follow-up questions go to OpenRouter too, 2026-10-03.)
+  updated: 'October 3, 2026',
   intro: 'Lucida is a flashcard app that your AI apps can connect to. This page explains what we keep, why, and what you can do about it. We don’t sell your data and we don’t show ads.',
   sections: [
     { h: 'What we keep', body: [
@@ -47,7 +49,7 @@ export const PRIVACY = {
         'Supabase stores your account, cards, pictures, and sounds, in the United States.',
         'Resend sends our emails.',
         'Stripe takes payments for Pro on the web, and Apple for Pro bought in the iPhone app.',
-        'When you ask Lucida to explain an answer, or Learn mode asks it to write quiz questions, the card’s text goes to OpenRouter, which passes it to an AI model that writes the explanation or the questions.',
+        'When you ask Lucida to explain an answer, or Learn mode asks it to write quiz questions, the card’s text, and any question you ask about it, goes to OpenRouter, which passes it to an AI model that writes the explanation, the answer or the questions. The questions you ask aren’t kept: they’re sent with that one request and nothing of the conversation is stored.',
         'When you ask Lucida to make cards (or live questions) from a file, pictures, a recording, pasted text or a topic, what the AI needs goes to OpenRouter, which passes it to an AI model that writes them: the text Lucida pulled out of your file, your pictures or scanned pages, or your topic. A recording goes first to a speech-to-text model, which turns it into text. We ask for services that say they don’t keep what they’re sent or train on it. They see only what you chose to make cards from, never your other cards.',
         'When Lucida looks for diagrams in a file you made cards from (slides, a PDF, a Word file or photos), the pictures in it go to OpenRouter, which passes them to an AI model that says which are diagrams worth studying and reads the words written in them. Logos and tiny or thin pictures are left out before anything is sent, and only the biggest few of a file’s pictures go (8 on Free, 40 on Pro). The diagrams it finds, and pictures you upload as diagrams, are kept in your own private storage and shown only to you, like a Source: never on a shared deck. A picture you upload goes to the AI, the same way, only when you ask for cards from it, to read its labels.',
         'When you ask Lucida to make a table or a mind map, the words of your cards, and of your notes (or only of the tag or source you chose), go to OpenRouter, which passes them to an AI model that writes it. A table or a mind map is shared with its deck, so it shows on the deck’s page if you share the deck.',

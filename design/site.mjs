@@ -22,7 +22,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { join, relative } from 'node:path';
-import { CONTACT, UPDATED as LEGAL_UPDATED } from './legal.mjs';
+import { CONTACT, PRIVACY, UPDATED as LEGAL_UPDATED } from './legal.mjs';
 import { MAKE } from '../web/plans.mjs';
 
 export const ORIGIN = 'https://lucida.cards', APP = 'https://app.lucida.cards', NAME = 'Lucida', EMAIL = CONTACT;
@@ -66,7 +66,7 @@ export const FIXED = [
     title: 'Lucida · Flashcards your AI can make', description: 'Ask Claude or ChatGPT to turn a lecture into flashcards. Lucida keeps them in your decks and brings each one back right before you’d forget it.' },
   { slug: 'pricing', kind: 'pricing', board: 'Pricing', file: 'pricing.html', updated: '2026-09-29', crumb: 'Pricing', h1: 'Simple pricing.',
     title: 'Lucida pricing: free, or Pro at $' + PRICE.monthly + ' a month', description: 'Lucida is free: unlimited decks and cards, Learn mode and sharing. Pro adds Stats, exam dates, themes and unlimited pictures and sounds.' },
-  { slug: 'privacy', kind: 'legal', board: 'Privacy', file: 'privacy.html', updated: iso(LEGAL_UPDATED), crumb: 'Privacy', h1: 'Privacy Policy',
+  { slug: 'privacy', kind: 'legal', board: 'Privacy', file: 'privacy.html', updated: iso(PRIVACY.updated || LEGAL_UPDATED), crumb: 'Privacy', h1: 'Privacy Policy',
     title: 'Privacy Policy · Lucida', description: 'What Lucida keeps, why we keep it, who helps us run it, and how you can export or delete your data.' },
   { slug: 'terms', kind: 'legal', board: 'Terms', file: 'terms.html', updated: iso(LEGAL_UPDATED), crumb: 'Terms', h1: 'Terms of Service',
     title: 'Terms of Service · Lucida', description: 'The terms for using Lucida, on the website at lucida.cards and in the app at app.lucida.cards: your account, your cards and fair use.' },
