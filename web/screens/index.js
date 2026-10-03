@@ -259,6 +259,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneDeckNotes",
+  "title": "iPhone · Deck page · Notes tab",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneDeckSettings",
   "title": "iPhone · Deck settings",
   "w": 390,
@@ -1869,6 +1875,12 @@ export default [
  {
   "name": "WebDeckMoveTray",
   "title": "Web · Deck · Move to tray (while a card is dragged)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebDeckNotes",
+  "title": "Web · Deck page · Notes tab",
   "w": 1440,
   "h": 900
  },
