@@ -2,10 +2,10 @@
   "slug": "vs/knowt",
   "kind": "compare",
   "title": "Lucida vs Knowt: flashcard apps compared (2026)",
-  "description": "Lucida vs Knowt: price, AI, spaced repetition, import, classes and games, with sources. Knowt adds AI notes and a tutor. Lucida has no ads and easy export.",
+  "description": "Lucida vs Knowt: price, AI, spaced repetition, import, sharing and games, with sources. Knowt adds AI notes and a tutor. Lucida has no ads and easy export.",
   "h1": "Lucida vs Knowt",
   "lead": "Knowt has AI built in (note summarizers, a tutor, exam prep), but its free plan limits the AI and shows ads. Lucida has no ads, makes cards from your files itself and lets your own AI (Claude, ChatGPT) make them too, so pick Knowt for one-stop AI and a big library, and Lucida for FSRS reviews, export and free live games.",
-  "updated": "2026-10-01",
+  "updated": "2026-10-02",
   "published": "2026-09-30",
   "table": {
     "columns": [
@@ -55,14 +55,9 @@
         "Millions of public sets, notes and exam resources (its plans page says 5 million). Share sets and collaborate live."
       ],
       [
-        "Classes",
-        "Make a class with a join code, assign decks by a date, and see progress that students choose to share. Free.",
-        "Teachers make classes, assign sets and see each student’s time in every study mode and mastery per card. AI on teacher-shared material is free for students."
-      ],
-      [
         "Games",
         "Live: play a deck with up to 60 friends on their phones. They join with a code or QR, no account. Free.",
-        "Knowt Play: a live class game. Players join at knowt.com/join with a 6-digit code, no sign-in needed. Five modes: Classic, Race, Clash, Blitz and Survival."
+        "Knowt Play: a live game for students. Players join at knowt.com/join with a 6-digit code, no sign-in needed. Five modes: Classic, Race, Clash, Blitz and Survival."
       ],
       [
         "Works offline",
@@ -92,7 +87,7 @@
         "**Exam prep.** Full access to AP, SAT and ACT prep is part of Ultra, and the free plan includes one full-length mock exam.",
         "**Knowt Play.** Five live game modes (Classic, Race, Clash, Blitz and Survival) with short-answer questions as well as multiple choice.",
         "**Notes and cards together,** and a library of millions of public sets and notes.",
-        "**Teacher tools.** Teachers assign sets, turn a set into a live game, and see each student’s time in every study mode and mastery per card. Lucida shows a teacher how far each student is on an assignment and when they last studied, and only if the student chooses to share it."
+        "**Teacher tools.** Teachers assign sets, turn a set into a live game, and see each student’s time in every study mode and mastery per card. Lucida has no assignments or per-student reports."
       ]
     },
     {
@@ -116,7 +111,7 @@
     {
       "h2": "Who should pick which",
       "bullets": [
-        "**Pick Knowt** if you want more AI built in, phone apps, AP, SAT or ACT prep, or a class game with several modes.",
+        "**Pick Knowt** if you want more AI built in, phone apps, AP, SAT or ACT prep, or a live game with several modes.",
         "**Pick Lucida** if you want no ads, FSRS reviews, easy export, and cards made from your files or by your own AI."
       ]
     },
@@ -154,7 +149,7 @@
     },
     {
       "q": "Does Knowt have live games like Kahoot?",
-      "a": "Yes. Knowt Play turns flashcards, notes or assessments into a live class game. Students join at knowt.com/join with a 6-digit code. Lucida’s Live is similar for flashcards: up to 60 friends join on their phones with a code, free."
+      "a": "Yes. Knowt Play turns flashcards, notes or assessments into a live game for students. Students join at knowt.com/join with a 6-digit code. Lucida’s Live is similar for flashcards: up to 60 friends join on their phones with a code, free."
     },
     {
       "q": "Does Knowt work offline?",

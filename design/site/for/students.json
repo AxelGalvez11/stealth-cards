@@ -5,7 +5,7 @@
   "description": "Turn lectures into flashcards with Lucida or your own AI, review on an FSRS schedule, quiz yourself in Learn mode and study with friends. Free to start.",
   "h1": "Lucida for students",
   "lead": "Lucida is a free flashcard app that makes cards from your lectures and notes (or lets your own AI do it), and spaced repetition brings each card back just before you’d forget it, so a few minutes a day add up. Start with one deck for your next exam, then add Learn mode quizzes, friends’ decks and live games when you want them.",
-  "updated": "2026-10-01",
+  "updated": "2026-10-02",
   "table": {
     "columns": [
       "",
@@ -39,7 +39,7 @@
         "Same"
       ],
       [
-        "Shared decks, classes and live games",
+        "Shared decks and live games",
         "Yes",
         "Adds stats on the hardest cards in decks you share"
       ],
@@ -64,7 +64,7 @@
     {
       "h2": "A plan for your next exam, step by step",
       "bullets": [
-        "**1. Make one deck for the exam.** Name it after the class. Add tags for topics, like Week 3 or Enzymes. Tags give you Learn mode sets and, on Pro, weak-topic stats.",
+        "**1. Make one deck for the exam.** Name it after the course. Add tags for topics, like Week 3 or Enzymes. Tags give you Learn mode sets and, on Pro, weak-topic stats.",
         "**2. Get the cards in.** Choose Make cards and add your notes, slides, a PDF, pictures or a recording, ask your own AI (Claude, ChatGPT or Cursor) to make them, import them from Quizlet, Anki or a CSV file, or type them. A fill-in-the-blank card is the quickest way to turn a sentence from your notes into a card.",
         "**3. Learn them.** Start with [Learn mode](/features/learn-mode). It asks several ways until you’ve got each card right twice in a row, then hands new cards to the schedule.",
         "**4. Review a little each day.** Your Library shows what’s due and how long it will take. Try to answer before you flip.",
@@ -84,8 +84,7 @@
       "h2": "Study with friends",
       "bullets": [
         "**Shared decks.** Send a deck by link. Friends study it as it is or make a copy, and they can suggest fixes (see [shared decks](/features/shared-decks)).",
-        "**Live games.** Open a room from a deck and your group joins on their phones with a code and no account (see [live games](/features/live-games)).",
-        "**Classes.** If your teacher makes a class, you join with a code (see [classes](/features/classes))."
+        "**Live games.** Open a room from a deck and your group joins on their phones with a code and no account (see [live games](/features/live-games))."
       ]
     },
     {

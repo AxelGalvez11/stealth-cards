@@ -40,9 +40,6 @@ function network(path, q, P) {
   // A deck's History by its lasting link (a Link only deck has no other address).
   const dh = /^\/d\/(s[a-z0-9]{4,40})\/history$/.exec(path);
   if (dh) return { name: P + 'History', props: { id: dh[1] } };
-  // A class's invite link (web/classes.mjs): anyone can open it, and the people in it see the class.
-  const k = /^\/class\/([A-Za-z]{6})\/?$/.exec(path);
-  if (k) return { name: P + 'Class', props: { code: k[1].toUpperCase() } };
   return null;
 }
 function resolve(path, q) {
@@ -58,6 +55,9 @@ function resolve(path, q) {
     if (!J) return { redirect: '/join' + (jn[2] ? '/' + jn[2] : '') };
     return { name: { answer: 'LiveAnswer', result: 'LiveResult', final: 'LiveFinal', ended: 'LiveEnded' }[J.phase] || 'LiveWaiting' };
   }
+  // The app has no classes now (the owner, 2026-10-02): your classes' old address and a class's invite link open the Library,
+  // without a word (signed out, that's the sign-in page first). The server keeps the classes (web/classes.mjs) for older apps.
+  if (path === '/library/classes' || /^\/class\/[A-Za-z]{6}\/?$/.test(path)) return { redirect: '/library' };
   const net = network(path, q, P);
   // Online and signed out: only the sign-in pages (and the code page once a code is on its way), and the study
   // network's pages anyone can open.
@@ -91,8 +91,8 @@ function resolve(path, q) {
   if (path === '/' || path === '/today') return { redirect: '/library' };
   // The Library (it was called Decks): your folders and decks, one folder, or all your cards. Old /decks links land here.
   if (path === '/decks') return { redirect: '/library' };
-  // Your classes are the Library's third view (web/classes.mjs); /verify opens Get verified over them.
-  if (path === '/library/classes' || path === '/verify') return { name: P + 'Classes', props: { newOpen: q.get('new') === '1', joinOpen: q.get('join') === '1', verifyOpen: path === '/verify' } };
+  // Get verified (teachers and schools) is in Settings › Account: /verify opens it there.
+  if (path === '/verify') return { redirect: '/settings/account?verify=1' };
   // The admin page: verification requests and reports. It's made for a big screen, so phones get it too.
   if (path === '/admin') return { name: 'WebAdmin' };
   // A practice test of a folder's decks (it starts from a sheet over the folder), and a test in progress or finished: /test/<deck id>
@@ -166,7 +166,7 @@ function resolve(path, q) {
   // the others), so Back and links work. A narrow screen shows the list of sections as one page, and each section as a page of its own.
   if (path === '/settings') return { name: P + 'Settings', props: narrow.matches ? { section: 'List' } : { back: settingsFrom || '/library' } };
   const sec = /^\/settings\/(account|plan|studying|appearance|connect-ai|privacy|help)$/.exec(path);
-  if (sec) return sec[1] === 'plan' && !db.plan() ? { redirect: '/settings' } : { name: P + 'Settings', props: { section: sec[1], back: settingsFrom || '/library' } };
+  if (sec) return sec[1] === 'plan' && !db.plan() ? { redirect: '/settings' } : { name: P + 'Settings', props: { section: sec[1], back: settingsFrom || '/library', verifyOpen: sec[1] === 'account' && q.get('verify') === '1' } };
   // Settings › Theme, and each theme's page (where you use it, or Go Pro on Free).
   if (path === '/settings/theme') return narrow.matches ? { name: 'PhoneThemePicker' } : { name: 'ThemePicker', props: { back: settingsFrom || '/library' } };
   const th = /^\/settings\/theme\/([a-z]+)$/.exec(path);
@@ -190,7 +190,7 @@ function linkFor(name) {
     WebDiscover: '/discover', WebActivity: '/activity', WebProfile: '/you', WebSuggestions: id ? '/deck/' + id + '/suggestions' : '/suggestions',
     LiveSetup: id ? '/deck/' + id + '/live' : '/library', LiveJoin: '/join',
     WebMake: '/make', PhoneMake: '/make', WebDeckEmpty: id ? '/deck/' + id : '/library', WebGuide: id ? '/deck/' + id + '/guide' : '/library', PhoneGuide: id ? '/deck/' + id + '/guide' : '/library',
-    WebClasses: '/library/classes', WebClass: current && current.props.code ? '/class/' + current.props.code : '/library/classes', WebAdmin: '/admin' };
+    WebAdmin: '/admin' };
   // Live's screens follow the game (their buttons act on it), so a link to one stays on the game's page.
   if (/^Live/.test(name) && !pages[name]) return current ? current.path : '/';
   return pages[name] || pages[name.replace(/^Phone/, 'Web')] || '/b/' + name;

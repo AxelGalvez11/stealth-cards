@@ -2,10 +2,10 @@
   "slug": "vs/quizlet",
   "kind": "compare",
   "title": "Lucida vs Quizlet: flashcard apps compared (2026)",
-  "description": "Lucida vs Quizlet: what is free, spaced repetition, AI, import, classes and games, with sources. Quizlet has the library. Lucida has free Learn mode.",
+  "description": "Lucida vs Quizlet: what is free, spaced repetition, AI, import, sharing and games, with sources. Quizlet has the library. Lucida has free Learn mode.",
   "h1": "Lucida vs Quizlet",
-  "lead": "Quizlet has the bigger library, phone apps and classroom tools, but its free plan limits Learn and Test. Lucida gives you Learn mode, spaced repetition and live games free, with no ads, and it can make cards from your files, while your own AI (Claude, ChatGPT) can make and edit cards too.",
-  "updated": "2026-10-01",
+  "lead": "Quizlet has the bigger library, phone apps and teacher tools, but its free plan limits Learn and Test. Lucida gives you Learn mode, spaced repetition and live games free, with no ads, and it can make cards from your files, while your own AI (Claude, ChatGPT) can make and edit cards too.",
+  "updated": "2026-10-02",
   "published": "2026-09-30",
   "table": {
     "columns": [
@@ -55,11 +55,6 @@
         "Millions of sets made by students and teachers. Search, share links, copy sets, password-protect. Study Groups hold up to 8 people and work with public sets."
       ],
       [
-        "Classes",
-        "Make a class with a join code, assign decks by a date, and see progress that students choose to share. Free.",
-        "Teachers make classes, add sets and invite students. Class members get free Learn and Test on the class’s sets. Connects to Google Classroom."
-      ],
-      [
         "Games",
         "Live: play a deck with up to 60 friends on their phones. They join with a code or QR, no account. Free.",
         "Match, Blast, Blocks and Classic Quizlet Live (teams or solo, join with a code). A teacher-identified account starts a Live game."
@@ -89,7 +84,7 @@
       "bullets": [
         "**The library.** Search millions of public sets by topic, school or course. Lucida’s library of shared decks is new and much smaller.",
         "**Phone apps.** Quizlet has iPhone, iPad and Android apps, and they can study Flashcards and Match offline. Lucida has no App Store app yet and needs a connection.",
-        "**Classroom tools.** Classes, assignments, Google Classroom, Classic Quizlet Live and teacher plans.",
+        "**Teacher tools.** Assignments, Classic Quizlet Live and teacher plans.",
         "**Extras.** Expert Solutions (step-by-step textbook answers), practice tests and study guides.",
         "**AI inside Quizlet.** Ask Quizlet, Smart Assist and Study Guides, plus an app in ChatGPT and a connector in Claude that build flashcard sets from a chat."
       ]
@@ -113,7 +108,7 @@
         "**Test:** one free practice test per set.",
         "**Study Guides and Practice Tests:** free with limited access.",
         "**Expert Solutions:** high-school level is free, and you get a limited number of college textbook solutions.",
-        "**Class sets:** students in a teacher’s class get free Learn and Test on that class’s sets.",
+        "**Teachers’ students:** students whose teacher invites them get free Learn and Test on the sets their teacher adds.",
         "**Paid only:** diagram sets, rich text, offline studying and an ad-free experience."
       ]
     },
@@ -127,7 +122,7 @@
     {
       "h2": "Who should pick which",
       "bullets": [
-        "**Pick Quizlet** if you want the biggest library of ready-made sets, phone apps with offline study, or classroom tools like Google Classroom.",
+        "**Pick Quizlet** if you want the biggest library of ready-made sets, phone apps with offline study, or teacher tools like assignments and Classic Quizlet Live.",
         "**Pick Lucida** if you want Learn mode, spaced repetition and live games free, no ads, and cards made from your files or by your own AI."
       ]
     },
@@ -145,7 +140,7 @@
     },
     {
       "q": "What is Quizlet’s Learn paywall?",
-      "a": "Quizlet’s help center says Learn is available to Plus and Plus for teachers subscribers, and that without a subscription you can start a free study session to try it. Students in a teacher’s class get free Learn and Test on that class’s sets. Lucida’s Learn mode is free."
+      "a": "Quizlet’s help center says Learn is available to Plus and Plus for teachers subscribers, and that without a subscription you can start a free study session to try it. Students whose teacher invites them get free Learn and Test on the sets their teacher adds. Lucida’s Learn mode is free."
     },
     {
       "q": "How much does Quizlet Plus cost?",
@@ -157,7 +152,7 @@
     },
     {
       "q": "Is Lucida a good Quizlet alternative?",
-      "a": "If you want Learn mode, spaced repetition and live games for free, with no ads and cards made from your files or by your own AI, yes. If you need Quizlet’s huge library, phone apps with offline study or Google Classroom, stay with Quizlet."
+      "a": "If you want Learn mode, spaced repetition and live games for free, with no ads and cards made from your files or by your own AI, yes. If you need Quizlet’s huge library, phone apps with offline study or teacher tools, stay with Quizlet."
     },
     {
       "q": "Can I import my Quizlet sets into Lucida?",

@@ -105,9 +105,6 @@ struct DemoProps {
   /// The sample deck's sharing (the deck page's Tweaks): "Link only" or "Public" (yours, shared), or from Maria:
   /// "study" (as it is) or "copy" (with her changes waiting); and the changes' sheet open.
   var shared = "", linked = "", updatesOpen = false
-  /// The classes boards (their Tweaks): sharing your progress on, a sheet open ("add" or "assign"), Report and Get verified
-  /// open, the New class or Join a class popup open ("new" or "join"), and the Library with assignments from your classes.
-  var classSharing = false, classPanel = "", classReport = false, classVerify = false, classForm = "", assignments = false
   /// Your theme (the Theme boards' `theme`: a key from web/themes/index.js, "lucida" for the app's own look), whether people
   /// who visit your profile see it, and which theme's page is open (PhoneTheme's `sheet`).
   var theme = "lucida", themeProfile = true, themeSheet = "aero"
@@ -147,9 +144,9 @@ final class Store: ObservableObject {
   @Published var demoLearn = DemoLearn()
   /// The practice test on a design screen (TestDemo.swift).
   @Published var demoTest = DemoTest()
-  /// What a design screen changed on the study network (Net.swift), and on a class (Classes.swift).
+  /// What a design screen changed on the study network (Net.swift), and a Get verified request sent on it (VerifyData.swift).
   @Published var demoNet = DemoNet()
-  @Published var demoClass = DemoClass()
+  @Published var demoVerifySent = false
   /// The study network's answers (Net.swift, like web/net.js).
   let netCache = NetCache()
   /// What the sources of your decks said, as it comes (Data/GuideData.swift).

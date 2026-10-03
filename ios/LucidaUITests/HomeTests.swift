@@ -11,7 +11,9 @@
 //      deck there.
 //   4  A brand-new account: the welcome, whose end is the Library: three plain tiles side by side, New deck, Import cards and Connect AI, and no
 //      other words; each opens its page.
-//   5  Assigned: a student's Library lists what the class assigned (so does one with no deck yet), and a row opens the class; the teacher's has none.
+//   5  No Classes (the owner, 2026-10-02: "remove the 'classes' page everywhere"): with a class still on the server (older apps use it), a
+//      student in it, one with no deck yet and its teacher see only Decks and All cards, no Assigned and no class words; the teacher's deck
+//      that's in it is a plain private deck (no Class mark; its Sharing says Private, "Only you.").
 //   6  News is the bell in Discover's header; it opens News, and Back is Discover.
 //   7  A folder's page has nothing to make cards either, and keeps its Practice test.
 // Run it with ios/tools/e2e-home.sh (a fresh server and the stand-in AI). It only runs when LUCIDA_HOME is set.
@@ -187,12 +189,18 @@ final class HomeTests: AppCase {
     check(wait(button(app, "Create deck")), "New deck opens New deck")
   }
 
-  // ---------- 5: Assigned ----------
-  func test5Assigned() throws {
+
+  // ---------- 5: no Classes ----------
+  /// Any word of the classes on screen ("Class", "classes", "Assigned").
+  private func classWords(_ app: XCUIApplication) -> Bool {
+    app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS[c] 'class' OR label CONTAINS[c] 'assigned'")).firstMatch.exists
+  }
+  func test5NoClasses() throws {
     let teacher = "hmt" + run, student = "hms" + run, fresh = "hmn" + run, chapter = "Chapter 3 " + run
     let tid = person(teacher, decks: [(chapter, 3)])[chapter] ?? ""
     _ = person(student, decks: [("My own", 1)])
     _ = person(fresh)
+    // A class made before (the server still has them, for older apps): the teacher's deck in it, assigned, and two students in it.
     let k = social(teacher, "class.make", ["name": "BIO 201"])
     let code = k["code"] as? String ?? "", cid = k["id"] as? String ?? ""
     social(student, "class.join", ["code": code])
@@ -200,19 +208,28 @@ final class HomeTests: AppCase {
     let added = social(teacher, "class.addDeck", ["id": cid, "deckId": tid])
     let soon = ISO8601DateFormatter().string(from: Date().addingTimeInterval(5 * 86400)).prefix(10)
     social(teacher, "class.assign", ["id": cid, "sharedId": added["sharedId"] as? String ?? "", "goal": "learn", "due": String(soon)])
+    check(!code.isEmpty && !((state(student)["classes"] as? [Any]) ?? []).isEmpty, "the server still keeps the class and its assignment")
     var app = launch(as: student)
-    let row = any(app, chapter)
-    check(wait(text(app, "ASSIGNED")) && wait(row) && any(app, "BIO 201").exists, "a student's Library lists what the class assigned")
-    snap("home-assigned")
-    row.tap()
-    check(wait(button(app, "Join")) || wait(any(app, "BIO 201")), "a row opens the class")
+    check(wait(button(app, "Decks")) && wait(button(app, "All cards")), "the Library's switch is Decks and All cards")
+    check(!button(app, "Classes").exists && !text(app, "ASSIGNED").exists && !any(app, chapter).exists && !any(app, "BIO 201").exists, "no Classes, and nothing a class assigned")
+    check(!classWords(app), "no class words on the Library")
+    snap("home-no-classes")
+    tap(button(app, "All cards"), "All cards")
+    check(wait(app.textFields["Search all cards"].firstMatch, 8) || wait(any(app, "Search all cards"), 8), "All cards opens")
+    check(!button(app, "Classes").exists && !classWords(app), "and has no Classes either")
     app.terminate()
     app = launch(as: fresh)
-    check(wait(text(app, "ASSIGNED")) && wait(any(app, chapter)) && wait(button(app, "Import cards")), "a student with no deck yet sees it too, over the tiles")
-    check(text(app, "ASSIGNED").frame.maxY < button(app, "Import cards").frame.minY, "Assigned comes first")
+    check(wait(button(app, "Import cards")) && !text(app, "ASSIGNED").exists && !any(app, chapter).exists, "a student with no deck yet gets the three tiles, and nothing assigned")
+    check(button(app, "Decks").exists && !button(app, "Classes").exists && !classWords(app), "and a switch with no Classes")
     app.terminate()
     app = launch(as: teacher)
-    check(wait(button(app, "Add")) && gone(text(app, "ASSIGNED"), 3), "the teacher's Library has no Assigned")
+    let row = any(app, chapter)
+    check(wait(row) && !classWords(app), "the teacher's deck that's in the class is a plain deck: no Class mark")
+    row.tap()
+    tap(button(app, "Deck settings"), "Deck settings")
+    tap(app.buttons["Sharing"].firstMatch, "the Sharing tab")
+    check(wait(app.staticTexts["Only you."], 8) && !classWords(app), "its Sharing says Private (Only you.), never your classes")
+    snap("home-no-classes-sharing")
   }
 
   // ---------- 6: News ----------

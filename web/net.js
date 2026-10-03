@@ -51,10 +51,8 @@ export function createNet({ accept = () => {}, changed = () => {}, signedOut = f
     // The people you blocked, for Settings › Account (names and handles, newest first).
     blocks: () => (signedOut ? { people: [] } : get('/api/social/blocks', 15000)),
     stats: id => (signedOut ? null : get('/api/social/stats?id=' + enc(id || ''), 60000)),
-    // Classes (web/classes.mjs): yours, one class's page (or its invite, for anyone), whether you're verified, and the
-    // admin page (only for admins; anyone else gets { missing }).
-    classes: () => (signedOut ? [] : get('/api/classes')),
-    klass: code => get('/api/public/class?code=' + enc(code || '')),
+    // Whether you're verified as a teacher or a school, or waiting (web/classes.mjs), and the admin page (only for admins; anyone
+    // else gets { missing }).
     verify: () => (signedOut ? null : get('/api/verify', 60000)),
     admin: () => (signedOut ? { missing: true, status: 401 } : get('/api/admin', 10000)),
     act, drop

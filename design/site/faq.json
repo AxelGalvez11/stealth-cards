@@ -13,7 +13,7 @@
         "[Spaced repetition with FSRS](/features/spaced-repetition): how every review is planned",
         "[AI flashcards](/features/ai-flashcards): how Lucida makes cards, and how to connect Claude, ChatGPT or Cursor and ask for cards",
         "[Learn mode](/features/learn-mode): quizzes on your own cards",
-        "[Shared decks](/features/shared-decks), [classes](/features/classes) and [live games](/features/live-games): study with other people",
+        "[Shared decks](/features/shared-decks) and [live games](/features/live-games): study with other people",
         "[Image occlusion](/features/image-occlusion) and [importing](/features/import)",
         "Made for [students](/for/students), [medical students](/for/med-school), [the MCAT](/for/mcat), [language learners](/for/language-learning) and [teachers](/for/teachers)"
       ]
@@ -28,7 +28,7 @@
     {
       "group": "The basics",
       "q": "Is Lucida free?",
-      "a": "Yes. Unlimited decks and cards, spaced repetition, Learn mode, sharing, live games, classes, making cards in Lucida (3 makes a day), up to 100 pictures and sounds, and import and export are free. Pro is optional."
+      "a": "Yes. Unlimited decks and cards, spaced repetition, Learn mode, sharing, live games, making cards in Lucida (3 makes a day), up to 100 pictures and sounds, and import and export are free. Pro is optional."
     },
     {
       "group": "The basics",
@@ -58,7 +58,7 @@
     {
       "group": "The basics",
       "q": "Who can see my cards?",
-      "a": "Only you, unless you share a deck, add it to a class or play it in a live game. A deck’s Sources, the files and recordings its cards were made from, stay private even on a shared deck. An AI app can see your cards only if you connect it and sign in to Lucida (or give it your private link), and only as far as you allow on the Connect AI page."
+      "a": "Only you, unless you share a deck or play it in a live game. A deck’s Sources, the files and recordings its cards were made from, stay private even on a shared deck. An AI app can see your cards only if you connect it and sign in to Lucida (or give it your private link), and only as far as you allow on the Connect AI page."
     },
     {
       "group": "The basics",
@@ -98,7 +98,7 @@
     {
       "group": "Spaced repetition",
       "q": "Can I turn spaced repetition off?",
-      "a": "Yes. Turn off Schedule with FSRS in Settings or for one deck, or grade with piles, which only sort cards. With it off, cards don’t get a next review date."
+      "a": "Only by grading a deck with piles, which only sort cards and give no next review date. Four grades and the check or X always schedule with FSRS."
     },
     {
       "group": "Spaced repetition",
@@ -196,39 +196,34 @@
       "a": "Yes. Lucida’s own AI makes cards (from your files, pictures, recordings, YouTube links or a topic), writes the questions when you start a live game from a topic, and writes Explain, a short explanation of why a card’s answer is right (3 a day on Free, up to 200 a day on Pro). Everything else an AI does for you happens in your own AI app, through your Lucida link."
     },
     {
-      "group": "Study, sharing and classes",
+      "group": "Study and sharing",
       "q": "What is Learn mode, and is it free?",
       "a": "Learn mode quizzes you on your cards with multiple choice, true or false, matching, fill-in-the-blank and typed questions until you’ve got each one right twice in a row. It’s free. See [Learn mode](/features/learn-mode)."
     },
     {
-      "group": "Study, sharing and classes",
+      "group": "Study and sharing",
       "q": "How do live games work?",
       "a": "You open a room from a deck on a computer, and players join on their phones with a 6-digit code and a name. Everyone answers the same questions for points, and a leaderboard and podium follow. A room holds up to 60 players. See [live games](/features/live-games)."
     },
     {
-      "group": "Study, sharing and classes",
+      "group": "Study and sharing",
       "q": "Can I start a live game from a topic?",
       "a": "Yes. Type a topic instead of choosing a deck, and Lucida writes about 10 questions. Afterwards, Save as a deck keeps the questions. It counts as one of your daily makes, so the same limits apply."
     },
     {
-      "group": "Study, sharing and classes",
+      "group": "Study and sharing",
       "q": "Do players need an account for a live game?",
       "a": "No. They need only the code and a name. The host needs a Lucida account."
     },
     {
-      "group": "Study, sharing and classes",
+      "group": "Study and sharing",
       "q": "How do I share a deck?",
       "a": "Open the deck’s settings, choose Sharing, and pick Private, Link only or Public. Send the link, or let people find a public deck in Discover. See [shared decks](/features/shared-decks)."
     },
     {
-      "group": "Study, sharing and classes",
+      "group": "Study and sharing",
       "q": "What’s the difference between studying a deck and making a copy?",
       "a": "Studying follows the owner’s changes, and you can’t edit the cards, but you can suggest changes. A copy is your own deck to change, and it can offer you the owner’s later changes to take or skip."
-    },
-    {
-      "group": "Study, sharing and classes",
-      "q": "How do classes work?",
-      "a": "A teacher makes a class and gets a six-letter code and an invite link. They add decks, assign them with a due date, and see progress that students choose to share. Teachers never see individual answers. See [classes](/features/classes)."
     },
     {
       "group": "Import, export and your data",

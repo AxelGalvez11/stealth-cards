@@ -23,7 +23,7 @@ leave out other apps' and exams' names.
 
 ## Description
 
-(Under 4000 characters, 1846 used. Paste as it is; the capital-letter lines are plain text headings.)
+(Under 4000 characters, 1743 used. Paste as it is; the capital-letter lines are plain text headings.)
 
 ```
 Lucida is a flashcard app that remembers for you.
@@ -44,9 +44,6 @@ Your streak, how much you remember, the days you studied, and the cards due each
 SHARE DECKS
 Share a deck with a link or with everyone. Find decks other people made, follow them, study them or copy them. Suggest a change to a deck you study, and take or skip the changes people suggest to yours.
 
-CLASSES
-Teachers make a class, add decks, assign them and see who is done. Students join with a code.
-
 LUCIDA PRO
 Lucida is free: unlimited decks and cards, Learn mode and sharing. Pro adds exam dates, stats on what you're weak at, the hardest cards on decks you share, themes for your cards, covers and profile, photo covers and your own colors, unlimited pictures and sounds, and more AI explanations.
 
@@ -60,7 +57,7 @@ Privacy Policy: https://lucida.cards/privacy
 
 What each line stands on, so nothing here goes further than the app does: cards typed, imported (a spreadsheet, or an Anki export, from the
 welcome) or made by an AI app through Connect AI (Claude, ChatGPT, Cursor, any MCP app); FSRS scheduling; the daily reminder (a notification the phone schedules itself at the time picked: Settings > Studying); Learn mode (multiple choice, true or
-false, fill in the blank); Stats; sharing, Discover, following, saving, copying and Suggest a change; classes; the Pro list is the pricing page's
+false, fill in the blank); Stats; sharing, Discover, following, saving, copying and Suggest a change; the Pro list is the pricing page's
 (`PLAN_PRO` in design/site.mjs) less the one line the iPhone app doesn't have yet (natural voices for sound cards; the app reads audio cards
 with the phone's own voice): the iPhone paywall's list is the same, `PLAN_PRO_PHONE`. Live games and export are on the web only, so they aren't here. No ads and no tracking: `PrivacyInfo.xcprivacy` says the same.
 

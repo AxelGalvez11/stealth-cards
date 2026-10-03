@@ -1,5 +1,5 @@
-// iPhone · Library (PhoneLibrary, PhoneLibraryCards, PhoneLibraryFolder, PhoneLibraryAssigned, PhoneDecksEmpty): it was called Decks, and the app
-// opens on it. Its top is what your classes assigned (LibraryTop.swift); it makes no cards itself (a deck's cover does). Then your folders and decks, or one folder's decks, with a search and a ⋯ menu on each deck to move it between folders; or
+// iPhone · Library (PhoneLibrary, PhoneLibraryCards, PhoneLibraryFolder, PhoneDecksEmpty): it was called Decks, and the app
+// opens on it. It makes no cards itself (a deck's cover does). Your folders and decks, or one folder's decks, with a search and a ⋯ menu on each deck to move it between folders; or
 // every card in one list (All cards), to filter by its tags and its deck or folder (each card says how hard it is). Tap a deck to open
 // it; hold one to drag it to another spot, onto a folder, or (in a folder) onto the Library button to take it out. In
 // All cards, hold a card to drag it onto another deck in the Move to tray (Drag.swift).
@@ -15,7 +15,7 @@ struct LibDeck: Identifiable {
   var photo: String? = nil
   var folder: String? = nil
   var due = 0, fresh = 0, totalLabel = "0", ret: Int? = nil, paused = false
-  /// How many cards, and whose it is: "Public", "Link only", or "Class" for a deck you share, "From <name>" for someone else's.
+  /// How many cards, and whose it is: "Public" or "Link only" for a deck you share, "From <name>" for someone else's.
   var total = 0, whose = ""
   var look: ThemeDeck { ThemeDeck(name: name, seed: seed.isEmpty ? name : seed, round: round, tags: tags) }
   /// "Public · 412 cards · 10 new · 91%" (one card says card).
@@ -211,9 +211,7 @@ struct LibraryScreen: View {
     let folder = folderId.flatMap { id in folders.first { $0.id == id } }
     let cards = nav.libCards && folderId == nil
     Group {
-      // The Library's third view: your classes (Classes.swift).
-      if nav.libClasses && folderId == nil { ClassesScreen() }
-      else if folderId != nil && folder == nil { Color.clear.onAppear { nav.back() } }
+      if folderId != nil && folder == nil { Color.clear.onAppear { nav.back() } }
       // No decks and no folders yet (PhoneDecksEmpty).
       else if folderId == nil && !cards && decks.isEmpty && folders.isEmpty { empty }
       else { page(decks, folders, folder, cards) }
@@ -236,7 +234,6 @@ struct LibraryScreen: View {
         if folder == nil {
           LibraryModes(current: cards ? "cards" : "decks") { menu = nil }
         }
-        if !cards && folder == nil { AssignedList() }
         search(cards ? "Search all cards" : folder != nil ? "Search this folder" : "Search decks and cards")
         if cards { allCards(ql, decks, folders) } else { deckList(ql, decks, folders, folder) }
       }
@@ -674,14 +671,12 @@ struct LibraryScreen: View {
   }
 
   // ---------- no decks yet ----------
-  // PhoneDecksEmpty, a brand-new account: what your classes assigned (a student who joined one before making a deck), then three plain tiles:
-  // New deck, Import cards and Connect AI.
+  // PhoneDecksEmpty, a brand-new account: three plain tiles, New deck, Import cards and Connect AI.
   private var empty: some View {
     ScrollView(showsIndicators: false) {
       VStack(spacing: 14) {
         PageTitle("Library") { RoundButton(icon: "plus", label: "New deck") { nav.newDeck() } }
         LibraryModes(current: "decks")
-        AssignedList()
         StartTiles()
       }
       .padding(.horizontal, 20).padding(.top, Screen.top(64)).padding(.bottom, 120)

@@ -99,7 +99,7 @@ import UniformTypeIdentifiers
   /// The canvas's states (PhoneImport's Tweak, build.mjs IMPORT_STATES), with its samples.
   func show(_ state: String) {
     let chosen = ["Deck chosen", "Importing", "Error"].contains(state)
-    setText(["Empty": "", "A file picked": ImportSample.file, "No cards": "Notes from Tuesday’s class"][state] ?? ImportSample.pasted)
+    setText(["Empty": "", "A file picked": ImportSample.file, "No cards": "Notes from Tuesday’s lecture"][state] ?? ImportSample.pasted)
     deck = chosen ? "Japanese · JLPT N4" : ""
     busy = state == "Importing"
     error = state == "Error" ? "Couldn’t reach Lucida. Check your connection and try again." : nil
