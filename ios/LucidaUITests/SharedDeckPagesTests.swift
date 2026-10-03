@@ -198,7 +198,8 @@ final class SharedDeckPagesTests: XCTestCase {
     check(button(app, "Study").exists && button(app, "Make a copy").exists && button(app, "Save").exists && button(app, "Suggest a change").exists && button(app, "Get updates").exists,
           "and Study, Make a copy, Save, Suggest a change, Get updates")
     check(button(app, "Back").exists && button(app, "Share").exists, "the cover has Back and Share")
-    check(any(app, "5 cards").exists && (button(app, "Cards").value as? String) == "5", "the cards are listed, with how many")
+    // (Tabs show no counts since 5d27d04e: how many is on the cover.)
+    check(any(app, "5 cards").exists && button(app, "Cards").exists, "the cards are listed, with how many")
     check(buttonStarting(app, "Where does glycolysis happen?").exists, "each card shows its question")
     tap(buttonStarting(app, "Where does glycolysis happen?"))
     check(wait(text(app, "In the mitochondria")), "pressing a card shows its answer")
@@ -285,6 +286,12 @@ final class SharedDeckPagesTests: XCTestCase {
   // ---------- 3: Maria suggests changes ----------
   /// The card editor's sheet in its suggest mode is up (its Why? at the bottom).
   private func suggesting(_ app: XCUIApplication) -> Bool { wait(app.textFields["Why? (optional)"].firstMatch) && button(app, "Send").exists }
+  /// The why, at the bottom of the sheet: the phone's keyboard (up for a card's field) covers it, so it goes down first (the bar's
+  /// Hide keyboard), as a person would.
+  private func writeWhy(_ app: XCUIApplication, _ words: String) {
+    if button(app, "Hide keyboard").exists { tap(button(app, "Hide keyboard")); _ = gone(button(app, "Hide keyboard"), 3) }
+    typeInto(app.textFields["Why? (optional)"].firstMatch, words)
+  }
   /// Lucida's quiet message (the toast) says these words.
   private func says(_ app: XCUIApplication, _ words: String) -> Bool { wait(app.descendants(matching: .any).matching(NSPredicate(format: "identifier == 'toast' AND label CONTAINS %@", words)).firstMatch) }
   func test3SuggestChanges() throws {
@@ -304,7 +311,7 @@ final class SharedDeckPagesTests: XCTestCase {
     check(!button(app, "Delete card").exists && !button(app, "Pause card").exists && button(app, "Suggest removing it").exists, "no Delete card or Pause card; Suggest removing it at the bottom")
     snap("pages-suggest-sheet")
     setText(field(app, "Back"), "In the cytoplasm")
-    typeInto(app.textFields["Why? (optional)"].firstMatch, "From my TA’s review")
+    writeWhy(app, "From my TA’s review")
     tap(button(app, "Send"))
     check(says(app, "Sent. Alex will see it."), "Send says “Sent. Alex will see it.” in Lucida’s quiet message")
     check(gone(app.textFields["Why? (optional)"].firstMatch), "and the sheet closes on the deck’s page")
@@ -584,7 +591,8 @@ final class SharedDeckPagesTests: XCTestCase {
     // News: a suggestion on his deck opens its suggestions.
     app = launch(as: w.alex)
     tap(button(app, "Discover"))
-    tap(buttonStarting(app, "News"))
+    // (The bell is Notifications since c0338eb6.)
+    tap(buttonStarting(app, "Notifications"))
     let news = buttonStarting(app, "Maria Santos suggested")
     check(wait(news, 10), "News has Maria’s suggestions")
     tap(news)
