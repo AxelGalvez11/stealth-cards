@@ -278,9 +278,9 @@ final class HomeTests: AppCase {
     let fid = act(who, "folder.add", ["name": "Science"])["id"] as? String ?? ""
     act(who, "deck.move", ["id": ids["Biology"] ?? "", "folder": fid])
     let app = launch(as: who, ["-open", "folder:Science"])
-    check(wait(button(app, "Rename")) && wait(any(app, "Biology")), "a folder's page opens, with its deck")
+    check(wait(button(app, "Folder options")) && wait(any(app, "Biology")), "a folder's page opens, with its deck")
     check(noMaking(app) && !button(app, "Make cards").exists, "it has nothing to make cards either")
-    check(wait(buttonStarting(app, "Practice test")), "and keeps its Practice test")
+    check(!buttonStarting(app, "Practice test").exists, "and no Practice test, its actions are in its ⋯ (canvas V188)")
     snap("home-folder")
   }
 }

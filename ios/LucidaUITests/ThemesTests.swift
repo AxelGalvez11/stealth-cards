@@ -209,8 +209,8 @@ final class ThemesTests: XCTestCase {
     let study = app.buttons["deck.study"].firstMatch
     check(wait(study), "Cell Biology has Study")
     study.tap()
-    check(wait(app.buttons["menu.Flashcards"].firstMatch), "Study opens its menu, with Flashcards")
-    app.buttons["menu.Flashcards"].firstMatch.tap()
+    check(wait(app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH %@", "menu.")).buttons.matching(NSPredicate(format: "label == %@", "Flashcards")).firstMatch), "Study opens its menu, with Flashcards")
+    app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH %@", "menu.")).buttons.matching(NSPredicate(format: "label == %@", "Flashcards")).firstMatch.tap()
     check(wait(button(app, "Flip card"), 12), "flashcards open")
     check(drawing(app, "bg=aero") && drawing(app, "face=aero"), "the study background and the card are the theme's")
     Thread.sleep(forTimeInterval: 1.0)
@@ -229,8 +229,8 @@ final class ThemesTests: XCTestCase {
 
     // ---------- Learn mode ----------
     app.buttons["deck.study"].firstMatch.tap()
-    check(wait(app.buttons["menu.Learn"].firstMatch), "Study's menu has Learn")
-    app.buttons["menu.Learn"].firstMatch.tap()
+    check(wait(app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH %@", "menu.")).buttons.matching(NSPredicate(format: "label == %@", "Learn")).firstMatch), "Study's menu has Learn")
+    app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH %@", "menu.")).buttons.matching(NSPredicate(format: "label == %@", "Learn")).firstMatch.tap()
     let start = button(app, "Start learning")
     check(wait(start), "Learn opens its start sheet")
     start.tap()

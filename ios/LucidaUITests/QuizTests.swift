@@ -97,7 +97,7 @@ final class QuizTests: XCTestCase {
   /// Learn mode on the deck of this name, with only multiple choice turned on (so each question is one a tap can answer).
   private func startLearn(_ app: XCUIApplication) {
     tap(app.buttons["deck.study"].firstMatch, "Study")
-    tap(app.buttons["menu.Learn"].firstMatch, "Study › Learn")
+    tap(app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH %@", "menu.")).buttons.matching(NSPredicate(format: "label == %@", "Learn")).firstMatch, "Study › Learn")
     check(wait(button(app, "Start learning")), "Learn mode’s start sheet opens")
     for k in ["Matching", "True or false", "Fill in the blank"] { tap(button(app, k), k) }
     tap(button(app, "Start learning"), "Start learning")

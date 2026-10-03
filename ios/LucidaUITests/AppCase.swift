@@ -134,7 +134,9 @@ class AppCase: XCTestCase {
   /// Study (Flashcards, Learn) and + (New card, Make cards, Source, Notes, Upload diagram, Make diagram): Lucida's own menu (Screens/AddMenu.swift),
   /// opened by the buttons `deck.study` (under the cover) and `deck.add` (the cover's round +). A row is `menu.<its name>` (the page has a Notes tab too).
   func deckButton(_ app: XCUIApplication, _ which: String) -> XCUIElement { app.buttons[which == "Add" ? "deck.add" : "deck.study"].firstMatch }
-  func menuRow(_ app: XCUIApplication, _ name: String) -> XCUIElement { app.buttons["menu." + name].firstMatch }
+  func menuRow(_ app: XCUIApplication, _ name: String) -> XCUIElement {
+    app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH %@", "menu.")).buttons.matching(NSPredicate(format: "label == %@", name)).firstMatch
+  }
   /// Opens one (unless it is open: its first row shows); false when its button isn't there.
   @discardableResult func openDeckMenu(_ app: XCUIApplication, _ which: String) -> Bool {
     let first = menuRow(app, which == "Add" ? "New card" : "Flashcards")

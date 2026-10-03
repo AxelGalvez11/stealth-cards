@@ -2,17 +2,19 @@
 // which the debug-only `-dev <name>` launch argument sets). `-testAudit` makes the app tell this test, through an invisible
 // element, which answer is right for the question on screen, and `-testSpent <ms>` sets how long the test in progress has been
 // open (to check the clock without waiting). The same story as the web app's own test (full/practice/tests/test-ui.mjs), in
-// flows that each set up their own people and decks (so any one can run alone). A test starts from a folder's page (each flow's deck is in a
-// folder of its own): a deck's page has no Practice test (the owner, 2026-10-02: "remove practice tests").
-//   1  The deck page has no Practice test; the folder's set-up (lengths, kinds, time limit, and no tip lines), taking a test of choices and
-//      true-or-false: numbers, going back, flags, the list of questions, Submit asking when some are unanswered, the results (the score, the
-//      time, every question), Retake the ones I missed, and how the last one went on the folder's page.
+// flows that each set up their own people and decks (so any one can run alone). No page has a Practice test button (a deck's since the
+// owner's "remove practice tests", 2026-10-02; a folder's since canvas V188), so each flow opens a folder's test with `-open test:<folder
+// name>`, like the web's /library/folder/<id>/test: its set-up over the folder's page (each flow's deck is in a folder of its own).
+//   1  No Practice test on the deck page, its Study menu, the folder's page or its ⋯ menu; the set-up (lengths, kinds, time limit, and
+//      no tip lines), taking a test of choices and true-or-false: numbers, going back, flags, the list of questions, Submit asking when
+//      some are unanswered, the results (the score, the time, every question), Retake the ones I missed, and Done back on the folder's
+//      page, which says nothing about it (no Last practice test line: the owner, "remove this").
 //   2  Written answers (case, accents, a missing "the" and small typos are forgiven; a wrong one offers Count it as right,
 //      which is saved), and Study the missed cards now: a real review of those cards, then back to the results.
 //   3  Matching: one letter for each word, exact grading, and the pairs that were wrong.
 //   4  The clock and leaving: a timed test shows it, a test is open again where it was after the app closed, runs out by itself
 //      ("The time ran out."), and leaving asks first.
-//   5  A folder: a Practice test over all its decks, and how the last one went on the folder's page.
+//   5  A folder: no Practice test button on its page; its test is over all its decks and saved with the folder.
 //   6  Fill in the blank (a fill-in-the-blank card asked as a blank).
 // Every test leaves the cards' schedules alone and logs no review.
 //
@@ -153,15 +155,20 @@ final class PracticeTestTests: XCTestCase {
     deck(who, name, facts, folder: act(who, "folder.add", ["name": fname])["id"] as? String ?? "")
     return fname
   }
-  /// Opens the page of the folder of this name, where a Practice test starts.
+  /// Opens the page of the folder of this name (its actions are in its ⋯ "Folder options", canvas V188).
   private func openFolder(_ who: String, _ name: String, _ extra: [String] = []) -> XCUIApplication {
     let app = launch(as: who, ["-open", "folder:" + name] + extra)
-    check(wait(button(app, "Practice test")), "the page of " + name + " is open, with its Practice test")
+    check(wait(button(app, "Folder options")), "the page of " + name + " is open")
     return app
   }
-  /// Practice test, the kinds in `off` turned off, a length and a time limit picked, then Start test.
+  /// A practice test's set-up over the page of the folder of this name (`-open test:<name>`: no page has a Practice test button).
+  private func openTest(_ who: String, _ name: String, _ extra: [String] = []) -> XCUIApplication {
+    let app = launch(as: who, ["-open", "test:" + name] + extra)
+    check(wait(button(app, "Start test")), "a test of " + name + " is being set up, over its page")
+    return app
+  }
+  /// On the set-up that is open: the kinds in `off` turned off, a length and a time limit picked, then Start test.
   private func start(_ app: XCUIApplication, count: String? = nil, off: [String] = [], limit: String? = nil) {
-    tap(button(app, "Practice test"), "Practice test")
     check(wait(button(app, "Start test")), "the set-up is open")
     for k in off { tap(button(app, k), k) }
     if let count { tap(button(app, count), count) }
@@ -215,12 +222,15 @@ final class PracticeTestTests: XCTestCase {
     var app = launch(as: who, ["-open", "deck:" + name])
     check(wait(app.buttons["deck.study"].firstMatch) && !button(app, "Practice test").exists, "the deck page has no Practice test (the owner: \"remove practice tests\")")
     app.buttons["deck.study"].firstMatch.tap()
-    check(wait(app.buttons["menu.Flashcards"].firstMatch) && app.buttons["menu.Learn"].exists && !app.buttons["menu.Practice test"].exists, "nor has its Study menu: Flashcards and Learn")
+    let rows = app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH %@", "menu.")).buttons
+    check(wait(rows.matching(NSPredicate(format: "label == %@", "Flashcards")).firstMatch) && rows.matching(NSPredicate(format: "label == %@", "Learn")).firstMatch.exists && !rows.matching(NSPredicate(format: "label == %@", "Practice test")).firstMatch.exists, "nor has its Study menu: Flashcards and Learn")
     app.terminate()
     app = openFolder(who, fname)
-    check(!any(app, "Last practice test").exists, "with no tests taken the folder says nothing about one")
-    tap(button(app, "Practice test"), "Practice test")
-    check(wait(button(app, "Start test")), "Practice test opens the set-up")
+    check(!buttonStarting(app, "Practice test").exists && !any(app, "Last practice test").exists, "nor has the folder's page (canvas V188), nor a line about a last test")
+    tap(button(app, "Folder options"), "Folder options")
+    check(wait(button(app, "Rename")) && !buttonStarting(app, "Practice test").exists, "nor the folder's ⋯ menu")
+    app.terminate()
+    app = openTest(who, fname)
     check(button(app, "10").exists && button(app, "All · 12").exists && !button(app, "20").exists, "lengths: 10 and All with its number (12 cards, so no 20 or 30)")
     check(!any(app, "Tests don’t change your review schedule.").exists && !any(app, "Answer questions from " + name + ", then see how you did.").exists, "no tip lines on the set-up (the owner: no tips)")
     check(["Multiple choice", "True or false", "Written", "Matching", "Fill in the blank"].allSatisfy { button(app, $0).exists && button(app, $0).isSelected }, "all five kinds are on to begin with")
@@ -300,12 +310,13 @@ final class PracticeTestTests: XCTestCase {
     check(!button(app, "Retake the ones I missed").exists && any(app, "Every question was right.").exists, "with nothing missed there is nothing to retake")
     check(eventually { tests(who).count == 2 }, "the retake is its own saved result")
     tap(button(app, "Done"), "Done")
-    check(wait(any(app, "Last practice test:")) && any(app, "2 of 2").exists && any(app, "100%").exists, "Done goes back to the folder, which says how the last test went")
+    check(wait(button(app, "Folder options")) && gone(text(app, "Your score")), "Done goes back to the folder's page")
+    check(!any(app, "Last practice test").exists, "which says nothing about the test (the owner: \"remove this\")")
     snap("practice-folder-last")
     check(schedule(who) == before && logs(who) == logsBefore, "still no change to any schedule")
     app.terminate()
     app = openFolder(who, fname)
-    check(wait(any(app, "Last practice test:")) && neverShows(app.buttons["All the questions"].firstMatch, 2), "after the app closes and opens again, no test is open and the folder still says how it went")
+    check(neverShows(app.buttons["All the questions"].firstMatch, 2), "after the app closes and opens again, no test is open")
     app.terminate()
     app = launch(as: who, ["-open", "deck:" + name])
     check(wait(app.buttons["deck.study"].firstMatch) && !any(app, "Practice tests").exists && !button(app, "Practice test").exists, "and the deck page lists no past tests")
@@ -317,7 +328,7 @@ final class PracticeTestTests: XCTestCase {
     let fname = inFolder(who, name, [("Capital of France", "Paris"), ("Capital of Spain", "Madrid"), ("Café in French", "café"), ("Largest ocean", "The Pacific Ocean"),
                      ("Longest river", "Amazon river"), ("Short one", "Cat"), ("Tallest", "Mount Everest"), ("Largest planet", "Jupiter")])
     let before = schedule(who)
-    let app = openFolder(who, fname)
+    let app = openTest(who, fname)
     start(app, count: "All · 8", off: ["Multiple choice", "True or false", "Matching", "Fill in the blank"])
     check(wait(app.buttons["All the questions"].firstMatch) && position(app) == "1 of 8", "a written test of all 8 cards")
     check(audit(app)["type"] as? String == "type" && wait(app.textFields["Your answer"].firstMatch), "each question has a box to write in")
@@ -352,7 +363,7 @@ final class PracticeTestTests: XCTestCase {
     tap(button(app, "Done"), "Done")
     check(wait(text(app, "Your score")) && text(app, "88%").exists, "the review’s Done goes back to the test’s results")
     tap(button(app, "Done"), "Done")
-    check(wait(any(app, "Last practice test:")), "and Done there goes back to the folder")
+    check(wait(button(app, "Folder options")), "and Done there goes back to the folder's page")
   }
 
   // ---------- 3: matching ----------
@@ -360,7 +371,7 @@ final class PracticeTestTests: XCTestCase {
     let who = "ptm" + run, name = "Matching " + run
     let fname = inFolder(who, name, [("Mitochondrion", "Makes ATP"), ("Ribosome", "Builds proteins"), ("Golgi", "Ships proteins"), ("Nucleus", "Holds DNA"), ("Lysosome", "Breaks down waste"),
                      ("Vacuole", "Stores water"), ("Chloroplast", "Makes sugar"), ("Membrane", "Outer layer")])
-    let app = openFolder(who, fname)
+    let app = openTest(who, fname)
     start(app, count: "All · 2", off: ["Multiple choice", "True or false", "Written", "Fill in the blank"])
     check(wait(app.buttons["All the questions"].firstMatch), "a test of matching alone starts")
     var a = audit(app)
@@ -386,7 +397,7 @@ final class PracticeTestTests: XCTestCase {
   func test4ClockAndLeave() throws {
     let who = "ptc" + run, name = "Clock " + run
     let fname = inFolder(who, name, capitals)
-    var app = openFolder(who, fname)
+    var app = openTest(who, fname)
     start(app, count: "10", off: ["Written", "Matching", "Fill in the blank"], limit: "10 min")
     check(wait(app.buttons["All the questions"].firstMatch), "a 10 minute test starts")
     check(wait(app.descendants(matching: .any)["Time left"].firstMatch) && matches(clock(app), "^(10:00|9:[0-5][0-9])$"), "a quiet clock counts down from 10:00 (\(clock(app)))")
@@ -408,8 +419,10 @@ final class PracticeTestTests: XCTestCase {
     check(any(app, "The time ran out.").exists && text(app, "10:00").exists, "with “The time ran out.” and the full 10:00")
     check(eventually { tests(who).count == 1 && (tests(who).first?["timeUp"] as? Bool) == true && (tests(who).first?["limit"] as? Int) == 10 }, "and the result is saved as timed out")
     tap(button(app, "Done"), "Done")
-    check(wait(button(app, "Practice test")) && wait(any(app, "Last practice test:")), "Done goes back to the folder")
+    check(wait(button(app, "Folder options")), "Done goes back to the folder's page")
     // Leaving asks first.
+    app.terminate()
+    app = openTest(who, fname)
     start(app, count: "10", off: ["Written", "Matching", "Fill in the blank"])
     check(wait(app.buttons["All the questions"].firstMatch), "a test to leave")
     answer(app)
@@ -420,7 +433,7 @@ final class PracticeTestTests: XCTestCase {
     tap(button(app, "Leave the test"), "Leave the test")
     check(wait(text(app, "Leave this test?")), "X asks again")
     tap(button(app, "Leave"), "Leave")
-    check(wait(button(app, "Practice test")) && neverShows(app.buttons["All the questions"].firstMatch, 2), "Leave goes back to the folder")
+    check(wait(button(app, "Folder options")) && neverShows(app.buttons["All the questions"].firstMatch, 2), "Leave goes back to the folder's page")
     check(tests(who).count == 1, "a test that was left isn’t saved (only the one that ran out is)")
     app.terminate()
     app = launch(as: who)
@@ -433,11 +446,11 @@ final class PracticeTestTests: XCTestCase {
     let folder = act(who, "folder.add", ["name": fname])["id"] as? String ?? ""
     deck(who, "Geography " + run, capitals, folder: folder)
     deck(who, "Chemistry " + run, [("Symbol for water", "H2O"), ("Symbol for salt", "NaCl"), ("Symbol for gold", "Au"), ("Symbol for iron", "Fe")], folder: folder)
-    var app = launch(as: who, ["-open", "folder:" + fname])
-    check(wait(button(app, "Practice test")), "a folder’s page has a Practice test button")
-    check(!any(app, "Last practice test").exists, "and no line about a last test yet")
-    tap(button(app, "Practice test"), "Practice test")
-    check(wait(button(app, "Start test")) && button(app, "All · 16").exists, "it is a test of all its decks (12 + 4 cards)")
+    var app = openFolder(who, fname)
+    check(!buttonStarting(app, "Practice test").exists && !any(app, "Last practice test").exists, "a folder’s page has no Practice test button (canvas V188), nor a line about a last test")
+    app.terminate()
+    app = openTest(who, fname)
+    check(button(app, "All · 16").exists, "its test is a test of all its decks (12 + 4 cards)")
     for k in ["Written", "Matching", "Fill in the blank"] { tap(button(app, k), k) }
     tap(button(app, "All · 16"), "All")
     tap(button(app, "Start test"), "Start test")
@@ -448,10 +461,7 @@ final class PracticeTestTests: XCTestCase {
     check(wait(text(app, "Your score")) && text(app, "100%").exists && any(app, "16 of 16").exists, "every answer right: 16 of 16, 100%")
     check(eventually { tests(who).first?["folderId"] as? String == folder && (tests(who).first?["name"] as? String) == fname }, "the result is saved with the folder")
     tap(button(app, "Done"), "Done")
-    check(wait(any(app, "Last practice test:")) && any(app, "16 of 16").exists && any(app, "100%").exists, "Done goes back to the folder, which says how the last test went")
-    app.terminate()
-    app = launch(as: who, ["-open", "folder:" + fname])
-    check(wait(any(app, "Last practice test:")), "and it still does after the app opens again")
+    check(wait(button(app, "Folder options")) && !any(app, "Last practice test").exists, "Done goes back to the folder's page, which says nothing about the test")
   }
 
   // ---------- 6: fill in the blank ----------
@@ -461,7 +471,7 @@ final class PracticeTestTests: XCTestCase {
     for t in ["The [[mitochondrion]] is the powerhouse of the cell.", "DNA is copied in the [[nucleus]].", "The [[ribosome]] builds proteins.", "The [[Golgi apparatus]] ships proteins out.", "[[Lysosomes]] break down waste."] {
       act(who, "card.add", ["deckId": id, "kind": "cloze", "text": t, "clozeMode": "each"])
     }
-    let app = openFolder(who, fname)
+    let app = openTest(who, fname)
     start(app, count: "All · 5", off: ["Multiple choice", "True or false", "Written", "Matching"])
     check(wait(app.buttons["All the questions"].firstMatch) && position(app) == "1 of 5", "a test of fill in the blank asks the five blank cards")
     let a = audit(app)

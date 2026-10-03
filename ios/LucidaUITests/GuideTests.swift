@@ -141,7 +141,7 @@ final class GuideTests: XCTestCase {
   private func makeButtons(_ app: XCUIApplication) -> Int { app.buttons.matching(NSPredicate(format: "label == %@", "Make cards")).count }
   /// A row of the deck cover's + (Lucida's own menu: New card, Make cards, Source, Notes, Upload diagram, Make diagram).
   private func fromDeckMenu(_ app: XCUIApplication, _ row: String) {
-    let r = app.buttons["menu." + row].firstMatch   // (a row by its own name: the page has a Notes tab too)
+    let r = app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH %@", "menu.")).buttons.matching(NSPredicate(format: "label == %@", row)).firstMatch   // (a row of the open menu: the page has a Notes tab too)
     if !(r.exists && r.isHittable) { tap(app.buttons["deck.add"].firstMatch, "the deck’s +") }
     tap(r, "+ › " + row)
   }

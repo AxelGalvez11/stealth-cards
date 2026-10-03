@@ -1,8 +1,9 @@
 #!/bin/zsh
 # Practice tests in the iPhone app, end to end (LucidaUITests/PracticeTestTests.swift): taps through the app as made-up people
-# on a fresh copy of the server on this Mac. A test starts from a folder's page (a deck's page has none). Someone sets up a test
+# on a fresh copy of the server on this Mac. No page has a Practice test button (canvas V188 took the folder's away), so a test opens
+# with `-open test:<folder name>`, its set-up over the folder's page. Someone sets up a test
 # (lengths, kinds, a time limit), takes it (numbers, back, flags, the list of questions, Submit asking about unanswered ones), sees
-# the results (the score, the time, every question), retakes the ones they missed, and finds how it went on the folder's page; written answers forgive small typos and the
+# the results (the score, the time, every question), retakes the ones they missed, and Done goes back to the folder's page; written answers forgive small typos and the
 # wrong ones offer Count it as right; the missed cards can be studied right away; matching, fill in the blank, a timed test
 # that runs out, a test open again where it was after the app closed, leaving, and a folder's test are checked too; and a test
 # never changes a card's schedule or logs a review. It starts web/server.mjs on PORT (3947) with an empty data folder, runs

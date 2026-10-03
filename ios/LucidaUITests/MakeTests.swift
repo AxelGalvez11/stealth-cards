@@ -148,7 +148,7 @@ final class MakeTests: XCTestCase {
   /// A deck page's Study (`deck.study`) and + (`deck.add`), and a row of the menu one opens (Lucida's own menu: the owner, 2026-10-02).
   private func deckButton(_ app: XCUIApplication, _ which: String) -> XCUIElement { app.buttons[which == "Add" ? "deck.add" : "deck.study"].firstMatch }
   private func fromDeckMenu(_ app: XCUIApplication, _ which: String, _ row: String) {
-    let r = app.buttons["menu." + row].firstMatch
+    let r = app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH %@", "menu.")).buttons.matching(NSPredicate(format: "label == %@", row)).firstMatch
     if !(r.exists && r.isHittable) { tap(deckButton(app, which), which == "Add" ? "the deck’s +" : "Study") }
     tap(r, (which == "Add" ? "+" : "Study") + " › " + row)
   }
@@ -626,7 +626,7 @@ final class MakeTests: XCTestCase {
     save(app, into: "Alpha " + run, count: n2)
     check(wait(deckButton(app, "Study")) && !button(app, "New folder").exists, "saving stays on the deck’s page")
     tap(button(app, "Back"), "Back")
-    check(wait(button(app, "Rename")) && text(app, shelf).exists, "and Back goes to the folder it was opened from")
+    check(wait(button(app, "Folder options")) && text(app, shelf).exists, "and Back goes to the folder it was opened from")
     // a brand-new person's +
     app = launch(as: "mkz" + run)
     check(wait(button(app, "New deck")), "a person with no decks has a + that makes a deck, as the canvas has it")
