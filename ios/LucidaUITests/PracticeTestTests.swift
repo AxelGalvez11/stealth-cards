@@ -213,7 +213,9 @@ final class PracticeTestTests: XCTestCase {
     let fname = inFolder(who, name, capitals)
     let before = schedule(who), logsBefore = logs(who)
     var app = launch(as: who, ["-open", "deck:" + name])
-    check(wait(buttonStarting(app, "Flashcards")) && button(app, "Learn").exists && !button(app, "Practice test").exists, "the deck page has no Practice test (the owner: \"remove practice tests\")")
+    check(wait(app.buttons["deck.study"].firstMatch) && !button(app, "Practice test").exists, "the deck page has no Practice test (the owner: \"remove practice tests\")")
+    app.buttons["deck.study"].firstMatch.tap()
+    check(wait(app.buttons["menu.Flashcards"].firstMatch) && app.buttons["menu.Learn"].exists && !app.buttons["menu.Practice test"].exists, "nor has its Study menu: Flashcards and Learn")
     app.terminate()
     app = openFolder(who, fname)
     check(!any(app, "Last practice test").exists, "with no tests taken the folder says nothing about one")
@@ -306,7 +308,7 @@ final class PracticeTestTests: XCTestCase {
     check(wait(any(app, "Last practice test:")) && neverShows(app.buttons["All the questions"].firstMatch, 2), "after the app closes and opens again, no test is open and the folder still says how it went")
     app.terminate()
     app = launch(as: who, ["-open", "deck:" + name])
-    check(wait(buttonStarting(app, "Flashcards")) && !any(app, "Practice tests").exists && !button(app, "Practice test").exists, "and the deck page lists no past tests")
+    check(wait(app.buttons["deck.study"].firstMatch) && !any(app, "Practice tests").exists && !button(app, "Practice test").exists, "and the deck page lists no past tests")
   }
 
   // ---------- 2: written answers, Count it as right, Study the missed cards ----------

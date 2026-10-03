@@ -52,6 +52,7 @@ private struct AddMenuPopup: View {
                 .accessibilityLabel(row.title)
                 .accessibilityValue(row.note)
                 .accessibilityHint(row.line)
+                .accessibilityIdentifier("menu." + row.title)
             }
           }
           .padding(8).frame(width: w)

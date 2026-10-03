@@ -129,4 +129,29 @@ class AppCase: XCTestCase {
     var n = 0
     while !(e.exists && e.isHittable) && n < max { app.swipeUp(velocity: .slow); n += 1 }
   }
+
+  // ---------- a deck page's two menus (the owner, 2026-10-02) ----------
+  /// Study (Flashcards, Learn) and + (New card, Make cards, Source, Notes, Upload diagram, Make diagram): Lucida's own menu (Screens/AddMenu.swift),
+  /// opened by the buttons `deck.study` (under the cover) and `deck.add` (the cover's round +). A row is `menu.<its name>` (the page has a Notes tab too).
+  func deckButton(_ app: XCUIApplication, _ which: String) -> XCUIElement { app.buttons[which == "Add" ? "deck.add" : "deck.study"].firstMatch }
+  func menuRow(_ app: XCUIApplication, _ name: String) -> XCUIElement { app.buttons["menu." + name].firstMatch }
+  /// Opens one (unless it is open: its first row shows); false when its button isn't there.
+  @discardableResult func openDeckMenu(_ app: XCUIApplication, _ which: String) -> Bool {
+    let first = menuRow(app, which == "Add" ? "New card" : "Flashcards")
+    if first.exists && first.isHittable { return true }
+    let b = deckButton(app, which)
+    guard wait(b, 15) else { check(false, "found the deck's " + (which == "Add" ? "+" : "Study") + " button"); return false }
+    b.tap()
+    return wait(first, 5)
+  }
+  /// Presses one of a deck menu's rows, opening the menu first.
+  func fromDeckMenu(_ app: XCUIApplication, _ which: String, _ row: String) {
+    openDeckMenu(app, which)
+    tap(menuRow(app, row), (which == "Add" ? "+" : "Study") + " › " + row)
+  }
+  /// Closes an open deck menu (a touch outside it, near the bottom of the screen).
+  func closeDeckMenu(_ app: XCUIApplication) {
+    app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95)).tap()
+    Thread.sleep(forTimeInterval: 0.4)
+  }
 }

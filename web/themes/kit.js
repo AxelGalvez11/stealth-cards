@@ -55,9 +55,8 @@ export const motifName = k => (k[0] === '#' ? 'Letter ' + k.slice(1) : k === 'wo
 // A long, low cover (a deck page's header on the web, New deck's preview) is a banner.
 export const banner = o => o.shape === 'wide' && o.w / o.h > 2.2;
 // Where a banner's picture goes: its middle (cx, cy) and size (s). A deck page's header (o.head) has buttons in its top
-// corners and along its bottom right (Play live, Learn, New card, Flashcards: about half its width), so its picture
-// sits a little left of the middle, a little high; New deck's preview has its buttons top right and the name bottom
-// left, so its picture sits bottom right.
+// corners and at its bottom right (+ and Study ▾), so its picture sits a little left of the middle, a little high; New
+// deck's preview has its buttons top right and the name bottom left, so its picture sits bottom right.
 export const bannerSpot = o => (o.head ? { cx: o.w * 0.43, cy: o.h * 0.38, s: o.h * 0.58 } : { cx: o.w * 0.78, cy: o.h * 0.64, s: o.h * 0.52 });
 // A phone deck page's header has its buttons along the top (o.top: how tall that row is), so its picture sits in the
 // lower right, under them.

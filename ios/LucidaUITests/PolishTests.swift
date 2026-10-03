@@ -354,7 +354,8 @@ final class PolishTests: XCTestCase {
 
     // ----- not while studying -----
     tap(buttonStarting(app, "Biology"), "the Biology deck")
-    tap(buttonStarting(app, "Flashcards"), "Flashcards")
+    tap(app.buttons["deck.study"].firstMatch, "Study")
+    tap(app.buttons["menu.Flashcards"].firstMatch, "Study › Flashcards")
     check(wait(button(app, "End review")), "a review opens over everything")
     flick(app, from: 0.9, to: 0.1, y: 0.45)
     check(button(app, "End review").exists, "a swipe on the study card doesn't change tab")
@@ -433,7 +434,8 @@ final class PolishTests: XCTestCase {
     check(buzzed(app, "selection:toggle"), "a switch gives a selection tap")
     tap(button(app, "Done"), "Done")
     // flipping and grading a card
-    tap(buttonStarting(app, "Flashcards"), "Flashcards")
+    tap(app.buttons["deck.study"].firstMatch, "Study")
+    tap(app.buttons["menu.Flashcards"].firstMatch, "Study › Flashcards")
     check(wait(button(app, "End review")), "the review opens")
     app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4)).tap()
     check(buzzed(app, "light:flip"), "flipping a card gives a light tap")

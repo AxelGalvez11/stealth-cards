@@ -96,7 +96,8 @@ final class QuizTests: XCTestCase {
   }
   /// Learn mode on the deck of this name, with only multiple choice turned on (so each question is one a tap can answer).
   private func startLearn(_ app: XCUIApplication) {
-    tap(button(app, "Learn"), "Learn")
+    tap(app.buttons["deck.study"].firstMatch, "Study")
+    tap(app.buttons["menu.Learn"].firstMatch, "Study › Learn")
     check(wait(button(app, "Start learning")), "Learn mode’s start sheet opens")
     for k in ["Matching", "True or false", "Fill in the blank"] { tap(button(app, k), k) }
     tap(button(app, "Start learning"), "Start learning")
@@ -121,7 +122,7 @@ final class QuizTests: XCTestCase {
     _ = deck(Self.server, who, name, 30)
     stubSet(["types": "multiple_choice", "delayMs": 4000])
     let app = launch(Self.server, as: who, ["-open", "deck:" + name])
-    check(wait(buttonStarting(app, "Flashcards")), "the deck page is open")
+    check(wait(app.buttons["deck.study"].firstMatch), "the deck page is open")
     startLearn(app)
     check(wait(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Answer number'")).firstMatch), "the first question is there at once, from the builders (the AI is still writing)")
     let first = options(app)
@@ -153,7 +154,7 @@ final class QuizTests: XCTestCase {
     for i in 0..<3 { api(Self.server, who, "POST", "/api/quiz", ["cardIds": Array(ids[(i * 20)..<(i * 20 + 20)])]) }
     check(stubRequests() == [20, 20, 20], "the day’s three batches are used (\(stubRequests()))")
     let app = launch(Self.server, as: who, ["-open", "deck:" + name])
-    check(wait(buttonStarting(app, "Flashcards")), "the deck page is open")
+    check(wait(app.buttons["deck.study"].firstMatch), "the deck page is open")
     startLearn(app)
     check(wait(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Answer number'")).firstMatch), "Learn mode asks its first question")
     var n = 0
@@ -171,7 +172,7 @@ final class QuizTests: XCTestCase {
     _ = deck(Self.off, who, name, 10)
     stubSet([:])
     let app = launch(Self.off, as: who, ["-open", "deck:" + name])
-    check(wait(buttonStarting(app, "Flashcards")), "the deck page is open")
+    check(wait(app.buttons["deck.study"].firstMatch), "the deck page is open")
     startLearn(app)
     check(wait(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Answer number'")).firstMatch), "Learn mode asks its first question")
     var n = 0

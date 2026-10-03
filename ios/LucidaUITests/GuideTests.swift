@@ -16,7 +16,8 @@
 //   10  the "Made from" line in the card editor opens the source at that spot (Sources, viewer open); More cards from a source; Delete (asks first: the file goes, the cards stay,
 //       the line turns to plain words)
 //   11  a shared deck's page shows its Notes (a toggle anyone can open) and "Made from 2 sources", with no names
-//   12  the deck cover's Make cards and New card (no Add cards menu); dark mode; nothing says "AI generated"
+//   12  the deck cover's + (the owner, 2026-10-02): New card, Make cards, and Notes (the Notes page, ready to type at the end of the Guide); dark mode; nothing
+//       says "AI generated"
 //   13  a toggle and a section: "> " makes a toggle, Enter writes inside it, it closes and opens, a heading's ▸ folds its section; none of that changes the words saved,
 //       and this phone remembers it (the Notes page and the deck page alike)
 // Run it with ios/tools/e2e-guide.sh (it starts a fresh server on port 3934 and the stand-in AI on 3939). It only runs when LUCIDA_GUIDE is set, so the other scripts keep running
@@ -138,6 +139,12 @@ final class GuideTests: XCTestCase {
   private func buttonStarting(_ app: XCUIApplication, _ words: String) -> XCUIElement { app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", words)).firstMatch }
   /// How many Make cards buttons show: the deck's cover has one (your own deck), and the Notes their own when there is something to make cards from.
   private func makeButtons(_ app: XCUIApplication) -> Int { app.buttons.matching(NSPredicate(format: "label == %@", "Make cards")).count }
+  /// A row of the deck cover's + (Lucida's own menu: New card, Make cards, Source, Notes, Upload diagram, Make diagram).
+  private func fromDeckMenu(_ app: XCUIApplication, _ row: String) {
+    let r = app.buttons["menu." + row].firstMatch   // (a row by its own name: the page has a Notes tab too)
+    if !(r.exists && r.isHittable) { tap(app.buttons["deck.add"].firstMatch, "the deck’s +") }
+    tap(r, "+ › " + row)
+  }
   private func text(_ app: XCUIApplication, _ label: String) -> XCUIElement { app.staticTexts.matching(NSPredicate(format: "label == %@", label)).firstMatch }
   private func textHas(_ app: XCUIApplication, _ words: String) -> XCUIElement { app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", words)).firstMatch }
   private func wait(_ e: XCUIElement, _ s: TimeInterval = 12) -> Bool { e.waitForExistence(timeout: s * Self.slow) }
@@ -227,20 +234,20 @@ final class GuideTests: XCTestCase {
     let who = "gdn" + run, name = "Plain deck " + run
     let id = person(who, deck: name, cards: 2)
     let app = launch(as: who, ["-open", "deck:" + name])
-    check(wait(buttonStarting(app, "Cards 2")), "the deck page has a Cards tab with the number of cards")
+    check(wait(button(app, "Cards")), "the deck page has a Cards tab (no count: the owner, 2026-10-02)")
     check(selected(buttonStarting(app, "Cards")) && !selected(buttonStarting(app, "Notes")) && !selected(buttonStarting(app, "Sources")), "it opens on Cards")
     check(button(app, "Notes").exists && buttonStarting(app, "Diagrams").exists && button(app, "Sources").exists, "with Notes, Diagrams and Sources beside it (a deck of your own)")
     check(textHas(app, "Question 1 of").exists && !line(app, "Title").exists, "the cards show, and no Notes in the way")
     tap(button(app, "Notes"), "Notes")
     check(wait(line(app, "Title")) && line(app, "Start writing").exists, "Notes with no Guide is a blank note: a heading that says Title and a line that says Start writing")
-    // (The deck's cover has its own Make cards, at the top: the Notes add theirs once there is something to make cards from.)
-    check(!button(app, "Edit").exists && makeButtons(app) == 1 && !textHas(app, "Question 1 of").exists, "(no Edit button or Make cards of their own yet, and the cards give way)")
+    // (The Notes add their own Make cards once there is something to make cards from; the cover's is in its + since 2026-10-02.)
+    check(!button(app, "Edit").exists && makeButtons(app) == 0 && !textHas(app, "Question 1 of").exists, "(no Edit button or Make cards of their own yet, and the cards give way)")
     snap("guide-empty")
     tap(line(app, "Title"), "the blank note's title")
     check(onPage(app) && eventually(5) { self.focusedValue(app) == "Title" }, "a tap opens the Notes page with the caret in the title")
     check(wait(app.buttons["Text style"]) && app.buttons["To-do"].exists && app.buttons["Bullets"].exists && app.buttons["Toggle"].exists && app.buttons["Hide the keyboard"].exists,
           "Lucida's own bar is above the keyboard: Aa, To-do, Bullets, Toggle, the keyboard-down button")
-    check(app.buttons["More"].exists && app.buttons["Add a page"].exists && text(app, name).exists, "with ⋯, + for a page, and the deck's name")
+    check(app.buttons["More"].exists && text(app, name).exists, "with ⋯ (New page is in it) and the deck's name")
     check(!button(app, "Write").exists && !button(app, "Preview").exists, "and no Write or Preview: the page is always formatted")
     noLabel(app, "the Notes page")
     type(app, "Cell Biology: Exam 1\nEverything for the first exam.")
@@ -249,16 +256,16 @@ final class GuideTests: XCTestCase {
     check(line(app, "Cell Biology: Exam 1").exists && (line(app, "Cell Biology: Exam 1").label == "Heading"), "the title is a heading")
     done(app)
     check(wait(line(app, "Cell Biology: Exam 1")) && selected(button(app, "Notes")), "Done goes back to the deck's Notes, which read the page")
-    check(makeButtons(app) == 2, "with Make cards of their own now (beside the cover's)")
+    check(makeButtons(app) == 1, "with Make cards of their own now")
     noLabel(app, "the Notes")
     // a tab that isn't there opens Cards
     let app2 = launch(as: who, ["-open", "deck:" + name, "-deckTab", "nowhere"])
-    check(wait(buttonStarting(app2, "Cards 2")) && selected(buttonStarting(app2, "Cards")) && !selected(button(app2, "Notes")), "a tab that isn’t there opens Cards")
+    check(wait(button(app2, "Cards")) && selected(button(app2, "Cards")) && !selected(button(app2, "Notes")), "a tab that isn’t there opens Cards")
     // a deck with no cards but a Guide keeps its page, and says so on Cards
     let bare = "Only a guide " + run, bid = person(who, deck: bare, cards: 0)
     act(who, "guide.save", ["deckId": bid, "text": "# Plan\n\nWrite the cards later."])
     let app3 = launch(as: who, ["-open", "deck:" + bare])
-    check(wait(buttonStarting(app3, "Cards 0")) && button(app3, "Notes").exists && wait(text(app3, "No cards in this deck yet.")), "a deck with no cards but a Guide keeps its tabs, and says so on Cards")
+    check(wait(button(app3, "Cards")) && button(app3, "Notes").exists && wait(text(app3, "No cards in this deck yet.")), "a deck with no cards but a Guide keeps its tabs, and says so on Cards")
     tap(button(app3, "Notes"), "Notes")
     check(wait(line(app3, "Plan")) && line(app3, "Write the cards later.").exists, "and its Notes show the Guide")
   }
@@ -477,7 +484,7 @@ final class GuideTests: XCTestCase {
     let n = cards(who, in: deckId).count
     var app = launch(as: who, ["-open", "deck:Cell Biology", "-deckTab", "notes"])
     check(wait(line(app, "Cell Biology: Exam 1")), "Notes read the Guide (its title, as a heading)")
-    check(buttonStarting(app, "Cards \(n)").exists && selected(button(app, "Notes")) && buttonStarting(app, "Sources \(sourceCount)").exists, "the tabs say how many cards and Sources (Cards \(n), Sources \(sourceCount)), and Notes is the one on show")
+    check(button(app, "Cards").exists && selected(button(app, "Notes")) && button(app, "Sources").exists && n > 0, "the tabs are there (no counts since 2026-10-02), and Notes is the one on show")
     check(lineHas(app, "Everything for the first exam").exists && !textHas(app, "Question 1 of").exists, "the Guide shows, the cards don’t")
     check(button(app, "Make cards").exists && button(app, "Guide").exists && button(app, "Lecture 3 summary").exists && button(app, "Mnemonics").exists, "Make cards, and the pages as tabs")
     // toggles: closed at first on this phone; opened, and remembered
@@ -533,7 +540,7 @@ final class GuideTests: XCTestCase {
     var app = launch(as: who, ["-open", "deck:Cell Biology"])
     check(wait(button(app, "Suggest a change")), "the deck page is the one you study")
     check(buttonStarting(app, "Cards").exists && button(app, "Notes").exists && !button(app, "Sources").exists && !buttonStarting(app, "Sources").exists, "it has Cards and Notes, and no Sources tab")
-    check(!button(app, "Add cards").exists, "and no Add cards")
+    check(!button(app, "Add cards").exists && !app.buttons["deck.add"].exists && app.buttons["deck.study"].exists, "and no Add cards or + (Study stays)")
     tap(button(app, "Notes"), "Notes")
     check(wait(line(app, "Cell Biology: Exam 1")), "the Guide shows")
     check(!button(app, "Edit").exists && !button(app, "Make cards").exists && !line(app, "Title").exists, "with no Make cards and nothing to write in")
@@ -727,7 +734,7 @@ final class GuideTests: XCTestCase {
     noLabel(app, "the shared deck’s page")
   }
 
-  // ---------- 12: the cover's Make cards and New card, dark mode ----------
+  // ---------- 12: the cover's + (New card, Make cards, Notes), dark mode ----------
   func test12MenuAndDark() throws {
     try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
     let who = "gdd" + run, name = "Dark deck " + run
@@ -735,13 +742,20 @@ final class GuideTests: XCTestCase {
     act(who, "guide.save", ["deckId": id, "text": "# Dark heading\n\n- [x] done\n- [ ] todo\n\n:::toggle A toggle\nInside it.\n:::\n\n| a | b |\n| - | - |\n| 1 | 2 |\n\n> a quote\n\nSome `code` here."])
     act(who, "settings.update", ["patch": ["look": "dark"]])
     let app = launch(as: who, ["-open", "deck:" + name])
-    check(wait(button(app, "New card")) && button(app, "Make cards").exists && !button(app, "Add cards").exists, "the deck’s cover has Make cards and New card, plainly (no Add cards menu)")
-    tap(button(app, "New card"), "New card")
-    check(wait(text(app, "New card")) && (app.textViews.count > 0 || app.textFields.count > 0), "New card opens the card editor")
+    check(wait(app.buttons["deck.add"]) && !button(app, "New card").exists && !button(app, "Make cards").exists && !button(app, "Add cards").exists, "the deck’s cover has its + (no sparkle, New card or Add cards)")
+    fromDeckMenu(app, "New card")
+    check(wait(text(app, "New card")) && (app.textViews.count > 0 || app.textFields.count > 0), "+ › New card opens the card editor")
     tap(button(app, "Cancel"), "Cancel")
-    tap(button(app, "Make cards"), "Make cards")
-    check(wait(button(app, "A topic")) && button(app, "Upload").exists, "Make cards opens the maker")
+    fromDeckMenu(app, "Make cards")
+    check(wait(button(app, "A topic")) && button(app, "Upload").exists, "+ › Make cards opens the maker")
     tap(button(app, "Close"), "Close")
+    _ = gone(button(app, "Close"))
+    // + › Notes: the Notes page, with the caret at the end of what is written
+    fromDeckMenu(app, "Notes")
+    check(onPage(app) && line(app, "Dark heading").exists, "+ › Notes opens the Notes page")
+    check(eventually(6) { self.focusedValue(app).hasSuffix("here.") }, "ready to type at the end of the Guide (“\(focusedValue(app))”)")
+    tap(app.buttons["backButton"], "Done")
+    check(wait(button(app, "Notes")), "and Done comes back to the deck")
     // dark
     tap(button(app, "Notes"), "Notes")
     check(wait(line(app, "Dark heading")) && line(app, "a quote").exists, "in dark mode the Notes read")

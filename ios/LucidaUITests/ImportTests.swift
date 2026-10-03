@@ -181,7 +181,7 @@ final class ImportTests: AppCase {
     let who = "ipd" + run, empty = "Empty " + run
     let ids = person(who, decks: [("Biology", 1), (empty, 0)])
     var app = launch(as: who, ["-open", "deck:" + empty])
-    check(wait(text(app, "No cards yet")) && wait(button(app, "Make cards")), "the empty deck's page, with Make cards on its cover")
+    check(wait(text(app, "No cards yet")) && wait(app.buttons["deck.add"].firstMatch), "the empty deck's page, with its + on its cover")
     check(!button(app, "More").exists && !button(app, "Import cards").exists, "and no More under it (no Make box row)")
     app.terminate()
     app = launch(as: who)

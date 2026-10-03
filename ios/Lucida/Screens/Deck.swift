@@ -252,7 +252,7 @@ struct DeckScreen: View {
           CoverButton(icon: "gear", label: "Deck settings") { withAnimation(Motion.sheet) { nav.sheet = .deckSettings(d.id) } }
           if !d.rows.isEmpty { CoverButton(icon: "search", label: "Search") {} }
           // Your own deck takes material: + opens New card, Make cards, Source, Notes, Upload diagram and Make diagram (addRows).
-          if !d.sharing.readOnly { CoverButton(icon: "plus", label: "Add") { studyOpen = false; addOpen.toggle() }.addMenuAnchor("deck-add") }
+          if !d.sharing.readOnly { CoverButton(icon: "plus", label: "Add") { studyOpen = false; addOpen.toggle() }.accessibilityIdentifier("deck.add").addMenuAnchor("deck-add") }
           if d.sharing.readOnly, let lk = d.sharing.link { CoverButton(icon: "message", label: "Suggest a change", size: 40) { nav.deckPage(lk.url, suggest: "1") } }
         }
         .padding(.top, Screen.top(54))
@@ -358,6 +358,7 @@ struct DeckScreen: View {
     }
     .buttonStyle(.press)
     .accessibilityLabel("Study")
+    .accessibilityIdentifier("deck.study")
     .addMenuAnchor("deck-study")
   }
   /// Study's menu: Flashcards (with what waits today) and Learn, each as its old button did (the iPhone never had Play live: it needs a big screen).
