@@ -303,6 +303,8 @@ extension Board {
     case "PhoneImport": nav.tab = .library; nav.sheet = .importCards("")
     // Make cards over the Library, on one of the canvas's steps (`-state Review`, or any name in MakeSample.steps; Pick when it's left out).
     case "PhoneMake": nav.tab = .library; nav.sheet = .make(MakeStart(demo: MakeSample.name(Board.arg("-state"))))
+    // Make cards opened from a deck (its + menu, Sources' Make cards, More from a source): the same states over Cell Biology's page, Into deck on it.
+    case "PhoneDeckMake": nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .make(MakeStart(deckId: "cell", demo: MakeSample.name(Board.arg("-state"))))
     case "PhoneEditor": store.props.editorTyping = true; nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .newCard(deckId: "cell", cardId: nil)
     // Editing a card that's paused (Unpause card), from the sample's first card.
     case "PhoneEditorPaused": store.props.editCard = "k1"; store.demoPaused["k1"] = true; nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .newCard(deckId: "cell", cardId: "k1")

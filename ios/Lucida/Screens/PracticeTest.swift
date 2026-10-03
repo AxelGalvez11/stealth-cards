@@ -1,28 +1,9 @@
 // iPhone · Practice test (PhoneTest, with the board's picker: Set up, Multiple choice, True or false, Fill in the blank, Written,
-// Matching, Submit, Leave, Results, Results · missed), and its pieces on a folder's page: the Practice test button and how the last
-// one went (a deck's page has none: the owner, 2026-10-02, "remove practice tests"). A calm test like an exam, not a game: numbered questions you can go back through and flag,
+// Matching, Submit, Leave, Results, Results · missed). No page has a Practice test button (a deck's: the owner, 2026-10-02, "remove
+// practice tests"; a folder's: canvas V188), so the set-up opens with `-open test:<folder name>` alone. A calm test like an exam, not a game: numbered questions you can go back through and flag,
 // a quiet timer when one is on, nothing said about right or wrong until you submit, then the score with every question. The
 // engine is Data/TestEngine.swift (a port of web/db.js's), the words and looks are the board's (design/test-boards.mjs).
 import SwiftUI
-
-// ---------- the folder's pieces ----------
-
-/// The Practice test button (a folder's page).
-struct TestStartButton: View {
-  @Environment(\.theme) private var t
-  @Environment(\.accessibilityReduceMotion) private var still
-  @EnvironmentObject private var nav: Nav
-  let scope: TestScope
-  var height: CGFloat = 48
-  var size: CGFloat = 16
-  var body: some View {
-    Button { withAnimation(Motion.sheet) { nav.sheet = .testStart(scope) } } label: {
-      HStack(spacing: 8) { Icon("file", size, 2); Text("Practice test").css(size, .semibold).lineLimit(1).fixedSize() }
-        .foregroundStyle(t.text).frame(maxWidth: .infinity).frame(height: height).background(Capsule().fill(t.surf))
-    }
-    .buttonStyle(.press)
-  }
-}
 
 // ---------- Set up ----------
 

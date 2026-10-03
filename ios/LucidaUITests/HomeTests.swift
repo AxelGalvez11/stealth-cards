@@ -4,11 +4,13 @@
 // stood in for (stub-ai.mjs: nothing real is asked). Each flow sets up its own people, so any one can run alone:
 //   1  The tab bar is Library, Discover, Stats and Profile, and the app opens on the Library: no Make box, no Upload, Paste, YouTube and More row,
 //      no line of what's due; its + is New deck and Import cards (no Make cards), and each opens. `-open today` (the old page's name) opens it.
-//   2  A deck's page: its cover has Make cards and New card; no Due, New and Remembered tiles, no Practice test, no exam line, and the line under
-//      its name says only how many cards; its tabs are Sources, Cards, Notes, Diagrams, right under Flashcards and Learn, open on Cards. Its Make
+//   2  A deck's page: its cover has + (New card, Make cards, Source, Notes, Upload diagram, Make diagram) and Study under it (Flashcards with its
+//      count, Learn: the owner, 2026-10-02); no sparkle or New card button, no Due, New and Remembered tiles, no Practice test, no exam line, and the
+//      line under its name says only how many cards; its tabs are Sources, Cards, Notes, Diagrams, right under Study, open on Cards. Its + › Make
 //      cards opens the maker set to the deck, and the cards go into it (and the line still says only how many).
-//   3  An empty deck: its cover ("No cards yet", Make cards and New card) and nothing under it; its Make cards is set to it; New deck opens a new
-//      deck there.
+//   3  An empty deck is the deck page (the owner, 2026-10-02: "creating new deck should already have the tabs"): its cover's + (no Study), its four
+//      tabs, and Cards' "No cards yet" with New card and Make cards; Make cards opens over the deck and comes back to it, set to it, and the cards go in;
+//      New deck opens a new deck on that page.
 //   4  A brand-new account: the welcome, whose end is the Library: three plain tiles side by side, New deck, Import cards and Connect AI, and no
 //      other words; each opens its page.
 //   5  No Classes (the owner, 2026-10-02: "remove the 'classes' page everywhere"): with a class still on the server (older apps use it), a
@@ -106,19 +108,26 @@ final class HomeTests: AppCase {
     let exam = ISO8601DateFormatter().string(from: Date().addingTimeInterval(9 * 86400)).prefix(10)
     act(who, "deck.update", ["id": id, "patch": ["exam": String(exam)]])
     var app = launch(as: who, ["-open", "deck:Anatomy"])
-    check(wait(button(app, "Make cards")) && button(app, "New card").exists && !button(app, "Add cards").exists, "a deck's cover has Make cards and New card (no Add cards menu)")
+    check(wait(deckButton(app, "Add")) && wait(deckButton(app, "Study")) && !button(app, "Make cards").exists && !button(app, "New card").exists && !button(app, "Add cards").exists,
+          "a deck's cover has + and Study (no sparkle, New card or Add cards)")
+    openDeckMenu(app, "Add")
+    check(["New card", "Make cards", "Source", "Notes", "Upload diagram", "Make diagram"].allSatisfy { menuRow(app, $0).exists }, "its + has New card, Make cards, Source, Notes, Upload diagram and Make diagram")
+    closeDeckMenu(app)
     check(wait(text(app, "3 cards")), "the line under its name says only how many cards")
     check(!text(app, "Due").exists && !text(app, "Remembered").exists && !text(app, "New").exists, "no Due, New and Remembered tiles (the owner: \"remove these mini stats\")")
     check(!buttonStarting(app, "Practice test").exists && !text(app, "Practice tests").exists, "no Practice test (the owner: \"remove practice tests\")")
     check(!any(app, "Exam in").exists && !any(app, "cards to review first").exists, "no exam line")
-    check(wait(buttonStarting(app, "Flashcards")) && buttonStarting(app, "Flashcards").label.contains("3"), "Flashcards keeps its count of cards due")
+    openDeckMenu(app, "Study")
+    let fl = menuRow(app, "Flashcards")
+    check(wait(fl, 5) && ((fl.value as? String) ?? "").contains("3") && menuRow(app, "Learn").exists && !menuRow(app, "Play live").exists, "Study › Flashcards keeps its count of cards due (“\((fl.value as? String) ?? "")”), and Learn (no Play live on a phone)")
+    closeDeckMenu(app)
     let order = deckTabs(app)
     check(order.map { String($0.split(separator: " ").first ?? "") } == ["Sources", "Cards", "Notes", "Diagrams"], "its tabs are Sources, Cards, Notes and Diagrams, in that order (\(order))")
     check(buttonStarting(app, "Cards").isSelected, "and it opens on Cards")
-    let learn = button(app, "Learn"), first = buttonStarting(app, "Sources")
-    check(learn.exists && first.exists && first.frame.minY - learn.frame.maxY >= 0 && first.frame.minY - learn.frame.maxY <= 20, "right under Flashcards and Learn (\(Int(first.frame.minY - learn.frame.maxY)) points)")
+    let study = deckButton(app, "Study"), first = buttonStarting(app, "Sources")
+    check(study.exists && first.exists && first.frame.minY - study.frame.maxY >= 0 && first.frame.minY - study.frame.maxY <= 20, "right under Study (\(Int(first.frame.minY - study.frame.maxY)) points)")
     snap("home-deck")
-    button(app, "Make cards").tap()
+    fromDeckMenu(app, "Add", "Make cards")
     check(wait(button(app, "A topic")) && button(app, "Close").exists, "its Make cards opens the maker")
     button(app, "A topic").tap()
     check(opened(app, "A topic") && wait(button(app, "Anatomy")) && button(app, "Anatomy").isSelected, "set to the deck")
@@ -129,7 +138,9 @@ final class HomeTests: AppCase {
     app.terminate()
     app = launch(as: who, ["-open", "deck:Anatomy"])
     check(wait(text(app, "\(n) cards")) && !any(app, "from your AI").exists, "and the line still says only how many cards, not how many Lucida made (the owner: \"remove the '38 added by ai'\")")
-    check(wait(buttonStarting(app, "Sources 1")), "with what they were made from under Sources")
+    // (Tabs show no counts since 2026-10-02: the source is a row under Sources.)
+    tap(buttonStarting(app, "Sources"), "Sources")
+    check(wait(any(app, topic)), "with what they were made from under Sources")
   }
 
   // ---------- 3: an empty deck, New deck ----------
@@ -138,17 +149,28 @@ final class HomeTests: AppCase {
     _ = person(who, decks: [("Anatomy", 3)])
     act(who, "deck.add", ["name": empty])
     var app = launch(as: who, ["-open", "deck:" + empty])
-    check(wait(text(app, "No cards yet")) && wait(button(app, "Make cards")) && button(app, "New card").exists, "an empty deck's cover has No cards yet, Make cards and New card")
-    check(noMaking(app), "and nothing under it: no Make box, no row")
+    check(wait(deckButton(app, "Add")) && !deckButton(app, "Study").exists, "an empty deck's cover has its +, and no Study (nothing to study)")
+    let tabs = deckTabs(app)
+    check(tabs == ["Sources", "Cards", "Notes", "Diagrams"] && button(app, "Cards").isSelected, "it is the deck page, with its four tabs, on Cards (\(tabs))")
+    check(wait(text(app, "No cards yet")) && button(app, "New card").exists && button(app, "Make cards").exists, "Cards says No cards yet, with New card and Make cards")
+    check(noMaking(app), "and no Make box or row")
     snap("home-deck-empty")
-    button(app, "Make cards").tap()
+    tap(button(app, "New card"), "New card")
+    check(wait(text(app, "New card")) && (app.textViews.count > 0 || app.textFields.count > 0), "its New card opens the card editor")
+    tap(button(app, "Cancel"), "Cancel")
+    tap(button(app, "Make cards"), "Make cards (the Cards tab's)")
     check(wait(button(app, "A topic")), "its Make cards opens the maker")
+    tap(button(app, "Close"), "Close")
+    check(gone(button(app, "A topic"), 6) && wait(deckButton(app, "Add")) && wait(text(app, "No cards yet")) && !button(app, "New folder").exists, "closing it comes back to the deck, not the Library")
+    fromDeckMenu(app, "Add", "Make cards")
+    check(wait(button(app, "A topic")), "its + › Make cards opens the maker")
     button(app, "A topic").tap()
     check(opened(app, "A topic") && wait(button(app, empty)) && button(app, empty).isSelected, "set to the deck")
     typeInto(app.textFields["Topic"], "Bones of the arm")
     let saved = makeAndSave(app)
     let eid = deck(who, empty)?["id"] as? String ?? ""
     check(saved.hasSuffix(" to " + empty) && cardCount(who, eid) > 0, "the cards go into that deck: “\(saved)”")
+    check(wait(deckButton(app, "Study")) && deckButton(app, "Add").exists && !button(app, "New folder").exists, "and the deck’s page is there with them (Study now), not the Library")
     app.terminate()
     app = launch(as: who)
     tap(button(app, "Add"), "the Library's +")
@@ -158,7 +180,8 @@ final class HomeTests: AppCase {
     let done = app.keyboards.buttons.matching(NSPredicate(format: "label IN {'Done','done','return','Return'}")).firstMatch
     if done.exists { done.tap(); Thread.sleep(forTimeInterval: 0.6) }
     tap(button(app, "Create deck"), "Create deck")
-    check(wait(text(app, "Fresh " + run)) && wait(text(app, "No cards yet")) && wait(button(app, "Make cards")), "New deck opens the new deck on its empty page, with Make cards")
+    check(wait(text(app, "Fresh " + run)) && wait(text(app, "No cards yet")) && wait(deckButton(app, "Add")), "New deck opens the new deck’s page, with its +")
+    check(deckTabs(app) == ["Sources", "Cards", "Notes", "Diagrams"], "with its four tabs already there (\(deckTabs(app)))")
   }
 
   // ---------- 4: a brand-new account ----------
@@ -255,9 +278,9 @@ final class HomeTests: AppCase {
     let fid = act(who, "folder.add", ["name": "Science"])["id"] as? String ?? ""
     act(who, "deck.move", ["id": ids["Biology"] ?? "", "folder": fid])
     let app = launch(as: who, ["-open", "folder:Science"])
-    check(wait(button(app, "Rename")) && wait(any(app, "Biology")), "a folder's page opens, with its deck")
+    check(wait(button(app, "Folder options")) && wait(any(app, "Biology")), "a folder's page opens, with its deck")
     check(noMaking(app) && !button(app, "Make cards").exists, "it has nothing to make cards either")
-    check(wait(buttonStarting(app, "Practice test")), "and keeps its Practice test")
+    check(!buttonStarting(app, "Practice test").exists, "and no Practice test, its actions are in its ⋯ (canvas V188)")
     snap("home-folder")
   }
 }

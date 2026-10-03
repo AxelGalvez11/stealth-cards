@@ -14,6 +14,8 @@
 //       adding them makes a card for every label and keeps the diagrams in the deck
 //   08  a shared deck's page shows its tables and mind maps (and none of its owner's lecture pictures or uploads); a deck you study has the Diagrams tab with only those, read only
 //   09  dark mode; nothing says "AI generated"; and no system dialog, alert or menu opens anywhere
+//   10  the deck cover's + (the owner, 2026-10-02: "upload diagram"): Make diagram opens its sheet over the Diagrams tab, Upload diagram asks Photo library or Files in Lucida's
+//       own sheet with the Diagrams tab shown; an empty deck's + does the same
 // Run it with ios/tools/e2e-diagrams.sh (it starts a fresh server on port 3908 and the stand-in AI on 3909). It only runs when LUCIDA_DIAGRAMS is set, so the other scripts keep running
 // their own checks alone.
 import XCTest
@@ -100,7 +102,7 @@ final class DiagramsTests: AppCase {
     try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
     let o = owner(0)
     let app = launch(as: o.who, ["-open", "deck:" + o.deck])
-    check(wait(buttonStarting(app, "Diagrams 6")), "the deck page has a Diagrams tab with the number of diagrams")
+    check(wait(button(app, "Diagrams")) && diagramsOf(o.who, o.id).count == 6, "the deck page has a Diagrams tab (no count: the owner, 2026-10-02), for its six diagrams")
     check(button(app, "Notes").exists && buttonStarting(app, "Sources").exists && buttonStarting(app, "Cards").exists, "beside Cards, Notes and Sources")
     check(selected(buttonStarting(app, "Cards")) && !selected(buttonStarting(app, "Diagrams")), "the page opens on Cards")
     tap(buttonStarting(app, "Diagrams"), "Diagrams")
@@ -417,5 +419,37 @@ final class DiagramsTests: AppCase {
     snap("dark-map")
     noLabel(app, "dark mode")
     noSystemUI(app, "dark mode")
+  }
+
+  // ---------- 10: the deck cover's + ----------
+  func test10DeckPlus() throws {
+    try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
+    let o = owner(0)
+    let app = launch(as: o.who, ["-open", "deck:" + o.deck])
+    check(wait(deckButton(app, "Add")) && selected(buttonStarting(app, "Cards")), "the deck page opens on Cards, with its +")
+    fromDeckMenu(app, "Add", "Make diagram")
+    check(wait(text(app, "Make a")) && text(app, "From").exists && button(app, "Make table").exists, "+ › Make diagram opens the Make diagram sheet")
+    noSystemUI(app, "+ › Make diagram")
+    snap("deck-plus-make-diagram")
+    tap(button(app, "Cancel"), "Cancel")
+    check(gone(text(app, "Make a")) && wait(text(app, "DIAGRAMS")) && selected(buttonStarting(app, "Diagrams")), "it is over the Diagrams tab, which stays when it closes")
+    tap(buttonStarting(app, "Cards"), "Cards")
+    fromDeckMenu(app, "Add", "Upload diagram")
+    check(wait(text(app, "Upload a picture")) && wait(button(app, "Photo library, A photo or a screenshot")) && button(app, "Files, A picture saved on this iPhone").exists,
+          "+ › Upload diagram asks where the picture is, in Lucida’s own sheet (Photo library, Files)")
+    noSystemUI(app, "+ › Upload diagram")
+    snap("deck-plus-upload")
+    tap(button(app, "Close"), "Close")
+    check(gone(text(app, "Upload a picture")) && selected(buttonStarting(app, "Diagrams")), "with the Diagrams tab shown, where the picture goes")
+    // an empty deck's + does the same
+    let empty = "Nothing yet " + run
+    act(o.who, "deck.add", ["name": empty])
+    let e = launch(as: o.who, ["-open", "deck:" + empty])
+    check(wait(text(e, "No cards yet")) && wait(deckButton(e, "Add")) && !deckButton(e, "Study").exists, "an empty deck: its + and no Study")
+    fromDeckMenu(e, "Add", "Upload diagram")
+    check(wait(text(e, "Upload a picture")) && wait(button(e, "Photo library, A photo or a screenshot")), "its + › Upload diagram asks where the picture is")
+    tap(button(e, "Close"), "Close")
+    check(gone(text(e, "Upload a picture")) && wait(text(e, "DIAGRAMS")) && selected(buttonStarting(e, "Diagrams")), "over its Diagrams tab")
+    noSystemUI(e, "an empty deck’s +")
   }
 }

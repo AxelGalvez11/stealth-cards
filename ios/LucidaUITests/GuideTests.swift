@@ -145,6 +145,12 @@ final class GuideTests: XCTestCase {
   private func buttonStarting(_ app: XCUIApplication, _ words: String) -> XCUIElement { app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", words)).firstMatch }
   /// How many Make cards buttons show: the deck's cover has one (your own deck), and the Notes their own when there is something to make cards from.
   private func makeButtons(_ app: XCUIApplication) -> Int { app.buttons.matching(NSPredicate(format: "label == %@", "Make cards")).count }
+  /// A row of the deck cover's + (Lucida's own menu: New card, Make cards, Source, Notes, Upload diagram, Make diagram).
+  private func fromDeckMenu(_ app: XCUIApplication, _ row: String) {
+    let r = app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH %@", "menu.")).buttons.matching(NSPredicate(format: "label == %@", row)).firstMatch   // (a row of the open menu: the page has a Notes tab too)
+    if !(r.exists && r.isHittable) { tap(app.buttons["deck.add"].firstMatch, "the deck’s +") }
+    tap(r, "+ › " + row)
+  }
   private func text(_ app: XCUIApplication, _ label: String) -> XCUIElement { app.staticTexts.matching(NSPredicate(format: "label == %@", label)).firstMatch }
   private func textHas(_ app: XCUIApplication, _ words: String) -> XCUIElement { app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", words)).firstMatch }
   private func wait(_ e: XCUIElement, _ s: TimeInterval = 12) -> Bool { e.waitForExistence(timeout: s * Self.slow) }
@@ -270,7 +276,8 @@ final class GuideTests: XCTestCase {
     let bare = "Only a guide " + run, bid = person(who, deck: bare, cards: 0)
     act(who, "guide.save", ["deckId": bid, "text": "# Plan\n\nWrite the cards later."])
     let app3 = launch(as: who, ["-open", "deck:" + bare])
-    check(wait(button(app3, "Cards")) && button(app3, "Notes").exists && wait(text(app3, "No cards in this deck yet.")), "a deck with no cards but a Guide keeps its tabs, and says so on Cards")
+    check(wait(button(app3, "Cards")) && button(app3, "Notes").exists && wait(text(app3, "No cards yet")) && button(app3, "New card").exists && button(app3, "Make cards").exists,
+          "a deck with no cards but a Guide keeps its tabs, and says so on Cards (No cards yet, with New card and Make cards)")
     tap(button(app3, "Notes"), "Notes")
     check(wait(app3.buttons.matching(NSPredicate(format: "identifier == %@ AND label == %@", "notes.row", "Plan")).firstMatch), "and its Notes list the Guide")
   }
@@ -581,7 +588,7 @@ final class GuideTests: XCTestCase {
     var app = launch(as: who, ["-open", "deck:Cell Biology"])
     check(wait(button(app, "Suggest a change")), "the deck page is the one you study")
     check(buttonStarting(app, "Cards").exists && button(app, "Notes").exists && !button(app, "Sources").exists && !buttonStarting(app, "Sources").exists, "it has Cards and Notes, and no Sources tab")
-    check(!button(app, "Add cards").exists, "and no Add cards")
+    check(!button(app, "Add cards").exists && !app.buttons["deck.add"].exists && app.buttons["deck.study"].exists, "and no Add cards or + (Study stays)")
     tap(button(app, "Notes"), "Notes")
     // (V176: the Notes tab is a list of notes; a deck you only study opens its Notes page to read)
     let note = app.buttons.matching(NSPredicate(format: "identifier == %@ AND label == %@", "notes.row", "Cell Biology: Exam 1")).firstMatch
@@ -788,7 +795,7 @@ final class GuideTests: XCTestCase {
     noLabel(app, "the shared deck’s page")
   }
 
-  // ---------- 12: the cover's Make cards and New card, dark mode ----------
+  // ---------- 12: the cover's + (New card, Make cards, Notes), dark mode ----------
   func test12MenuAndDark() throws {
     try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
     let who = "gdd" + run, name = "Dark deck " + run
@@ -796,16 +803,20 @@ final class GuideTests: XCTestCase {
     act(who, "guide.save", ["deckId": id, "text": "# Dark heading\n\n- [x] done\n- [ ] todo\n\n:::toggle A toggle\nInside it.\n:::\n\n| a | b |\n| - | - |\n| 1 | 2 |\n\n> a quote\n\nSome `code` here."])
     act(who, "settings.update", ["patch": ["look": "dark"]])
     let app = launch(as: who, ["-open", "deck:" + name])
-    // (the deck page's + menu: New card, Make cards and the rest, wt-full's Study ▾ and +)
-    tap(button(app, "Add"), "the deck's +")
-    check(wait(button(app, "New card")) && button(app, "Make cards").exists && button(app, "Notes").exists && !button(app, "Add cards").exists, "the deck’s + has New card, Make cards and Notes (no Add cards menu)")
-    tap(button(app, "New card"), "New card")
-    check(wait(text(app, "New card")) && (app.textViews.count > 0 || app.textFields.count > 0), "New card opens the card editor")
+    check(wait(app.buttons["deck.add"]) && !button(app, "New card").exists && !button(app, "Make cards").exists && !button(app, "Add cards").exists, "the deck’s cover has its + (no sparkle, New card or Add cards)")
+    fromDeckMenu(app, "New card")
+    check(wait(text(app, "New card")) && (app.textViews.count > 0 || app.textFields.count > 0), "+ › New card opens the card editor")
     tap(button(app, "Cancel"), "Cancel")
-    tap(button(app, "Add"), "the deck's +")
-    tap(button(app, "Make cards"), "Make cards")
-    check(wait(button(app, "A topic")) && button(app, "Upload").exists, "Make cards opens the maker")
+    fromDeckMenu(app, "Make cards")
+    check(wait(button(app, "A topic")) && button(app, "Upload").exists, "+ › Make cards opens the maker")
     tap(button(app, "Close"), "Close")
+    _ = gone(button(app, "Close"))
+    // + › Notes: the Notes page, with the caret at the end of what is written
+    fromDeckMenu(app, "Notes")
+    check(onPage(app) && line(app, "Dark heading").exists, "+ › Notes opens the Notes page")
+    check(eventually(6) { self.focusedValue(app).hasSuffix("here.") }, "ready to type at the end of the Guide (“\(focusedValue(app))”)")
+    tap(app.buttons["backButton"], "Done")
+    check(wait(button(app, "Notes")), "and Done comes back to the deck")
     // dark
     tap(app.buttons.matching(NSPredicate(format: "label == %@ AND NOT (identifier BEGINSWITH %@)", "Notes", "notes.")).firstMatch, "Notes")
     check(wait(noteRow(app, "Dark heading")), "in dark mode the Notes list the note")

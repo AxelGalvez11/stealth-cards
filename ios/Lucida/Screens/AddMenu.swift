@@ -56,7 +56,8 @@ private struct AddMenuPopup: View {
           }
           .padding(8).frame(width: w)
           .modifier(PopBox())
-          .accessibilityElement(children: .contain).accessibilityLabel(label)
+          // (`menu.<its name>`: a test finds a row inside it apart from a page's button of the same name, the deck page's Notes tab and + › Notes.)
+          .accessibilityElement(children: .contain).accessibilityLabel(label).accessibilityIdentifier("menu." + label)
           .offset(x: r.maxX - w, y: r.maxY + 8)
         }
         .transition(.opacity)

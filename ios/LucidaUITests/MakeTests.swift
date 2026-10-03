@@ -15,8 +15,9 @@
 //   11  the recorder: its timer, Pause, Resume, Stop, Discard
 //   12  the recorder stops at the plan's minutes, and a long one is several files (one for every ten minutes)
 //   13  when the AI fails, Try again goes on
-//   14  the ways in: a deck cover's Make cards (the Library's + is New deck and Import cards: it makes no cards), an empty deck's cover (set to that
-//       deck), and a new person's +
+//   14  the ways in: a deck cover's + › Make cards and + › Source (the maker at Upload), set to the deck and over it: closing or saving comes back to the
+//       deck, never the Library, and a deck in a folder keeps its way Back to the folder (the owner, 2026-10-02); the Library's + is New deck and Import
+//       cards (it makes no cards); an empty deck's + (set to that deck); and a new person's +
 //   15  the flow opens like the web's /make link (a kind, a deck, a kept source, a Guide)
 //   16  the file picker and the photo picker open
 //   17  a long recording picked from Files (70 minutes, 33 MB) is cut into seven parts of ten minutes, goes up as seven files in order, and its
@@ -144,6 +145,13 @@ final class MakeTests: XCTestCase {
   }
   private func button(_ app: XCUIApplication, _ label: String) -> XCUIElement { app.buttons[label].firstMatch }
   private func buttonStarting(_ app: XCUIApplication, _ words: String) -> XCUIElement { app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", words)).firstMatch }
+  /// A deck page's Study (`deck.study`) and + (`deck.add`), and a row of the menu one opens (Lucida's own menu: the owner, 2026-10-02).
+  private func deckButton(_ app: XCUIApplication, _ which: String) -> XCUIElement { app.buttons[which == "Add" ? "deck.add" : "deck.study"].firstMatch }
+  private func fromDeckMenu(_ app: XCUIApplication, _ which: String, _ row: String) {
+    let r = app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH %@", "menu.")).buttons.matching(NSPredicate(format: "label == %@", row)).firstMatch
+    if !(r.exists && r.isHittable) { tap(deckButton(app, which), which == "Add" ? "the deck’s +" : "Study") }
+    tap(r, (which == "Add" ? "+" : "Study") + " › " + row)
+  }
   private func text(_ app: XCUIApplication, _ label: String) -> XCUIElement { app.staticTexts[label].firstMatch }
   /// A line of a page of notes: the Notes page draws each line (a heading, a toggle's title) as a text view, read through its value.
   private func noteLine(_ app: XCUIApplication, _ words: String) -> XCUIElement { app.textViews.matching(NSPredicate(format: "value == %@", words)).firstMatch }
@@ -572,24 +580,30 @@ final class MakeTests: XCTestCase {
     check(wait(button(app, "New deck")) && button(app, "Import cards").exists && !button(app, "Make cards").exists, "the Library’s + opens New deck and Import cards, and no Make cards")
     check(!button(app, "Upload").exists && !button(app, "YouTube").exists && !button(app, "More").exists, "and the Library has no Make box row")
     app.terminate()
-    // a deck's cover
+    // a deck's cover: its + (the owner, 2026-10-02: New card, Make cards, Source, Notes, Upload diagram, Make diagram)
     app = launch(as: who, ["-open", "deck:Alpha " + run])
-    check(wait(button(app, "Make cards")) && button(app, "New card").exists, "a deck's cover has Make cards and New card")
-    button(app, "Make cards").tap()
-    check(wait(text(app, "Make cards")) && ["Upload", "Photo", "Record a lecture", "Paste", "YouTube", "A topic"].allSatisfy { button(app, $0).exists }, "Make cards opens the six ways to start")
+    check(wait(deckButton(app, "Add")) && !button(app, "Make cards").exists && !button(app, "New card").exists, "a deck's cover has its + (no sparkle or New card button)")
+    fromDeckMenu(app, "Add", "Make cards")
+    check(wait(text(app, "Make cards")) && ["Upload", "Photo", "Record a lecture", "Paste", "YouTube", "A topic"].allSatisfy { button(app, $0).exists }, "+ › Make cards opens the six ways to start")
     noLabel(app, "the list of sources")
     button(app, "YouTube").tap()
     check(wait(text(app, "YouTube")) && wait(app.textFields["Link to the video"]), "YouTube opens the YouTube page")
     check(wait(button(app, "Alpha " + run)) && button(app, "Alpha " + run).isSelected, "set to the deck it came from")
     button(app, "Close").tap()
     check(gone(button(app, "Close")), "the X closes it")
+    check(wait(deckButton(app, "Add")) && !button(app, "New folder").exists, "and the deck’s page is there again, not the Library")
+    // + › Source: the maker at Upload, set to the deck (a source comes in with the cards made from it)
+    fromDeckMenu(app, "Add", "Source")
+    check(wait(text(app, "Upload")) && !button(app, "Record a lecture").exists && wait(button(app, "Alpha " + run)) && button(app, "Alpha " + run).isSelected, "+ › Source opens the maker at Upload, set to the deck")
+    button(app, "Close").tap()
+    _ = gone(button(app, "Close"))
     // an empty deck's cover
     let empty = "Empty one " + run, eid = act(who, "deck.add", ["name": empty])["id"] as? String ?? ""
     app = launch(as: who, ["-open", "deck:" + empty])
-    check(wait(text(app, "No cards yet")) && wait(button(app, "Make cards")) && button(app, "New card").exists, "an empty deck's cover has Make cards and New card")
+    check(wait(text(app, "No cards yet")) && wait(deckButton(app, "Add")) && !deckButton(app, "Study").exists, "an empty deck's cover has its + (and no Study)")
     check(!button(app, "Upload").exists && !button(app, "Paste").exists && !button(app, "More").exists, "and no Make box row under it")
-    button(app, "Make cards").tap()
-    check(wait(button(app, "A topic")), "its Make cards opens the ways to start")
+    fromDeckMenu(app, "Add", "Make cards")
+    check(wait(button(app, "A topic")), "its + › Make cards opens the ways to start")
     button(app, "A topic").tap()
     typeInto(app.textFields["Topic"], "Fun facts")
     check(wait(button(app, empty)) && button(app, empty).isSelected, "the empty deck is picked to put the cards in")
@@ -598,6 +612,21 @@ final class MakeTests: XCTestCase {
     save(app, into: empty, count: n)
     check(decks(who).filter { $0["name"] as? String == empty }.count == 1 && cards(who, in: eid).count == n && decks(who).count == 2, "the cards went into that deck (\(n)), and no new deck was made")
     check(sources(deck(who, empty)).first?["kind"] as? String == "topic", "which keeps the topic as its source")
+    check(wait(deckButton(app, "Study")) && !button(app, "New folder").exists, "saving comes back to that deck’s page, now with its cards (and Study), not the Library")
+    // a deck in a folder: saving stays on its page, and Back still goes to the folder
+    let shelf = "Shelf " + run, fid = act(who, "folder.add", ["name": shelf])["id"] as? String ?? ""
+    act(who, "deck.move", ["id": did, "folder": fid])
+    app = launch(as: who, ["-open", "folder:" + shelf])
+    tap(buttonStarting(app, "Alpha " + run), "the deck in the folder")
+    fromDeckMenu(app, "Add", "Make cards")
+    tap(button(app, "A topic"), "A topic")
+    typeInto(app.textFields["Topic"], "More fun facts")
+    guard makeIt(app, "from a deck in a folder") else { return }
+    let n2 = edits(app).count
+    save(app, into: "Alpha " + run, count: n2)
+    check(wait(deckButton(app, "Study")) && !button(app, "New folder").exists, "saving stays on the deck’s page")
+    tap(button(app, "Back"), "Back")
+    check(wait(button(app, "Folder options")) && text(app, shelf).exists, "and Back goes to the folder it was opened from")
     // a brand-new person's +
     app = launch(as: "mkz" + run)
     check(wait(button(app, "New deck")), "a person with no decks has a + that makes a deck, as the canvas has it")
