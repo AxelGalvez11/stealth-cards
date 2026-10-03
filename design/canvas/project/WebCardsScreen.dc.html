@@ -124,7 +124,7 @@ constructor(props) {
 componentDidMount() { this.placeCaret(); this.placeSlash(); this.onDocKey = ev => this.boxKey(ev); document.addEventListener('keydown', this.onDocKey); if (this.opened) this.opened(); this.sgCheck(); }
 componentDidUpdate() { this.placeCaret(); this.placeSlash(); this.placeLabel(); this.sgCheck(); }
 // Leaving the editor while it records throws the recording away. (The cards screen saves what you changed first.)
-componentWillUnmount() { if (this.closing) this.closing(); if (this.onSel) document.removeEventListener('selectionchange', this.onSel); if (this.onDocKey) document.removeEventListener('keydown', this.onDocKey); const db = this.props.db; if (db && db.recording()) db.act.stopRecording(true); }
+componentWillUnmount() { if (this.closing) this.closing(); if (this.onSel) document.removeEventListener('selectionchange', this.onSel); if (this.onDocKey) document.removeEventListener('keydown', this.onDocKey); this.sgKeys(false); const db = this.props.db; if (db && db.recording()) db.act.stopRecording(true); }
 // A saved card opens with what it says; a new one starts empty in the app (the canvas shows a sample).
 doc() {
   const db = this.sdb(), e = this.ed;
@@ -857,11 +857,45 @@ suggestDb(db, page) {
     act: Object.assign(Object.create(db.act), { pickFile: no, pickSound: no, record: no, stopRecording: () => {} })
   });
 }
+// A phone's web page (and a tablet's): what has the focus in the bottom row (the why, Suggest removing it) stays above the keyboard,
+// so nothing is typed in unseen (the owner's canvas chat, V194: while a card's field is typed in, the keyboard may cover the row). The
+// visible part of the page is visualViewport's, which gets shorter as the keyboard comes up (and moves as the phone pans the view): the
+// row's box gets that much more room under the row (its padding), so the row rides just above the keyboard, and drops back when the
+// focus leaves the row. The row is found by its why field; drawing the page again sets the box's padding back, so it's put again after
+// each drawing. (Pinch zoom is the person's own: nothing moves then.)
+sgKeys(on) {
+  const v = typeof window !== 'undefined' ? window.visualViewport : null;
+  if (on && !this.sgOnKeys) {
+    this.sgOnKeys = () => this.sgPlace();
+    document.addEventListener('focusin', this.sgOnKeys); document.addEventListener('focusout', this.sgOnKeys);
+    if (v) { v.addEventListener('resize', this.sgOnKeys); v.addEventListener('scroll', this.sgOnKeys); }
+  } else if (!on && this.sgOnKeys) {
+    document.removeEventListener('focusin', this.sgOnKeys); document.removeEventListener('focusout', this.sgOnKeys);
+    if (v) { v.removeEventListener('resize', this.sgOnKeys); v.removeEventListener('scroll', this.sgOnKeys); }
+    this.sgOnKeys = null;
+  }
+}
+sgPlace() {
+  const v = typeof window !== 'undefined' ? window.visualViewport : null, why = document.querySelector('input[placeholder="Why? (optional)"]');
+  const row = why && why.closest('label') ? why.closest('label').parentElement : null, box = row && row.parentElement;
+  if (!box) return;
+  // (what it added the last time, unless the page was drawn again since)
+  const had = box.style.paddingBottom === box.scSgSet ? box.scSgLift || 0 : 0, a = document.activeElement;
+  let lift = 0;
+  if (v && Math.abs(v.scale - 1) < .01 && a && a !== document.body && row.contains(a)) lift = Math.max(0, Math.round(had + row.getBoundingClientRect().bottom + 12 - (v.offsetTop + v.height)));
+  if (!lift && !had) return;
+  if (lift && Math.abs(lift - had) < 2) return;
+  const base = parseFloat(getComputedStyle(box).paddingBottom) - had;
+  box.style.paddingBottom = (base + lift) + 'px';
+  box.scSgSet = box.style.paddingBottom; box.scSgLift = lift;
+}
 // A deck that isn't shared any more has nothing to suggest to (its page says so), and the deck's owner edits it instead (Edit
 // cards). The cards screen opens on its card once the deck's page is here (focusOpen).
 sgCheck() {
   const db = this.props.db, p = this.props;
   if (!p.suggest || !db || db.mock) return;
+  this.sgKeys(true);
+  this.sgPlace();
   if (this.sgFocus && this.focusOpen) { this.sgFocus = false; this.focusOpen(); }
   const page = this.sgLeft ? null : this.sgPageNow(db);
   if (!page || !(page.missing || (page.me && page.me.owner))) return;
