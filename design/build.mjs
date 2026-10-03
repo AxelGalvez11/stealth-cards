@@ -20,7 +20,7 @@ import { THEMES } from '../web/themes/index.js';
 import { THEME_KEYS, themeCss, themeFonts, themeStatic } from './themes.mjs';
 import { LEVELS, YEARS, SUBJECTS } from '../web/school.js';
 import testKit from './test-boards.mjs';
-import { makeBoards, deckBlocks, publicGuideBlocks, PUBLIC_GUIDE_JS, deckMaterialsJs, NOTE_TREE_CSS, GUIDE_CSS, GUIDE_STATES, MATERIALS_MOCK, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
+import { makeBoards, deckBlocks, publicGuideBlocks, PUBLIC_GUIDE_JS, deckMaterialsJs, NOTE_TREE_CSS, MAKE_STEPS, GUIDE_CSS, GUIDE_STATES, MATERIALS_MOCK, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
 import { DIAGRAM_METHOD, DIAGRAM_CSS, PUBLIC_DIAGRAMS_JS, publicDiagramBlocks } from './diagrams.mjs';
 import { askMarkup, toastMarkup, ASK_SAMPLES, ASK_JS, askProp, dateMarkup, DATE_JS, dropMarkup, dropSheet, dropPill, DROP_JS, PLAYER_JS } from './ui.mjs';
 // The themes (Pro), for boards' logic: key, board name, short and full names.
@@ -93,7 +93,7 @@ skinFor(k) {
 }
 ${GEN_METHOD}
 ${MOCK_METHOD}
-${logic.includes('this.rich(') ? RICH_METHOD : ''}${logic.includes('this.drag(') ? '\n' + DRAG_METHOD : ''}${logic.includes('this.shareOrCopy(') ? '\n' + SHARE_METHOD : ''}${logic.includes('this.md(') || logic.includes('this.notes(') ? '\n' + GUIDE_METHOD : ''}${logic.includes('this.notes(') ? '\n' + NOTES_METHOD : ''}${logic.includes('this.mockMaterials(') ? '\n' + MATERIALS_MOCK : ''}${logic.includes('this.dg(') ? '\n' + DIAGRAM_METHOD : ''}
+${logic.includes('this.rich(') ? RICH_METHOD : ''}${logic.includes('this.drag(') ? '\n' + DRAG_METHOD : ''}${logic.includes('this.shareOrCopy(') ? '\n' + SHARE_METHOD : ''}${logic.includes('this.md(') || logic.includes('this.notes(') ? '\n' + GUIDE_METHOD : ''}${logic.includes('this.notes(') ? '\n' + NOTES_METHOD : ''}${logic.includes('this.mockMaterials(') ? '\n' + (logic.includes('this.newDeckDb(') ? NEW_DECK_METHOD : '') + MATERIALS_MOCK : ''}${logic.includes('this.dg(') ? '\n' + DIAGRAM_METHOD : ''}
 ${logic}
 }
 </script>
@@ -146,6 +146,16 @@ const DARK = { dark: { editor: 'boolean', default: false }, dim: { editor: 'bool
 const T = 'const t = this.theme(!!this.props.dark, !!this.props.dim);';
 // Data: the web app passes its database as props.db; on the canvas, boards use the sample in mock.mjs.
 const DB_JS = 'const db = this.props.db || this.mock(); const chrome = db.chrome();';
+// The deck page's: on the canvas, prop empty shows a brand-new deck (newDeckDb) on this same page.
+const DECK_DB_JS = 'const db0 = this.props.db || this.mock(), db = db0.mock && this.props.empty ? this.newDeckDb(db0) : db0; const chrome = db.chrome();';
+const NEW_DECK_METHOD = `// A brand-new deck on the canvas (prop empty: the "new deck" boards): this same page, its tabs there from the start and nothing in them yet
+// (the owner, 2026-10-02: "creating new deck should already have the tabs").
+newDeckDb(db0) {
+  const d0 = db0.deck();
+  return { ...db0, cards: () => [], deck: () => ({ ...d0, id: 'new', name: 'Pharmacology', seed: 'Pharmacology', tags: [], cover: { style: null, round: 0, image: null },
+    total: 0, totalLabel: '0', due: 0, fresh: 0, ret: 0, aiCount: 0, forecast: (d0.forecast || []).map(() => 0), piles: (d0.piles || []).map(q => ({ ...q, n: 0 })), shared: null, linked: null }) };
+}
+`;
 
 // ---------- icons (stroke, currentColor) ----------
 const svg = (p, s = 18, w = 1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
@@ -1292,9 +1302,13 @@ const STUDY_BTN = phone => `<div style="position: relative;"><button type="butto
 const ADD_BTN = phone => `<div style="position: relative;"><button type="button" onClick="{{addMenu.toggle}}" aria-label="Add" data-tip="Add" aria-haspopup="menu" aria-expanded="{{addMenu.expanded}}" class="sc-press" style="width: ${phone ? 44 : 36}px; height: ${phone ? 44 : 36}px; flex-shrink: 0; border: 0; border-radius: ${phone ? 22 : 18}px; ${onCover} display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.plus, phone ? 18 : 16, 2.2)}</button>${ADD_MENU(phone)}</div>`;
 // What they read, for the deck page (after DECK_MATERIALS_JS: gs and dg) and an empty deck. Only one is open at a time; a board's `menu` Tweak opens one.
 // Upload diagram and Make diagram show the Diagrams tab, where the upload and the diagram appear (an empty deck goes to its page's Diagrams tab for them).
+// A deck with no cards: its Cards tab offers New card and Make cards (the owner, 2026-10-02: "creating new deck should already have the tabs").
+const NEW_CARD_PLUS = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>', NEW_CARD_SPARK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>';
 const DECK_MENUS_JS = (phone, empty = false) => `const menuIs = this.state.deckMenu !== undefined ? this.state.deckMenu : this.props.menu || '', shutMenu = () => this.setState({ deckMenu: '' });
   const menuOf = (k, more) => ({ open: menuIs === k, expanded: menuIs === k ? 'true' : 'false', close: shutMenu, toggle: () => this.setState({ deckMenu: menuIs === k ? '' : k${empty ? '' : ', tagMenuOpen: false'} }), ...more });
-  const boardOf = n => '${phone ? 'Phone' : 'Web'}' + n + '.dc.html', gMake = db.mock ? boardOf('Make') : '/make?deck=' + encodeURIComponent(dk.id);
+  // Make cards and Source open over this deck and close back to it, never to the Library (the owner, 2026-10-02: "pressing '+' should not take
+  // user back to the library page"); the cards go into this deck.
+  const boardOf = n => '${phone ? 'Phone' : 'Web'}' + n + '.dc.html', gMake = db.mock ? boardOf('DeckMake') : '/make?deck=' + encodeURIComponent(dk.id) + '&on=deck';
   ${empty
     ? `const dgm = db.mock ? null : db.diagrams, toDiagrams = run => () => { shutMenu(); if (!dgm) return; run(); db.act.go('/deck/' + dk.id + '?tab=diagrams'); };`
     : `const toDiagrams = run => () => { this.setState({ deckMenu: '', tab: 'diagrams' }); run(); };`}
@@ -1353,7 +1367,7 @@ const webDeck = webRoot(`${sidebar('Library')}
       </a>
     </sc-for>
   </div>
-  <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; color: {{t.muted}};">No cards in this deck yet.</span></sc-if>
+  <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><div style="padding: 20px 0 8px; display: flex; flex-direction: column; align-items: flex-start; gap: 14px;"><span style="font-size: 15px; color: {{t.muted}};">No cards yet</span><sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 8px;"><a href="{{addMenu.newCardHref}}" class="sc-press" style="height: 40px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; font-size: 14px; font-weight: 600; background: {{t.surf}}; color: {{t.text}};">${NEW_CARD_PLUS}New card</a><a href="{{addMenu.makeHref}}" class="sc-press" style="height: 40px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; font-size: 14px; font-weight: 600; background: {{t.inv}}; color: {{t.invText}};">${NEW_CARD_SPARK}Make cards</a></div></sc-if></div></sc-if>
   </sc-if>
 </main>
 ${moveTray('tray', false)}
@@ -1381,7 +1395,7 @@ const CARD_DRAG_JS = phone => `const others = db.decks().filter(d => d.id !== dk
 const deckLogic = `
 constructor(props) { super(props); this.state = { filter: 'All', tagMenuOpen: false, tagQ: '', q: '' }; }
 renderVals() {
-  ${T}${DB_JS}${COVER_LOGIC}${deckMaterialsJs(false)}
+  ${T}${DECK_DB_JS}${COVER_LOGIC}${deckMaterialsJs(false)}
   ${LIFT_JS}
   ${CARD_DRAG_JS(false)}
   ${DECK_MENUS_JS(false)}
@@ -3770,7 +3784,7 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
         <a href="{{r.href}}" data-sc-item="{{r.id}}" draggable="false" class="sc-drag" style="display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid {{t.line}};"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.front}}</span><span style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.kind}}{{r.stateNote}}</span></a>
       </sc-for>
     </div>
-    <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; color: {{t.muted}};">No cards in this deck yet.</span></sc-if>
+    <sc-if value="{{gs.noCards}}" hint-placeholder-val="{{ false }}"><div style="padding: 16px 0 8px; display: flex; flex-direction: column; gap: 14px;"><span style="font-size: 15px; color: {{t.muted}};">No cards yet</span><sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 10px;"><a href="{{addMenu.newCardHref}}" class="sc-press" style="flex: 1 1 0; height: 44px; padding: 0 14px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; font-size: 15px; font-weight: 600; background: {{t.surf}}; color: {{t.text}};">${NEW_CARD_PLUS}New card</a><a href="{{addMenu.makeHref}}" class="sc-press" style="flex: 1 1 0; height: 44px; padding: 0 14px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; font-size: 15px; font-weight: 600; background: {{t.inv}}; color: {{t.invText}};">${NEW_CARD_SPARK}Make cards</a></div></sc-if></div></sc-if>
     </sc-if>
   </div>
 </div></div>`, '', `${moveTray('tray', true)}
@@ -3790,7 +3804,7 @@ ${pickSheet('lbLevel')}${pickSheet('lbSubject', true)}${pickSheet('lbSchool', tr
 ${DBP.viewer}${DBP.dgViewer}${DBP.dgSheet}`);
 const phoneDeckLogic = `
 constructor(props) { super(props); this.state = {}; }
-renderVals() { ${T}${DB_JS}${COVER_LOGIC}${deckMaterialsJs(true)}
+renderVals() { ${T}${DECK_DB_JS}${COVER_LOGIC}${deckMaterialsJs(true)}
   ${LIFT_JS}
   ${CARD_DRAG_JS(true)}
   ${DECK_MENUS_JS(true)}
@@ -4500,18 +4514,6 @@ const webDecksEmpty = webRoot(`${sidebar('Library')}
   <div style="display: flex; align-items: center; gap: 12px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Library</h1><span style="margin-left: 10px; display: flex;">${libModes(32)}</span><span style="flex-grow: 1;"></span>${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}</div>
   ${startTiles(false)}
 </main>`);
-// A deck with no cards yet (a new deck opens here): its cover, with "No cards yet" under the name and its + (New card, Make cards, Source, Notes, Upload diagram
-// and Make diagram: ADD_MENU) on it, and nothing under it (the owner, 2026-10-02: no Make box or row; no Study, as there is nothing to study).
-const webDeckEmpty = webRoot(`${sidebar('Library')}
-<main style="flex-grow: 1; box-sizing: border-box; padding: 24px 48px 20px; display: flex; flex-direction: column; gap: 20px; min-width: 0;">
-  <div style="position: relative; height: 184px; flex-shrink: 0; border-radius: 20px;">
-    <div style="position: absolute; inset: 0; border-radius: inherit; overflow: hidden;">${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '', 'div', '', true)}${coverPicture}</div>
-    <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 20px 24px 24px 28px; display: flex; flex-direction: column; justify-content: space-between; color: {{cover.ink}};">
-      <div style="display: flex; align-items: center; justify-content: space-between;"><a href="WebDecks.dc.html" style="height: 36px; padding: 0 14px 0 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; ${onCover} font-size: 13px; font-weight: 600;">${svg(I.back, 14, 2.2)}Library</a>${coverBtn('Deck settings', 'openSettings', 'gear')}</div>
-      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;"><div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; text-shadow: {{cover.shadow}};"><h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1; {{coverTitle}}">{{deckName}}</h1><div style="font-size: 14px; opacity: .8;">No cards yet</div></div><div style="display: flex; gap: 10px; flex-shrink: 0;">${ADD_BTN(false)}</div></div>
-    </div>
-  </div>
-</main>`);
 const emptyKpis = (list, big) => `<div style="display: grid; grid-template-columns: repeat(${big ? 4 : 2}, minmax(0, 1fr)); gap: ${big ? 12 : 8}px;">${list.map(([l, v]) => `<div style="background: {{t.surf}}; border-radius: ${big ? 28 : 24}px; padding: ${big ? 22 : 16}px; display: flex; flex-direction: column; gap: ${big ? 6 : 2}px;"><span style="font-size: ${big ? 13 : 12}px; color: {{t.muted}};">${l}</span><span style="font-size: ${big ? 40 : 28}px; font-weight: ${big ? 600 : 700}; letter-spacing: -.035em; line-height: 1.05; color: {{t.muted}};">${v}</span></div>`).join('')}</div>`;
 const webStatsEmpty = webRoot(`${sidebar('Stats')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 24px; min-width: 0;">
@@ -4521,15 +4523,6 @@ const webStatsEmpty = webRoot(`${sidebar('Stats')}
     ${emptyBlock({ art: EMPTY_ART(150, 'stats'), title: 'No stats yet', body: 'Your streak, study days, and how much you remember show up here after your first review.', actions: webActions(pill('Make a deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })) })}
   </div>
 </main>`);
-const phoneDeckEmpty = phone(`<div style="height: 100%; box-sizing: border-box; padding: 0 0 120px; display: flex; flex-direction: column;">
-  <div style="position: relative; z-index: {{coverZ}}; height: 232px; flex-shrink: 0; container-type: inline-size;">
-    <div style="position: absolute; inset: 0; overflow: hidden;">${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '', 'div', '', true)}${coverPicture}</div>
-    <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 54px 16px 18px 20px; display: flex; flex-direction: column; justify-content: space-between; color: {{cover.ink}};">
-      <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneLibrary.dc.html')}<div style="display: flex; gap: 8px;">${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${ADD_BTN(true)}</div></div>
-      <div style="display: flex; flex-direction: column; gap: 4px; text-shadow: {{cover.shadow}};"><div style="font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; {{coverTitleS}}">{{deckName}}</div><div style="font-size: 14px; opacity: .8;">No cards yet</div></div>
-    </div>
-  </div>
-</div>`, '');
 // The Library before there are any decks: the three tiles.
 const phoneDecksEmpty = phone(`<div style="padding: 64px 20px 120px; display: flex; flex-direction: column; gap: 14px;">
   ${pTitle('Library', roundBtn('plus', 'New deck', 'PhoneNewDeck.dc.html'))}
@@ -8700,7 +8693,7 @@ const files = {
   'WebSettingsGetVerified': ['Web · Settings · Get verified (a teacher or a school asks; /verify)', attrOf('WebSettings', W, H, 'verify-open="{{yes}}" section="Account"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
   'IconOptions': ['Web · Icon options', iconOptions, { props: DARK, logic: iconOptionsLogic, w: W, h: H }],
   'WebDecksEmpty': ['Web · Library · no decks yet', webDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
-  'WebDeckEmpty': ['Web · Deck · no cards yet', webDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain, menu: EMPTY_MENU_PROP }, logic: emptyLogic('Pharmacology'), w: W, h: H }],
+  'WebDeckEmpty': ['Web · Deck page · a new deck, nothing in it yet', attrOf('WebDeck', W, H, 'empty="{{yes}}" menu="{{menu}}" dark="{{dark}}" dim="{{dim}}" grain="{{grain}}"'), { props: { ...DARK, grain: MESH('Iris').grain, menu: EMPTY_MENU_PROP }, logic: `renderVals() { return { yes: true, menu: this.props.menu || '', dark: !!this.props.dark, dim: !!this.props.dim, grain: String(this.props.grain ?? 0.7) }; }`, w: W, h: H }],
   'WebStatsEmpty': ['Web · Stats · no reviews yet (Pro)', webStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
   'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, menu: DECK_MENU_PROP, calendar: { editor: 'enum', default: '', options: ['', 'Exam date'] }, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, ...SHARE_PROPS, ...PRO_DECK_PROPS, ...GUIDE_STATE }, logic: deckLogic, css: NOTE_TREE_CSS + NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: W, h: H }],
   'WebEditor': ['Web · Card editor', webEditor, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false }, slashDemo: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: W, h: H }],
@@ -8758,6 +8751,8 @@ const files = {
   'WebDeckSources': ['Web · Deck page · Sources tab', attrOf('WebDeck', W, H, 'section="Sources"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckDiagrams': ['Web · Deck page · Diagrams tab', attrOf('WebDeck', W, H, 'section="Diagrams" guide="Diagrams"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckAddMenu': ['Web · Deck page · + menu open', attrOf('WebDeck', W, H, 'menu="Add"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
+  // Make cards opened from the deck sits over it (V186: "pressing '+' should not take user back to the library page")
+  'WebDeckMake': ['Web · Deck page · Make cards, opened from the deck (it stays behind)', attrOf('WebMake', W, H, 'on-deck="{{yes}}" step="{{step}}"'), { props: { step: { editor: 'enum', default: 'Pick', options: MAKE_STEPS } }, logic: `renderVals() { return { yes: true, step: this.props.step || 'Pick' }; }`, w: W, h: H }],
   'WebDeckShared': ['Web · Deck page · shared (public, with suggestions waiting)', attrOf('WebDeck', W, H, 'shared="Public"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckStudied': ['Web · Deck page · a deck you study from someone else', attrOf('WebDeck', W, H, 'linked="study"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckCopy': ['Web · Deck page · your copy, with the owner’s changes waiting', attrOf('WebDeck', W, H, 'linked="copy"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
@@ -8786,7 +8781,7 @@ const files = {
   'Generated': ['Generated gradients', generatedBoard, { props: { grain: MESH('Iris').grain }, logic: generatedLogic, w: W, h: H }],
   'Gallery': ['Gradient cards', galleryBoard, { props: { grain: MESH('Iris').grain }, logic: galleryLogic, w: W, h: H }],
   'Motion': ['Motion', motion(), { props: { grain: MESH('Iris').grain }, logic: `renderVals() { return { t: this.theme(false), grain: String(this.props.grain ?? 0.7), hero: this.mesh('Iris'), art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot') }; }`, css: motionCss, w: W, h: MOTION_H }],
-  'PhoneDeckEmpty': ['iPhone · Deck · no cards yet', phoneDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain, menu: EMPTY_MENU_PROP }, logic: emptyLogic('Pharmacology', true), w: PW, h: PH }],
+  'PhoneDeckEmpty': ['iPhone · Deck page · a new deck, nothing in it yet', attrOf('PhoneDeck', PW, PH, 'empty="{{yes}}" menu="{{menu}}" dark="{{dark}}" dim="{{dim}}" grain="{{grain}}"'), { props: { ...DARK, grain: MESH('Iris').grain, menu: EMPTY_MENU_PROP }, logic: `renderVals() { return { yes: true, menu: this.props.menu || '', dark: !!this.props.dark, dim: !!this.props.dim, grain: String(this.props.grain ?? 0.7) }; }`, w: PW, h: PH }],
   'PhoneDecksEmpty': ['iPhone · Library · no decks yet', phoneDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('', true), w: PW, h: PH }],
   'PhoneLibrary': ['iPhone · Library', phoneLibrary, { props: { ...DARK, grain: MESH('Iris').grain, caughtUp: BOOL, mode: LIB_MODE, folder: LIB_FOLDER }, logic: libraryLogic(true), css: DRAG_CSS, w: PW, h: PH }],
   'PhoneLibraryCards': ['iPhone · Library · all cards', attrOf('PhoneLibrary', PW, PH, 'mode="cards"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
@@ -8808,6 +8803,7 @@ const files = {
   'PhoneDeckSources': ['iPhone · Deck page · Sources tab', attrOf('PhoneDeck', PW, PH, 'section="Sources"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckDiagrams': ['iPhone · Deck page · Diagrams tab', attrOf('PhoneDeck', PW, PH, 'section="Diagrams" guide="Diagrams"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckAddMenu': ['iPhone · Deck page · + menu open', attrOf('PhoneDeck', PW, PH, 'menu="Add"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
+  'PhoneDeckMake': ['iPhone · Deck page · Make cards, opened from the deck (it stays behind)', attrOf('PhoneMake', PW, PH, 'on-deck="{{yes}}" step="{{step}}"'), { props: { step: { editor: 'enum', default: 'Pick', options: MAKE_STEPS } }, logic: `renderVals() { return { yes: true, step: this.props.step || 'Pick' }; }`, w: PW, h: PH }],
   'PhoneDeckStudied': ['iPhone · Deck page · a deck you study from someone else', attrOf('PhoneDeck', PW, PH, 'linked="study"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckCopy': ['iPhone · Deck page · your copy, with the owner’s changes waiting', attrOf('PhoneDeck', PW, PH, 'linked="copy"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckUpdates': ['iPhone · Deck page · your copy · the owner’s changes (take or skip)', attrOf('PhoneDeck', PW, PH, 'linked="copy" updates-open="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],

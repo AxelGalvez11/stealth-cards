@@ -116,7 +116,7 @@ function resolve(path, q) {
   if (path === '/decks/new') return { name: P + 'NewDeck' };
   // Making cards from a file, photos, a recording, a video, text or a topic (web/make.js). `source` opens one kind's page, `deck` is where
   // the cards go, `from` is a kept source to make more cards from, and `guide` (with `page`) is a deck's Guide to make cards from.
-  if (path === '/make') return { name: P + 'Make', props: { kind: q.get('source') || '', deckId: q.get('deck') || '', from: q.get('from') || '', guide: q.get('guide') || '', page: q.get('page') || '' } };
+  if (path === '/make') return { name: P + 'Make', props: { kind: q.get('source') || '', deckId: q.get('deck') || '', from: q.get('from') || '', guide: q.get('guide') || '', page: q.get('page') || '', onDeck: q.get('on') === 'deck' && !!q.get('deck') } };
   if (path === '/decks/import') return { name: P + 'Import' };
   if (deck) {
     const id = deck[1];
@@ -141,7 +141,8 @@ function resolve(path, q) {
     if (deck[2]) return narrow.matches ? { name: 'PhoneEditor', props: { deckId: id, cardId: deck[3] || '', from: q.get('from') || '', diagram: q.get('diagram') || '', keyboard: false } }
       : { name: 'WebCardsScreen', props: { deckId: id, cardId: deck[3] || '', from: q.get('from') || '', diagram: q.get('diagram') || '' } };
     // An empty deck shows its empty page, unless you opened its settings or its Diagrams (its + › Upload diagram and Make diagram happen there).
-    return { name: P + (db.cards(id).length || q.get('settings') === '1' || q.get('tab') === 'diagrams' || (dRow && (dRow.hasGuide || dRow.hasSources || dRow.hasDiagrams)) ? 'Deck' : 'DeckEmpty'), props: { deckId: id, settingsOpen: q.get('settings') === '1', sourceOpen: q.get('source') || '', sourceAt: q.get('at') || '', tab: q.get('tab') || '', diagram: q.get('diagram') || '' } };
+    // A new deck is the deck page itself, its tabs there from the start (the owner, 2026-10-02: "creating new deck should already have the tabs").
+    return { name: P + 'Deck', props: { deckId: id, settingsOpen: q.get('settings') === '1', sourceOpen: q.get('source') || '', sourceAt: q.get('at') || '', tab: q.get('tab') || '', diagram: q.get('diagram') || '' } };
   }
   // A Learn mode session: the board for its current question, or the end once every card is learned.
   const ln = /^\/learn\/([^/]+)$/.exec(path);

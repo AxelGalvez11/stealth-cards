@@ -248,13 +248,19 @@ export default [
  },
  {
   "name": "PhoneDeckEmpty",
-  "title": "iPhone · Deck · no cards yet",
+  "title": "iPhone · Deck page · a new deck, nothing in it yet",
   "w": 390,
   "h": 844
  },
  {
   "name": "PhoneDeckGray",
   "title": "iPhone · Deck page (dark, gray)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneDeckMake",
+  "title": "iPhone · Deck page · Make cards, opened from the deck (it stays behind)",
   "w": 390,
   "h": 844
  },
@@ -1880,13 +1886,19 @@ export default [
  },
  {
   "name": "WebDeckEmpty",
-  "title": "Web · Deck · no cards yet",
+  "title": "Web · Deck page · a new deck, nothing in it yet",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebDeckGray",
   "title": "Web · Deck page (dark, gray)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebDeckMake",
+  "title": "Web · Deck page · Make cards, opened from the deck (it stays behind)",
   "w": 1440,
   "h": 900
  },
