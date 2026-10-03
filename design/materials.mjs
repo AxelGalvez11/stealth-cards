@@ -326,33 +326,34 @@ export const NOTES_CSS = [
   '.nb-phone>.nb-doc{padding-bottom:calc(8px + var(--nb-kb, 0px))}',
   '.nb-kb{height:40px;min-width:46px;flex-shrink:0;padding:0 8px;border:0;border-radius:10px;background:transparent;color:var(--gd-text);font:inherit;font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer}.nb-kb.nb-on{background:var(--nb-surf)}.nb-kb b{font-weight:800}.nb-kb i{font-family:Georgia,serif}',
   '.nb-kt{font-size:15px;font-weight:600}.nb-aa{font-size:17px;font-weight:700;letter-spacing:-.02em}.nb-kgap{flex-grow:1}',
-  // the outline (web/notes.js): a box that stays in view at the top of the note (--nb-ol-top below the top of what scrolls it) with the rail at its right
-  // (--nb-ol-x past the note's edge): a short line for each heading, a subheading's shorter and further in, the one being read in the words' color; the card of
+  // the outline (web/notes.js): a box that stays in view at the top of the note (--nb-otl-top below the top of what scrolls it) with the rail at its right
+  // (--nb-otl-x past the note's edge): a short line for each heading, a subheading's shorter and further in, the one being read in the words' color; the card of
   // headings opens over the rail, toward the note, in a quick fade; on a phone the lines are smaller and the tree is a sheet from the bottom
-  '.nb-olw{position:sticky;top:var(--nb-ol-top,24px);height:0;z-index:20}.nb-olw.nb-ol-off{display:none}.nb-ol{position:absolute;top:0;right:calc(-1 * var(--nb-ol-x, 40px))}',
-  '.nb-ol-rail{display:flex;flex-direction:column;align-items:flex-end;gap:8px;margin:0;padding:8px 6px;border:0;border-radius:8px;background:transparent;cursor:pointer;-webkit-tap-highlight-color:transparent}',
-  `.nb-ol-line{display:block;width:16px;height:2px;border-radius:1px;background:var(--gd-muted);opacity:.35;transition:opacity ${s3(MOTION.fade)} ease,background-color ${s3(MOTION.fade)} ease}.nb-ol-line.nb-i1{width:12px}.nb-ol-line.nb-i2{width:8px}.nb-ol-line.nb-cur{background:var(--gd-text);opacity:1}`,
-  `.nb-ol-panel{position:absolute;top:-6px;right:0;width:264px;max-height:min(440px,calc(100vh - 160px));overflow-y:auto;scrollbar-width:thin;box-sizing:border-box;padding:6px;border-radius:16px;background:var(--nb-bg);box-shadow:0 0 0 1px var(--gd-line),0 18px 44px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:1px;text-shadow:none;opacity:0;visibility:hidden;transition:opacity ${s3(MOTION.fade)} ease,visibility 0s linear ${s3(MOTION.fade)}}`,
-  `.nb-ol.nb-open>.nb-ol-panel{opacity:1;visibility:visible;transition:opacity ${s3(MOTION.fade)} ease}`,
-  '.nb-ol-item{flex-shrink:0;display:block;width:100%;box-sizing:border-box;padding:6px 10px;border:0;border-radius:10px;background:transparent;color:var(--gd-text);font:inherit;font-size:14px;font-weight:400;line-height:1.35;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}',
-  '.nb-ol-item.nb-i1{padding-left:24px}.nb-ol-item.nb-i2{padding-left:38px}.nb-ol-item:hover{background:var(--nb-surf)}.nb-ol-item.nb-cur{font-weight:600}',
-  '.nb-phone .nb-ol-rail{gap:6px;padding:8px 4px}.nb-phone .nb-ol-line{width:12px}.nb-phone .nb-ol-line.nb-i1{width:9px}.nb-phone .nb-ol-line.nb-i2{width:6px}',
-  '.nb-ol-sheetw{position:absolute;inset:0;z-index:70;line-height:1.3;overflow-wrap:normal;pointer-events:auto}.nb-ol-sheetw.nb-fixed{position:fixed;z-index:90}',
+  '.nb-otlw{position:sticky;top:var(--nb-otl-top,24px);height:0;z-index:20}.nb-otlw.nb-otl-off{display:none}.nb-otl{position:absolute;top:0;right:calc(-1 * var(--nb-otl-x, 40px))}',
+  '.nb-otl-rail{display:flex;flex-direction:column;align-items:flex-end;gap:8px;margin:0;padding:8px 6px;border:0;border-radius:8px;background:transparent;cursor:pointer;-webkit-tap-highlight-color:transparent}',
+  `.nb-otl-line{display:block;width:16px;height:2px;border-radius:1px;background:var(--gd-muted);opacity:.35;transition:opacity ${s3(MOTION.fade)} ease,background-color ${s3(MOTION.fade)} ease}.nb-otl-line.nb-i1{width:12px}.nb-otl-line.nb-i2{width:8px}.nb-otl-line.nb-cur{background:var(--gd-text);opacity:1}.nb-otl-still>.nb-otl-line{transition:none}`,
+  `.nb-otl-panel{position:absolute;top:-6px;right:0;width:264px;max-height:min(440px,calc(100vh - 160px));overflow-y:auto;scrollbar-width:thin;box-sizing:border-box;padding:6px;border-radius:16px;background:var(--nb-bg);box-shadow:0 0 0 1px var(--gd-line),0 18px 44px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:1px;text-shadow:none;opacity:0;visibility:hidden;transition:opacity ${s3(MOTION.fade)} ease,visibility 0s linear ${s3(MOTION.fade)}}`,
+  `.nb-otl.nb-otl-open>.nb-otl-panel{opacity:1;visibility:visible;transition:opacity ${s3(MOTION.fade)} ease}`,
+  '.nb-otl-item{flex-shrink:0;display:block;width:100%;box-sizing:border-box;padding:6px 10px;border:0;border-radius:10px;background:transparent;color:var(--gd-text);font:inherit;font-size:14px;font-weight:400;line-height:1.35;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}',
+  '.nb-otl-item.nb-i1{padding-left:24px}.nb-otl-item.nb-i2{padding-left:38px}.nb-otl-item:hover{background:var(--nb-surf)}.nb-otl-item.nb-cur{font-weight:600}',
+  '.nb-phone .nb-otl-rail{gap:6px;padding:8px 4px}.nb-phone .nb-otl-line{width:12px}.nb-phone .nb-otl-line.nb-i1{width:9px}.nb-phone .nb-otl-line.nb-i2{width:6px}',
+  '.nb-otl-sheetw{position:absolute;inset:0;z-index:70;line-height:1.3;overflow-wrap:normal;pointer-events:auto}.nb-otl-sheetw.nb-otl-fixed{position:fixed;z-index:90}',
   `@keyframes nbScrimIn{from{opacity:0}}@keyframes nbSheetIn{from{transform:translateY(100%)}}@keyframes nbScrimOut{to{opacity:0}}@keyframes nbSheetOut{to{transform:translateY(100%)}}`,
-  `.nb-ol-scrim{position:absolute;inset:0;background:var(--nb-dim,rgba(0,0,0,.28));animation:nbScrimIn ${s3(MOTION.sheet)} ease backwards}.nb-gone>.nb-ol-scrim{animation:nbScrimOut ${s3(MOTION.leave)} ease forwards}`,
-  `.nb-ol-sheet{position:absolute;left:0;right:0;bottom:0;max-height:calc(100% - 56px);box-sizing:border-box;padding:20px 20px 34px;border-radius:32px 32px 0 0;background:var(--nb-bg);color:var(--gd-text);display:flex;flex-direction:column;gap:14px;overflow:hidden;animation:nbSheetIn ${s3(MOTION.sheet)} ${EASE} backwards}.nb-gone>.nb-ol-sheet{animation:nbSheetOut ${s3(MOTION.leave)} ${EASE_OUT} forwards}`,
-  '.nb-ol-shead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}.nb-ol-stitle{font-size:20px;font-weight:600;letter-spacing:-.02em}',
-  '.nb-ol-x{width:36px;height:36px;flex-shrink:0;padding:0;border:0;border-radius:18px;background:var(--nb-surf);color:var(--gd-text);display:flex;align-items:center;justify-content:center;cursor:pointer}',
-  '.nb-ol-list{min-height:0;overflow-y:auto;scrollbar-width:none;display:flex;flex-direction:column}',
-  '.nb-ol-row{flex-shrink:0;min-height:52px;box-sizing:border-box;padding:8px 4px;border:0;border-bottom:1px solid var(--gd-line);background:transparent;color:var(--gd-text);font:inherit;font-size:16px;font-weight:400;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}',
-  '.nb-ol-row.nb-i1{padding-left:22px}.nb-ol-row.nb-i2{padding-left:40px}.nb-ol-row.nb-cur{font-weight:600}',
+  `.nb-otl-scrim{position:absolute;inset:0;background:var(--nb-dim,rgba(0,0,0,.28));animation:nbScrimIn ${s3(MOTION.sheet)} ease backwards}.nb-otl-gone>.nb-otl-scrim{animation:nbScrimOut ${s3(MOTION.leave)} ease forwards}`,
+  `.nb-otl-sheet{position:absolute;left:0;right:0;bottom:0;max-height:calc(100% - 56px);box-sizing:border-box;padding:20px 20px 34px;border-radius:32px 32px 0 0;background:var(--nb-bg);color:var(--gd-text);display:flex;flex-direction:column;gap:14px;overflow:hidden;animation:nbSheetIn ${s3(MOTION.sheet)} ${EASE} backwards}.nb-otl-gone>.nb-otl-sheet{animation:nbSheetOut ${s3(MOTION.leave)} ${EASE_OUT} forwards}`,
+  '.nb-otl-shead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}.nb-otl-stitle{font-size:20px;font-weight:600;letter-spacing:-.02em}',
+  '.nb-otl-x{width:36px;height:36px;flex-shrink:0;padding:0;border:0;border-radius:18px;background:var(--nb-surf);color:var(--gd-text);display:flex;align-items:center;justify-content:center;cursor:pointer}',
+  '.nb-otl-list{min-height:0;overflow-y:auto;scrollbar-width:none;display:flex;flex-direction:column}',
+  '.nb-otl-row{flex-shrink:0;min-height:52px;box-sizing:border-box;padding:8px 4px;border:0;border-bottom:1px solid var(--gd-line);background:transparent;color:var(--gd-text);font:inherit;font-size:16px;font-weight:400;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}',
+  '.nb-otl-row.nb-i1{padding-left:22px}.nb-otl-row.nb-i2{padding-left:40px}.nb-otl-row.nb-cur{font-weight:600}',
   '@media (prefers-reduced-motion:reduce){.nb-in,.nb-menu.nb-show,.nb-bar.nb-show{animation:none}.nb-tg svg,.nb-fold svg,.nb-fold{transition:none}',
-  '.nb-ol-line,.nb-ol-panel,.nb-ol.nb-open>.nb-ol-panel{transition:none}.nb-ol-scrim,.nb-ol-sheet,.nb-gone>.nb-ol-scrim,.nb-gone>.nb-ol-sheet{animation:none}}'
+  '.nb-otl-line,.nb-otl-panel,.nb-otl.nb-otl-open>.nb-otl-panel{transition:none}.nb-otl-scrim,.nb-otl-sheet,.nb-otl-gone>.nb-otl-scrim,.nb-otl-gone>.nb-otl-sheet{animation:none}}'
 ].join('');
 // The colors a page of notes is drawn in, from a board's theme (`code`: what code sits on, the other color of the page it is on; `dim`: behind a phone's sheet).
 export const NOTES_VARS = (code = 't.surf') => `--gd-text: {{t.text}}; --gd-muted: {{t.muted}}; --gd-line: {{t.line}}; --nb-code: {{${code}}}; --nb-bg: {{t.bg}}; --nb-surf: {{t.surf}}; --nb-surf2: {{t.surf2}}; --nb-dim: {{t.dim}};`;
-// Where a page's outline rail sits (web/notes.js): how far right of the note (in the room its box keeps there) and where it stays as the page scrolls.
-const OUTLINE_AT = (x, top) => ` --nb-ol-x: ${x}px; --nb-ol-top: ${top}px;`;
+// Where a page's outline rail sits (web/notes.js): how far right of the note (in the room its box keeps there) and where it stays as the page scrolls (under the
+// top of what scrolls the page, past that box's own room at its top: the deck pages' main has 24 or 36 px, so theirs is 0).
+const OUTLINE_AT = (x, top) => ` --nb-otl-x: ${x}px; --nb-otl-top: ${top}px;`;
 // Every board that shows a page of notes carries this (it was the rendered Guide's .gd look; a page is drawn by web/notes.js now).
 export const GUIDE_CSS = NOTES_CSS;
 
@@ -373,7 +374,7 @@ export function deckBlocks(H, phone) {
         <span style="flex-grow: 1;"></span>
         <sc-if value="{{gs.canMake}}" hint-placeholder-val="{{ true }}">${link('Make cards', '{{gs.makeHref}}', 'sparkle')}</sc-if>
       </div></sc-if>
-      <div ref="{{gs.ref}}" data-sc-own data-phone="${phone ? 'yes' : ''}" style="${NOTES_VARS('t.bg')}${phone ? OUTLINE_AT(18, 16) : OUTLINE_AT(28, 24)}"></div>
+      <div ref="{{gs.ref}}" data-sc-own data-phone="${phone ? 'yes' : ''}" style="${NOTES_VARS('t.bg')}${phone ? OUTLINE_AT(18, 16) : OUTLINE_AT(28, 0)}"></div>
     </section>
   </sc-if>`;
   // The deck page's sections, right under its header: Sources (what the cards were made from; only for the deck's owner), Cards, Notes (the Guide
@@ -760,7 +761,7 @@ export function publicGuideBlocks(H, phone) {
     <section aria-label="Notes" style="min-width: 0; box-sizing: border-box; padding: ${phone ? '18px 18px 16px 20px' : '22px 26px 20px 26px'}; border-radius: ${phone ? 22 : 26}px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 12px; margin-bottom: ${phone ? 4 : 20}px;">
       <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;"><span style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">Notes</span>
         <sc-if value="{{gd.hasTabs}}" hint-placeholder-val="{{ false }}"><div role="group" aria-label="Guide pages" style="display: flex; gap: 4px; flex-wrap: wrap;"><sc-for list="{{gd.tabs}}" as="g" hint-placeholder-count="3"><button type="button" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}" style="height: 28px; max-width: 180px; padding: 0 12px; border: 0; border-radius: 999px; background: {{g.bg}}; color: {{g.fg}}; font: inherit; font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{g.title}}</button></sc-for></div></sc-if></div>
-      <div style="position: relative; margin-left: -${phone ? 20 : 26}px; padding-left: ${phone ? 26 : 30}px; {{gd.clip}}"><div ref="{{gd.ref}}" data-sc-own data-phone="${phone ? 'yes' : ''}" style="${NOTES_VARS('t.bg')}${phone ? OUTLINE_AT(18, 16) : OUTLINE_AT(26, 24)}"></div></div>
+      <div style="position: relative; margin-left: -${phone ? 20 : 26}px; padding-left: ${phone ? 26 : 30}px; {{gd.clip}}"><div ref="{{gd.ref}}" data-sc-own data-phone="${phone ? 'yes' : ''}" style="${NOTES_VARS('t.bg')}${phone ? OUTLINE_AT(18, 16) : OUTLINE_AT(26, 0)}"></div></div>
       <sc-if value="{{gd.long}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{gd.toggle}}" aria-expanded="{{gd.expanded}}" style="align-self: flex-start; padding: 0; border: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer;">{{gd.toggleLabel}}</button></sc-if>
     </section>
   </sc-if>`;

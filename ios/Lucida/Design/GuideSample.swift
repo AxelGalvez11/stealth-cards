@@ -7,7 +7,7 @@ enum GuideSample {
   /// The deck page's `guide` setting (the canvas's GUIDE_STATES): what the Guide and the Sources hold.
   static let states = ["Guide and sources", "Guide pages", "Long guide", "A source open", "No guide yet", "Studying (read only)"]
   /// The PhoneGuide board's `view` (design/materials.mjs GUIDE_VIEWS).
-  static let views = ["Writing", "Block menu", "Format bar", "Toggle open", "Toggle closed", "Section folded", "Blank note", "Reading on a shared deck", "Older versions", "A new page"]
+  static let views = ["Writing", "Block menu", "Format bar", "Toggle open", "Toggle closed", "Section folded", "Blank note", "Reading on a shared deck", "Older versions", "A new page", "Outline open"]
   static let deckId = "cell"
 
   static let text = [

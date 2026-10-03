@@ -27,7 +27,7 @@
 // the headings' names as a tree, the one being read in bold; a press scrolls to that heading (at once with Reduce Motion), and the card closes when the
 // pointer leaves. On a phone a tap opens the same tree in Lucida's own sheet: a heading scrolls there and closes it, and the rail is hidden while the
 // keyboard is up. A heading in a folded section or a closed toggle is in it too: going to it opens what it is in, as its ▸ does. It follows the page as
-// it is written. (Where it sits: --nb-ol-x, how far right of the note, and --nb-ol-top, where it stays when the page scrolls, on the element.)
+// it is written. (Where it sits: --nb-otl-x, how far right of the note, and --nb-otl-top, where it stays when the page scrolls, on the element.)
 //
 // SAFE. Words are put in as text nodes; a link is an <a> only when reading, with an address guide.js allows (http, https, mailto, #) and
 // rel="nofollow ugc noopener"; a picture only from where `image(src)` says it may come. The few icons are this file's own SVG.
@@ -143,9 +143,9 @@ export function makeNotes(G) {
     const menuEl = el('div', 'nb-menu', { role: 'listbox', 'aria-label': 'Add a block' }), barEl = el('div', 'nb-bar', { role: 'toolbar', 'aria-label': 'Format' });
     const keysEl = el('div', 'nb-keys', { role: 'toolbar', 'aria-label': 'Format' });
     // the outline: a box that stays in view at the top of the note (it goes in first, only with `outline`), the rail in it, and the card of headings
-    const olId = 'nb-ol' + Math.random().toString(36).slice(2, 9), olWrap = el('div', 'nb-olw'), olEl = el('div', 'nb-ol');
-    const railEl = el('button', 'nb-ol-rail', { type: 'button', 'aria-label': 'Outline', 'aria-expanded': 'false', 'aria-haspopup': 'menu', 'aria-controls': olId });
-    const panelEl = el('div', 'nb-ol-panel', { id: olId, role: 'menu', 'aria-label': 'Outline' });
+    const olId = 'nb-otl' + Math.random().toString(36).slice(2, 9), olWrap = el('div', 'nb-otlw'), olEl = el('div', 'nb-otl');
+    const railEl = el('button', 'nb-otl-rail', { type: 'button', 'aria-label': 'Outline', 'aria-expanded': 'false', 'aria-haspopup': 'menu', 'aria-controls': olId });
+    const panelEl = el('div', 'nb-otl-panel', { id: olId, role: 'menu', 'aria-label': 'Outline' });
     olEl.append(railEl, panelEl); olWrap.appendChild(olEl);
     root.append(docEl, plusEl, menuEl, barEl);
     host.appendChild(root);
@@ -1240,15 +1240,21 @@ export function makeNotes(G) {
     function drawOutline() {
       if (!o.outline) { if (olWrap.parentNode) olWrap.remove(); closeSheet(true); OL.heads = []; OL.sig = ''; return; }
       if (olWrap.parentNode !== root) root.insertBefore(olWrap, root.firstChild);
-      const heads = outlineHeads(), sig = JSON.stringify(heads.map(x => [x.id, x.w, x.ind])) + (o.phone ? '|phone' : '');
+      // (fewer than two headings: no outline at all, not even a hidden one)
+      const all = outlineHeads(), heads = all.length >= 2 ? all : [], sig = JSON.stringify(heads.map(x => [x.id, x.w, x.ind])) + (o.phone ? '|phone' : '');
       OL.heads = heads;
-      if (sig !== OL.sig) {
+      const fresh = sig !== OL.sig;
+      if (fresh) {
         OL.sig = sig;
+        // (lines drawn again are lit at once, with no fade: the fade is for the one being read changing as the page scrolls)
+        railEl.classList.add('nb-otl-still');
         railEl.textContent = ''; panelEl.textContent = '';
         railEl.setAttribute('aria-haspopup', o.phone ? 'dialog' : 'menu');
+        // (past 40 headings the lines sit closer, so the rail stays about as tall as 40 would make it)
+        railEl.style.gap = heads.length > 40 ? Math.max(2, Math.floor((o.phone ? 320 : 400) / heads.length) - 2) + 'px' : '';
         for (const x of heads) {
-          railEl.appendChild(el('span', 'nb-ol-line nb-i' + x.ind, { 'data-for': x.id, 'aria-hidden': 'true' }));
-          const it = el('button', 'nb-ol-item nb-i' + x.ind, { type: 'button', role: 'menuitem', tabindex: '-1', 'data-for': x.id, text: x.w });
+          railEl.appendChild(el('span', 'nb-otl-line nb-i' + x.ind, { 'data-for': x.id, 'aria-hidden': 'true' }));
+          const it = el('button', 'nb-otl-item nb-i' + x.ind, { type: 'button', role: 'menuitem', tabindex: '-1', 'data-for': x.id, text: x.w });
           panelEl.appendChild(it);
         }
         if (OL.sheet) drawSheet();
@@ -1256,14 +1262,14 @@ export function makeNotes(G) {
         olMark(OL.cur);
       }
       olShow();
-      olSoon();
+      if (fresh && heads.length) { olFind(); requestAnimationFrame(() => railEl.classList.remove('nb-otl-still')); } else olSoon();
     }
     // Shown with two headings or more, and on a phone not while the keyboard is up (a line is being written). The card is open while the pointer is on it,
     // the keyboard's focus is in it, or a touch opened it (the canvas's state: always).
     function olShow() {
       if (!o.outline) return;
       const typing = !!(o.phone && o.editable && (st.focused || (o.demo && o.demo.keys))), show = OL.heads.length >= 2 && !typing, D = o.demo && o.demo.outline;
-      olWrap.classList.toggle('nb-ol-off', !show);
+      olWrap.classList.toggle('nb-otl-off', !show);
       if (!show) { OL.tap = false; closeSheet(true); }
       olOpen(show && !o.phone && !!(OL.hover || (OL.focus && !OL.esc) || OL.tap || D));
       if (show && o.phone && D && !OL.sheet) openSheet();
@@ -1271,7 +1277,7 @@ export function makeNotes(G) {
     function olOpen(v) {
       if (OL.open === v) return;
       OL.open = v;
-      olEl.classList.toggle('nb-open', v);
+      olEl.classList.toggle('nb-otl-open', v);
       railEl.setAttribute('aria-expanded', v ? 'true' : 'false');
       if (v) { olSoon(); const it = panelEl.querySelector('.nb-cur'); if (it) olEnsure(it, true); }
       if (v && OL.tap) document.addEventListener('pointerdown', olAway, true); else document.removeEventListener('pointerdown', olAway, true);
@@ -1313,17 +1319,17 @@ export function makeNotes(G) {
     // closes it, and so do a tap on the page behind, Close and Escape. (On the canvas it is drawn in the board's own box: sheetHost.)
     function openSheet() {
       if (OL.sheet || OL.heads.length < 2) return;
-      const host = o.sheetHost || root, wrap = el('div', 'nb-ol-sheetw' + (o.sheetHost ? '' : ' nb-fixed')), scrim = el('div', 'nb-ol-scrim');
+      const host = o.sheetHost || root, wrap = el('div', 'nb-otl-sheetw' + (o.sheetHost ? '' : ' nb-otl-fixed')), scrim = el('div', 'nb-otl-scrim');
       // (not aria-modal: the app's own dialogs, web/ui.js, would set the page aside until its next paint; this sheet keeps the keyboard's focus in itself)
-      const sheet = el('div', 'nb-ol-sheet', { role: 'dialog', 'aria-label': 'Outline' }), head = el('div', 'nb-ol-shead');
-      const close = el('button', 'nb-ol-x', { type: 'button', 'aria-label': 'Close', html: svg('close', 14, 2.2) }), list = el('div', 'nb-ol-list');
-      head.append(el('span', 'nb-ol-stitle', { text: 'Outline' }), close);
+      const sheet = el('div', 'nb-otl-sheet', { role: 'dialog', 'aria-label': 'Outline' }), head = el('div', 'nb-otl-shead');
+      const close = el('button', 'nb-otl-x', { type: 'button', 'aria-label': 'Close', html: svg('close', 14, 2.2) }), list = el('div', 'nb-otl-list');
+      head.append(el('span', 'nb-otl-stitle', { text: 'Outline' }), close);
       sheet.append(head, list); wrap.append(scrim, sheet); host.appendChild(wrap);
       OL.sheet = { wrap, list, close };
       drawSheet();
       scrim.addEventListener('click', () => closeSheet());
       close.addEventListener('click', () => closeSheet());
-      list.addEventListener('click', ev => { const b = ev.target.closest && ev.target.closest('.nb-ol-row'); if (!b) return; const id = b.getAttribute('data-for'); closeSheet(); goTo(id); });
+      list.addEventListener('click', ev => { const b = ev.target.closest && ev.target.closest('.nb-otl-row'); if (!b) return; const id = b.getAttribute('data-for'); closeSheet(); goTo(id); });
       wrap.addEventListener('keydown', ev => {
         if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); return closeSheet(); }
         // (the keyboard's focus stays in the sheet while it is open)
@@ -1334,7 +1340,7 @@ export function makeNotes(G) {
     }
     function drawSheet() {
       const l = OL.sheet.list; l.textContent = '';
-      for (const x of OL.heads) l.appendChild(el('button', 'nb-ol-row nb-i' + x.ind, { type: 'button', 'data-for': x.id, text: x.w }));
+      for (const x of OL.heads) l.appendChild(el('button', 'nb-otl-row nb-i' + x.ind, { type: 'button', 'data-for': x.id, text: x.w }));
       olMark(OL.cur);
     }
     // (it goes the way Lucida's sheets go, at once with Reduce Motion; the keyboard's focus goes back to the rail)
@@ -1343,7 +1349,7 @@ export function makeNotes(G) {
       OL.sheet = null; railEl.setAttribute('aria-expanded', 'false');
       const back = s.wrap.contains(document.activeElement);
       if (now || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) s.wrap.remove();
-      else { s.wrap.classList.add('nb-gone'); s.wrap.style.pointerEvents = 'none'; setTimeout(() => s.wrap.remove(), 200); }
+      else { s.wrap.classList.add('nb-otl-gone'); s.wrap.style.pointerEvents = 'none'; setTimeout(() => s.wrap.remove(), 200); }
       if (back && railEl.isConnected) railEl.focus({ preventScroll: true });
     }
     // The keys: on the rail, Down, Return or Space go into the card (on the current heading); in it, Up, Down, Home and End move, Return or Space goes to the
@@ -1373,7 +1379,7 @@ export function makeNotes(G) {
     olEl.addEventListener('keydown', onOlKey);
     railEl.addEventListener('click', () => { if (o.phone) return openSheet(); if (OL.touch) { OL.tap = !OL.open; olShow(); } });
     panelEl.addEventListener('click', ev => {
-      const b = ev.target.closest && ev.target.closest('.nb-ol-item'); if (!b) return;
+      const b = ev.target.closest && ev.target.closest('.nb-otl-item'); if (!b) return;
       goTo(b.getAttribute('data-for'));
       if (OL.touch) { OL.tap = false; olShow(); }
     });

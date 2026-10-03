@@ -2,7 +2,8 @@
 // Older versions, A new page, and the Dark and Gray twins): the Guide and its extra pages as one page that is always formatted, where you tap and type
 // (Design/NotesViews.swift; its rules in Data/Notes.swift), opened from the deck page's Notes (a tap on the words opens it there). At the top: back, the deck's
 // name, the quiet saving line and ⋯ (Make cards from this page, New page, Older versions, Rename page, Delete page); under it the pages as pills once there
-// are two or more (no Guide pill on its own: the owner, 2026-10-02).
+// are two or more (no Guide pill on its own: the owner, 2026-10-02). At the page's right, the outline's rail (NotesRail: a line for each heading, a tap opens their
+// tree in Lucida's own sheet), hidden while a line is written.
 // It saves as it's typed (a moment after the last key, one save after another: GuideEditorModel), and Done (the back arrow) sends what is waiting first.
 // What is saved is Markdown, written from the page's blocks by web/guide.js itself (GuideEngine), so the iPhone keeps exactly what the web keeps.
 import SwiftUI
@@ -24,6 +25,8 @@ struct GuideScreen: View {
   @StateObject private var notes = NotesPage()
   @StateObject private var scroll = NotesScroll()
   @State private var hooks = NotesHooks()
+  /// (only the rail watches it: the page isn't drawn again as the heading being read changes)
+  @State private var outline = NotesOutline()
   let deckId: String
   @State private var picking = false
   @State private var pictureAfter: String? = nil
@@ -69,7 +72,8 @@ struct GuideScreen: View {
           if n.tabs.count > 1 { GuidePagesRow(tabs: n.tabs, pageId: n.pageId, pick: pick) }
           if n.hist { GuideHistory(model: model, title: "Older versions of " + (n.pageId == "main" ? "the Guide" : n.title)) { Task { await model.toggleHistory() } } }
           else {
-            GuidePageArea(notes: notes, scroll: scroll, setup: setup(n), renaming: $renaming, title: n.title, hl: store.demo ? NotesDemo.of(n.view)?.bar : nil) { model.rename($0) }
+            GuidePageArea(notes: notes, scroll: scroll, outline: outline, rail: !keys && !renaming && keyboard.height == 0, setup: setup(n), renaming: $renaming, title: n.title,
+                          hl: store.demo ? NotesDemo.of(n.view)?.bar : nil) { model.rename($0) }
           }
         }
         .padding(.top, Screen.top(52))
@@ -111,6 +115,13 @@ struct GuideScreen: View {
       if n.view == "A new page" { model.page = "gnew" }
       if n.view == "Older versions" { model.versions = GuideSample.versions }
       aa = NotesDemo.of(n.view)?.aa ?? false
+    }
+    // (the canvas's Outline open: the outline's sheet over the page)
+    if store.demo && n.view == "Outline open" {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [notes, outline, scroll, nav] in
+        outline.refresh(notes.outline, top: scroll.viewport.minY, scrolled: false)
+        NotesRail.open(nav: nav, heads: notes.outline, outline: outline, page: notes)
+      }
     }
     if !store.demo && !store.guide(deckId).can { nav.back(); return }
     load(n)
@@ -263,11 +274,14 @@ struct GuideMoreMenu: View {
 }
 
 // ---------- the page ----------
-/// The page itself (and, for an extra page being renamed, its name above it), scrolling, with the caret kept above the bar.
+/// The page itself (and, for an extra page being renamed, its name above it), scrolling, with the caret kept above the bar, and the outline's rail at its right
+/// (`rail`: not while the keyboard is up, so it never covers what is being written), 12 points under its top as it scrolls.
 struct GuidePageArea: View {
   @Environment(\.theme) private var t
   @ObservedObject var notes: NotesPage
   @ObservedObject var scroll: NotesScroll
+  let outline: NotesOutline
+  let rail: Bool
   let setup: NotesSetup
   @Binding var renaming: Bool
   let title: String
@@ -277,6 +291,7 @@ struct GuidePageArea: View {
   @State private var name = ""
   @FocusState private var nameOn: Bool
   var body: some View {
+    let heads = notes.outline, railOn = rail && heads.count >= 2
     ScrollView(showsIndicators: false) {
       VStack(alignment: .leading, spacing: 0) {
         if renaming {
@@ -294,11 +309,15 @@ struct GuidePageArea: View {
       }
       .padding(.top, 10).padding(.trailing, 20).padding(.leading, 30).padding(.bottom, setup.editable ? 0 : 120)
       .environment(\.notesScroll, scroll)
+      .environment(\.notesOutline, outline)
     }
     .scrollPosition($pos)
-    .onScrollGeometryChange(for: CGFloat.self, of: { $0.contentOffset.y + $0.contentInsets.top }) { _, y in scroll.offset = y }
+    .onScrollGeometryChange(for: CGFloat.self, of: { $0.contentOffset.y + $0.contentInsets.top }) { _, y in scroll.offset = y; outline.refresh(heads, top: scroll.viewport.minY) }
     .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { scroll.viewport = $0 }
-    .onAppear { let p = $pos; scroll.go = { y in p.wrappedValue.scrollTo(y: y) } }
+    .overlay(alignment: .topTrailing) { if railOn { NotesRail(heads: heads, outline: outline, page: notes).padding(.top, 12).transition(.opacity) } }
+    .animation(Motion.fade, value: railOn)
+    .onAppear { let p = $pos; scroll.go = { y in p.wrappedValue.scrollTo(y: y) }; DispatchQueue.main.async { outline.refresh(heads, top: scroll.viewport.minY, scrolled: false) } }
+    .onChange(of: heads) { _, h in DispatchQueue.main.async { outline.refresh(h, top: scroll.viewport.minY, scrolled: false) } }
     .scrollDismissesKeyboard(.interactively)
     .frame(maxHeight: .infinity)
   }

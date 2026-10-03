@@ -19,6 +19,9 @@
 //   12  the deck cover's Make cards and New card (no Add cards menu); dark mode; nothing says "AI generated"
 //   13  a toggle and a section: "> " makes a toggle, Enter writes inside it, it closes and opens, a heading's ▸ folds its section; none of that changes the words saved,
 //       and this phone remembers it (the Notes page and the deck page alike)
+//   14  the outline: the rail of the headings at the Notes page's right; a tap opens their tree in Lucida's own sheet (the current one selected); a heading scrolls
+//       there and closes it (a closed toggle's heading opens it, a folded section's subheading unfolds it); a heading typed joins it; no rail while a line is written;
+//       the deck page's Notes have it too, staying in view as the page scrolls; a shared deck's, once shown in full
 // Run it with ios/tools/e2e-guide.sh (it starts a fresh server on port 3934 and the stand-in AI on 3939). It only runs when LUCIDA_GUIDE is set, so the other scripts keep running
 // their own checks alone.
 import XCTest
@@ -792,5 +795,93 @@ final class GuideTests: XCTestCase {
           "the deck page's Notes show it the same way (the toggle open, the section folded)")
     app.buttons["Show this section"].firstMatch.tap()
     check(wait(line(app, "First words.")), "and unfold it there too")
+  }
+
+  // ---------- 14: the outline (the owner: "add that thing notion has where it shows a rail tree of sections") ----------
+  func test14Outline() throws {
+    try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
+    let who = "gdo" + run, name = "Outline deck " + run
+    let id = person(who, deck: name)
+    func fill(_ n: Int, _ what: String) -> String { (1...n).map { "A line about \(what), number \($0)." }.joined(separator: "\n\n") }
+    let md = ["# Outline test", "", fill(3, "the start"), "", "## Checklist", "", "- [ ] Glycolysis", "", fill(12, "the checklist"), "", "## The mitochondrion", "", fill(10, "the mitochondrion"),
+              "", "### Its two membranes", "", fill(10, "membranes"), "", ":::toggle More about it", "## Hidden in a toggle", "", "Words inside it.", ":::", "", "## Mnemonics", "", fill(20, "mnemonics"), ""].joined(separator: "\n")
+    act(who, "guide.save", ["deckId": id, "text": md])
+    let names = ["Outline test", "Checklist", "The mitochondrion", "Its two membranes", "Hidden in a toggle", "Mnemonics"]
+    var app = openPage(who, deck: name)
+    let rail = app.buttons["notes.outline"]
+    check(wait(rail) && rail.label == "Outline" && rail.isHittable, "the Notes page has the outline’s rail")
+    let W = app.windows.firstMatch.frame.width
+    check(rail.frame.maxX > W - 30 && rail.frame.minY < 260, "at its right, near the top (at \(pt(rail.frame.minX)), \(pt(rail.frame.minY)))")
+    snap("outline-rail")
+    // the sheet: the tree, the one being read selected
+    func sheet() { tap(app.buttons["notes.outline"], "the rail"); _ = wait(text(app, "Outline"), 6) }
+    func row(_ words: String) -> XCUIElement { app.buttons.matching(NSPredicate(format: "label == %@", words)).firstMatch }
+    func near(_ words: String) -> Bool { eventually(6) { let l = self.line(app, words); return l.exists && l.isHittable && l.frame.minY > 60 && l.frame.minY < 300 } }
+    sheet()
+    check(text(app, "Outline").exists && names.allSatisfy { row($0).exists }, "a tap opens Lucida’s own sheet with every heading’s name")
+    check(row("Outline test").isSelected && !row("Mnemonics").isSelected, "the one being read is the one picked")
+    check(app.alerts.count == 0 && app.sheets.count == 0 && app.popovers.count == 0 && app.menus.count == 0, "(Lucida’s own sheet, not the system’s)")
+    snap("outline-sheet")
+    tap(row("Mnemonics"), "Mnemonics in the sheet")
+    check(gone(text(app, "Outline"), 4) && near("Mnemonics"), "a heading scrolls there and closes the sheet (\(pt(line(app, "Mnemonics").frame.minY)))")
+    sheet()
+    check(row("Mnemonics").isSelected, "and it is now the one being read")
+    // a heading inside a closed toggle: going to it opens the toggle
+    check(!line(app, "Words inside it.").exists, "(the toggle is closed)")
+    tap(row("Hidden in a toggle"), "the heading in the toggle")
+    check(near("Hidden in a toggle") && line(app, "Words inside it.").exists, "a heading inside a closed toggle: it opens, and the page goes there")
+    // a folded section: its subheading is still in the tree, and going to it unfolds the section
+    app.swipeDown(); app.swipeDown(); app.swipeDown(); app.swipeDown(); app.swipeDown()
+    sheet(); tap(row("The mitochondrion"), "The mitochondrion")
+    _ = near("The mitochondrion")
+    let fold = app.buttons.matching(NSPredicate(format: "identifier == %@ AND label == %@", "notes.fold", "Fold this section")).element(boundBy: 2)
+    tap(fold, "The mitochondrion's ▸")
+    check(gone(line(app, "Its two membranes"), 4), "(its section folds: the subheading goes)")
+    sheet()
+    check(row("Its two membranes").exists, "a subheading folded away is still in the tree")
+    tap(row("Its two membranes"), "the folded subheading")
+    check(near("Its two membranes") && !app.buttons["Show this section"].exists, "going to it unfolds the section, as its ▸ does")
+    Thread.sleep(forTimeInterval: 1)
+    check(saved(who, id) == md, "none of that changes the note")
+    // writing: no rail while a line is written (the keyboard up); a heading typed joins the outline
+    let last = line(app, "A line about mnemonics, number 20.")
+    app.swipeUp(); app.swipeUp(); app.swipeUp(); app.swipeUp(); app.swipeUp(); app.swipeUp()
+    tapEnd(last)
+    check(eventually(6) { self.focusedValue(app) == "A line about mnemonics, number 20." }, "(the caret in the last line)")
+    check(gone(app.buttons["notes.outline"], 4), "while a line is written, the rail is hidden so it never covers what is written")
+    snap("outline-writing")
+    type(app, "\n## At the very end")
+    check(eventually { self.saved(who, id).hasSuffix("## At the very end\n") }, "(the new heading is saved)")
+    key(app, "Hide the keyboard")
+    check(wait(app.buttons["notes.outline"], 6), "the keyboard goes, the rail is back")
+    sheet()
+    check(row("At the very end").exists, "and the heading just typed is in the tree")
+    tap(button(app, "Close"), "Close")
+    // the deck page's Notes: the same rail, staying in view as the page scrolls
+    done(app)
+    check(wait(line(app, "Outline test")) && selected(button(app, "Notes")), "back on the deck page’s Notes")
+    let drail = app.buttons["notes.outline"]
+    check(wait(drail), "the deck page’s Notes have the rail too")
+    tap(drail, "the deck page's rail")
+    check(wait(text(app, "Outline"), 6) && row("Mnemonics").exists && row("At the very end").exists, "its sheet has the same tree")
+    tap(row("Mnemonics"), "Mnemonics")
+    check(gone(text(app, "Outline"), 4) && eventually(6) { let l = self.line(app, "Mnemonics"); return l.exists && l.frame.minY > 40 && l.frame.minY < 300 }, "a heading scrolls the deck page there")
+    check(eventually(4) { drail.exists && drail.isHittable && drail.frame.minY > 40 && drail.frame.minY < 200 }, "and the rail stays in view near the top (at \(pt(drail.frame.minY)))")
+    snap("outline-deck")
+    // a shared deck's page: cut short there is no rail; Show more, and there is
+    let sh = (api(who, "POST", "/api/social", ["type": "deck.share", "deckId": id, "visibility": "public"]).json as? [String: Any])?["result"] as? [String: Any] ?? [:]
+    let sid = sh["id"] as? String ?? ""
+    check(!sid.isEmpty, "(the deck is shared)")
+    app = launch(as: S("newcomer"), ["-open", "deckpage:/d/" + sid])
+    check(wait(text(app, "NOTES"), 20) && wait(line(app, "Outline test")), "a shared deck’s page reads its Notes")
+    check(!app.buttons["notes.outline"].exists, "cut short (Show more), no rail: what is cut off can’t be scrolled to")
+    let showMore = button(app, "Show more")
+    if !showMore.isHittable { app.swipeUp() }
+    tap(showMore, "Show more")
+    check(wait(app.buttons["notes.outline"], 6), "shown in full, the rail is there")
+    tap(app.buttons["notes.outline"], "the shared page's rail")
+    tap(row("Hidden in a toggle"), "the heading in the toggle")
+    check(eventually(6) { let l = self.line(app, "Hidden in a toggle"); return l.exists && l.frame.minY > 40 && l.frame.minY < 300 } && line(app, "Words inside it.").exists, "and a reader can go to any heading (a closed toggle’s too)")
+    noLabel(app, "the outline")
   }
 }

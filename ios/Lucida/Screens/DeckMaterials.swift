@@ -64,7 +64,8 @@ private struct LittlePill: View {
 /// this phone): its page tabs (when it has pages), Make cards (for its owner, once it has words), and the page. For its owner a tap on the words opens the Notes page
 /// there, and an empty Guide is a blank note waiting (a heading and a line). On a shared deck's page (`shared`: the deck's address, which this phone remembers its
 /// toggles by) it says NOTES, and a long page is cut short with Show more. The caller says which page is showing (`page`, one of `tabs`) and its words; `images`
-/// says which pictures may show (a deck's own, or a shared deck's public ones).
+/// says which pictures may show (a deck's own, or a shared deck's public ones). At its right, the outline's rail (NotesRail), which stays a little under the top
+/// of the screen as the page scrolls by; on a shared deck's page, once the page shows in full (cut short, Show more comes first).
 struct GuideCard: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var nav: Nav
@@ -83,10 +84,13 @@ struct GuideCard: View {
   var shared: String? = nil
   @StateObject private var notes = NotesPage()
   @State private var hooks = NotesHooks()
+  /// (only the rail watches it: the card isn't drawn again as the page scrolls)
+  @State private var outline = NotesOutline()
 
   var body: some View {
     let hasText = !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     let long = shared != nil && ((text as NSString).length > 640 || text.split(separator: "\n", omittingEmptySubsequences: false).count > 14)
+    let heads = notes.outline, railOn = heads.count >= 2 && (!long || open)
     let key = shared.map { "shared|" + $0 + "|" + page } ?? ((store.demo ? "canvas|" : "") + deckId + "|" + page)
     VStack(alignment: .leading, spacing: 12) {
       if shared != nil || !tabs.isEmpty || (canEdit && hasText) { GuideCardBar(tabs: tabs, page: $page, open: $open, label: shared != nil, make: canEdit && hasText ? { nav.make(deckId: deckId) } : nil) }
@@ -94,6 +98,8 @@ struct GuideCard: View {
       // (a link inside the page to a heading in the part that is cut off opens the rest first)
       let pageView = NotesView(page: notes, setup: NotesSetup(colors: NotesColors(t, code: t.bg), owner: canEdit, hooks: hooks)).padding(.leading, shared != nil ? 26 : 0)
         .environment(\.guideExpand, long && !open ? { open = true } : nil)
+        .environment(\.notesOutline, outline)
+        .onGeometryChange(for: CGFloat.self) { $0.frame(in: .named("guide-card")).minY } action: { outline.notes(at: $0) }
       if long && !open {
         pageView.fixedSize(horizontal: false, vertical: true).frame(maxHeight: 230, alignment: .top).clipped()
           .mask(LinearGradient(stops: [.init(color: .black, location: 0.62), .init(color: .clear, location: 1)], startPoint: .top, endPoint: .bottom))
@@ -107,6 +113,9 @@ struct GuideCard: View {
     .padding(.top, shared != nil ? 18 : 16).padding(.bottom, shared != nil ? 16 : 18).padding(.leading, shared != nil ? 20 : 24).padding(.trailing, 18)
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(t.surf))
+    .coordinateSpace(.named("guide-card"))
+    .overlay(alignment: .topTrailing) { if railOn { NotesRail(heads: heads, outline: outline, page: notes, sticky: true) } }
+    .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { r in outline.stick(card: r, rail: NotesRail.height(heads.count)); outline.refresh(heads, top: Screen.safeTop) }
     .accessibilityElement(children: .contain).accessibilityLabel("Notes")
     .onAppear { load(key) }
     .onChange(of: key) { _, k in load(k) }
