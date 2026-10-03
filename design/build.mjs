@@ -2803,7 +2803,7 @@ listVals(o) {
 // so they're missing something; \`draft\`: 'unfinished' when the new card being written isn't finished. Neither is sent.
 sgBatch(db) {
   const out = [], held = [], marks = this.sgOut || new Set(), names = this.kindNames(), at = this.sgOrder || new Map();
-  const put = (key, change) => out.push({ n: at.has(key) ? at.get(key) : Infinity, change });
+  const put = (key, change) => out.push({ n: at.has(key) ? at.get(key) : Infinity, key, change });
   for (const [id, e] of Object.entries(this.eds || {})) {
     const saved = id !== 'new' && !marks.has(id) && !this.temp(id) && db.card(id);
     if (!saved) continue;
@@ -2820,7 +2820,9 @@ sgBatch(db) {
   let draft = '';
   if (n && this.hasWords(n.edits)) { if (this.missingOf(ty, f)) draft = 'unfinished'; else { const after = this.sgAfter(null, ty, f); if (after) put('new', { op: 'add', after }); } }
   // (In the order they were made, the new card being written last; a sort keeps the cards of one text or picture together.)
-  return { out: out.sort((a, b) => a.n - b.n).map(x => x.change), held, draft };
+  // \`keys\`: what each change came from, so sending clears just those.
+  out.sort((a, b) => a.n - b.n);
+  return { out: out.map(x => x.change), keys: new Set(out.map(x => x.key)), held, draft };
 }
 // When each change of the batch was first made: a card changed (e:), marked Suggest removing it (r:), or added (a:).
 sgNoted(key) { const at = this.sgOrder || (this.sgOrder = new Map()); if (!at.has(key)) at.set(key, (this.sgSeq = (this.sgSeq || 0) + 1)); }
@@ -2830,7 +2832,7 @@ sgNoted(key) { const at = this.sgOrder || (this.sgOrder = new Map()); if (!at.ha
 async sgSendBatch() {
   const db = this.sdb(), page = this.sgPage;
   if (this.state.sgBusy || !page) return;
-  const { out, held, draft } = this.sgBatch(db), n = held.length;
+  const { out, keys, held, draft } = this.sgBatch(db), n = held.length;
   if (!out.length && !n && !draft) return this.setState({ sgLine: 'Add a change first.', sgOk: false });
   if (n || draft) {
     const line = n && draft ? 'Some changes and your new card are missing something, so they won’t be sent.'
@@ -2843,16 +2845,25 @@ async sgSendBatch() {
   try {
     const r = await db.act.suggest(page.id, out, String(this.state.sgWhy || '').trim());
     if (!r) return this.setState({ sgBusy: false });
-    this.sgReset(db);
+    this.sgReset(db, keys);
     this.setState({ sgBusy: false, sgSent: true, sgOk: true, sgWhy: '', sgLine: this.sgSentLine(r, page) });
   } catch (err) { this.setState({ sgBusy: false, sgOk: false, sgLine: (err && err.message) || 'Something went wrong. Try again.' }); }
 }
-// After sending: nothing changed, added, or marked; the card on screen stays (as the deck has it), or a new card starts.
-sgReset(db) {
-  const keep = this.pick !== 'new' && !this.temp(this.pick) && db.card(this.pick) ? this.pick : null;
-  this.eds = {}; this.added = []; this.gone = []; this.sgOut = new Set(); this.sgOrder = new Map();
-  this.pick = keep || 'new';
-  this.ed = this.eds[this.pick] = keep ? this.fresh() : this.fresh({ type: 'Basic', edits: { front: '', back: '', text: '', note: '', speak: '', boxes: [] } });
+// After sending, what was sent starts again from the deck as it is: its cards' changes and marks go, and its new cards (the one
+// being written starts over). What wasn't sent (a change missing something, a new card not finished) stays as it was.
+sgReset(db, keys) {
+  const order = this.sgOrder || new Map(), blank = () => this.fresh({ type: 'Basic', edits: { front: '', back: '', text: '', note: '', speak: '', boxes: [] } });
+  for (const key of keys) {
+    const id = key.slice(2);
+    order.delete(key);
+    if (key === 'new') this.eds.new = blank();
+    else if (key.startsWith('e:')) delete this.eds[id];
+    else if (key.startsWith('r:')) { if (this.sgOut) this.sgOut.delete(id); }
+    else if (key.startsWith('a:')) { this.added = this.added.filter(c => c.id !== id); delete this.eds[id]; }
+  }
+  // The card on screen: as the deck has it now, or (a new card that went) the first card, or a new one.
+  if (this.pick !== 'new' && !this.cardOf(db, this.pick)) { const next = this.cardIds(db)[0]; this.pick = next ? next.id : 'new'; }
+  this.ed = this.eds[this.pick] || (this.eds[this.pick] = this.pick === 'new' ? blank() : this.fresh());
 }
 // Back (the deck's name): to the shared deck's page. Changes not sent would be lost, so it asks first (Lucida's own question).
 async sgLeave(href) {
