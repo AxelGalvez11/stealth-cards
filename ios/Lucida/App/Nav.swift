@@ -89,8 +89,6 @@ final class Nav: ObservableObject {
   @Published var tab: Tab = .library
   /// The Library shows All cards instead of your folders and decks.
   @Published var libCards = false
-  /// A filter for All cards to start on, from the Stats page: "leech" (or "paused").
-  var libFilter: String? = nil
   @Published var path: [Route] = []
   @Published var sheet: SheetKind?
   /// A list to pick from, over everything (Discover's filters, Edit profile's school, a deck's labels): see PickSheet.swift.

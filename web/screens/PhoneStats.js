@@ -481,7 +481,7 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const d
         bars: w.diffDist.map(b => ({ label: b.label, title: 'Difficulty ' + b.label + ': ' + num(b.n) + ' cards', h: Math.max(3, Math.round(b.n / dmax * 70)) + 'px', c: shade(b.n, dmax) })) },
       leech: { some: w.leeches.length > 0, big: num(w.leeches.length), sub: !w.leeches.length ? 'None right now' : paused ? paused + ' paused' : '', canStudy: w.leeches.some(c => !c.paused),
         decks: Object.entries(w.leeches.reduce((a, c) => ({ ...a, [c.deck]: (a[c.deck] || 0) + 1 }), {})).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name, n]) => ({ name, n: String(n) })),
-        seeHref: db.mock ? board('LibraryCards') : '/library/cards?level=leech', studyHref: db.mock ? board('Review') : '/review?set=leech' } } });
+        seeHref: db.mock ? board('LibraryCards') : '/library/cards', studyHref: db.mock ? board('Review') : '/review?set=leech' } } });
     // Pace: time per card, what's coming, how your gaps grow, and any exams.
     const tm = p.time, timed = tm.n >= 5, amax = Math.max(1, ...p.ahead.map(b => b.n)), gs = p.gaps.slice(-8), gv = gs.filter(b => b.days != null), gmax = Math.max(1, ...gv.map(b => b.days));
     Object.assign(deepVals, { pace: {
