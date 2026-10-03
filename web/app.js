@@ -127,9 +127,9 @@ function resolve(path, q) {
     if (deck[2] === '/import') return dRow && dRow.readOnly ? { redirect: '/deck/' + id } : { name: P + 'Import', props: { deckId: id } };
     // Suggestions people sent for this deck (it's shared), to take or skip.
     if (deck[2] === '/suggestions') return { name: P + 'Suggestions', props: { deckId: id } };
-    // A deck's Notes (its Guide and pages), written here: ?page= one of its pages, ?at=<line>:<place> where a press on the Notes tab put the caret. A deck you study as it is
-    // shows its owner's, which is theirs to change.
-    if (deck[2] === '/guide') return dRow && dRow.readOnly ? { redirect: '/deck/' + id } : { name: P + 'Guide', props: { deckId: id, page: q.get('page') || '', at: /^\d{1,5}:\d{1,6}$/.test(q.get('at') || '') ? q.get('at') : '' } };
+    // A deck's Notes (its Guide and pages), written here: ?page= one of its pages, ?at=<line>:<place> where a press on the Notes tab put the caret, or ?at=end (the deck page's
+    // + › Notes: ready to type at the end of what is written). A deck you study as it is shows its owner's, which is theirs to change.
+    if (deck[2] === '/guide') return dRow && dRow.readOnly ? { redirect: '/deck/' + id } : { name: P + 'Guide', props: { deckId: id, page: q.get('page') || '', at: /^(\d{1,5}:\d{1,6}|end)$/.test(q.get('at') || '') ? q.get('at') : '' } };
     // Playing a deck live needs a big screen, so it starts from a computer.
     if (deck[2] === '/live') return narrow.matches ? { redirect: '/deck/' + id } : { name: 'LiveSetup', props: { deckId: id } };
     // Learn mode starts from a sheet over the deck, and so does a practice test.
@@ -140,8 +140,8 @@ function resolve(path, q) {
     // shows it; on a phone it starts with no field picked (the phone brings up its own keyboard).
     if (deck[2]) return narrow.matches ? { name: 'PhoneEditor', props: { deckId: id, cardId: deck[3] || '', from: q.get('from') || '', diagram: q.get('diagram') || '', keyboard: false } }
       : { name: 'WebCardsScreen', props: { deckId: id, cardId: deck[3] || '', from: q.get('from') || '', diagram: q.get('diagram') || '' } };
-    // An empty deck shows its empty page, unless you opened its settings.
-    return { name: P + (db.cards(id).length || q.get('settings') === '1' || (dRow && (dRow.hasGuide || dRow.hasSources || dRow.hasDiagrams)) ? 'Deck' : 'DeckEmpty'), props: { deckId: id, settingsOpen: q.get('settings') === '1', sourceOpen: q.get('source') || '', sourceAt: q.get('at') || '', tab: q.get('tab') || '', diagram: q.get('diagram') || '' } };
+    // An empty deck shows its empty page, unless you opened its settings or its Diagrams (its + › Upload diagram and Make diagram happen there).
+    return { name: P + (db.cards(id).length || q.get('settings') === '1' || q.get('tab') === 'diagrams' || (dRow && (dRow.hasGuide || dRow.hasSources || dRow.hasDiagrams)) ? 'Deck' : 'DeckEmpty'), props: { deckId: id, settingsOpen: q.get('settings') === '1', sourceOpen: q.get('source') || '', sourceAt: q.get('at') || '', tab: q.get('tab') || '', diagram: q.get('diagram') || '' } };
   }
   // A Learn mode session: the board for its current question, or the end once every card is learned.
   const ln = /^\/learn\/([^/]+)$/.exec(path);

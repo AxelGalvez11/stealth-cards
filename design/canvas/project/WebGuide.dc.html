@@ -3657,7 +3657,7 @@ renderVals0() {
     showPage: !histOpen, histOpen, versions: histNow, noVersions: histOpen && st.hist !== null && !versions.length, histTitle: 'Older versions of ' + (pageId === 'main' ? 'the Guide' : cur.title),
     // the page (web/notes.js): the same for writing and reading; on the canvas, its states
     nbRef: el => { if (!el) return; this._nbc = this.notes().mount(el, { md: text, key: (mock ? 'canvas|' + view + '|' : '') + key, editable: canEdit, phone: false, image, demo,
-      onChange: setText, onPicture: canEdit ? pickPicture : undefined, focusAt: at ? { i: +at[1], off: +at[2] } : !mock && !text.trim() ? { i: 0, off: 0 } : undefined, keysHost: mock ? this._keys : undefined }); },
+      onChange: setText, onPicture: canEdit ? pickPicture : undefined, focusAt: at ? { i: +at[1], off: +at[2] } : !mock && !text.trim() ? { i: 0, off: 0 } : !mock && p.at === 'end' ? 'end' : undefined, keysHost: mock ? this._keys : undefined }); },
     keysRef: el => { this._keys = el || this._keys; }
   };
 }

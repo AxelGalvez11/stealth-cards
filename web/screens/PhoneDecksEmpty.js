@@ -403,12 +403,12 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const d
   const pic = dk.cover.image || '', photo = pic !== 'mock' ? pic : '';
   // With a theme on (Pro), the theme draws the cover, and letters the deck's name.
   const S = this.skin(db), C = S && !pic && dk.name ? S.coverOf({ ...dk, round: dk.cover.round }, 'head', 34) : null;
+  
   return { hero: this.mesh(this.props.gradient ?? 'Iris'), grain: String(this.props.grain ?? 0.7), t, ...chrome, modes, nav: db.mock ? { ...chrome.nav, news: '', hasNews: false } : chrome.nav, art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot'), noop: () => {},
     deckName: dk.name, cover: { ...this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), dk.cover.style), ...(photo ? { ink: '#FFFFFF', shadow: '0 1px 14px rgba(0,0,0,.45)' } : {}),
       ...(C ? { base: C.base, ink: C.ink, shadow: 'none', plain: false, skin: true, art: C.art } : { plain: true, skin: false, art: null }) },
     coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleHead(32, dk.name) : '',
     coverIsImage: pic === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
-    newCardHref: db.mock ? 'PhoneEditor.dc.html' : dk.newCardHref, makeHref: db.mock ? 'PhoneMake.dc.html' : '/make?deck=' + encodeURIComponent(dk.id),
     newDeckHref: db.mock ? 'PhoneNewDeck.dc.html' : db.href('newDeck'), importHref: db.mock ? 'PhoneImport.dc.html' : db.href('import', ''), connectHref: db.mock ? 'PhoneConnect.dc.html' : db.href('connect'),
     openSettings: () => { if (!db.mock) db.act.go(dk.settingsHref); } }; }
 }

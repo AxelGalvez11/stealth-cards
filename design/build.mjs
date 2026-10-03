@@ -1170,10 +1170,7 @@ const COVER_LOGIC = `
     // How many cards, and whose deck it is when it's someone else's (the owner, 2026-10-02: "remove the '38 added by ai'").
     deckLine: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel) + (lk ? ' · from ' + lk.owner.name : ''),
     deckLineShort: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel),
-    // The owner: "learn button needs to be 'learn', flashcards need to have flashcards button". So this one always says
-    // Flashcards ("Learn 10 new cards" read like Learn mode), with how many cards wait for it today.
-    studyLabel: 'Flashcards', studyCount: String(dk.due || dk.fresh || 0), hasStudyCount: !!(dk.due || dk.fresh), noStudyCount: !(dk.due || dk.fresh),
-    studyHref: dk.studyHref, newCardHref: dk.newCardHref, ...shareVals
+    ...shareVals
   };`;
 // Deck settings: shared by the web side panel and the iPhone sheet. The web panel sits over the page, not inside its
 // scrolling <main>, so it stays in place however far the page is scrolled. Both come last on their page: the app
@@ -1275,13 +1272,61 @@ const deckUpdatesBody = phone => `<div style="display: flex; align-items: center
       <div style="display: flex; gap: 8px; justify-content: flex-end;"><sc-if value="{{u.notMine}}" hint-placeholder-val="{{ true }}">${smallBtn('Skip', 'u.skip')}${smallBtn('Take it', 'u.take', 'check', '{{t.inv}}').replace('color: {{t.text}}', 'color: {{t.invText}}')}</sc-if><sc-if value="{{u.mine}}" hint-placeholder-val="{{ false }}">${smallBtn('Keep mine', 'u.skip')}${smallBtn('Take theirs', 'u.take', '', '{{t.inv}}').replace('color: {{t.text}}', 'color: {{t.invText}}')}</sc-if></div>
     </div></sc-for></div>`;
 
-// How many cards wait for Flashcards today, as a small round count inside its button.
-const STUDY_COUNT = (h, bg, fg) => `<span style="min-width: ${h}px; height: ${h}px; padding: 0 7px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: ${h / 2}px; background: ${bg}; color: ${fg}; font-family: ${MONO}; font-size: ${h > 22 ? 13 : 12}px; font-weight: 600;">{{studyCount}}</span>`;
+// ---------- the deck page's Study ▾ and + (the owner, 2026-10-02: "collapse live, flashcards, and learn into one button dropdown, there should be a "+"
+// button for users to add cards, source, notes, or upload diagram automatically") ----------
+// Two of Lucida's own menus, in the popover the ⋯ menus use (popBox), each beside its button: Escape or a press outside closes it, Up and Down move between its
+// rows, Return and Space press one (web/app.js, web/ui.js). A row is an icon and a name (and, for Flashcards, what waits today); on a phone the rows are the
+// iPhone's (Screens/AddMenu.swift: 44 tall, a bolder name). Each row is the flow its old button opened. DECK_MENUS_JS is what they read.
+const deckMenuRow = (phone, ic, label, { href = '', click = '', note = '' } = {}) => {
+  const st = `height: ${phone ? 44 : 40}px; flex-shrink: 0; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: ${phone ? 12 : 10}px; border: 0; border-radius: 12px; background: transparent; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: ${phone ? 600 : 500}; text-align: left; cursor: pointer;`;
+  const inner = `<span style="display: flex; flex-shrink: 0; ${phone ? 'width: 20px; justify-content: center; ' : ''}color: {{t.muted}};">${svg(I[ic], phone ? 17 : 16, 2)}</span><span style="flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${label}</span>${note}`;
+  return href ? `<a href="${href}" role="menuitem" onClick="${click}" class="sc-press" style="${st}">${inner}</a>` : `<button type="button" role="menuitem" onClick="${click}" class="sc-press" style="${st}">${inner}</button>`;
+};
+const deckMenuBox = (k, label, place, rows) => `<sc-if value="{{${k}.open}}" hint-placeholder-val="{{ false }}"><div role="menu" aria-label="${label}" data-sc-pop style="position: absolute; ${place} top: calc(100% + 8px); z-index: 30; ${popBox} text-shadow: none;">${rows}</div></sc-if>`;
+// Study: Flashcards (with what waits today: "28 due", or the new cards when nothing is due), Learn, and on a computer Play live (it needs a big screen). On a
+// phone the menu is as wide as its button.
+const STUDY_MENU = phone => deckMenuBox('studyMenu', 'Study', phone ? 'left: 0; right: 0;' : 'right: 0; width: 240px;', [
+  deckMenuRow(phone, 'decks', 'Flashcards', { href: '{{studyMenu.flashHref}}', click: '{{studyMenu.close}}', note: `<sc-if value="{{studyMenu.hasNote}}" hint-placeholder-val="{{ true }}"><span style="flex-shrink: 0; font-size: 13px; font-weight: 500; color: {{t.muted}}; font-variant-numeric: tabular-nums;">{{studyMenu.note}}</span></sc-if>` }),
+  deckMenuRow(phone, 'sparkle', 'Learn', { href: '{{studyMenu.learnHref}}', click: '{{studyMenu.close}}' }),
+  phone ? '' : deckMenuRow(phone, 'live', 'Play live', { href: 'LiveSetup.dc.html', click: '{{studyMenu.close}}' })].join(''));
+// +: New card (the card editor), Make cards (the Make flow), Source (the Make flow at Upload: a source comes in with the cards made from it), Notes (the Notes
+// page), and the Diagrams tab's own Upload and Make diagram (with the tab shown).
+const ADD_MENU = phone => deckMenuBox('addMenu', 'Add', `right: 0; width: ${phone ? 260 : 240}px;`, [
+  deckMenuRow(phone, 'plus', 'New card', { href: '{{addMenu.newCardHref}}', click: '{{addMenu.close}}' }),
+  deckMenuRow(phone, 'sparkle', 'Make cards', { href: '{{addMenu.makeHref}}', click: '{{addMenu.close}}' }),
+  deckMenuRow(phone, 'file', 'Source', { href: '{{addMenu.sourceHref}}', click: '{{addMenu.close}}' }),
+  deckMenuRow(phone, 'pencil', 'Notes', { href: '{{addMenu.notesHref}}', click: '{{addMenu.close}}' }),
+  deckMenuRow(phone, 'image', 'Upload diagram', { click: '{{addMenu.upload}}' }),
+  deckMenuRow(phone, 'mindmap', 'Make diagram', { click: '{{addMenu.makeDiagram}}' })].join(''));
+// The buttons that open them: Study is the deck's main button (white on a computer's cover, the page's black under a phone's), + a round one on the cover.
+const STUDY_BTN = phone => `<div style="position: relative;"><button type="button" onClick="{{studyMenu.toggle}}" aria-haspopup="menu" aria-expanded="{{studyMenu.expanded}}" class="sc-press" style="${phone
+  ? 'width: 100%; height: 56px; padding: 0 20px; gap: 8px; background: {{t.inv}}; color: {{t.invText}}; font-size: 17px;'
+  : 'height: 36px; padding: 0 13px 0 18px; gap: 6px; background: #FFFFFF; color: #000000; box-shadow: 0 1px 2px rgba(0,0,0,.1); font-size: 14px;'} display: flex; align-items: center; justify-content: center; border: 0; border-radius: 999px; font-family: inherit; font-weight: 600; white-space: nowrap; cursor: pointer;">Study<span style="display: flex; opacity: .6;">${svg(I.chevDown, phone ? 16 : 14, 2.2)}</span></button>${STUDY_MENU(phone)}</div>`;
+const ADD_BTN = phone => `<div style="position: relative;"><button type="button" onClick="{{addMenu.toggle}}" aria-label="Add" data-tip="Add" aria-haspopup="menu" aria-expanded="{{addMenu.expanded}}" class="sc-press" style="width: ${phone ? 44 : 36}px; height: ${phone ? 44 : 36}px; flex-shrink: 0; border: 0; border-radius: ${phone ? 22 : 18}px; ${onCover} display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.plus, phone ? 18 : 16, 2.2)}</button>${ADD_MENU(phone)}</div>`;
+// What they read, for the deck page (after DECK_MATERIALS_JS: gs and dg) and an empty deck. Only one is open at a time; a board's `menu` Tweak opens one.
+// Upload diagram and Make diagram show the Diagrams tab, where the upload and the diagram appear (an empty deck goes to its page's Diagrams tab for them).
+const DECK_MENUS_JS = (phone, empty = false) => `const menuIs = this.state.deckMenu !== undefined ? this.state.deckMenu : this.props.menu || '', shutMenu = () => this.setState({ deckMenu: '' });
+  const menuOf = (k, more) => ({ open: menuIs === k, expanded: menuIs === k ? 'true' : 'false', close: shutMenu, toggle: () => this.setState({ deckMenu: menuIs === k ? '' : k${empty ? '' : ', tagMenuOpen: false'} }), ...more });
+  const boardOf = n => '${phone ? 'Phone' : 'Web'}' + n + '.dc.html', gMake = db.mock ? boardOf('Make') : '/make?deck=' + encodeURIComponent(dk.id);
+  ${empty
+    ? `const dgm = db.mock ? null : db.diagrams, toDiagrams = run => () => { shutMenu(); if (!dgm) return; run(); db.act.go('/deck/' + dk.id + '?tab=diagrams'); };`
+    : `const toDiagrams = run => () => { this.setState({ deckMenu: '', tab: 'diagrams' }); run(); };`}
+  const deckMenus = {
+    // (A phone's cover holds its + menu; while that is open the cover sits above what comes after it.)
+    canStudy: ${empty ? 'false' : 'db.cards(dk.id).length > 0'}, coverZ: menuIs === 'Add' ? '5' : 'auto',
+    studyMenu: menuOf('Study', { flashHref: db.mock ? boardOf('Review') : dk.studyHref, hasNote: !!(dk.due || dk.fresh), note: dk.due ? dk.due + ' due' : dk.fresh ? dk.fresh + ' new' : '',
+      learnHref: db.mock ? boardOf('QuizStart') : db.learnOn(dk.id) ? '/learn/' + dk.id : '/deck/' + dk.id + '/learn' }),
+    addMenu: menuOf('Add', { newCardHref: db.mock ? boardOf('${phone ? 'Editor' : 'CardsScreenNew'}') : dk.newCardHref, makeHref: gMake, sourceHref: db.mock ? gMake : gMake + '&source=file',
+      notesHref: db.mock ? boardOf('Guide') : '/deck/' + dk.id + '/guide' + (${empty ? 'false' : 'gs.guideText'} ? '?at=end' : ''),
+      upload: toDiagrams(() => ${empty ? 'dgm.upload(dk.id)' : 'dg.upload()'}), makeDiagram: toDiagrams(() => ${empty ? 'dgm.openSheet(dk.id)' : 'dg.openSheet()'}) })
+  };`;
+// The deck boards' `menu` Tweak: which menu is open on the canvas (an empty deck has only +).
+const DECK_MENU_PROP = { editor: 'enum', default: '', options: ['', 'Study', 'Add'] }, EMPTY_MENU_PROP = { editor: 'enum', default: '', options: ['', 'Add'] };
 const DB = deckBlocks({ svg, I, MONO, OCC }, false), DBP = deckBlocks({ svg, I, MONO, OCC }, true);
 const webDeck = webRoot(`${sidebar('Library')}
 <main style="position: relative; flex-grow: 1; box-sizing: border-box; padding: 24px 48px 20px; display: flex; flex-direction: column; gap: 20px; min-width: 0; scroll-timeline: --deck block;">
-  <div style="position: relative; height: 184px; flex-shrink: 0; border-radius: 20px; overflow: hidden;">
-    ${parallax(184, 24)}
+  <div style="position: relative; height: 184px; flex-shrink: 0; border-radius: 20px;">
+    <div style="position: absolute; inset: 0; border-radius: inherit; overflow: hidden;">${parallax(184, 24)}</div>
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 20px 24px 24px 28px; display: flex; flex-direction: column; justify-content: space-between; color: {{coverInk}};">
       <div style="display: flex; align-items: center; justify-content: space-between;">
         <a href="WebDecks.dc.html" style="height: 36px; padding: 0 14px 0 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; ${onCover} font-size: 13px; font-weight: 600;">${svg(I.back, 14, 2.2)}Library</a>
@@ -1293,12 +1338,10 @@ const webDeck = webRoot(`${sidebar('Library')}
       </div>
       <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;">
         <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; text-shadow: {{coverShadow}};"><h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; {{coverTitle}}">{{deckName}}</h1><div style="font-size: 14px; opacity: .8;">{{deckLine}}</div></div>
-        <div style="display: flex; gap: 10px; flex-shrink: 0;">
-          <sc-if value="{{showLive}}" hint-placeholder-val="{{ false }}"><a href="LiveSetup.dc.html" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.live, 15, 2)}Play live</a></sc-if>
-          <a href="{{learnHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.sparkle, 15, 2)}{{learnLabel}}</a>
-          <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}"><a href="{{gs.newCardHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.plus, 15, 2)}New card</a><a href="{{gs.makeHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.sparkle, 15, 2)}Make cards</a></sc-if>
+        <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
           <sc-if value="{{isStudy}}" hint-placeholder-val="{{ false }}"><a href="{{suggestHref}}" style="height: 36px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.message, 15, 2)}Suggest a change</a></sc-if>
-          <a href="{{studyHref}}" style="height: 36px; padding: 0 8px 0 18px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: #FFFFFF; color: #000000; box-shadow: 0 1px 2px rgba(0,0,0,.1); font-size: 14px; font-weight: 600;">${svg(I.decks, 15, 2)}<span>{{studyLabel}}</span><sc-if value="{{hasStudyCount}}" hint-placeholder-val="{{ true }}">${STUDY_COUNT(22, '#EDEDED', '#000000')}</sc-if><sc-if value="{{noStudyCount}}" hint-placeholder-val="{{ false }}"><span style="width: 2px;"></span></sc-if></a>
+          <sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}">${ADD_BTN(false)}</sc-if>
+          <sc-if value="{{canStudy}}" hint-placeholder-val="{{ true }}">${STUDY_BTN(false)}</sc-if>
         </div>
       </div>
     </div>
@@ -1354,6 +1397,7 @@ renderVals() {
   ${T}${DB_JS}${COVER_LOGIC}${DECK_MATERIALS_JS}
   ${LIFT_JS}
   ${CARD_DRAG_JS(false)}
+  ${DECK_MENUS_JS(false)}
   const labels = ['All', 'Basic', 'Fill in the blank', 'Image', 'Audio'];
   const f = this.state.filter, allRows = db.cards(dk.id), q = (this.state.q || '').trim().toLowerCase();
   const glyphs = { text: 'Aa', blank: '_', image: '▢', audio: '♪' };
@@ -1366,16 +1410,12 @@ renderVals() {
   const rows = allRows.filter(r => (f === 'All' || r.kind === f || r.tags.includes(f)) && (!q || [r.front, r.back, ...r.tags].join(' ').toLowerCase().includes(q)))
     .map(r => ({ ...r, glyph: glyphs[r.icon], aiNote: r.ai ? ' · ' + r.ai : '', stateNote: r.pending ? ' · Waiting for you' : r.paused ? ' · Paused' : '' }));
   return {
-    t, rows, ...chrome, ...coverVals, ...cardDrag, gs, vw, dg, query: this.state.q || '', setQuery: e => this.setState({ q: e && e.target ? e.target.value : '' }),
+    t, rows, ...chrome, ...coverVals, ...cardDrag, ...deckMenus, gs, vw, dg, query: this.state.q || '', setQuery: e => this.setState({ q: e && e.target ? e.target.value : '' }),
     filters: labels.map(l => ({ label: l, pressed: l === f ? 'true' : 'false', bg: l === f ? t.inv : t.surf, fg: l === f ? t.invText : t.text, pick: () => this.setState({ filter: l, tagMenuOpen: false }) })),
     tagBtn: { label: tagOn ? f : 'Tags', pressed: tagOn ? 'true' : 'false', bg: tagOn ? t.inv : t.surf, fg: tagOn ? t.invText : t.text, dot: tagOn ? tagCol(f) : 'transparent', dotW: tagOn ? '8px' : '0px' },
     tagMenu: { open: menuOpen, expanded: menuOpen ? 'true' : 'false', query: this.state.tagQ || '',
-      toggle: () => this.setState({ tagMenuOpen: !menuOpen, tagQ: '' }), setQuery: e => this.setState({ tagQ: e && e.target ? e.target.value : '' }),
-      rows: found.map(g => ({ ...tagChip(g), count: String(uses[g]), on: g === f, pressed: g === f ? 'true' : 'false', pick: () => this.setState({ filter: g === f ? 'All' : g, tagMenuOpen: false, tagQ: '' }) })), none: found.length === 0 },
-    // Learn mode: start one, or go back to the one you stopped.
-    learnHref: db.mock ? 'WebQuizStart.dc.html' : db.learnOn(dk.id) ? '/learn/' + dk.id : '/deck/' + dk.id + '/learn', learnLabel: 'Learn',
-    // Live (play with friends): play this deck on a big screen, with friends on their phones.
-    showLive: true
+      toggle: () => this.setState({ tagMenuOpen: !menuOpen, tagQ: '', deckMenu: '' }), setQuery: e => this.setState({ tagQ: e && e.target ? e.target.value : '' }),
+      rows: found.map(g => ({ ...tagChip(g), count: String(uses[g]), on: g === f, pressed: g === f ? 'true' : 'false', pick: () => this.setState({ filter: g === f ? 'All' : g, tagMenuOpen: false, tagQ: '' }) })), none: found.length === 0 }
   };
 }`;
 
@@ -3726,17 +3766,17 @@ renderVals() { ${T}
 }`;
 
 const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-width: none; scroll-timeline: --deck block;"><div style="padding: 0 0 120px; display: flex; flex-direction: column; gap: 16px;">
-  <div style="position: relative; height: 232px; overflow: hidden; container-type: inline-size;">
-    ${parallax(232)}
+  <div style="position: relative; z-index: {{coverZ}}; height: 232px; container-type: inline-size;">
+    <div style="position: absolute; inset: 0; overflow: hidden;">${parallax(232)}</div>
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 54px 16px 18px 20px; display: flex; flex-direction: column; justify-content: space-between; color: {{coverInk}};">
-      <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneLibrary.dc.html')}<div style="display: flex; gap: 8px;"><sc-if value="{{isShared}}" hint-placeholder-val="{{ false }}"><a href="{{pageHref}}" aria-label="{{shareChip}}" style="width: 40px; height: 40px; border-radius: 20px; ${onCover} display: flex; align-items: center; justify-content: center;">${svg(I.globe, 18, 2)}</a></sc-if>${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${coverRound('search', 'Search')}<sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}">${coverRound('sparkle', 'Make cards', '{{gs.makeHref}}')}${coverRound('plus', 'New card', '{{gs.newCardHref}}')}</sc-if><sc-if value="{{isStudy}}" hint-placeholder-val="{{ false }}"><a href="{{suggestHref}}" aria-label="Suggest a change" style="width: 40px; height: 40px; border-radius: 20px; ${onCover} display: flex; align-items: center; justify-content: center;">${svg(I.message, 18, 2)}</a></sc-if></div></div>
+      <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneLibrary.dc.html')}<div style="display: flex; gap: 8px;"><sc-if value="{{isShared}}" hint-placeholder-val="{{ false }}"><a href="{{pageHref}}" aria-label="{{shareChip}}" style="width: 40px; height: 40px; border-radius: 20px; ${onCover} display: flex; align-items: center; justify-content: center;">${svg(I.globe, 18, 2)}</a></sc-if>${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${coverRound('search', 'Search')}<sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}">${ADD_BTN(true)}</sc-if><sc-if value="{{isStudy}}" hint-placeholder-val="{{ false }}"><a href="{{suggestHref}}" aria-label="Suggest a change" style="width: 40px; height: 40px; border-radius: 20px; ${onCover} display: flex; align-items: center; justify-content: center;">${svg(I.message, 18, 2)}</a></sc-if></div></div>
       <div style="display: flex; flex-direction: column; gap: 4px; text-shadow: {{coverShadow}};"><div style="font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; {{coverTitleS}}">{{deckName}}</div><div style="font-size: 14px; opacity: .8;">{{deckLineShort}}</div></div>
     </div>
   </div>
   <div style="padding: 0 20px; display: flex; flex-direction: column; gap: 16px;">
     <sc-if value="{{isLinked}}" hint-placeholder-val="{{ false }}"><a href="{{fromHref}}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px; font-weight: 600;">${PERSON_AV('fromWho', 28)}<span style="flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{fromChip}}</span><span style="display: flex; color: {{t.muted}};">${svg(I.chev, 16, 2)}</span></a></sc-if>
     <sc-if value="{{hasUpdates}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{openUpdates}}" style="height: 56px; box-sizing: border-box; padding: 0 16px; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; gap: 10px; font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer;"><span style="flex-grow: 1;">{{updLine}}</span><span style="font-size: 14px; color: {{t.muted}};">See changes</span></button></sc-if>
-    <div style="display: flex; gap: 8px;"><a href="PhoneReview.dc.html" style="flex: 2 1 0; height: 56px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; white-space: nowrap;">${svg(I.decks, 17, 2)}<span>{{studyLabel}}</span><sc-if value="{{hasStudyCount}}" hint-placeholder-val="{{ true }}">${STUDY_COUNT(24, 'rgba(128,128,128,.32)', 'inherit')}</sc-if></a><a href="{{learnHref}}" style="flex: 1 1 0; height: 56px; border-radius: 999px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 600; white-space: nowrap;">${svg(I.sparkle, 17, 2)}{{learnShort}}</a></div>
+    <sc-if value="{{canStudy}}" hint-placeholder-val="{{ true }}">${STUDY_BTN(true)}</sc-if>
     ${DBP.tabs}${DBP.guide}${DBP.diagrams}${DBP.sources}
     <sc-if value="{{gs.showCards}}" hint-placeholder-val="{{ true }}">
     <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grab}}" style="display: flex; flex-direction: column;">
@@ -3767,11 +3807,11 @@ constructor(props) { super(props); this.state = {}; }
 renderVals() { ${T}${DB_JS}${COVER_LOGIC}${DECK_MATERIALS_JS}
   ${LIFT_JS}
   ${CARD_DRAG_JS(true)}
-  return { t, ...chrome, dark: !!this.props.dark, ...coverVals, ...cardDrag, gs, vw, dg,
+  ${DECK_MENUS_JS(true)}
+  return { t, ...chrome, dark: !!this.props.dark, ...coverVals, ...cardDrag, ...deckMenus, gs, vw, dg,
     // Every card (all six sample cards on the canvas, so the page scrolls and shows the cover's parallax); each opens
     // in the editor. A row is the card: its question, then its kind and when it's next (no tag chips, 2026-10-02).
-    rows: db.cards(dk.id).map(r => ({ ...r, href: db.mock ? 'PhoneEditor.dc.html' : r.href, stateNote: r.pending ? ' · Waiting for you' : r.paused ? ' · Paused' : '' })),
-    learnHref: db.mock ? 'PhoneQuizStart.dc.html' : db.learnOn(dk.id) ? '/learn/' + dk.id : '/deck/' + dk.id + '/learn', learnShort: 'Learn' }; }`;
+    rows: db.cards(dk.id).map(r => ({ ...r, href: db.mock ? 'PhoneEditor.dc.html' : r.href, stateNote: r.pending ? ' · Waiting for you' : r.paused ? ' · Paused' : '' })) }; }`;
 
 // The fields scroll under the header when they're taller than the sheet. The keyboard is drawn on the canvas only: in
 // the app, the phone shows its own.
@@ -4476,15 +4516,15 @@ const webDecksEmpty = webRoot(`${sidebar('Library')}
   <div style="display: flex; align-items: center; gap: 12px;"><h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Library</h1><span style="margin-left: 10px; display: flex;">${libModes(32)}</span><span style="flex-grow: 1;"></span>${pill('New deck', { inv: true, icon: 'plus', href: 'WebNewDeck.dc.html' })}</div>
   ${startTiles(false)}
 </main>`);
-// A deck with no cards yet (a new deck opens here): its cover, with "No cards yet" under the name and New card and Make cards on it, and
-// nothing under it (the owner, 2026-10-02: no Make box or row).
+// A deck with no cards yet (a new deck opens here): its cover, with "No cards yet" under the name and its + (New card, Make cards, Source, Notes, Upload diagram
+// and Make diagram: ADD_MENU) on it, and nothing under it (the owner, 2026-10-02: no Make box or row; no Study, as there is nothing to study).
 const webDeckEmpty = webRoot(`${sidebar('Library')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 24px 48px 20px; display: flex; flex-direction: column; gap: 20px; min-width: 0;">
-  <div style="position: relative; height: 184px; flex-shrink: 0; border-radius: 20px; overflow: hidden;">
-    ${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '', 'div', '', true)}${coverPicture}
+  <div style="position: relative; height: 184px; flex-shrink: 0; border-radius: 20px;">
+    <div style="position: absolute; inset: 0; border-radius: inherit; overflow: hidden;">${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '', 'div', '', true)}${coverPicture}</div>
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 20px 24px 24px 28px; display: flex; flex-direction: column; justify-content: space-between; color: {{cover.ink}};">
       <div style="display: flex; align-items: center; justify-content: space-between;"><a href="WebDecks.dc.html" style="height: 36px; padding: 0 14px 0 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; ${onCover} font-size: 13px; font-weight: 600;">${svg(I.back, 14, 2.2)}Library</a>${coverBtn('Deck settings', 'openSettings', 'gear')}</div>
-      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;"><div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; text-shadow: {{cover.shadow}};"><h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1; {{coverTitle}}">{{deckName}}</h1><div style="font-size: 14px; opacity: .8;">No cards yet</div></div><div style="display: flex; gap: 10px; flex-shrink: 0;"><a href="{{newCardHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.plus, 15, 2)}New card</a><a href="{{makeHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; ${onCover} font-size: 14px; font-weight: 600;">${svg(I.sparkle, 15, 2)}Make cards</a></div></div>
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;"><div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; text-shadow: {{cover.shadow}};"><h1 style="margin: 0; font-size: 34px; font-weight: 600; letter-spacing: -.035em; line-height: 1; {{coverTitle}}">{{deckName}}</h1><div style="font-size: 14px; opacity: .8;">No cards yet</div></div><div style="display: flex; gap: 10px; flex-shrink: 0;">${ADD_BTN(false)}</div></div>
     </div>
   </div>
 </main>`);
@@ -4498,10 +4538,10 @@ const webStatsEmpty = webRoot(`${sidebar('Stats')}
   </div>
 </main>`);
 const phoneDeckEmpty = phone(`<div style="height: 100%; box-sizing: border-box; padding: 0 0 120px; display: flex; flex-direction: column;">
-  <div style="position: relative; height: 232px; flex-shrink: 0; overflow: hidden; container-type: inline-size;">
-    ${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '', 'div', '', true)}${coverPicture}
+  <div style="position: relative; z-index: {{coverZ}}; height: 232px; flex-shrink: 0; container-type: inline-size;">
+    <div style="position: absolute; inset: 0; overflow: hidden;">${meshCard('cover', 'position: absolute; inset: 0;', 'height: 100%;', '', 'div', '', true)}${coverPicture}</div>
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 54px 16px 18px 20px; display: flex; flex-direction: column; justify-content: space-between; color: {{cover.ink}};">
-      <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneLibrary.dc.html')}<div style="display: flex; gap: 8px;">${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${coverRound('sparkle', 'Make cards', '{{makeHref}}')}${coverRound('plus', 'New card', '{{newCardHref}}')}</div></div>
+      <div style="display: flex; justify-content: space-between;">${coverRound('back', 'Back', 'PhoneLibrary.dc.html')}<div style="display: flex; gap: 8px;">${coverRound('gear', 'Deck settings', '', '{{openSettings}}')}${ADD_BTN(true)}</div></div>
       <div style="display: flex; flex-direction: column; gap: 4px; text-shadow: {{cover.shadow}};"><div style="font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; {{coverTitleS}}">{{deckName}}</div><div style="font-size: 14px; opacity: .8;">No cards yet</div></div>
     </div>
   </div>
@@ -4531,12 +4571,12 @@ const emptyLogic = (cover = '', phone = false) => `renderVals() { ${T}${DB_JS}
   const pic = dk.cover.image || '', photo = pic !== 'mock' ? pic : '';
   // With a theme on (Pro), the theme draws the cover, and letters the deck's name.
   const S = this.skin(db), C = S && !pic && dk.name ? S.coverOf({ ...dk, round: dk.cover.round }, 'head', 34) : null;
-  return { ${MESH_VALS('Iris')} t, ...chrome, modes, nav: db.mock ? { ...chrome.nav, news: '', hasNews: false } : chrome.nav, art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot'), noop: () => {},
+  ${cover ? DECK_MENUS_JS(phone, true) : ''}
+  return { ${MESH_VALS('Iris')} t, ...chrome, ${cover ? '...deckMenus, ' : ''}modes, nav: db.mock ? { ...chrome.nav, news: '', hasNews: false } : chrome.nav, art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot'), noop: () => {},
     deckName: dk.name, cover: { ...this.gen(dk.seed + (dk.cover.round ? ' #' + dk.cover.round : ''), dk.cover.style), ...(photo ? { ink: '#FFFFFF', shadow: '0 1px 14px rgba(0,0,0,.45)' } : {}),
       ...(C ? { base: C.base, ink: C.ink, shadow: 'none', plain: false, skin: true, art: C.art } : { plain: true, skin: false, art: null }) },
     coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleHead(32, dk.name) : '',
     coverIsImage: pic === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
-    newCardHref: db.mock ? '${phone ? 'PhoneEditor' : 'WebCardsScreenNew'}.dc.html' : dk.newCardHref, makeHref: db.mock ? '${phone ? 'PhoneMake' : 'WebMake'}.dc.html' : '/make?deck=' + encodeURIComponent(dk.id),
     newDeckHref: db.mock ? '${phone ? 'PhoneNewDeck' : 'WebNewDeck'}.dc.html' : db.href('newDeck'), importHref: db.mock ? '${phone ? 'PhoneImport' : 'WebImport'}.dc.html' : db.href('import', ${cover ? 'dk.id' : "''"}), connectHref: db.mock ? '${phone ? 'PhoneConnect' : 'WebConnect'}.dc.html' : db.href('connect'),
     openSettings: () => { if (!db.mock) db.act.go(dk.settingsHref); } }; }`;
 
@@ -8676,9 +8716,9 @@ const files = {
   'WebSettingsGetVerified': ['Web · Settings · Get verified (a teacher or a school asks; /verify)', attrOf('WebSettings', W, H, 'verify-open="{{yes}}" section="Account"'), { logic: darkLogic, css: NUM_CSS, w: W, h: H }],
   'IconOptions': ['Web · Icon options', iconOptions, { props: DARK, logic: iconOptionsLogic, w: W, h: H }],
   'WebDecksEmpty': ['Web · Library · no decks yet', webDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
-  'WebDeckEmpty': ['Web · Deck · no cards yet', webDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('Pharmacology'), w: W, h: H }],
+  'WebDeckEmpty': ['Web · Deck · no cards yet', webDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain, menu: EMPTY_MENU_PROP }, logic: emptyLogic('Pharmacology'), w: W, h: H }],
   'WebStatsEmpty': ['Web · Stats · no reviews yet', webStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
-  'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, calendar: { editor: 'enum', default: '', options: ['', 'Exam date'] }, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, ...SHARE_PROPS, ...PRO_DECK_PROPS, ...GUIDE_STATE }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: W, h: H }],
+  'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, menu: DECK_MENU_PROP, calendar: { editor: 'enum', default: '', options: ['', 'Exam date'] }, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, ...SHARE_PROPS, ...PRO_DECK_PROPS, ...GUIDE_STATE }, logic: deckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: W, h: H }],
   'WebEditor': ['Web · Card editor', webEditor, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false }, slashDemo: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorSlash': ['Web · Card editor · / menu', attrOf('WebEditor', W, H, 'slash-demo="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
   'WebSignIn': ['Web · Sign in', webSignIn, { props: { ...DARK, grain: MESH('Iris').grain, passwordMode: BOOL }, logic: signInLogic('', [64, 78, 70, 84]), css: WALL_CSS, w: W, h: H }],
@@ -8725,6 +8765,9 @@ const files = {
   'WebDeckSettingsStudy': ['Web · Deck settings · Studying (FSRS)', studyOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckSettingsShare': ['Web · Deck settings · Sharing (a public deck)', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" settings-tab="Sharing" shared="Public"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckSettingsSharePrivate': ['Web · Deck settings · Sharing (private, the start)', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" settings-tab="Sharing"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
+  // The deck page's two menus open (its `menu` Tweak): Study ▾ (Flashcards, Learn, Play live) and + (New card, Make cards, Source, Notes, Upload diagram, Make diagram).
+  'WebDeckStudyMenu': ['Web · Deck page · Study menu open', attrOf('WebDeck', W, H, 'menu="Study"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
+  'WebDeckAddMenu': ['Web · Deck page · + menu open', attrOf('WebDeck', W, H, 'menu="Add"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckShared': ['Web · Deck page · shared (public, with suggestions waiting)', attrOf('WebDeck', W, H, 'shared="Public"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckStudied': ['Web · Deck page · a deck you study from someone else', attrOf('WebDeck', W, H, 'linked="study"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckCopy': ['Web · Deck page · your copy, with the owner’s changes waiting', attrOf('WebDeck', W, H, 'linked="copy"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
@@ -8754,7 +8797,7 @@ const files = {
   'Generated': ['Generated gradients', generatedBoard, { props: { grain: MESH('Iris').grain }, logic: generatedLogic, w: W, h: H }],
   'Gallery': ['Gradient cards', galleryBoard, { props: { grain: MESH('Iris').grain }, logic: galleryLogic, w: W, h: H }],
   'Motion': ['Motion', motion(), { props: { grain: MESH('Iris').grain }, logic: `renderVals() { return { t: this.theme(false), grain: String(this.props.grain ?? 0.7), hero: this.mesh('Iris'), art: this.mesh('Iris'), art2: this.mesh('Mint'), art3: this.mesh('Apricot') }; }`, css: motionCss, w: W, h: MOTION_H }],
-  'PhoneDeckEmpty': ['iPhone · Deck · no cards yet', phoneDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('Pharmacology', true), w: PW, h: PH }],
+  'PhoneDeckEmpty': ['iPhone · Deck · no cards yet', phoneDeckEmpty, { props: { ...DARK, grain: MESH('Iris').grain, menu: EMPTY_MENU_PROP }, logic: emptyLogic('Pharmacology', true), w: PW, h: PH }],
   'PhoneDecksEmpty': ['iPhone · Library · no decks yet', phoneDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic('', true), w: PW, h: PH }],
   'PhoneLibrary': ['iPhone · Library', phoneLibrary, { props: { ...DARK, grain: MESH('Iris').grain, caughtUp: BOOL, mode: LIB_MODE, folder: LIB_FOLDER, level: LEVEL_PROP }, logic: libraryLogic(true), css: DRAG_CSS, w: PW, h: PH }],
   'PhoneLibraryCards': ['iPhone · Library · all cards', attrOf('PhoneLibrary', PW, PH, 'mode="cards"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
@@ -8766,11 +8809,13 @@ const files = {
   'PhoneNewDeck': ['iPhone · New deck', phoneNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: PW, h: PH }],
   'PhoneImport': ['iPhone · Import cards (paste or choose a file, the deck, Import; its Tweak shows each state)', phoneImport, { props: { ...DARK, grain: MESH('Iris').grain, state: { editor: 'enum', default: 'Deck chosen', options: IMPORT_STATES } }, logic: IMPORT_LOGIC(true), w: PW, h: PH }],
   'PhoneInbox': ['iPhone · Check AI cards', phoneInbox, { props: DARK, logic: phoneInboxLogic, css: REVIEW_CSS, w: PW, h: PH }],
-  'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, calendar: { editor: 'enum', default: '', options: ['', 'Exam date'] }, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, ...SHARE_PROPS, ...PRO_DECK_PROPS, ...GUIDE_STATE }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: PW, h: PH }],
+  'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, menu: DECK_MENU_PROP, calendar: { editor: 'enum', default: '', options: ['', 'Exam date'] }, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, ...SHARE_PROPS, ...PRO_DECK_PROPS, ...GUIDE_STATE }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsStudy': ['iPhone · Deck settings · Studying (FSRS)', studyOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsGoal': ['iPhone · Deck settings · Studying · goal raised to 95% (reviews a day)', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" settings-tab="Studying" step-goal="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsStudyFree': ['iPhone · Deck settings · Studying · on Free (what Pro adds)', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" settings-tab="Studying" free="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsShare': ['iPhone · Deck settings · Sharing (a public deck)', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" settings-tab="Sharing" shared="Public"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
+  'PhoneDeckStudyMenu': ['iPhone · Deck page · Study menu open', attrOf('PhoneDeck', PW, PH, 'menu="Study"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
+  'PhoneDeckAddMenu': ['iPhone · Deck page · + menu open', attrOf('PhoneDeck', PW, PH, 'menu="Add"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckStudied': ['iPhone · Deck page · a deck you study from someone else', attrOf('PhoneDeck', PW, PH, 'linked="study"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckCopy': ['iPhone · Deck page · your copy, with the owner’s changes waiting', attrOf('PhoneDeck', PW, PH, 'linked="copy"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckUpdates': ['iPhone · Deck page · your copy · the owner’s changes (take or skip)', attrOf('PhoneDeck', PW, PH, 'linked="copy" updates-open="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],

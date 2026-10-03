@@ -112,6 +112,8 @@ struct DemoProps {
   /// canvas's `guide`: GuideSample.states), a source opened (its id) at a card's place, the Guide editor's view (GuideSample.views), and whether the card
   /// editor says where its card came from.
   var section = "Cards", guideState = "Guide and sources", sourceOpen = "", sourceAt = "", guideView = "Writing", madeFrom = true
+  /// The deck page's menu open on a design screen (the board's `menu` Tweak: "Study" or "Add"; PhoneDeckStudyMenu, PhoneDeckAddMenu).
+  var deckMenu = ""
 }
 
 @MainActor
