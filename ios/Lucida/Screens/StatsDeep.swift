@@ -209,7 +209,7 @@ struct DeepStats: View {
     return all.sorted { $0.n != $1.n ? $0.n > $1.n : $0.i < $1.i }.prefix(3).map { (name: $0.name, n: $0.n) }
   }
   private func studySet(_ set: String) { store.startReview(nil, set: set); nav.study(set: set) }
-  private func showCards(_ filter: String) { nav.libFilter = filter; nav.libCards = true; nav.pick(.library) }
+  private func showCards() { nav.libCards = true; nav.pick(.library) }
 
   /// Four numbers in two columns (the tiles at the top of Memory and Pace).
   private func tiles(_ list: [(label: String, value: String, sub: String, color: Color)]) -> some View {
@@ -321,7 +321,7 @@ struct DeepStats: View {
         }
         HStack(spacing: 8) {
           if w.leeches.contains(where: { !$0.paused }) { StatsPill(label: "Study them", solid: true) { studySet("leech") } }
-          StatsPill(label: "See them") { showCards("leech") }
+          StatsPill(label: "See them") { showCards() }
         }
       }
     }

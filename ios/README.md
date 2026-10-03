@@ -142,7 +142,7 @@ cards, exam dates, cards you keep forgetting, what a goal costs), `Tune.swift` (
 and `Insights.swift` (Stats' Memory, Weak spots, and Pace). `Screens/StudyPlan.swift` is Deck settings → Studying's Pro
 part, `StatsDeep.swift` the deep tabs, `TuneRow.swift` Settings' Tune to you. Boards: `PhoneDeckSettingsStudy`,
 `PhoneDeckSettingsGoal`, `PhoneDeckSettingsStudyFree`, `PhoneStatsMemory`, `PhoneStatsWeak`, `PhoneStatsPace`,
-`PhoneStatsUpgrade`, `PhoneLibraryLeeches`, `PhoneEditorPaused`, `PhoneSettingsFree` (a board's `-tune Off|"Not enough
+`PhoneStatsUpgrade`, `PhoneEditorPaused`, `PhoneSettingsFree` (a board's `-tune Off|"Not enough
 reviews"|Tuning` shows the other states of Tune to you).
 
 More launch arguments (debug builds): `-open statsdeep -tab Memory` (or `Weak spots`, `Pace`) opens Stats on that tab;

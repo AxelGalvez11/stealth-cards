@@ -241,6 +241,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneDeckDiagrams",
+  "title": "iPhone · Deck page · Diagrams tab",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneDeckEmpty",
   "title": "iPhone · Deck · no cards yet",
   "w": 390,
@@ -291,6 +297,12 @@ export default [
  {
   "name": "PhoneDeckSettingsStudyFree",
   "title": "iPhone · Deck settings · Studying · on Free (what Pro adds)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneDeckSources",
+  "title": "iPhone · Deck page · Sources tab",
   "w": 390,
   "h": 844
  },
@@ -806,7 +818,7 @@ export default [
  },
  {
   "name": "PhoneStatsEmpty",
-  "title": "iPhone · Stats · no reviews yet",
+  "title": "iPhone · Stats · no reviews yet (Pro)",
   "w": 390,
   "h": 844
  },
@@ -1861,6 +1873,12 @@ export default [
   "h": 900
  },
  {
+  "name": "WebDeckDiagrams",
+  "title": "Web · Deck page · Diagrams tab",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebDeckEmpty",
   "title": "Web · Deck · no cards yet",
   "w": 1440,
@@ -1929,6 +1947,12 @@ export default [
  {
   "name": "WebDeckShared",
   "title": "Web · Deck page · shared (public, with suggestions waiting)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebDeckSources",
+  "title": "Web · Deck page · Sources tab",
   "w": 1440,
   "h": 900
  },
@@ -2546,7 +2570,7 @@ export default [
  },
  {
   "name": "WebStatsEmpty",
-  "title": "Web · Stats · no reviews yet",
+  "title": "Web · Stats · no reviews yet (Pro)",
   "w": 1440,
   "h": 900
  },
