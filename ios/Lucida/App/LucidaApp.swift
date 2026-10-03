@@ -244,6 +244,9 @@ extension Board {
     if name.hasSuffix("Gray") { store.props.darkMode = "gray" }
     switch name.replacingOccurrences(of: "Dark", with: "").replacingOccurrences(of: "Gray", with: "") {
     case "PhoneDeck": nav.tab = .library; nav.path = [.deck("cell")]
+    // The deck page on its Notes tab (the tree of notes, with the sample's pages inside pages: V176, V185) and on its Sources tab, as the canvas's boards.
+    case "PhoneDeckNotes": store.props.section = "Notes"; store.props.guideState = "Guide pages"; nav.tab = .library; nav.path = [.deck("cell")]
+    case "PhoneDeckSources": store.props.section = "Sources"; nav.tab = .library; nav.path = [.deck("cell")]
     // A deck's Notes page (its view: -state Writing, "Block menu", "Format bar", "Toggle open", "Toggle closed", "Section folded", "Blank note",
     // "Reading on a shared deck", "Older versions", "A new page" or "Outline open"); PhoneGuideOutline is the last.
     case "PhoneGuide", "PhoneGuideOutline": nav.tab = .library; nav.path = [.guide(Board.sampleDeckId, "")]
