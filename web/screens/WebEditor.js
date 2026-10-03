@@ -1716,7 +1716,7 @@ sgToggle(phone, cur) {
   if (phone) return this.setState({ sgRemove: !this.state.sgRemove });
   if (!cur) return;
   const marks = this.sgOut || (this.sgOut = new Set());
-  if (marks.has(cur)) marks.delete(cur); else marks.add(cur);
+  if (marks.has(cur)) marks.delete(cur); else { marks.add(cur); if (this.sgNoted) this.sgNoted('r:' + cur); }
   this.setState({ sgLine: '', sgOk: false });
 }
 // The suggest mode's values: the title, Send, the Why? note and Suggest removing it (SUGGEST_FOOTER), and on a computer the

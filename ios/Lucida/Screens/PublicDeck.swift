@@ -1,7 +1,8 @@
 // iPhone · A shared deck's page (PhonePublicDeck, PhonePublicDeckStudying, PhonePublicDeckOwner, PhonePublicDeckCopy,
 // PhonePublicDeckSuggest, PhonePublicDeckSuggestNew, and the Dark and Gray twins): what anyone opens from Discover, a
 // profile, or a link. Its cover and badge, whose it is, and what you can do with it: Study it as it is, Make a copy (a
-// sheet), Save it, Get its updates, and Suggest a change (a sheet); its owner gets Edit, Suggestions, and Share settings
+// sheet), Save it, Get its updates, and Suggest a change (the card editor's sheet in its suggest mode, on a new card or, from
+// a card, on that card: canvas V181); its owner gets Edit, Suggestions, and Share settings
 // instead. Under it, its cards (press one for its answer), its History, and its People. Anyone but its owner can Report it
 // (a sheet); a verified teacher or school gets Check this deck under the buttons (on a deck whose check isn't current),
 // which then says "Checked by you" until the owner changes the deck again.
@@ -54,7 +55,6 @@ struct PublicDeckScreen: View {
     if addr.copy { opened = true; withAnimation(Motion.sheet) { nav.sheet = .copyDeck(addr.plain) } }
     else if !addr.suggest.isEmpty {
       opened = true
-      SuggestModel.of(addr.plain.key).startFresh()
       withAnimation(Motion.sheet) { nav.sheet = .suggest(addr.plain, start: addr.suggest) }
     }
   }
@@ -458,10 +458,9 @@ struct PublicDeckScreen: View {
     watch = on; err = ""; changes += 1
     Task { do { try await store.watchDeck(p.id, on) } catch { watch = nil; err = fail(error) } }
   }
-  /// Suggest a change from its button (no card yet) or from a card.
+  /// Suggest a change from its button (a new card) or from a card (that card).
   private func openSuggest(card: String) {
-    SuggestModel.of(addr.plain.key).open(card: card)
-    withAnimation(Motion.sheet) { nav.sheet = .suggest(addr.plain, start: "") }
+    withAnimation(Motion.sheet) { nav.sheet = .suggest(addr.plain, start: card.isEmpty ? "new" : card) }
   }
 }
 

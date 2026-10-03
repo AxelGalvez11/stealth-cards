@@ -916,7 +916,7 @@ sgToggle(phone, cur) {
   if (phone) return this.setState({ sgRemove: !this.state.sgRemove });
   if (!cur) return;
   const marks = this.sgOut || (this.sgOut = new Set());
-  if (marks.has(cur)) marks.delete(cur); else marks.add(cur);
+  if (marks.has(cur)) marks.delete(cur); else { marks.add(cur); if (this.sgNoted) this.sgNoted('r:' + cur); }
   this.setState({ sgLine: '', sgOk: false });
 }
 // The suggest mode's values: the title, Send, the Why? note and Suggest removing it (SUGGEST_FOOTER), and on a computer the
@@ -1048,6 +1048,7 @@ addDraft() {
   this.added = [card, ...this.added];
   this.addedAt = Date.now();
   // (Suggesting, it's a new card of the batch, sent with the rest.)
+  if (this.props.suggest) this.sgNoted('a:' + card.id);
   if (db.mock || this.props.suggest) return;
   this.addFailed = false;
   this.track(db.act.addCard(db.deck(this.props.deckId).id, this.payload(ty, f)).then(r => {
@@ -1106,9 +1107,10 @@ kindNames() { return { basic: 'Basic', cloze: 'Blank', image: 'Image', audio: 'A
 edited(ed) {
   const db = this.props.db;
   if (!db || db.mock) return;
-  // Suggesting, nothing saves; a change after the quiet line said something puts it away.
-  if (this.props.suggest) { if (this.state.sgLine && !this.state.sgBusy) this.setState({ sgLine: '', sgOk: false }); return; }
   const id = Object.keys(this.eds).find(k => this.eds[k] === ed);
+  // Suggesting, nothing saves (the batch keeps the order its changes were made in); a change after the quiet line said
+  // something puts it away.
+  if (this.props.suggest) { this.sgNoted('e:' + id); if (this.state.sgLine && !this.state.sgBusy) this.setState({ sgLine: '', sgOk: false }); return; }
   if (!id || id === 'new' || this.temp(id) || this.gone.includes(id)) return;
   clearTimeout(this.timers[id]);
   this.timers[id] = setTimeout(() => { delete this.timers[id]; this.save(id, false); this.forceUpdate(); }, 700);
@@ -1263,24 +1265,28 @@ listVals(o) {
 // text or picture), and each new card (added with Add card, and the one being written once it's finished). `held`: cards changed
 // so they're missing something; `draft`: 'unfinished' when the new card being written isn't finished. Neither is sent.
 sgBatch(db) {
-  const out = [], held = [], marks = this.sgOut || new Set(), names = this.kindNames();
+  const out = [], held = [], marks = this.sgOut || new Set(), names = this.kindNames(), at = this.sgOrder || new Map();
+  const put = (key, change) => out.push({ n: at.has(key) ? at.get(key) : Infinity, change });
   for (const [id, e] of Object.entries(this.eds || {})) {
     const saved = id !== 'new' && !marks.has(id) && !this.temp(id) && db.card(id);
     if (!saved) continue;
     const ty = e.type || names[saved.kind], f = { ...saved, ...e.edits }, after = this.sgAfter(saved, ty, f);
-    if (after) { if (this.missingOf(ty, f)) held.push(id); else out.push({ op: 'edit', card: id, after }); }
+    if (after) { if (this.missingOf(ty, f)) held.push(id); else put('e:' + id, { op: 'edit', card: id, after }); }
   }
-  for (const id of marks) if (!this.temp(id)) for (const c of db.group(id)) out.push({ op: 'remove', card: c.id });
-  for (const c of (this.added || []).slice().reverse()) {
+  for (const id of marks) if (!this.temp(id)) for (const c of db.group(id)) put('r:' + id, { op: 'remove', card: c.id });
+  for (const c of this.added || []) {
     if (marks.has(c.id)) continue;
     const e = this.eds[c.id] || {}, ty = e.type || names[c.kind] || 'Basic', f = { ...c, ...(e.edits || {}) }, after = this.sgAfter(null, ty, f);
-    if (after) { if (this.missingOf(ty, f)) held.push(c.id); else out.push({ op: 'add', after }); }
+    if (after) { if (this.missingOf(ty, f)) held.push(c.id); else put('a:' + c.id, { op: 'add', after }); }
   }
   const n = this.eds && this.eds.new, ty = n && (n.type || 'Basic'), f = n && { ...db.draft(ty), ...n.edits };
   let draft = '';
-  if (n && this.hasWords(n.edits)) { if (this.missingOf(ty, f)) draft = 'unfinished'; else { const after = this.sgAfter(null, ty, f); if (after) out.push({ op: 'add', after }); } }
-  return { out, held, draft };
+  if (n && this.hasWords(n.edits)) { if (this.missingOf(ty, f)) draft = 'unfinished'; else { const after = this.sgAfter(null, ty, f); if (after) put('new', { op: 'add', after }); } }
+  // (In the order they were made, the new card being written last; a sort keeps the cards of one text or picture together.)
+  return { out: out.sort((a, b) => a.n - b.n).map(x => x.change), held, draft };
 }
+// When each change of the batch was first made: a card changed (e:), marked Suggest removing it (r:), or added (a:).
+sgNoted(key) { const at = this.sgOrder || (this.sgOrder = new Map()); if (!at.has(key)) at.set(key, (this.sgSeq = (this.sgSeq || 0) + 1)); }
 // Send suggestions: the batch goes to the deck's owner as one suggestion, with the why. What can't go yet is said first (Lucida's
 // own question). Sent, the batch starts again from the deck's cards as they are, the button says Sent, and the quiet line
 // says who will see it; what goes wrong shows the server's words in the quiet line, and the batch stays.
@@ -1307,7 +1313,7 @@ async sgSendBatch() {
 // After sending: nothing changed, added, or marked; the card on screen stays (as the deck has it), or a new card starts.
 sgReset(db) {
   const keep = this.pick !== 'new' && !this.temp(this.pick) && db.card(this.pick) ? this.pick : null;
-  this.eds = {}; this.added = []; this.gone = []; this.sgOut = new Set();
+  this.eds = {}; this.added = []; this.gone = []; this.sgOut = new Set(); this.sgOrder = new Map();
   this.pick = keep || 'new';
   this.ed = this.eds[this.pick] = keep ? this.fresh() : this.fresh({ type: 'Basic', edits: { front: '', back: '', text: '', note: '', speak: '', boxes: [] } });
 }

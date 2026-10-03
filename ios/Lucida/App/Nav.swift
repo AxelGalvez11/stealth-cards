@@ -15,7 +15,8 @@ enum SheetKind: Identifiable, Equatable {
   case nameFolder(rename: String?, deck: String?, name: String)
   /// Edit profile (on your profile), and a copy's changes from the deck it came from (take or skip each).
   case editProfile, deckUpdates(String)
-  /// A shared deck's Make a copy, and its Suggest a change (`start`: the card it opens on, "new", or "1").
+  /// A shared deck's Make a copy, and its Suggest a change (the card editor's sheet in its suggest mode; `start`: the card it opens
+  /// on, or "new" or "1" for a new card).
   case copyDeck(DeckAddress), suggest(DeckAddress, start: String)
   /// Report a deck, a person, or a suggestion (its kind, id, and name); and Get verified (Settings › Account).
   case report(kind: String, id: String, name: String), verify
@@ -44,7 +45,7 @@ enum SheetKind: Identifiable, Equatable {
     case .editProfile: return "editProfile"
     case .deckUpdates(let d): return "updates-" + d
     case .copyDeck(let a): return "copy-" + a.key
-    case .suggest(let a, _): return "suggest-" + a.key
+    case .suggest(let a, let s): return "suggest-" + a.key + "-" + s
     case .report(let k, let i, _): return "report-\(k)-\(i)"
     case .verify: return "verify"
     case .goPro: return "goPro"

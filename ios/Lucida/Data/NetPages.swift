@@ -48,18 +48,21 @@ struct SharedCard: Decodable {
     enum CodingKeys: String, CodingKey { case w, by, ai }
     init(from d: Decoder) throws { let c = try d.container(keyedBy: CodingKeys.self); w = c.v(.w, ""); by = c.v(.by, ""); ai = c.v(.ai, "") }
   }
-  var id = "", kind = "basic", front = "", back = "", text = "", note = "", speak = "", source = ""
+  var id = "", kind = "basic", front = "", back = "", text = "", note = "", speak = "", lang = "", source = ""
   var tags: [String] = []
-  var image: String? = nil, audio: String? = nil
-  var box: String? = nil
+  var image: String? = nil, audio: String? = nil, wave: Wave? = nil, auto = true
+  /// A picture's boxes and what to hide (a box's own card has its box), its blank (one card per blank, -1 for all), and the cards
+  /// made with it (one per blank or box): what the card editor needs to open it as it is (Suggest a change).
+  var box: String? = nil, occ = "one", cloze: Int? = nil, group: String? = nil
   var boxes: [OccBox] = []
   var trail: [Step] = []
-  enum CodingKeys: String, CodingKey { case id, kind, front, back, text, note, speak, source, tags, image, audio, box, boxes, trail }
+  enum CodingKeys: String, CodingKey { case id, kind, front, back, text, note, speak, lang, source, tags, image, audio, wave, auto, box, occ, cloze, group, boxes, trail }
   init() {}
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
-    id = c.v(.id, ""); kind = c.v(.kind, "basic"); front = c.v(.front, ""); back = c.v(.back, ""); text = c.v(.text, ""); note = c.v(.note, ""); speak = c.v(.speak, "")
-    source = c.v(.source, ""); tags = c.v(.tags, []); image = c.v(.image, nil); audio = c.v(.audio, nil); box = c.v(.box, nil); boxes = c.v(.boxes, []); trail = c.v(.trail, [])
+    id = c.v(.id, ""); kind = c.v(.kind, "basic"); front = c.v(.front, ""); back = c.v(.back, ""); text = c.v(.text, ""); note = c.v(.note, ""); speak = c.v(.speak, ""); lang = c.v(.lang, "")
+    source = c.v(.source, ""); tags = c.v(.tags, []); image = c.v(.image, nil); audio = c.v(.audio, nil); wave = c.v(.wave, nil); auto = c.v(.auto, true)
+    box = c.v(.box, nil); occ = c.v(.occ, "one") == "all" ? "all" : "one"; cloze = c.v(.cloze, nil); group = c.v(.group, nil); boxes = c.v(.boxes, []); trail = c.v(.trail, [])
   }
 }
 

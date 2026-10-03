@@ -3,7 +3,9 @@
 // flows that each set up their own people (so any one can run alone):
 //   1  Maria opens the page from Discover, saves it, gets its updates, and studies it.
 //   2  Maria makes a copy (a folder, a name), and a link opens Make a copy.
-//   3  Maria suggests changes (the sheet, and a card of the deck she studies).
+//   3  Maria suggests changes in the card editor's sheet (its suggest mode, canvas V181; one card per Send): a card's new words with
+//      a why, a new card, a card taken out; Alex's Suggestions have the three with the note, and neither deck changed; a card of the
+//      deck she studies, and a link; five waiting, the sixth Send has the server's words, and the sheet stays.
 //   4  Alex opens Suggestions, takes one change, skips one, takes the rest; Maria's decks get the changes and she sees the
 //      new version; Alex goes back to a version on History, and someone else sees History without Go back.
 //   5  The local person keeps and tosses cards their AI made (over MCP) on Suggestions.
@@ -281,80 +283,108 @@ final class SharedDeckPagesTests: XCTestCase {
   }
 
   // ---------- 3: Maria suggests changes ----------
+  /// The card editor's sheet in its suggest mode is up (its Why? at the bottom).
+  private func suggesting(_ app: XCUIApplication) -> Bool { wait(app.textFields["Why? (optional)"].firstMatch) && button(app, "Send").exists }
+  /// Lucida's quiet message (the toast) says these words.
+  private func says(_ app: XCUIApplication, _ words: String) -> Bool { wait(app.descendants(matching: .any).matching(NSPredicate(format: "identifier == 'toast' AND label CONTAINS %@", words)).firstMatch) }
   func test3SuggestChanges() throws {
     try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
     let w = world("3")
     print("Flow 3, people: \(w.alex), \(w.maria) (@\(w.AH))")
     social(w.maria, "deck.study", ["id": w.sharedId])
+    let words = { (who: String, deck: String) in self.cards(who, in: deck).map { [$0["kind"], $0["front"], $0["back"], $0["text"]].map { "\($0 ?? "")" }.joined(separator: "|") }.sorted() }
+    let studied = (decks(w.maria).first { ($0["link"] as? [String: Any])?["id"] as? String == w.sharedId })?["id"] as? String ?? ""
+    let alexBefore = words(w.alex, w.deck), mariaBefore = words(w.maria, studied)
     var app = launch(as: w.maria, ["-open", "deckpage:" + w.path])
-    tap(button(app, "Suggest a change"))
-    check(wait(app.textFields["Find a card to fix"].firstMatch), "Suggest a change opens its sheet")
-    typeInto(app.textFields["Find a card to fix"].firstMatch, "glycolysis")
-    let pick = inSheet(app, "Where does glycolysis happen?", starting: true)
-    check(wait(pick), "searching finds a card")
-    tap(pick)
-    check(wait(field(app, "Back")), "picking a card shows its words")
-    check(!button(app, "Add this change").isEnabled, "there's nothing to add until something changes")
+    // A card's Suggest a change: the card editor's sheet, on that card.
+    tap(buttonStarting(app, "Where does glycolysis happen?"))
+    tap(lowest(app, "Suggest a change"))
+    check(suggesting(app) && wait(text(app, "Suggest a change")), "a card’s Suggest a change opens the card editor’s sheet in its suggest mode")
+    check(wait(field(app, "Back")) && (field(app, "Back").value as? String) == "In the mitochondria", "on that card, with its words")
+    check(!button(app, "Delete card").exists && !button(app, "Pause card").exists && button(app, "Suggest removing it").exists, "no Delete card or Pause card; Suggest removing it at the bottom")
+    snap("pages-suggest-sheet")
     setText(field(app, "Back"), "In the cytoplasm")
-    check(button(app, "Add this change").isEnabled, "changing a word lets you add it")
-    tap(button(app, "Add this change"))
-    check(wait(text(app, "Your changes · 1")), "the change is listed")
-    tap(button(app, "New card"))
+    typeInto(app.textFields["Why? (optional)"].firstMatch, "From my TA’s review")
+    tap(button(app, "Send"))
+    check(says(app, "Sent. Alex will see it."), "Send says “Sent. Alex will see it.” in Lucida’s quiet message")
+    check(gone(app.textFields["Why? (optional)"].firstMatch), "and the sheet closes on the deck’s page")
+    // The page's Suggest a change: a new card.
+    tap(button(app, "Suggest a change"))
+    check(suggesting(app) && wait(text(app, "Suggest a card")) && !button(app, "Suggest removing it").exists, "the page’s Suggest a change opens it on a new card (Suggest a card)")
+    tap(button(app, "Send"))
+    check(says(app, "Add a change first.") && suggesting(app), "Send with nothing written asks for a change, and the sheet stays")
     typeInto(field(app, "Front"), "What activates PFK-1?")
     typeInto(field(app, "Back"), "AMP")
-    tap(button(app, "Add this card"))
-    tap(button(app, "New card"))
-    tap(button(app, "Fill in the blank"))
-    typeInto(field(app, "Text"), "No blanks here")
-    check(!button(app, "Add this card").isEnabled, "a text with blanks needs a [[blank]]")
-    setText(field(app, "Text"), "[[Glycolysis]] makes 2 ATP.")
-    check(button(app, "Add this card").isEnabled, "with one, it can be added")
-    tap(button(app, "Add this card"))
-    typeInto(app.textFields["Find a card to fix"].firstMatch, "remove")
-    let rm = inSheet(app, "A card to remove", starting: true)
-    check(wait(rm), "searching finds the card to take out")
-    tap(rm)
-    tap(button(app, "Remove this card"))
-    check(wait(text(app, "Your changes · 3")) && button(app, "Add this change").isEnabled, "three changes are listed, and a card is marked to go")
-    typeInto(app.textFields["Why?"].firstMatch, "From my TA’s review")
-    tap(button(app, "Send to Alex"))
-    check(wait(text(app, "Sent. Alex will see it.")), "sending says “Sent. Alex will see it.”")
+    tap(button(app, "Add image"))
+    check(says(app, "can’t bring a new picture or sound") && app.otherElements["PhotosPicker"].exists == false, "a picture can’t come with a suggestion (no photo picker)")
+    tap(button(app, "Basic"))
+    tap(button(app, "Send"))
+    check(gone(app.textFields["Why? (optional)"].firstMatch), "the new card is sent")
+    // Suggest removing it.
+    tap(buttonStarting(app, "A card to remove"))
+    tap(lowest(app, "Suggest a change"))
+    check(suggesting(app), "another card’s Suggest a change")
+    tap(button(app, "Suggest removing it"))
+    check(wait(button(app, "Removing it")) && button(app, "Removing it").isSelected, "Suggest removing it says Removing it")
+    snap("pages-suggest-removing")
+    tap(button(app, "Send"))
+    check(gone(app.textFields["Why? (optional)"].firstMatch), "the removal is sent")
     Thread.sleep(forTimeInterval: 1)
+    // Alex's suggestions: the three changes, the note on the first, and neither deck changed.
     let inbox = api(w.alex, "GET", "/api/social/suggestions?id=" + w.sharedId).json as? [[String: Any]] ?? []
-    let s1 = inbox.first { $0["message"] as? String == "From my TA’s review" }
-    let kinds = (s1?["changes"] as? [[String: Any]] ?? []).compactMap { $0["kind"] as? String }.joined(separator: ",")
-    check(kinds == "answer,new,new,remove", "Alex got one suggestion: an answer, two new cards, a removal")
-    check((s1?["person"] as? [String: Any])?["handle"] as? String == w.MH && s1?["author"] == nil && s1?["owner"] == nil && (s1?["deck"] as? [String: Any])?["name"] as? String == w.deckName,
+    let ch = { (s: [String: Any]) in s["changes"] as? [[String: Any]] ?? [] }
+    let edit = inbox.first { ch($0).first?["op"] as? String == "edit" }, add = inbox.first { ch($0).first?["op"] as? String == "add" }, rm = inbox.first { ch($0).first?["op"] as? String == "remove" }
+    check(inbox.count == 3 && inbox.allSatisfy { ch($0).count == 1 }, "Alex has three suggestions, one card each")
+    check(edit?["message"] as? String == "From my TA’s review" && (ch(edit ?? [:]).first?["after"] as? [String: Any])?["back"] as? String == "In the cytoplasm", "the card’s new words, with the note")
+    check((ch(add ?? [:]).first?["after"] as? [String: Any])?["front"] as? String == "What activates PFK-1?" && (ch(add ?? [:]).first?["after"] as? [String: Any])?["back"] as? String == "AMP", "the new card")
+    check(ch(rm ?? [:]).first?["kind"] as? String == "remove", "the card taken out")
+    check((edit?["person"] as? [String: Any])?["handle"] as? String == w.MH && edit?["author"] == nil && edit?["owner"] == nil && (edit?["deck"] as? [String: Any])?["name"] as? String == w.deckName,
           "it says who sent it and which deck, without account ids")
-    tap(button(app, "Done"))
-    check(gone(text(app, "Sent. Alex will see it.")), "Done closes the sheet")
+    check(words(w.alex, w.deck) == alexBefore && words(w.maria, studied) == mariaBefore, "nothing changed in either deck")
+    app.terminate()
+    app = launch(as: w.alex, ["-open", "suggestions:" + w.deckName])
+    check(wait(buttonStarting(app, "Maria Santos, 1 change"), 12) && app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Maria Santos, 1 change'")).count == 3, "Alex’s Suggestions list has the three")
+    for i in 0..<3 where !text(app, "“From my TA’s review”").exists {
+      tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Maria Santos, 1 change'")).element(boundBy: i))
+      _ = wait(text(app, "“From my TA’s review”"), 2)
+      if !text(app, "“From my TA’s review”").exists, button(app, "Back to suggestions").exists { tap(button(app, "Back to suggestions")) }
+    }
+    check(text(app, "“From my TA’s review”").exists, "with the note")
+    snap("pages-owner-suggestions")
 
     // A card of the deck she studies opens Suggest a change on it.
     app.terminate()
     app = launch(as: w.maria, ["-open", "deck:" + w.deckName])
     check(wait(button(app, "Suggest a change")), "the deck she studies has Suggest a change on its cover")
     tap(buttonStarting(app, "The ____ is the powerhouse"))
-    check(wait(field(app, "Text")), "a card of it opens Suggest a change on that card")
+    check(suggesting(app) && wait(field(app, "Text")), "a card of it opens the card editor’s sheet on that card")
     check((field(app, "Text").value as? String)?.contains("[[mitochondrion]]") == true, "with the card's words")
     setText(field(app, "Text"), "The [[mitochondrion]] is the powerhouse of every cell.")
-    tap(button(app, "Send to Alex"))
-    check(wait(text(app, "Sent. Alex will see it.")), "it sends the fix (the change being written counts)")
-    tap(button(app, "Done"))
+    tap(button(app, "Send"))
+    check(says(app, "Sent. Alex will see it."), "it sends the fix")
     tap(button(app, "Back"))
     tap(buttonStarting(app, "Which organelle makes ribosomes?"))
     check(wait(field(app, "Front")) && (field(app, "Front").value as? String) == "Which organelle makes ribosomes?", "her own card opens the shared card it came from")
     tap(button(app, "Cancel"))
-    tap(button(app, "Back"))
-    tap(button(app, "Suggest a change"))
-    check(wait(app.textFields["Find a card to fix"].firstMatch), "the cover's Suggest a change opens the page with the sheet")
-    tap(button(app, "Cancel"))
-    check(gone(app.textFields["Find a card to fix"].firstMatch), "Cancel closes it")
+    check(gone(app.textFields["Why? (optional)"].firstMatch), "Cancel closes it")
     // A link to a card (?suggest=<card id>) opens the sheet on that card.
     let listed = get(w.maria, "/api/public/deck?id=" + w.sharedId)["cardsList"] as? [[String: Any]] ?? []
     let powerhouse = listed.first { ($0["text"] as? String)?.contains("powerhouse") == true }?["id"] as? String ?? ""
+    let glycolysis = listed.first { ($0["front"] as? String)?.contains("glycolysis") == true }?["id"] as? String ?? ""
     app.terminate()
     app = launch(as: w.maria, ["-open", "deckpage:" + w.path + "?suggest=" + powerhouse])
     check(wait(field(app, "Text")) && (field(app, "Text").value as? String)?.contains("[[mitochondrion]]") == true, "?suggest=<card> opens the sheet on that card")
+    tap(button(app, "Cancel"))
+    // Five waiting (the fifth through the server): the sixth Send has the server's words, and the sheet stays with the change.
+    social(w.maria, "suggestion.send", ["id": w.sharedId, "message": "", "changes": [["op": "edit", "card": glycolysis, "after": ["back": "Cytosol"]]]])
+    tap(buttonStarting(app, "What is ATP?"))
+    tap(lowest(app, "Suggest a change"))
+    check(suggesting(app), "a sixth one opens")
+    setText(field(app, "Back"), "The energy currency")
+    tap(button(app, "Send"))
+    check(says(app, "You have 5 suggestions waiting on this deck."), "the sixth Send shows the server’s words in Lucida’s quiet message")
+    check(suggesting(app) && (field(app, "Back").value as? String) == "The energy currency", "and the sheet stays open with the change")
+    snap("pages-suggest-five-waiting")
     check(app.alerts.count == 0, "no alerts along the way")
   }
 
@@ -548,7 +578,7 @@ final class SharedDeckPagesTests: XCTestCase {
     tap(lowest(app, "Sharing"))
     check(wait(button(app, "Suggest a change")), "a studied deck’s Sharing says whose it is, with Suggest a change")
     tap(lowest(app, "Suggest a change"))
-    check(wait(app.textFields["Find a card to fix"].firstMatch), "its Suggest a change opens the page with the sheet")
+    check(wait(app.textFields["Why? (optional)"].firstMatch) && wait(text(app, "Suggest a card")), "its Suggest a change opens the page with the card editor’s sheet, on a new card")
     tap(button(app, "Cancel"))
     app.terminate()
     // News: a suggestion on his deck opens its suggestions.
