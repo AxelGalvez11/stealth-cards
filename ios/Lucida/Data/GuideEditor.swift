@@ -24,7 +24,8 @@ final class GuideEditorModel: ObservableObject {
   /// What the editor asks of the app around it (the Store's acts, or a stand-in for a check).
   struct Env {
     var save: (String, String, String) async throws -> Void = { _, _, _ in }
-    var addPage: (String, String) async throws -> String = { _, _ in "" }
+    /// (deck, title, the page it goes inside: "" for the top)
+    var addPage: (String, String, String) async throws -> String = { _, _, _ in "" }
     var rename: (String, String, String) async throws -> Void = { _, _, _ in }
     var delete: (String, String) async throws -> Void = { _, _ in }
     var restore: (String, String, Double) async throws -> Void = { _, _, _ in }
@@ -111,9 +112,10 @@ final class GuideEditorModel: ObservableObject {
   func text(saved: String) -> String { drafts[key(page)] ?? saved }
 
   func pick(_ id: String) async { await flush(); page = id; historyOpen = false; versions = nil }
-  func addPage() async {
+  /// A new page (inside the open one: Add a page inside; or at the top: New note), and it opens.
+  func addPage(inside parent: String = "") async {
     await flush()
-    do { let id = try await env.addPage(deckId, "New page"); page = id; historyOpen = false; versions = nil }
+    do { let id = try await env.addPage(deckId, "New page", parent); page = id; historyOpen = false; versions = nil }
     catch { self.error = GuideEditorModel.words(error, "Couldn’t add a page. Try again.") }
   }
   /// A page's name changes 600 ms after the last key, or at once when the page is left (Done, another page: like the web's field, which sends its name when it loses

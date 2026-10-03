@@ -45,7 +45,7 @@ struct DeckTabs: View {
   }
 }
 
-/// A small pill with an icon (the deck page's Make cards, Edit): 34 tall, on the page's color.
+/// A small pill with an icon (the deck page's Make cards): 34 tall, light gray (V183: the sections sit on the page itself, with no gray box behind them).
 private struct LittlePill: View {
   @Environment(\.theme) private var t
   let label: String, icon: String
@@ -53,10 +53,115 @@ private struct LittlePill: View {
   var body: some View {
     Button(action: action) {
       HStack(spacing: 6) { Icon(icon, 14, 2); Text(label).css(13, .semibold).lineLimit(1).fixedSize() }
-        .foregroundStyle(t.text).padding(.horizontal, 14).frame(height: 34).background(Capsule().fill(t.bg))
+        .foregroundStyle(t.text).padding(.horizontal, 14).frame(height: 34).background(Capsule().fill(t.surf))
     }
     .buttonStyle(.press).accessibilityLabel(label)
   }
+}
+
+// ---------- Notes: the list of notes, a tree (V176, V185) ----------
+/// The deck's Notes tab: its notes as a tree, like Notion's pages (the owner, 2026-10-02; design/materials.mjs deckBlocks' noteRow). The main note once it has words,
+/// then every page that isn't inside another; the pages inside a note sit under it, 20 points further in, and can hold pages of their own. A note with pages inside
+/// has an arrow that shows or hides them (open to start); a row opens that page (the Notes page), and its + (for the owner) makes a page inside it. At the end "No
+/// notes yet" when there are none, and New note for the owner (the main note while it has no words, otherwise a note at the top).
+struct NotesTree: View {
+  @Environment(\.theme) private var t
+  @EnvironmentObject private var nav: Nav
+  let deckId: String
+  let g: GuideVM
+  /// The notes whose pages inside are hidden (on this screen only, as the web's).
+  @State private var shut: Set<String> = []
+  struct Row: Identifiable { let id: String, title: String, sub: String, depth: Int, kids: Int, open: Bool }
+  /// The tree's rows, in order (as deckMaterials' walk: six levels at most, a page seen once).
+  static func rows(_ g: GuideVM, shut: Set<String>) -> [Row] {
+    let all = g.all, pages = g.pages
+    let top = all.filter { x in x.id == "main" ? !x.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty : x.parent.isEmpty || !all.contains { y in y.id == x.parent } }
+    var seen = Set<String>(), out: [Row] = []
+    func walk(_ x: MakeGuidePage, _ depth: Int) {
+      guard !seen.contains(x.id), depth <= 6 else { return }
+      seen.insert(x.id)
+      let kids = pages.filter { $0.parent == x.id && $0.id != x.id }, open = !kids.isEmpty && !shut.contains(x.id)
+      let pv = NoteText.preview(x.text).isEmpty ? "Empty" : NoteText.preview(x.text), inside = !kids.isEmpty && !open ? plural(kids.count, "page") + " inside" : ""
+      out.append(Row(id: x.id, title: NoteText.title(x), sub: [inside, pv].filter { !$0.isEmpty }.joined(separator: " · "), depth: depth, kids: kids.count, open: open))
+      if open { kids.forEach { walk($0, depth + 1) } }
+    }
+    top.forEach { walk($0, 0) }
+    return out
+  }
+  var body: some View {
+    let rows = Self.rows(g, shut: shut)
+    VStack(alignment: .leading, spacing: 0) {
+      if !g.hasAny {
+        Text("No notes yet").css(14).foregroundStyle(t.muted).padding(.vertical, 16).frame(maxWidth: .infinity, alignment: .leading)
+          .overlay(alignment: .bottom) { t.line.frame(height: 1) }
+      }
+      ForEach(rows) { r in row(r) }
+      if g.can {
+        Button { nav.newNote(deckId: deckId) } label: {
+          HStack(spacing: 12) {
+            NotesIcon("plus", 16, 2).frame(width: 32, height: 32).overlay(Circle().strokeBorder(t.line, style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
+            Text("New note").css(15, .medium)
+          }
+          .foregroundStyle(t.muted).padding(.vertical, 12).padding(.leading, 30).frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
+        }
+        .buttonStyle(.flat).accessibilityLabel("New note").accessibilityIdentifier("notes.new")
+      }
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .accessibilityElement(children: .contain).accessibilityLabel("Notes")
+  }
+  private func row(_ r: Row) -> some View {
+    HStack(spacing: 0) {
+      if r.kids > 0 {
+        Button { withAnimation(Motion.pop) { if r.open { shut.insert(r.id) } else { shut.remove(r.id) } } } label: {
+          NotesIcon("chev", 14, 2.2).rotationEffect(.degrees(r.open ? 90 : 0)).animation(Motion.knob, value: r.open).foregroundStyle(t.muted).frame(width: 28, height: 28).contentShape(Rectangle())
+        }
+        .buttonStyle(.press).padding(.trailing, 2)
+        .accessibilityLabel((r.open ? "Hide" : "Show") + " the pages inside " + r.title).accessibilityIdentifier("notes.chev")
+      } else { Color.clear.frame(width: 28, height: 28).padding(.trailing, 2).accessibilityHidden(true) }
+      Button { nav.guide(deckId: deckId, page: r.id == "main" ? "" : r.id) } label: {
+        HStack(spacing: 12) {
+          NoteGlyph().foregroundStyle(t.muted).frame(width: 32, height: 32).background(Circle().fill(t.surf))
+          VStack(alignment: .leading, spacing: 3) {
+            Text(r.title).css(15, .medium).lineLimit(1).foregroundStyle(t.text)
+            Text(r.sub).css(13).lineLimit(1).foregroundStyle(t.muted)
+          }
+          .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.vertical, 12).contentShape(Rectangle())
+      }
+      .buttonStyle(.flat).accessibilityLabel(r.title).accessibilityValue(r.sub).accessibilityIdentifier("notes.row")
+      if g.can {
+        Button { nav.newNote(deckId: deckId, inside: r.id) } label: { NotesIcon("plus", 16, 2).foregroundStyle(t.muted).frame(width: 36, height: 36).contentShape(Circle()) }
+          .buttonStyle(.press).padding(.leading, 4)
+          .accessibilityLabel("Add a page inside " + r.title).accessibilityIdentifier("notes.addInside")
+      }
+    }
+    .padding(.leading, CGFloat(r.depth) * 20)
+    .overlay(alignment: .bottom) { t.line.frame(height: 1) }
+  }
+}
+/// A note's glyph: a page (design/materials.mjs NOTE_SVG), drawn from the same SVG.
+struct NoteGlyph: View {
+  static let svg = "<path d=\"M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z\"/><path d=\"M14 3v5h5\"/><path d=\"M9 13h6M9 17h4\"/>"
+  @MainActor private static var parts: [IconArt.Part]? = nil
+  var size: CGFloat = 16, stroke: CGFloat = 1.8
+  var body: some View {
+    let ps = Self.parts ?? { let p = SVG.parts(Self.svg); Self.parts = p; return p }(), k = size / 24
+    Canvas { ctx, _ in
+      for p in ps {
+        let path = Path(p.path).applying(CGAffineTransform(scaleX: k, y: k))
+        if p.fill { ctx.fill(path, with: .foreground) }
+        if p.stroke { ctx.stroke(path, with: .foreground, style: StrokeStyle(lineWidth: stroke * k, lineCap: .round, lineJoin: .round)) }
+      }
+    }
+    .frame(width: size, height: size).accessibilityHidden(true)
+  }
+}
+extension Nav {
+  /// New note (the Notes list's own, or + on a row: `inside` that note): the Notes page makes the page and opens it (GuideScreen.start); with no words in the
+  /// Guide yet, New note is the Guide itself.
+  func newNote(deckId: String, inside: String = "") { guide(deckId: deckId, at: "new:" + inside) }
 }
 
 // ---------- Notes: the Guide ----------
@@ -64,7 +169,9 @@ private struct LittlePill: View {
 /// this phone): its page tabs (when it has pages), Make cards (for its owner, once it has words), and the page. For its owner a tap on the words opens the Notes page
 /// there, and an empty Guide is a blank note waiting (a heading and a line). On a shared deck's page (`shared`: the deck's address, which this phone remembers its
 /// toggles by) it says NOTES, and a long page is cut short with Show more. The caller says which page is showing (`page`, one of `tabs`) and its words; `images`
-/// says which pictures may show (a deck's own, or a shared deck's public ones).
+/// says which pictures may show (a deck's own, or a shared deck's public ones). On a shared deck's page, once the page shows in full (cut short, Show more comes first),
+/// the outline's rail (NotesRail) sits at its right and stays a little under the top of the screen as the page scrolls by; the deck page's Notes tab has none (it
+/// becomes a list of notes).
 struct GuideCard: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var nav: Nav
@@ -83,10 +190,13 @@ struct GuideCard: View {
   var shared: String? = nil
   @StateObject private var notes = NotesPage()
   @State private var hooks = NotesHooks()
+  /// (only the rail watches it: the card isn't drawn again as the page scrolls)
+  @State private var outline = NotesOutline()
 
   var body: some View {
     let hasText = !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     let long = shared != nil && ((text as NSString).length > 640 || text.split(separator: "\n", omittingEmptySubsequences: false).count > 14)
+    let heads = notes.outline, railOn = shared != nil && heads.count >= 2 && (!long || open)
     let key = shared.map { "shared|" + $0 + "|" + page } ?? ((store.demo ? "canvas|" : "") + deckId + "|" + page)
     VStack(alignment: .leading, spacing: 12) {
       if shared != nil || !tabs.isEmpty || (canEdit && hasText) { GuideCardBar(tabs: tabs, page: $page, open: $open, label: shared != nil, make: canEdit && hasText ? { nav.make(deckId: deckId) } : nil) }
@@ -94,6 +204,8 @@ struct GuideCard: View {
       // (a link inside the page to a heading in the part that is cut off opens the rest first)
       let pageView = NotesView(page: notes, setup: NotesSetup(colors: NotesColors(t, code: t.bg), owner: canEdit, hooks: hooks)).padding(.leading, shared != nil ? 26 : 0)
         .environment(\.guideExpand, long && !open ? { open = true } : nil)
+        .environment(\.notesOutline, outline)
+        .onGeometryChange(for: CGFloat.self) { $0.frame(in: .named("guide-card")).minY } action: { outline.notes(at: $0) }
       if long && !open {
         pageView.fixedSize(horizontal: false, vertical: true).frame(maxHeight: 230, alignment: .top).clipped()
           .mask(LinearGradient(stops: [.init(color: .black, location: 0.62), .init(color: .clear, location: 1)], startPoint: .top, endPoint: .bottom))
@@ -107,6 +219,9 @@ struct GuideCard: View {
     .padding(.top, shared != nil ? 18 : 16).padding(.bottom, shared != nil ? 16 : 18).padding(.leading, shared != nil ? 20 : 24).padding(.trailing, 18)
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(t.surf))
+    .coordinateSpace(.named("guide-card"))
+    .overlay(alignment: .topTrailing) { if railOn { NotesRail(heads: heads, outline: outline, page: notes, sticky: true) } }
+    .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { r in outline.stick(card: r, rail: NotesRail.height(heads.count)); outline.refresh(heads, top: Screen.safeTop) }
     .accessibilityElement(children: .contain).accessibilityLabel("Notes")
     .onAppear { load(key) }
     .onChange(of: key) { _, k in load(k) }
@@ -179,7 +294,7 @@ struct SourcesCard: View {
         ForEach(rows) { s in
           Button { open(s) } label: {
             HStack(spacing: 12) {
-              Icon(s.icon, 17, 1.8).foregroundStyle(t.text).frame(width: 36, height: 36).background(Circle().fill(t.bg))
+              Icon(s.icon, 17, 1.8).foregroundStyle(t.text).frame(width: 36, height: 36).background(Circle().fill(t.surf))
               VStack(alignment: .leading, spacing: 1) {
                 Text(s.name).css(14, .semibold).lineLimit(1)
                 Text(s.line).css(12).foregroundStyle(t.muted).lineLimit(1)
@@ -196,9 +311,8 @@ struct SourcesCard: View {
         }
       }
     }
-    .padding(.horizontal, 18).padding(.top, 18).padding(.bottom, 10)
+    // (no gray box behind it, V183: it sits on the page, as the web's does)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(t.surf))
     .accessibilityElement(children: .contain).accessibilityLabel("Sources")
   }
 }

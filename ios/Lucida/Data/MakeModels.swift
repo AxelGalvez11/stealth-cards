@@ -74,9 +74,11 @@ struct MakeSourceInfo: Decodable, Equatable, Identifiable {
 struct MakeGuidePage: Decodable, Equatable, Identifiable {
   var id = "", title = "", text = ""
   var at: Double = 0
-  enum CodingKeys: String, CodingKey { case id, title, text, at }
-  init(id: String = "", title: String = "", text: String = "", at: Double = 0) { self.id = id; self.title = title; self.text = text; self.at = at }
-  init(from d: Decoder) throws { let c = try d.container(keyedBy: CodingKeys.self); id = c.v(.id, ""); title = c.v(.title, ""); text = c.v(.text, ""); at = c.v(.at, 0) }
+  /// The page it sits inside, as Notion's pages nest (V176): "main" (the Guide), another page's id, or "" at the top.
+  var parent = ""
+  enum CodingKeys: String, CodingKey { case id, title, text, at, parent }
+  init(id: String = "", title: String = "", text: String = "", at: Double = 0, parent: String = "") { self.id = id; self.title = title; self.text = text; self.at = at; self.parent = parent }
+  init(from d: Decoder) throws { let c = try d.container(keyedBy: CodingKeys.self); id = c.v(.id, ""); title = c.v(.title, ""); text = c.v(.text, ""); at = c.v(.at, 0); parent = c.v(.parent, "") }
 }
 struct MakeGuide: Decodable, Equatable {
   var text = "", pages: [MakeGuidePage] = []

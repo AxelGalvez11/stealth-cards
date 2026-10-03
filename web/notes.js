@@ -21,6 +21,14 @@
 //   Strikethrough, Code and Link while words are selected. All of it is Lucida's own (nothing from the browser).
 // Pasting reads Markdown (and this page's own copies), a web page's or a document's formatting, or plain lines; copying gives Markdown and safe HTML.
 //
+// THE OUTLINE (Notion's page outline; the owner, 2026-10-02: "add that thing notion has where it shows a rail tree of sections"). With `outline` on and two
+// headings or more, a quiet rail of short lines sits at the right of the note and stays in view as it scrolls: a line for each heading, a subheading's
+// shorter and further in, the section being read in the words' color. On a computer the pointer on it (or the keyboard's focus) opens a small card with
+// the headings' names as a tree, the one being read in bold; a press scrolls to that heading (at once with Reduce Motion), and the card closes when the
+// pointer leaves. On a phone a tap opens the same tree in Lucida's own sheet: a heading scrolls there and closes it, and the rail is hidden while the
+// keyboard is up. A heading in a folded section or a closed toggle is in it too: going to it opens what it is in, as its ▸ does. It follows the page as
+// it is written. (Where it sits: --nb-otl-x, how far right of the note, and --nb-otl-top, where it stays when the page scrolls, on the element.)
+//
 // SAFE. Words are put in as text nodes; a link is an <a> only when reading, with an address guide.js allows (http, https, mailto, #) and
 // rel="nofollow ugc noopener"; a picture only from where `image(src)` says it may come. The few icons are this file's own SVG.
 //
@@ -33,7 +41,9 @@
 //   image(src)    the address a picture may show from, or '' (the app's own /media/ files by default)
 //   phone         the phone's look: the ▸ of headings always shows, the bar above the keyboard instead of the format bar
 //   focusAt       { i, off } (or 'end') where the caret goes the first time         onEscape()  Escape with nothing open
-//   demo          the canvas's states: { open: 'all' | 'none' | 'first', fold: [heading indexes], emptyAt: i, menu: true, bar: { i, a, b }, keys: true }
+//   outline       the rail of the headings at the page's right (above)               sheetHost   on the canvas, where a phone's outline sheet is drawn
+//   demo          the canvas's states: { open: 'all' | 'none' | 'first', fold: [heading indexes], emptyAt: i, menu: true, bar: { i, a, b }, keys: true,
+//                 outline: true (the outline's card open; on a phone, its sheet) }
 // and returns { focus(at), flush(), selectedText(), blocks() }.
 export function makeNotes(G) {
   const TEXT = { p: 1, h: 1, ul: 1, ol: 1, todo: 1, toggle: 1, quote: 1 }, HOLDS = { ul: 1, ol: 1, todo: 1, toggle: 1, quote: 1 }, ONE_LINE = { h: 1, toggle: 1 };
@@ -132,6 +142,11 @@ export function makeNotes(G) {
     const plusEl = el('button', 'nb-plus', { type: 'button', 'aria-label': 'Add a block', 'data-tip': 'Add a block', html: svg('plus', 16, 2.2), tabindex: '-1' });
     const menuEl = el('div', 'nb-menu', { role: 'listbox', 'aria-label': 'Add a block' }), barEl = el('div', 'nb-bar', { role: 'toolbar', 'aria-label': 'Format' });
     const keysEl = el('div', 'nb-keys', { role: 'toolbar', 'aria-label': 'Format' });
+    // the outline: a box that stays in view at the top of the note (it goes in first, only with `outline`), the rail in it, and the card of headings
+    const olId = 'nb-otl' + Math.random().toString(36).slice(2, 9), olWrap = el('div', 'nb-otlw'), olEl = el('div', 'nb-otl');
+    const railEl = el('button', 'nb-otl-rail', { type: 'button', 'aria-label': 'Outline', 'aria-expanded': 'false', 'aria-haspopup': 'menu', 'aria-controls': olId });
+    const panelEl = el('div', 'nb-otl-panel', { id: olId, role: 'menu', 'aria-label': 'Outline' });
+    olEl.append(railEl, panelEl); olWrap.appendChild(olEl);
     root.append(docEl, plusEl, menuEl, barEl);
     host.appendChild(root);
     const by = id => st.idx.get(id);
@@ -157,6 +172,7 @@ export function makeNotes(G) {
       }
       for (const [, r] of st.rows) r.el.remove();
       st.rows = new Map();
+      OL.pin = ''; OL.cur = ''; closeSheet(true);
       render();
       if (o.demo) demoUi();
     }
@@ -309,6 +325,7 @@ export function makeNotes(G) {
       while (prev ? prev.nextSibling : docEl.firstChild) (prev ? prev.nextSibling : docEl.firstChild).remove();
       if (st.restore) { st.restore = false; putSel(st.sel); }
       placeUi();
+      drawOutline();
     }
     // Is block i inside block id (a toggle) or in its section (a heading)?
     function isInside(i, id) {
@@ -1012,10 +1029,29 @@ export function makeNotes(G) {
       try { f = decodeURIComponent(f); } catch (e) { /* as written */ }
       f = f.toLowerCase();
       const ids = G.headings(st.md || '').map(x => x.id), heads = st.blocks.filter(b => b.k === 'h'), k = ids.findIndex(id => id === f || id === 'g-' + f), b = k >= 0 ? heads[k] : null;
-      if (!b) return;
-      reveal(by(b.id)); render(); remember();
-      const row = st.rows.get(b.id), still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (row) row.el.scrollIntoView({ block: 'start', behavior: still ? 'auto' : 'smooth' });
+      if (b) goTo(b.id);
+    }
+    // To a heading (a link to it, or the outline): what it is folded or closed in opens (and this device remembers that), and the page brings it near its top.
+    function goTo(id) {
+      const i = by(id); if (i == null) return;
+      reveal(i); render(); remember();
+      const row = st.rows.get(id); if (!row) return;
+      OL.pin = id; OL.pinUntil = Date.now() + 700; olMark(id);
+      scrollToRow(row.el);
+    }
+    // What scrolls the page: the nearest box around it that scrolls up and down (null: the window, or nothing).
+    function scroller() {
+      for (let p = root.parentElement; p && p !== document.body && p !== document.documentElement; p = p.parentElement) {
+        const cs = getComputedStyle(p); if (/(auto|scroll)/.test(cs.overflowY) && p.scrollHeight > p.clientHeight + 1) return p;
+      }
+      return null;
+    }
+    // Scrolls so the row sits a little below the top of what scrolls the page (smoothly, at once with Reduce Motion; only that box: not the window around it).
+    function scrollToRow(rowE) {
+      const sc = scroller(), behavior = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', r = rowE.getBoundingClientRect(), room = o.phone ? 16 : 24;
+      if (sc) { const q = sc.getBoundingClientRect(), z = q.height / (sc.offsetHeight || q.height) || 1; sc.scrollTo({ top: Math.max(0, sc.scrollTop + (r.top - q.top) / z - room), behavior }); return; }
+      const de = document.scrollingElement || document.documentElement;
+      if (de && de.scrollHeight > innerHeight + 1) window.scrollTo({ top: Math.max(0, scrollY + r.top - room), behavior });
     }
     function flipOpen(id) {
       const was = !!st.open.get(id); st.open.set(id, !was);
@@ -1149,6 +1185,7 @@ export function makeNotes(G) {
         } else placeMenu();
       }
       if (o.phone) drawKeys(live);
+      olShow();
     }
     // The phone's bar above the keyboard: Aa, To-do, Bullets, Toggle, Picture and Done; while words are selected, Bold, Italic, Strikethrough, Code and Link.
     function drawKeys(sel) {
@@ -1187,6 +1224,177 @@ export function makeNotes(G) {
       placeKeys();
       if (ev && ev.type === 'resize' && st.focused && st.sel && keysEl.classList.contains('nb-show')) { const row = st.rows.get(st.sel.b.id); if (row) visible(row.el); }
     }
+    // ---------- the outline: the rail of the page's headings at its right, and their tree ----------
+    // heads: the headings with words, in page order (id, words, how far in: 0 for the page's highest level, then 1 and 2); cur: the one being read;
+    // pin: the one just gone to (it stays the one being read while the page scrolls there); open: the card is open (hover, focus or a tap);
+    // sheet: a phone's sheet while it is open.
+    const OL = { heads: [], sig: '', cur: '', pin: '', pinUntil: 0, raf: 0, hover: false, focus: false, tap: false, esc: false, open: false, touch: false, sheet: null };
+    function outlineHeads() {
+      const out = [];
+      for (const b of st.blocks) if (b.k === 'h') { const w = rtext(b.r).replace(/\s+/g, ' ').trim(); if (w) out.push({ id: b.id, w: w.slice(0, 200), lv: Math.min(Math.max(b.level || 1, 1), 3) }); }
+      const top = out.reduce((m, x) => Math.min(m, x.lv), 3);
+      for (const x of out) x.ind = Math.min(2, x.lv - top);
+      return out;
+    }
+    // Drawn again with the page (a heading written, renamed or taken away shows at once), its lines and names only when the headings changed.
+    function drawOutline() {
+      if (!o.outline) { if (olWrap.parentNode) olWrap.remove(); closeSheet(true); OL.heads = []; OL.sig = ''; return; }
+      if (olWrap.parentNode !== root) root.insertBefore(olWrap, root.firstChild);
+      // (fewer than two headings: no outline at all, not even a hidden one)
+      const all = outlineHeads(), heads = all.length >= 2 ? all : [], sig = JSON.stringify(heads.map(x => [x.id, x.w, x.ind])) + (o.phone ? '|phone' : '');
+      OL.heads = heads;
+      const fresh = sig !== OL.sig;
+      if (fresh) {
+        OL.sig = sig;
+        // (lines drawn again are lit at once, with no fade: the fade is for the one being read changing as the page scrolls)
+        railEl.classList.add('nb-otl-still');
+        railEl.textContent = ''; panelEl.textContent = '';
+        railEl.setAttribute('aria-haspopup', o.phone ? 'dialog' : 'menu');
+        // (past 40 headings the lines sit closer, so the rail stays about as tall as 40 would make it)
+        railEl.style.gap = heads.length > 40 ? Math.max(2, Math.floor((o.phone ? 320 : 400) / heads.length) - 2) + 'px' : '';
+        for (const x of heads) {
+          railEl.appendChild(el('span', 'nb-otl-line nb-i' + x.ind, { 'data-for': x.id, 'aria-hidden': 'true' }));
+          const it = el('button', 'nb-otl-item nb-i' + x.ind, { type: 'button', role: 'menuitem', tabindex: '-1', 'data-for': x.id, text: x.w });
+          panelEl.appendChild(it);
+        }
+        if (OL.sheet) drawSheet();
+        if (OL.cur && !heads.some(x => x.id === OL.cur)) OL.cur = '';
+        olMark(OL.cur);
+      }
+      olShow();
+      if (fresh && heads.length) { olFind(); requestAnimationFrame(() => railEl.classList.remove('nb-otl-still')); } else olSoon();
+    }
+    // Shown with two headings or more, and on a phone not while the keyboard is up (a line is being written). The card is open while the pointer is on it,
+    // the keyboard's focus is in it, or a touch opened it (the canvas's state: always).
+    function olShow() {
+      if (!o.outline) return;
+      const typing = !!(o.phone && o.editable && (st.focused || (o.demo && o.demo.keys))), show = OL.heads.length >= 2 && !typing, D = o.demo && o.demo.outline;
+      olWrap.classList.toggle('nb-otl-off', !show);
+      if (!show) { OL.tap = false; closeSheet(true); }
+      olOpen(show && !o.phone && !!(OL.hover || (OL.focus && !OL.esc) || OL.tap || D));
+      if (show && o.phone && D && !OL.sheet) openSheet();
+    }
+    function olOpen(v) {
+      if (OL.open === v) return;
+      OL.open = v;
+      olEl.classList.toggle('nb-otl-open', v);
+      railEl.setAttribute('aria-expanded', v ? 'true' : 'false');
+      if (v) { olSoon(); const it = panelEl.querySelector('.nb-cur'); if (it) olEnsure(it, true); }
+      if (v && OL.tap) document.addEventListener('pointerdown', olAway, true); else document.removeEventListener('pointerdown', olAway, true);
+    }
+    // (a touch opened it: a touch anywhere else closes it)
+    function olAway(ev) { if (olEl.contains(ev.target)) return; OL.tap = false; olShow(); }
+    // The heading being read: the last one whose row has come up to a line just under the top of what scrolls the page (where going to a heading puts
+    // it; the first one before any has).
+    function olSoon() { if (OL.raf || !OL.heads.length) return; OL.raf = requestAnimationFrame(() => { OL.raf = 0; olFind(); }); }
+    function olFind() {
+      if (!OL.heads.length || !root.isConnected) return;
+      let cur = OL.pin && OL.heads.some(x => x.id === OL.pin) ? OL.pin : '';
+      if (!cur) {
+        const sc = scroller(), q = sc ? sc.getBoundingClientRect() : { top: 0, height: innerHeight }, z = sc ? q.height / (sc.offsetHeight || q.height) || 1 : 1, line = q.top + 48 * z;
+        let first = '';
+        for (const x of OL.heads) {
+          const r = st.rows.get(x.id); if (!r || !r.el.isConnected) continue;
+          if (!first) first = x.id;
+          if (r.el.getBoundingClientRect().top <= line) cur = x.id; else break;
+        }
+        cur = cur || first || OL.heads[0].id;
+      }
+      if (cur !== OL.cur) olMark(cur);
+    }
+    function olMark(id) {
+      OL.cur = id || '';
+      for (const e of railEl.children) e.classList.toggle('nb-cur', e.getAttribute('data-for') === OL.cur);
+      for (const e of panelEl.children) { const on = e.getAttribute('data-for') === OL.cur; e.classList.toggle('nb-cur', on); if (on) e.setAttribute('aria-current', 'location'); else e.removeAttribute('aria-current'); }
+      if (OL.sheet) for (const e of OL.sheet.list.children) { const on = e.getAttribute('data-for') === OL.cur; e.classList.toggle('nb-cur', on); if (on) e.setAttribute('aria-current', 'location'); else e.removeAttribute('aria-current'); }
+    }
+    // A name in the card stays in sight inside it (the card scrolls when there are many; the page around it never moves).
+    function olEnsure(it, middle) {
+      const p = it.parentElement; if (!p || p.scrollHeight <= p.clientHeight) return;
+      if (middle) p.scrollTop = it.offsetTop - (p.clientHeight - it.offsetHeight) / 2;
+      else if (it.offsetTop < p.scrollTop) p.scrollTop = it.offsetTop - 6;
+      else if (it.offsetTop + it.offsetHeight > p.scrollTop + p.clientHeight) p.scrollTop = it.offsetTop + it.offsetHeight - p.clientHeight + 6;
+    }
+    // A phone: the tree in Lucida's own sheet from the bottom (its name, Close, a row for each heading), over the dimmed page; a heading scrolls there and
+    // closes it, and so do a tap on the page behind, Close and Escape. (On the canvas it is drawn in the board's own box: sheetHost.)
+    function openSheet(byKey) {
+      if (OL.sheet || OL.heads.length < 2) return;
+      const host = o.sheetHost || root, wrap = el('div', 'nb-otl-sheetw' + (o.sheetHost ? '' : ' nb-otl-fixed')), scrim = el('div', 'nb-otl-scrim');
+      // (not aria-modal: the app's own dialogs, web/ui.js, would set the page aside until its next paint; this sheet keeps the keyboard's focus in itself)
+      const sheet = el('div', 'nb-otl-sheet', { role: 'dialog', 'aria-label': 'Outline', tabindex: '-1' }), head = el('div', 'nb-otl-shead');
+      const close = el('button', 'nb-otl-x', { type: 'button', 'aria-label': 'Close', html: svg('close', 14, 2.2) }), list = el('div', 'nb-otl-list');
+      head.append(el('span', 'nb-otl-stitle', { text: 'Outline' }), close);
+      sheet.append(head, list); wrap.append(scrim, sheet); host.appendChild(wrap);
+      OL.sheet = { wrap, list, close };
+      drawSheet();
+      scrim.addEventListener('click', () => closeSheet());
+      close.addEventListener('click', () => closeSheet());
+      list.addEventListener('click', ev => { const b = ev.target.closest && ev.target.closest('.nb-otl-row'); if (!b) return; const id = b.getAttribute('data-for'); closeSheet(); goTo(id); });
+      wrap.addEventListener('keydown', ev => {
+        if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); return closeSheet(); }
+        // (the keyboard's focus stays in the sheet while it is open)
+        if (ev.key === 'Tab') { const f = [close, ...list.children], n = f.length, at = f.indexOf(document.activeElement); ev.preventDefault(); f[at < 0 ? (ev.shiftKey ? n - 1 : 0) : (at + (ev.shiftKey ? n - 1 : 1)) % n].focus(); }
+      });
+      railEl.setAttribute('aria-expanded', 'true');
+      // (the keyboard's focus goes into the sheet: opened with a key, on the heading being read; with a tap, on the sheet itself, so no ring shows on a row)
+      if (!o.demo) setTimeout(() => { if (OL.sheet && OL.sheet.wrap === wrap) (byKey ? list.querySelector('.nb-cur') || close : sheet).focus({ preventScroll: true }); }, 0);
+    }
+    function drawSheet() {
+      const l = OL.sheet.list; l.textContent = '';
+      for (const x of OL.heads) l.appendChild(el('button', 'nb-otl-row nb-i' + x.ind, { type: 'button', 'data-for': x.id, text: x.w }));
+      olMark(OL.cur);
+    }
+    // (it goes the way Lucida's sheets go, at once with Reduce Motion; the keyboard's focus goes back to the rail)
+    function closeSheet(now) {
+      const s = OL.sheet; if (!s) return;
+      OL.sheet = null; railEl.setAttribute('aria-expanded', 'false');
+      const back = s.wrap.contains(document.activeElement);
+      if (now || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) s.wrap.remove();
+      else { s.wrap.classList.add('nb-otl-gone'); s.wrap.style.pointerEvents = 'none'; setTimeout(() => s.wrap.remove(), 200); }
+      if (back && railEl.isConnected) railEl.focus({ preventScroll: true });
+    }
+    // The keys: on the rail, Down, Return or Space go into the card (on the current heading); in it, Up, Down, Home and End move, Return or Space goes to the
+    // heading, and Escape closes it, back on the rail. (Tab leaves it, and it closes.)
+    function onOlKey(ev) {
+      if (o.phone) return;
+      const items = [...panelEl.children], at = items.indexOf(document.activeElement), k = ev.key;
+      if (k === 'Escape') { if (!OL.open) return; ev.preventDefault(); ev.stopPropagation(); OL.esc = true; OL.hover = false; OL.tap = false; if (at >= 0) railEl.focus({ preventScroll: true }); return olShow(); }
+      if (ev.target === railEl && /^(ArrowDown|Enter| )$/.test(k)) {
+        ev.preventDefault(); OL.esc = false; OL.focus = true; olShow();
+        const it = panelEl.querySelector('.nb-cur') || items[0]; if (it) { it.focus({ preventScroll: true }); olEnsure(it); }
+        return;
+      }
+      if (at < 0) return;
+      let to = -1;
+      if (k === 'ArrowDown') to = (at + 1) % items.length; else if (k === 'ArrowUp') to = (at + items.length - 1) % items.length; else if (k === 'Home') to = 0; else if (k === 'End') to = items.length - 1;
+      if (to >= 0) { ev.preventDefault(); items[to].focus({ preventScroll: true }); olEnsure(items[to]); }
+    }
+    // (a press on the rail or a name never takes the caret out of the page: what was being written stays where it was)
+    railEl.addEventListener('mousedown', ev => ev.preventDefault());
+    panelEl.addEventListener('mousedown', ev => ev.preventDefault());
+    olEl.addEventListener('pointerdown', ev => { OL.touch = ev.pointerType === 'touch'; });
+    olEl.addEventListener('pointerenter', ev => { if (ev.pointerType === 'touch' || o.phone) return; OL.hover = true; olShow(); });
+    olEl.addEventListener('pointerleave', ev => { if (ev.pointerType === 'touch') return; OL.hover = false; OL.esc = false; olShow(); });
+    olEl.addEventListener('focusin', () => { OL.focus = true; olShow(); });
+    olEl.addEventListener('focusout', () => setTimeout(() => { if (olEl.contains(document.activeElement)) return; OL.focus = false; OL.esc = false; olShow(); }, 0));
+    olEl.addEventListener('keydown', onOlKey);
+    railEl.addEventListener('click', ev => { if (o.phone) return openSheet(ev.detail === 0); if (OL.touch) { OL.tap = !OL.open; olShow(); } });
+    panelEl.addEventListener('click', ev => {
+      const b = ev.target.closest && ev.target.closest('.nb-otl-item'); if (!b) return;
+      goTo(b.getAttribute('data-for'));
+      if (OL.touch) { OL.tap = false; olShow(); }
+    });
+    // As the page scrolls (only what scrolls it), the heading being read follows; a scroll that isn't the one going to a heading lets that heading go.
+    function onScroll(ev) {
+      if (!root.isConnected) { document.removeEventListener('scroll', onScroll, true); window.removeEventListener('resize', olSoon); return; }
+      const t = ev.target;
+      if (!(t === document || t === document.documentElement || (t && t.contains && t.contains(root)))) return;
+      if (OL.pin) { if (Date.now() <= OL.pinUntil) OL.pinUntil = Date.now() + 250; else OL.pin = ''; }
+      olSoon();
+    }
+    document.addEventListener('scroll', onScroll, true);
+    window.addEventListener('resize', olSoon);
+
     // The canvas's selection: none (its states show the menu and the bar as drawn).
     function demoSel() {
       const D = o.demo;
@@ -1247,7 +1455,7 @@ export function makeNotes(G) {
     docEl.addEventListener('dragstart', ev => ev.preventDefault());
     docEl.addEventListener('drop', ev => ev.preventDefault());
     docEl.addEventListener('focusin', () => { st.focused = true; placeUi(); });
-    docEl.addEventListener('focusout', () => { setTimeout(() => { if (root.contains(document.activeElement)) return; st.focused = false; st.aa = false; closeMenu(); placeUi(); if (o.phone) drawKeys(null); }, 0); });
+    docEl.addEventListener('focusout', () => { setTimeout(() => { if (root.contains(document.activeElement) && !olEl.contains(document.activeElement)) return; st.focused = false; st.aa = false; closeMenu(); placeUi(); if (o.phone) drawKeys(null); }, 0); });
     const onSel = () => {
       if (!root.isConnected) { document.removeEventListener('selectionchange', onSel); if (window.visualViewport) { window.visualViewport.removeEventListener('resize', onViewport); window.visualViewport.removeEventListener('scroll', onViewport); } return; }
       if (st.comp) return;
@@ -1269,6 +1477,7 @@ export function makeNotes(G) {
       const key = String(o.key || ''), md = String(o.md == null ? '' : o.md);
       if (key !== st.key || (md !== st.sent && md !== st.md) || JSON.stringify(was.demo || null) !== JSON.stringify(o.demo || null)) load(md, key);
       else if (!!was.editable !== !!o.editable || !!was.phone !== !!o.phone) { st.rows.forEach(r => { r.sig = ''; }); render(); }
+      else if (!!was.outline !== !!o.outline) drawOutline();
       if (o.focusAt != null && !st.focusedOnce && o.editable) { st.focusedOnce = true; setTimeout(() => api.focus(o.focusAt), 0); }
     }
     return { root, api, update };

@@ -2,23 +2,30 @@
 // which the debug-only `-dev <name>` launch argument sets) and the AI stood in for (tests/stub-ai.mjs): the same story as the web's own tests (notes-ui, notes-editor,
 // sources-ui, deck-tabs-ui), in flows that each set up their own people. The Sources come from ios/tests/js/guide-seed.mjs, which makes them with the server's own make
 // steps (a PDF, a recording kept as thirteen files that is almost two hours long, a video, pictures, pasted text, a topic).
-//   01  a deck with no Guide shows a blank note on Notes (Title, Start writing); a tap opens the Notes page there; what is typed is saved by itself; Done lands on Notes
+//   01  a deck with no notes says No notes yet on Notes, with New note, which opens the Notes page (the Guide); what is typed is saved by itself; Done lands on
+//       Notes, which list the note
 //   02  writing: the shortcuts (# - [] 1. ---), Enter and Backspace, Aa (Heading, Text), To-do and Bullets, Bold on selected words, a link, the keyboard-down button,
 //       the bar above the keyboard and the header staying put
-//   03  reading: the heading, table, boxes and quote are drawn, and nothing in a page can run: a script, an onerror picture, a javascript: link, an outside picture
+//   03  the page drawn (opened from the Notes list): the heading, table, boxes and quote, and nothing in a page can run: a script, an onerror picture, a javascript:
+//       link, an outside picture
 //   04  Older versions (⋯) lists them; Restore brings one back and keeps what it replaced
-//   05  pages: + makes one, named by its first heading; Rename page and Delete page (asks first) from ⋯; at ten pages + goes away
+//   05  pages nest (V176, V185): Add a page inside (under the note, and in ⋯) makes one inside the open page, named by its first heading; the page's path;
+//       Pages inside; the deck's Notes as a tree (further in, an arrow that hides and shows, + on a row, New note); Rename page and Delete page (asks first;
+//       what was inside moves up); at ten pages Add a page inside goes away
 //   06  Make cards (⋯) from the page, or from just what is selected
-//   07  the deck page's Notes: toggles open and close (and this phone remembers), a section folds, a link to a heading jumps up to it, page tabs, a tap on the
-//       words opens the Notes page at that line, Done comes back to Notes
-//   08  a deck you only study shows its Notes with no editing, has no Sources tab, and has no Notes page to write in
+//   07  the deck page's Notes list the notes (V176); each opens its Notes page, where toggles open and close (and this phone remembers), a section folds, and a
+//       tap on the words puts the caret there; Done comes back to Notes
+//   08  a deck you only study lists its notes (no New note, no +) and opens its Notes page to read (no ⋯, no Add a page inside), and has no Sources tab
 //   09  the Sources list, each kind's viewer, a recording of thirteen files plays the part that covers the card's time, a PDF opens at its page, a video opens at the time
 //   10  the "Made from" line in the card editor opens the source at that spot (Sources, viewer open); More cards from a source; Delete (asks first: the file goes, the cards stay,
 //       the line turns to plain words)
 //   11  a shared deck's page shows its Notes (a toggle anyone can open) and "Made from 2 sources", with no names
-//   12  the deck cover's Make cards and New card (no Add cards menu); dark mode; nothing says "AI generated"
+//   12  the deck's + menu (New card, Make cards, Notes; no Add cards menu); dark mode; nothing says "AI generated"
 //   13  a toggle and a section: "> " makes a toggle, Enter writes inside it, it closes and opens, a heading's ▸ folds its section; none of that changes the words saved,
-//       and this phone remembers it (the Notes page and the deck page alike)
+//       and this phone remembers it (opened again, and from the deck page's Notes)
+//   14  the outline: the rail of the headings at the Notes page's right; a tap opens their tree in Lucida's own sheet (the current one selected); a heading scrolls
+//       there and closes it (a closed toggle's heading opens it, a folded section's subheading unfolds it); a heading typed joins it; no rail while a line is written;
+//       none on the deck page's Notes tab; a shared deck's, once shown in full, staying in view as the page scrolls
 // Run it with ios/tools/e2e-guide.sh (it starts a fresh server on port 3934 and the stand-in AI on 3939). It only runs when LUCIDA_GUIDE is set, so the other scripts keep running
 // their own checks alone.
 import XCTest
@@ -216,7 +223,13 @@ final class GuideTests: XCTestCase {
     Thread.sleep(forTimeInterval: 0.6)
   }
   /// ⋯, then one of its rows.
-  private func more(_ app: XCUIApplication, _ row: String) { tap(app.buttons["More"].firstMatch, "More"); tap(app.buttons[row].firstMatch, row) }
+  /// (the menu's row: Add a page inside is also a button under the note, which carries an identifier; the menu's rows carry none)
+  private func more(_ app: XCUIApplication, _ row: String) {
+    tap(app.buttons["More"].firstMatch, "More")
+    tap(app.buttons.matching(NSPredicate(format: "label == %@ AND NOT (identifier BEGINSWITH %@)", row, "notes.")).firstMatch, row)
+  }
+  /// A note in the deck's Notes list (V176), and a page's place in a page's path.
+  private func noteRow(_ app: XCUIApplication, _ words: String) -> XCUIElement { app.buttons.matching(NSPredicate(format: "identifier == %@ AND label == %@", "notes.row", words)).firstMatch }
   private func done(_ app: XCUIApplication) { tap(app.buttons["backButton"], "Done") }
   private func saved(_ who: String, _ id: String, page: String = "") -> String { page.isEmpty ? guide(who, id).text : (guide(who, id).pages.first { $0["id"] as? String == page }?["text"] as? String ?? "") }
   private func shown(_ e: XCUIElement) -> Bool { e.exists && e.frame.height > 1 && e.isHittable }
@@ -227,20 +240,19 @@ final class GuideTests: XCTestCase {
     let who = "gdn" + run, name = "Plain deck " + run
     let id = person(who, deck: name, cards: 2)
     let app = launch(as: who, ["-open", "deck:" + name])
-    check(wait(buttonStarting(app, "Cards 2")), "the deck page has a Cards tab with the number of cards")
-    check(selected(buttonStarting(app, "Cards")) && !selected(buttonStarting(app, "Notes")) && !selected(buttonStarting(app, "Sources")), "it opens on Cards")
-    check(button(app, "Notes").exists && buttonStarting(app, "Diagrams").exists && button(app, "Sources").exists, "with Notes, Diagrams and Sources beside it (a deck of your own)")
+    check(wait(button(app, "Cards")) && selected(button(app, "Cards")) && !selected(button(app, "Notes")) && !selected(button(app, "Sources")), "the deck page opens on Cards")
+    check(button(app, "Notes").exists && button(app, "Diagrams").exists && button(app, "Sources").exists, "with Sources, Notes and Diagrams beside it (a deck of your own; no counts)")
     check(textHas(app, "Question 1 of").exists && !line(app, "Title").exists, "the cards show, and no Notes in the way")
     tap(button(app, "Notes"), "Notes")
-    check(wait(line(app, "Title")) && line(app, "Start writing").exists, "Notes with no Guide is a blank note: a heading that says Title and a line that says Start writing")
-    // (The deck's cover has its own Make cards, at the top: the Notes add theirs once there is something to make cards from.)
-    check(!button(app, "Edit").exists && makeButtons(app) == 1 && !textHas(app, "Question 1 of").exists, "(no Edit button or Make cards of their own yet, and the cards give way)")
+    // (V176: the Notes tab is a list of notes, like the Cards tab)
+    check(wait(text(app, "No notes yet")) && app.buttons["notes.new"].exists && app.textViews.count == 0, "Notes with nothing written says No notes yet, with New note (no page of notes in the tab)")
     snap("guide-empty")
-    tap(line(app, "Title"), "the blank note's title")
-    check(onPage(app) && eventually(5) { self.focusedValue(app) == "Title" }, "a tap opens the Notes page with the caret in the title")
+    tap(app.buttons["notes.new"], "New note")
+    check(onPage(app) && eventually(5) { self.focusedValue(app) == "Title" }, "New note opens the Notes page (the Guide itself, while it has no words) with the caret in its title")
+    check(guide(who, id).pages.isEmpty, "(and makes no page: the Guide is the first note)")
     check(wait(app.buttons["Text style"]) && app.buttons["To-do"].exists && app.buttons["Bullets"].exists && app.buttons["Toggle"].exists && app.buttons["Hide the keyboard"].exists,
           "Lucida's own bar is above the keyboard: Aa, To-do, Bullets, Toggle, the keyboard-down button")
-    check(app.buttons["More"].exists && app.buttons["Add a page"].exists && text(app, name).exists, "with ⋯, + for a page, and the deck's name")
+    check(app.buttons["More"].exists && app.buttons["notes.addPage"].exists && text(app, name).exists && app.descendants(matching: .any)["notes.path"].exists, "with ⋯, Add a page inside, the deck's name and the page's path")
     check(!button(app, "Write").exists && !button(app, "Preview").exists, "and no Write or Preview: the page is always formatted")
     noLabel(app, "the Notes page")
     type(app, "Cell Biology: Exam 1\nEverything for the first exam.")
@@ -248,19 +260,19 @@ final class GuideTests: XCTestCase {
     check(wait(app.staticTexts["saveLabel"]) && eventually(4) { app.staticTexts["saveLabel"].label == "Saved" }, "the page says Saved")
     check(line(app, "Cell Biology: Exam 1").exists && (line(app, "Cell Biology: Exam 1").label == "Heading"), "the title is a heading")
     done(app)
-    check(wait(line(app, "Cell Biology: Exam 1")) && selected(button(app, "Notes")), "Done goes back to the deck's Notes, which read the page")
-    check(makeButtons(app) == 2, "with Make cards of their own now (beside the cover's)")
+    let row = app.buttons.matching(NSPredicate(format: "identifier == %@ AND label == %@", "notes.row", "Cell Biology: Exam 1")).firstMatch
+    check(wait(row) && selected(button(app, "Notes")) && (row.value as? String ?? "").contains("Everything for the first exam."), "Done goes back to the deck's Notes, which list the note by its title, with its first words")
     noLabel(app, "the Notes")
     // a tab that isn't there opens Cards
     let app2 = launch(as: who, ["-open", "deck:" + name, "-deckTab", "nowhere"])
-    check(wait(buttonStarting(app2, "Cards 2")) && selected(buttonStarting(app2, "Cards")) && !selected(button(app2, "Notes")), "a tab that isn’t there opens Cards")
+    check(wait(button(app2, "Cards")) && selected(button(app2, "Cards")) && !selected(button(app2, "Notes")), "a tab that isn’t there opens Cards")
     // a deck with no cards but a Guide keeps its page, and says so on Cards
     let bare = "Only a guide " + run, bid = person(who, deck: bare, cards: 0)
     act(who, "guide.save", ["deckId": bid, "text": "# Plan\n\nWrite the cards later."])
     let app3 = launch(as: who, ["-open", "deck:" + bare])
-    check(wait(buttonStarting(app3, "Cards 0")) && button(app3, "Notes").exists && wait(text(app3, "No cards in this deck yet.")), "a deck with no cards but a Guide keeps its tabs, and says so on Cards")
+    check(wait(button(app3, "Cards")) && button(app3, "Notes").exists && wait(text(app3, "No cards in this deck yet.")), "a deck with no cards but a Guide keeps its tabs, and says so on Cards")
     tap(button(app3, "Notes"), "Notes")
-    check(wait(line(app3, "Plan")) && line(app3, "Write the cards later.").exists, "and its Notes show the Guide")
+    check(wait(app3.buttons.matching(NSPredicate(format: "identifier == %@ AND label == %@", "notes.row", "Plan")).firstMatch), "and its Notes list the Guide")
   }
 
   // ---------- 02: writing ----------
@@ -348,7 +360,11 @@ final class GuideTests: XCTestCase {
     let HOSTILE = "# A heading\n\nSome **bold** words and `code`.\n\n- [x] done\n- [ ] todo\n\n| a | b |\n| - | - |\n| 1 | 2 |\n\n> a quote\n\n<script>window.__pwn = 2</script>\n\n<img src=x onerror=\"window.__pwn = 1\">\n\n[click me](javascript:window.__pwn=3)\n\n[fine](https://example.com/page)\n\n![remote](http://evil.example/p.png)\n\n![mine](\(mine))"
     act(who, "guide.save", ["deckId": id, "text": HOSTILE])
     let app = launch(as: who, ["-open", "deck:" + name, "-deckTab", "notes"])
-    check(wait(line(app, "A heading")) && line(app, "A heading").label == "Heading", "the Notes draw the heading as a heading")
+    // (V176: the Notes tab lists the note; its page draws it)
+    let row = noteRow(app, "A heading")
+    check(wait(row), "the Notes tab lists the note by its heading")
+    tap(row, "the note")
+    check(onPage(app) && wait(line(app, "A heading")) && line(app, "A heading").label == "Heading", "its Notes page draws the heading as a heading")
     check(line(app, "Some bold words and code.").exists, "the paragraph, its marks drawn (no stars or backticks)")
     check(line(app, "a").exists && line(app, "b").exists && line(app, "1").exists && line(app, "2").exists, "the table's cells")
     check(app.descendants(matching: .any).matching(identifier: "notes.box").count == 2 && app.descendants(matching: .any)["Done"].exists && app.descendants(matching: .any)["Not done"].exists,
@@ -361,9 +377,6 @@ final class GuideTests: XCTestCase {
     check(line(app, "fine").identifier == "links: fine -> https://example.com/page", "a normal link is one, to its address")
     check(!app.images["remote"].exists && app.staticTexts["remote"].exists, "an outside picture is not shown: its description is")
     check(wait(app.images["mine"], 15), "only the app’s own pictures show (\(mine))")
-    // the same words on the Notes page
-    tap(line(app, "A heading"), "the heading")
-    check(onPage(app) && line(app, "A heading").exists && lineHas(app, "<script>").exists, "a tap opens the same page to write in, drawn the same")
     check(saved(who, id) == HOSTILE, "and opening it changes nothing that's saved")
   }
 
@@ -399,47 +412,84 @@ final class GuideTests: XCTestCase {
     let who = "gdg" + run, name = "Pages deck " + run
     let id = person(who, deck: name)
     act(who, "guide.save", ["deckId": id, "text": "First draft"])
-    let app = openPage(who, deck: name)
-    check(button(app, "Guide").exists && button(app, "Add a page").exists, "the Guide has a pill, and + for a page")
-    tap(button(app, "Add a page"), "Add a page")
-    check(eventually { self.guide(who, id).pages.count == 1 }, "+ makes one")
-    check(wait(button(app, "New page")) && eventually(6) { self.focusedValue(app) == "Title" }, "it opens as a blank note, with the caret in its title")
+    func crumb(_ app: XCUIApplication, _ words: String) -> XCUIElement { app.descendants(matching: .any)["notes.path"].buttons[words] }
+    func inside(_ app: XCUIApplication, _ words: String) -> XCUIElement { app.buttons.matching(NSPredicate(format: "identifier == %@ AND label == %@", "notes.inside", words)).firstMatch }
+    func row(_ app: XCUIApplication, _ words: String) -> XCUIElement { app.buttons.matching(NSPredicate(format: "identifier == %@ AND label == %@", "notes.row", words)).firstMatch }
+    func pageId(_ title: String) -> String { guide(who, id).pages.first { $0["title"] as? String == title }?["id"] as? String ?? "" }
+    func parentOf(_ title: String) -> String { guide(who, id).pages.first { $0["title"] as? String == title }?["parent"] as? String ?? "?" }
+    var app = openPage(who, deck: name)
+    // (V176: the page pills are the page's path; pages nest like Notion's)
+    check(crumb(app, "Guide").exists && app.buttons["notes.addPage"].exists, "the Guide's path is just the Guide, and Add a page inside is under the note")
+    tap(app.buttons["notes.addPage"], "Add a page inside")
+    check(eventually { self.guide(who, id).pages.count == 1 }, "Add a page inside makes one")
+    check(eventually { (self.guide(who, id).pages.first?["parent"] as? String) == "main" }, "inside the Guide")
+    check(wait(crumb(app, "New page")) && crumb(app, "Guide").exists && eventually(6) { self.focusedValue(app) == "Title" }, "it opens as a blank note with the caret in its title, its path Guide / New page")
     type(app, "Mnemonics\nP-M-A-T")
     let pid = guide(who, id).pages.first?["id"] as? String ?? ""
     check(eventually { self.saved(who, id, page: pid) == "# Mnemonics\n\nP-M-A-T\n" }, "a page has its own words, saved as they are typed")
-    check(eventually { (self.guide(who, id).pages.first?["title"] as? String) == "Mnemonics" } && wait(button(app, "Mnemonics")), "and a new page is called by its first heading")
+    check(eventually { (self.guide(who, id).pages.first?["title"] as? String) == "Mnemonics" } && wait(crumb(app, "Mnemonics")), "and a new page is called by its first heading")
     check(guide(who, id).text == "First draft", "the Guide's own words are untouched")
-    tap(button(app, "Guide"), "the Guide's pill")
-    check(wait(line(app, "First draft")), "the Guide's pill shows the Guide")
-    tap(button(app, "Mnemonics"), "the page's pill")
-    check(wait(line(app, "P-M-A-T")), "the page's pill shows the page")
+    tap(crumb(app, "Guide"), "the Guide in the path")
+    check(wait(line(app, "First draft")) && wait(inside(app, "Mnemonics")), "the path goes back to the Guide, which lists the page inside it")
+    tap(inside(app, "Mnemonics"), "Mnemonics, inside the Guide")
+    check(wait(line(app, "P-M-A-T")), "and a tap opens it")
     snap("guide-page")
+    // a page inside a page: ⋯ › Add a page inside
+    more(app, "Add a page inside")
+    check(eventually { self.guide(who, id).pages.count == 2 }, "⋯ › Add a page inside makes another")
+    check(eventually(6) { self.focusedValue(app) == "Title" }, "(a blank note)")
+    type(app, "Mitosis phases\nProphase first.")
+    check(eventually { parentOf("Mitosis phases") == pid } && wait(crumb(app, "Mitosis phases")) && crumb(app, "Mnemonics").exists && crumb(app, "Guide").exists, "inside the page that was open: its path is Guide / Mnemonics / Mitosis phases")
+    snap("guide-nested")
     // Rename page, from ⋯
+    tap(crumb(app, "Mnemonics"), "Mnemonics in the path")
+    check(wait(inside(app, "Mitosis phases")), "(the page lists the one inside it)")
     more(app, "Rename page")
     let nameField = app.textFields["Page name"]
     check(wait(nameField) && (nameField.value as? String) == "Mnemonics", "Rename page shows the page's name in a field")
     nameField.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap()
     nameField.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 9) + "Memory aids\n")
-    check(eventually { (self.guide(who, id).pages.first?["title"] as? String) == "Memory aids" } && wait(button(app, "Memory aids")), "and saves the new name")
-    // Delete page asks first
+    check(eventually { (self.guide(who, id).pages.first?["title"] as? String) == "Memory aids" } && wait(crumb(app, "Memory aids")), "and saves the new name (the path says it)")
+    // the deck's Notes: a tree (V185)
+    done(app)
+    check(wait(row(app, "Guide")) && row(app, "Memory aids").exists && row(app, "Mitosis phases").exists, "the deck's Notes are a tree of the notes and the pages inside them")
+    check(row(app, "Memory aids").frame.minX > row(app, "Guide").frame.minX && row(app, "Mitosis phases").frame.minX > row(app, "Memory aids").frame.minX, "each page further in under the one it is inside")
+    let hide = app.buttons["Hide the pages inside Memory aids"]
+    check(hide.exists, "a note with pages inside has an arrow")
+    tap(hide, "the arrow")
+    check(gone(row(app, "Mitosis phases"), 4) && (row(app, "Memory aids").value as? String ?? "").contains("1 page inside"), "it hides them (and says how many are inside)")
+    tap(app.buttons["Show the pages inside Memory aids"], "the arrow again")
+    check(wait(row(app, "Mitosis phases")), "and shows them again")
+    snap("notes-tree")
+    tap(app.buttons["Add a page inside Mitosis phases"], "the + on Mitosis phases")
+    check(onPage(app) && eventually { self.guide(who, id).pages.count == 3 } && eventually { self.guide(who, id).pages.contains { $0["parent"] as? String == pageId("Mitosis phases") } }, "+ on a row makes a page inside that note")
+    check(eventually(6) { self.focusedValue(app) == "Title" }, "and opens it, ready to name")
+    done(app)
+    tap(app.buttons["notes.new"], "New note")
+    check(onPage(app) && eventually { self.guide(who, id).pages.count == 4 } && eventually { self.guide(who, id).pages.contains { ($0["parent"] as? String ?? "?") == "" } }, "New note, with words in the Guide, makes a note at the top")
+    done(app)
+    // Delete page asks first; the pages inside it move up to where it was
+    tap(row(app, "Memory aids"), "Memory aids")
     more(app, "Delete page")
     check(wait(any(app, "Delete the page “Memory aids”?")), "Delete page asks first, with the page’s name")
     dismissDialog(app)
-    check(gone(any(app, "Delete the page “Memory aids”?")) && guide(who, id).pages.count == 1, "closing it keeps the page")
+    check(gone(any(app, "Delete the page “Memory aids”?")) && guide(who, id).pages.count == 4, "closing it keeps the page")
     more(app, "Delete page")
     check(wait(any(app, "Delete the page “Memory aids”?")), "it asks again")
     tap(dialogButton(app, "Delete"), "Delete")
-    check(eventually { self.guide(who, id).pages.isEmpty }, "Delete removes the page")
-    check(wait(line(app, "First draft")) && !button(app, "Memory aids").exists, "and the Guide shows again")
+    check(eventually { self.guide(who, id).pages.count == 3 } && eventually { parentOf("Mitosis phases") == "main" }, "Delete removes the page, and the page inside it moves up to the Guide")
+    check(wait(line(app, "First draft")), "and the Guide shows again")
     // a page named like a source, however long its name
     let long = "Lecture 3 slides, with every term the first exam asks for and then some more besides"
     act(who, "guide.page.add", ["deckId": id, "title": long])
-    let again = openPage(who, deck: name)
-    check(wait(button(again, String(long.prefix(80)).trimmingCharacters(in: .whitespaces))), "a page named like a source, and as long as that, has its pill (its first 80 letters)")
-    // at ten pages + goes away
+    app = launch(as: who, ["-open", "deck:" + name, "-deckTab", "notes"])
+    check(wait(row(app, String(long.prefix(80)).trimmingCharacters(in: .whitespaces))), "a page named like a source, and as long as that, is in the Notes (its first 80 letters)")
+    // at ten pages Add a page inside goes away
     for i in 0..<10 { act(who, "guide.page.add", ["deckId": id, "title": "P\(i)"]) }
     let app2 = openPage(who, deck: name)
-    check(wait(button(app2, "Guide")) && !button(app2, "Add a page").exists, "at ten pages, + goes away")
+    check(wait(crumb(app2, "Guide")) && !app2.buttons["notes.addPage"].exists, "at ten pages, Add a page inside goes away")
+    tap(app2.buttons["More"].firstMatch, "More")
+    check(wait(app2.buttons["Older versions"]) && !app2.buttons["Add a page inside"].exists, "(⋯ too)")
   }
 
   // ---------- 06: Make cards from the page ----------
@@ -474,12 +524,14 @@ final class GuideTests: XCTestCase {
   func test07DeckGuide() throws {
     try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
     let who = S("owner"), deckId = S("deckId")
-    let n = cards(who, in: deckId).count
     var app = launch(as: who, ["-open", "deck:Cell Biology", "-deckTab", "notes"])
-    check(wait(line(app, "Cell Biology: Exam 1")), "Notes read the Guide (its title, as a heading)")
-    check(buttonStarting(app, "Cards \(n)").exists && selected(button(app, "Notes")) && buttonStarting(app, "Sources \(sourceCount)").exists, "the tabs say how many cards and Sources (Cards \(n), Sources \(sourceCount)), and Notes is the one on show")
-    check(lineHas(app, "Everything for the first exam").exists && !textHas(app, "Question 1 of").exists, "the Guide shows, the cards don’t")
-    check(button(app, "Make cards").exists && button(app, "Guide").exists && button(app, "Lecture 3 summary").exists && button(app, "Mnemonics").exists, "Make cards, and the pages as tabs")
+    // (V176: the Notes tab lists the notes; each opens as its own page)
+    let main = noteRow(app, "Cell Biology: Exam 1")
+    check(wait(main) && (main.value as? String ?? "").contains("Everything for the first exam"), "Notes list the Guide by its title, with its first words")
+    check(selected(button(app, "Notes")) && button(app, "Cards").exists && button(app, "Sources").exists, "Notes is the tab on show, beside Cards and Sources (no counts)")
+    check(noteRow(app, "Lecture 3 summary").exists && noteRow(app, "Mnemonics").exists && !textHas(app, "Question 1 of").exists && app.textViews.count == 0, "and its pages, not the cards (and no page of notes in the tab)")
+    tap(main, "the Guide in the list")
+    check(onPage(app) && wait(line(app, "Cell Biology: Exam 1")), "a tap opens its Notes page")
     // toggles: closed at first on this phone; opened, and remembered
     let idea = line(app, "The mitochondrion makes most of the cell’s ATP"), inside = line(app, "It has two membranes. The inner one folds into cristae.")
     check(idea.exists && !inside.exists, "a toggle shows its line, and what it holds is hidden")
@@ -488,7 +540,7 @@ final class GuideTests: XCTestCase {
     opens.element(boundBy: 0).tap()
     check(wait(inside) && opens.element(boundBy: 0).label == "Close", "a tap on ▸ opens it")
     snap("deck-notes-toggle-open")
-    app = launch(as: who, ["-open", "deck:Cell Biology", "-deckTab", "notes"])
+    app = launch(as: who, ["-open", "guide:Cell Biology"])
     check(wait(line(app, "It has two membranes. The inner one folds into cristae.")), "this phone remembers it's open")
     app.buttons.matching(identifier: "notes.toggle").element(boundBy: 0).tap()
     check(gone(line(app, "It has two membranes. The inner one folds into cristae.")), "and another tap closes it")
@@ -500,29 +552,25 @@ final class GuideTests: XCTestCase {
     check(saved(who, deckId) == S("guide"), "folding is how this phone shows the page, not a change to it")
     app.buttons["Show this section"].firstMatch.tap()
     check(wait(line(app, "Glycolysis, step by step")), "and it unfolds")
-    // a link to a heading jumps up to it
-    app.swipeUp(); app.swipeUp()
-    let back = lineHas(app, "Back to the top"), top = line(app, "Cell Biology: Exam 1")
-    check(wait(back) && back.identifier.contains("Back to the top -> #cell-biology-exam-1"), "a link to a heading is kept as it was written")
-    back.coordinate(withNormalizedOffset: CGVector(dx: 0.08, dy: 0.5)).tap()
-    check(eventually(8) { top.exists && top.isHittable && top.frame.minY > 40 && top.frame.maxY < 500 }, "a tap on it scrolls up to that heading (now at \(pt(top.frame.minY)))")
-    // the pages
-    tap(button(app, "Lecture 3 summary"), "the page tab")
-    check(wait(line(app, "Lecture 3")) && line(app, "NADH gives up its electrons.").exists, "a page tab shows that page (its heading and its list)")
+    // the pages: each a note of its own in the list
+    done(app)
+    tap(noteRow(app, "Lecture 3 summary"), "Lecture 3 summary in the list")
+    check(onPage(app) && wait(line(app, "Lecture 3")) && line(app, "NADH gives up its electrons.").exists, "a page opens as its own (its heading and its list)")
     check(line(app, "NADH gives up its electrons.").label == "List", "with its numbered items")
-    tap(button(app, "Mnemonics"), "the other page tab")
+    check(app.descendants(matching: .any)["notes.path"].buttons["Lecture 3 summary"].exists, "its path is itself (a note at the top)")
+    done(app)
+    tap(noteRow(app, "Mnemonics"), "Mnemonics in the list")
     check(wait(line(app, "PMAT for the phases of mitosis")), "the other shows its bullets")
-    // a tap on the words opens the Notes page at that line
+    // a tap on the words puts the caret there
     tapEnd(line(app, "PMAT for the phases of mitosis"))
-    check(onPage(app) && eventually(6) { self.focusedValue(app) == "PMAT for the phases of mitosis" }, "a tap on the words opens the Notes page on that page, with the caret in that line")
-    check(button(app, "Mnemonics").isSelected, "its pill is the one lit")
+    check(eventually(6) { self.focusedValue(app) == "PMAT for the phases of mitosis" }, "a tap on the words puts the caret in that line")
     type(app, "!")
     let g2 = (seed["pages"] as? [String: String])?["g2"] ?? ""
     check(eventually { self.saved(who, deckId, page: g2).contains("- **PMAT** for the phases of mitosis!") }, "what is typed goes where it was tapped: " + saved(who, deckId, page: g2).replacingOccurrences(of: "\n", with: "\\n"))
     app.typeText(XCUIKeyboardKey.delete.rawValue)
     check(eventually { self.saved(who, deckId, page: g2).hasPrefix("- **PMAT** for the phases of mitosis\n") }, "(and taken out again)")
     done(app)
-    check(wait(line(app, "PMAT for the phases of mitosis")) && selected(button(app, "Notes")), "Done comes back to Notes")
+    check(wait(noteRow(app, "Mnemonics")) && selected(button(app, "Notes")), "Done comes back to Notes")
     noLabel(app, "the deck’s Notes")
   }
 
@@ -535,19 +583,32 @@ final class GuideTests: XCTestCase {
     check(buttonStarting(app, "Cards").exists && button(app, "Notes").exists && !button(app, "Sources").exists && !buttonStarting(app, "Sources").exists, "it has Cards and Notes, and no Sources tab")
     check(!button(app, "Add cards").exists, "and no Add cards")
     tap(button(app, "Notes"), "Notes")
-    check(wait(line(app, "Cell Biology: Exam 1")), "the Guide shows")
-    check(!button(app, "Edit").exists && !button(app, "Make cards").exists && !line(app, "Title").exists, "with no Make cards and nothing to write in")
-    check(button(app, "Lecture 3 summary").exists && button(app, "Mnemonics").exists, "and its pages")
+    // (V176: the Notes tab is a list of notes; a deck you only study opens its Notes page to read)
+    let note = app.buttons.matching(NSPredicate(format: "identifier == %@ AND label == %@", "notes.row", "Cell Biology: Exam 1")).firstMatch
+    check(wait(note), "the Notes tab lists its notes")
+    check(!app.buttons["notes.new"].exists && !app.buttons.matching(identifier: "notes.addInside").firstMatch.exists, "with no New note and no + on its rows")
+    tap(note, "the note")
+    check(onPage(app) && wait(line(app, "Cell Biology: Exam 1")), "a tap opens its Notes page, to read")
+    check(!app.buttons["More"].exists && !app.buttons["notes.addPage"].exists, "with no ⋯ and no Add a page inside")
     app.buttons.matching(identifier: "notes.toggle").element(boundBy: 0).tap()
     check(wait(line(app, "It has two membranes. The inner one folds into cristae.")), "its toggles open for someone studying it too")
+    // a link to a heading jumps up to it (a page being read)
+    app.swipeUp(); app.swipeUp()
+    let back = lineHas(app, "Back to the top"), top = line(app, "Cell Biology: Exam 1")
+    check(wait(back) && back.identifier.contains("Back to the top -> #cell-biology-exam-1"), "a link to a heading is kept as it was written")
+    back.coordinate(withNormalizedOffset: CGVector(dx: 0.08, dy: 0.5)).tap()
+    check(eventually(8) { top.exists && top.frame.minY > 40 && top.frame.maxY < 500 }, "a tap on it scrolls up to that heading (now at \(pt(top.frame.minY)))")
     tap(line(app, "Cell Biology: Exam 1"), "the words")
-    check(!app.buttons["backButton"].waitForExistence(timeout: 3) && button(app, "Notes").exists, "a tap on the words doesn't open a page to write in")
+    Thread.sleep(forTimeInterval: 1)
+    check(!focused(app).exists && !app.buttons["Hide the keyboard"].exists, "a tap on the words writes nothing (no caret, no keyboard)")
+    done(app)
+    check(wait(note), "Done comes back to the list")
     // an address for a tab that isn't there falls back to Cards
     app = launch(as: who, ["-open", "deck:Cell Biology", "-deckTab", "sources"])
     check(wait(buttonStarting(app, "Cards")) && selected(buttonStarting(app, "Cards")) && !text(app, "SOURCES").exists, "asking for Sources lands on Cards")
-    // and there is no Notes page to write in
+    // its Notes page opened straight away reads too
     app = launch(as: who, ["-open", "guide:Cell Biology"])
-    check(wait(button(app, "Notes")) && !app.buttons["backButton"].exists, "a deck someone else shares has no Notes page to write in (it stays on the deck page)")
+    check(onPage(app) && wait(line(app, "Cell Biology: Exam 1")) && !app.buttons["More"].exists, "a deck someone else shares opens its Notes page to read, with nothing to change")
     // the deck a studier has no Guide for: Notes isn't there at all
     let plain = "Studied plain " + run
     let owner = "gdo2" + run, id = person(owner, deck: plain, cards: 1)
@@ -703,7 +764,7 @@ final class GuideTests: XCTestCase {
     check(eventually { self.media(who, file) == 404 }, "and its file is gone")
     check(cards(who, in: deckId).count == before, "the cards stay")
     check(gone(button(app, "More cards")) && gone(app.buttons["Open Lecture 3 slides"]), "the viewer closes and the list lost it")
-    check(buttonStarting(app, "Sources \(sourceCount - 1)").exists, "the tab counts one less now")
+    check(app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Open ")).count == sourceCount - 1, "the list has one less now (tabs show no counts)")
     // the card still says where it came from, in plain words
     app = launch(as: who, ["-open", "deck:Cell Biology"])
     tap(cardRow(app, rowText), "the card made from the PDF")
@@ -735,19 +796,22 @@ final class GuideTests: XCTestCase {
     act(who, "guide.save", ["deckId": id, "text": "# Dark heading\n\n- [x] done\n- [ ] todo\n\n:::toggle A toggle\nInside it.\n:::\n\n| a | b |\n| - | - |\n| 1 | 2 |\n\n> a quote\n\nSome `code` here."])
     act(who, "settings.update", ["patch": ["look": "dark"]])
     let app = launch(as: who, ["-open", "deck:" + name])
-    check(wait(button(app, "New card")) && button(app, "Make cards").exists && !button(app, "Add cards").exists, "the deck’s cover has Make cards and New card, plainly (no Add cards menu)")
+    // (the deck page's + menu: New card, Make cards and the rest, wt-full's Study ▾ and +)
+    tap(button(app, "Add"), "the deck's +")
+    check(wait(button(app, "New card")) && button(app, "Make cards").exists && button(app, "Notes").exists && !button(app, "Add cards").exists, "the deck’s + has New card, Make cards and Notes (no Add cards menu)")
     tap(button(app, "New card"), "New card")
     check(wait(text(app, "New card")) && (app.textViews.count > 0 || app.textFields.count > 0), "New card opens the card editor")
     tap(button(app, "Cancel"), "Cancel")
+    tap(button(app, "Add"), "the deck's +")
     tap(button(app, "Make cards"), "Make cards")
     check(wait(button(app, "A topic")) && button(app, "Upload").exists, "Make cards opens the maker")
     tap(button(app, "Close"), "Close")
     // dark
-    tap(button(app, "Notes"), "Notes")
-    check(wait(line(app, "Dark heading")) && line(app, "a quote").exists, "in dark mode the Notes read")
+    tap(app.buttons.matching(NSPredicate(format: "label == %@ AND NOT (identifier BEGINSWITH %@)", "Notes", "notes.")).firstMatch, "Notes")
+    check(wait(noteRow(app, "Dark heading")), "in dark mode the Notes list the note")
     snap("dark-notes")
-    tap(line(app, "Dark heading"), "the heading")
-    check(onPage(app) && line(app, "Dark heading").exists, "and the Notes page opens")
+    tap(noteRow(app, "Dark heading"), "the note")
+    check(onPage(app) && wait(line(app, "Dark heading")) && line(app, "a quote").exists, "and its Notes page opens and reads")
     snap("dark-page")
     noLabel(app, "dark mode")
   }
@@ -787,10 +851,97 @@ final class GuideTests: XCTestCase {
     tap(app.buttons.matching(identifier: "notes.toggle").firstMatch, "the toggle's ▸")
     check(wait(line(app, "Why it matters.")), "the toggle opens again")
     snap("guide-toggle-open")
+    // (V176: the deck page's Notes list the note; it opens again the same way)
     done(app)
-    check(wait(line(app, "Key idea")) && line(app, "Why it matters.").exists && !line(app, "First words.").exists && app.buttons["Show this section"].exists,
-          "the deck page's Notes show it the same way (the toggle open, the section folded)")
+    tap(noteRow(app, "Toggles"), "the note in the list")
+    check(onPage(app) && wait(line(app, "Key idea")) && line(app, "Why it matters.").exists && !line(app, "First words.").exists && app.buttons["Show this section"].exists,
+          "opened from the deck page's Notes it shows the same way (the toggle open, the section folded)")
     app.buttons["Show this section"].firstMatch.tap()
-    check(wait(line(app, "First words.")), "and unfold it there too")
+    check(wait(line(app, "First words.")), "and unfolds")
+  }
+
+  // ---------- 14: the outline (the owner: "add that thing notion has where it shows a rail tree of sections") ----------
+  func test14Outline() throws {
+    try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
+    let who = "gdo" + run, name = "Outline deck " + run
+    let id = person(who, deck: name)
+    func fill(_ n: Int, _ what: String) -> String { (1...n).map { "A line about \(what), number \($0)." }.joined(separator: "\n\n") }
+    let md = ["# Outline test", "", fill(3, "the start"), "", "## Checklist", "", "- [ ] Glycolysis", "", fill(12, "the checklist"), "", "## The mitochondrion", "", fill(10, "the mitochondrion"),
+              "", "### Its two membranes", "", fill(10, "membranes"), "", ":::toggle More about it", "## Hidden in a toggle", "", "Words inside it.", ":::", "", "## Mnemonics", "", fill(20, "mnemonics"), ""].joined(separator: "\n")
+    act(who, "guide.save", ["deckId": id, "text": md])
+    let names = ["Outline test", "Checklist", "The mitochondrion", "Its two membranes", "Hidden in a toggle", "Mnemonics"]
+    var app = openPage(who, deck: name)
+    let rail = app.buttons["notes.outline"]
+    check(wait(rail) && rail.label == "Outline" && rail.frame.height > 1, "the Notes page has the outline’s rail")
+    let W = app.windows.firstMatch.frame.width
+    check(rail.frame.maxX > W - 30 && rail.frame.minY < 260, "at its right, near the top (at \(pt(rail.frame.minX)), \(pt(rail.frame.minY)))")
+    snap("outline-rail")
+    // the sheet: the tree, the one being read selected
+    func sheet() { tap(app.buttons["notes.outline"], "the rail"); _ = wait(text(app, "Outline"), 6) }
+    func row(_ words: String) -> XCUIElement { app.buttons.matching(NSPredicate(format: "label == %@", words)).firstMatch }
+    // (by its frame: asking whether a line is hittable while the page still moves can stop the test)
+    func near(_ words: String) -> Bool { eventually(6) { let l = self.line(app, words); return l.exists && l.frame.height > 1 && l.frame.minY > 60 && l.frame.minY < 300 } }
+    sheet()
+    check(text(app, "Outline").exists && names.allSatisfy { row($0).exists }, "a tap opens Lucida’s own sheet with every heading’s name")
+    check(row("Outline test").isSelected && !row("Mnemonics").isSelected, "the one being read is the one picked")
+    check(app.alerts.count == 0 && app.sheets.count == 0 && app.popovers.count == 0 && app.menus.count == 0, "(Lucida’s own sheet, not the system’s)")
+    snap("outline-sheet")
+    tap(row("Mnemonics"), "Mnemonics in the sheet")
+    check(gone(text(app, "Outline"), 4) && near("Mnemonics"), "a heading scrolls there and closes the sheet (\(pt(line(app, "Mnemonics").frame.minY)))")
+    sheet()
+    check(row("Mnemonics").isSelected, "and it is now the one being read")
+    // a heading inside a closed toggle: going to it opens the toggle
+    check(!line(app, "Words inside it.").exists, "(the toggle is closed)")
+    tap(row("Hidden in a toggle"), "the heading in the toggle")
+    check(near("Hidden in a toggle") && line(app, "Words inside it.").exists, "a heading inside a closed toggle: it opens, and the page goes there")
+    // a folded section: its subheading is still in the tree, and going to it unfolds the section
+    app.swipeDown(); app.swipeDown(); app.swipeDown(); app.swipeDown(); app.swipeDown()
+    sheet(); tap(row("The mitochondrion"), "The mitochondrion")
+    _ = near("The mitochondrion")
+    let fold = app.buttons.matching(NSPredicate(format: "identifier == %@ AND label == %@", "notes.fold", "Fold this section")).element(boundBy: 2)
+    tap(fold, "The mitochondrion's ▸")
+    check(gone(line(app, "Its two membranes"), 4), "(its section folds: the subheading goes)")
+    sheet()
+    check(row("Its two membranes").exists, "a subheading folded away is still in the tree")
+    tap(row("Its two membranes"), "the folded subheading")
+    check(near("Its two membranes") && !app.buttons["Show this section"].exists, "going to it unfolds the section, as its ▸ does")
+    Thread.sleep(forTimeInterval: 1)
+    check(saved(who, id) == md, "none of that changes the note")
+    // writing: no rail while a line is written (the keyboard up); a heading typed joins the outline
+    let last = line(app, "A line about mnemonics, number 20.")
+    app.swipeUp(); app.swipeUp(); app.swipeUp(); app.swipeUp(); app.swipeUp(); app.swipeUp()
+    tapEnd(last)
+    check(eventually(6) { self.focusedValue(app) == "A line about mnemonics, number 20." }, "(the caret in the last line)")
+    check(gone(app.buttons["notes.outline"], 4), "while a line is written, the rail is hidden so it never covers what is written")
+    snap("outline-writing")
+    type(app, "\n## At the very end")
+    check(eventually { self.saved(who, id).hasSuffix("## At the very end\n") }, "(the new heading is saved)")
+    key(app, "Hide the keyboard")
+    check(wait(app.buttons["notes.outline"], 6), "the keyboard goes, the rail is back")
+    sheet()
+    check(row("At the very end").exists, "and the heading just typed is in the tree")
+    tap(button(app, "Close"), "Close")
+    // the deck page's Notes tab: no rail (it becomes a list of notes)
+    done(app)
+    check(wait(noteRow(app, "Outline test")) && selected(button(app, "Notes")), "back on the deck page’s Notes (the list)")
+    check(!app.buttons["notes.outline"].exists, "the deck page’s Notes tab has no rail (only the Notes page and a shared deck’s Notes do)")
+    // a shared deck's page: cut short there is no rail; Show more, and there is
+    let sh = (api(who, "POST", "/api/social", ["type": "deck.share", "deckId": id, "visibility": "public"]).json as? [String: Any])?["result"] as? [String: Any] ?? [:]
+    let sid = sh["id"] as? String ?? ""
+    check(!sid.isEmpty, "(the deck is shared)")
+    app = launch(as: S("newcomer"), ["-open", "deckpage:/d/" + sid])
+    check(wait(text(app, "NOTES"), 20) && wait(line(app, "Outline test")), "a shared deck’s page reads its Notes")
+    check(!app.buttons["notes.outline"].exists, "cut short (Show more), no rail: what is cut off can’t be scrolled to")
+    let showMore = button(app, "Show more")
+    if wait(showMore, 6) && showMore.frame.maxY > app.windows.firstMatch.frame.height - 40 { app.swipeUp(); Thread.sleep(forTimeInterval: 1) }
+    tap(showMore, "Show more")
+    check(wait(app.buttons["notes.outline"], 6), "shown in full, the rail is there")
+    tap(app.buttons["notes.outline"], "the shared page's rail")
+    tap(row("Hidden in a toggle"), "the heading in the toggle")
+    check(eventually(6) { let l = self.line(app, "Hidden in a toggle"); return l.exists && l.frame.minY > 40 && l.frame.minY < 300 } && line(app, "Words inside it.").exists, "and a reader can go to any heading (a closed toggle’s too)")
+    let srail = app.buttons["notes.outline"]
+    check(eventually(4) { srail.exists && srail.frame.height > 1 && srail.frame.minY > 40 && srail.frame.minY < 200 }, "and the rail stays in view near the top as the page scrolls (at \(pt(srail.frame.minY)))")
+    snap("outline-shared")
+    noLabel(app, "the outline")
   }
 }

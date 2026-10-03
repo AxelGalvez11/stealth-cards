@@ -173,12 +173,22 @@ enum GuideAnchors {
     expand?()
     DispatchQueue.main.asyncAfter(deadline: .now() + (expand == nil ? 0 : 0.45)) { [weak page] in
       guard let page, let target = find(id, in: page) else { return }
-      let at = target.convert(target.bounds, to: page).minY
-      // (A page that runs under the status bar, like a deck's, keeps the heading clear of it.)
-      let under = max(0, (page.window?.safeAreaInsets.top ?? 0) - page.convert(page.bounds, to: nil).minY)
-      let low = -page.adjustedContentInset.top, high = max(low, page.contentSize.height - page.bounds.height + page.adjustedContentInset.bottom)
-      page.setContentOffset(CGPoint(x: page.contentOffset.x, y: min(max(at - under - 16, low), high)), animated: true)
+      bring(target, in: page)
     }
+  }
+  /// The page a view is on: the nearest scroll view around it that scrolls up and down (not a table's own sideways one).
+  static func page(of v: UIView) -> UIScrollView? {
+    var up = v.superview
+    while let x = up { if let sv = x as? UIScrollView, sv.contentSize.height > sv.bounds.height + 1 { return sv }; up = x.superview }
+    return nil
+  }
+  /// Scrolls `page` so `target` sits a little under its top (smoothly, at once with Reduce Motion): a link to a heading, and the outline.
+  static func bring(_ target: UIView, in page: UIScrollView) {
+    let at = target.convert(target.bounds, to: page).minY
+    // (A page that runs under the status bar, like a deck's, keeps the heading clear of it.)
+    let under = max(0, (page.window?.safeAreaInsets.top ?? 0) - page.convert(page.bounds, to: nil).minY)
+    let low = -page.adjustedContentInset.top, high = max(low, page.contentSize.height - page.bounds.height + page.adjustedContentInset.bottom)
+    page.setContentOffset(CGPoint(x: page.contentOffset.x, y: min(max(at - under - 16, low), high)), animated: !Motion.still)
   }
   private static func find(_ id: String, in root: UIView) -> GuideWords? {
     if let w = root as? GuideWords, w.anchorID == id { return w }
