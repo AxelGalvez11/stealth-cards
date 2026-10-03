@@ -13,7 +13,7 @@
 //   apps       a row of small cards, an app and its one line: `cards: [{ name, line, lucida }]`
 //   checklist  a section's bullets as a checklist card (their own words)
 //   screen     one of Lucida's real screens, as a picture (SCREENS below): `id`, `caption`, `alt`
-//   and the drawings of single pages: timeline, chat, learn, live, fork, class, occlusion, import, plan, example, words.
+//   and the drawings of single pages: timeline, chat, learn, live, fork, occlusion, import, plan, example, words.
 //
 // visualsOf() runs inside the boards (design/build.mjs writes it into their logic with .toString()), so it stands alone: it uses
 // nothing outside itself except what `E` hands it.
@@ -31,8 +31,6 @@ export const SCREENS = {
     alt: 'A live game: the question on the big screen with four colored answers, and the player’s phone with the same answers' },
   deck:    { desk: { board: 'WebPublicDeck', crop: [270, 20, 1130, 640] }, phone: { board: 'PhonePublicDeck', crop: [0, 0, 390, 440] },
     alt: 'A shared deck’s page: its cover, the Study and Make a copy buttons, its cards and how it was made' },
-  class:   { desk: { board: 'WebClass', crop: [270, 20, 1130, 640] }, phone: { board: 'PhoneClass', crop: [0, 100, 390, 390] },
-    alt: 'A class: its assignments, how far each student who shares has got, the invite code and the people in it' },
   picture: { desk: { board: 'WebCardsScreenImage', crop: [370, 130, 1060, 620] }, phone: { board: 'PhoneReviewImage', crop: [0, 100, 390, 440] },
     alt: 'A picture card in Lucida: boxes cover the labels of a picture, and each box is its own card' },
   import:  { desk: { board: 'WebImport', crop: [400, 130, 640, 640] }, phone: { board: 'WebImport', crop: [420, 143, 600, 400] },
@@ -50,7 +48,7 @@ export const SCREENS = {
 };
 
 // The kinds of figure the article template draws (design/build.mjs has a drawing for each).
-export const KINDS = ['pick', 'steps', 'apps', 'checklist', 'screen', 'gaps', 'curve', 'chat', 'learn', 'live', 'fork', 'class', 'occlusion', 'import', 'plan', 'example', 'words'];
+export const KINDS = ['pick', 'steps', 'apps', 'checklist', 'screen', 'gaps', 'curve', 'chat', 'learn', 'live', 'fork', 'occlusion', 'import', 'plan', 'example', 'words'];
 
 // Where the pictures of a screen are (web/shots/): a computer and a phone, light and dark.
 export const shotFile = (id, phone, dark) => '/shots/' + id + (phone ? '-phone' : '') + (dark ? '-dark' : '') + '.webp';
@@ -130,10 +128,6 @@ export function visualsOf(P, E, sections) {
     } else if (f.kind === 'live') {
       const colors = ['#4F57E6', '#C2410C', '#0E7490', '#BE185D'];
       list.push(fig(f, { ...f, board: f.board.map((r, i) => ({ n: String(i + 1), i: r.who.charAt(0), c: colors[i % 4], who: r.who, pts: r.pts })) }));
-    } else if (f.kind === 'class') {
-      const colors = ['#4F57E6', '#C2410C', '#0E7490', '#BE185D', '#7E22CE'];
-      const steps = s.bullets.filter(b => /^\*\*\d+\./.test(b.raw)).map(stepOf).map((x, i) => ({ n: String(i + 1), t: x.t }));
-      list.push(fig(f, { ...f, letters: f.code.split(''), people: f.people.map((n, i) => ({ i: n.charAt(0), c: colors[i % 5] })), steps }));
     } else if (f.kind === 'plan') {
       const steps = f.steps.map((x, i) => ({ n: x.n, t: x.t, d: x.d || '', hasD: !!x.d, cv: String([0, 2, 4, 6, 1, 3][i % 6]), more: i < f.steps.length - 1 }));
       list.push(fig(f, { steps, cols: ' sp-n' + steps.length }));

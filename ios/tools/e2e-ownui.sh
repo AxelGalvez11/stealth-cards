@@ -1,6 +1,6 @@
 #!/bin/zsh
 # Nothing the phone draws itself (the owner, 2026-10-01), end to end in the iPhone app (LucidaUITests/OwnUITests.swift): the questions are Lucida's own sheet,
-# Settings' lists and the language of made cards are Lucida's list sheet, a deck's exam date and a class's due date open Lucida's calendar, Take a photo opens
+# Settings' lists and the language of made cards are Lucida's list sheet, a deck's exam date opens Lucida's calendar, Take a photo opens
 # Lucida's camera screen, a failed save says so in a quiet message, and no page shows the system's navigation bar, a toolbar, an alert or a menu. It starts
 # web/server.mjs on PORT (3993) with an empty data folder, and a stand-in in front of it on PROXYPORT (3995) that fails every save while a file exists, runs the
 # test on a simulator, prints each check and a last line "Own UI: N passed, M failed", and stops both by PID.

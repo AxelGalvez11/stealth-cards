@@ -4,8 +4,7 @@
 //   1  The first page (the Library: there is no Today) has no profile picture; its + stays on the right, and the Profile tab is the way in.
 //   2  "Remove from folder": a deck's ⋯ menu and Deck settings have it only for a deck that's in a folder, and it takes the deck
 //      out; a copy of someone's deck picks "Library", not "No folder".
-//   3  Share opens the phone's share sheet: Share profile, a deck's Share link, a class's Share invite link. Connect AI's link
-//      still copies.
+//   3  Share opens the phone's share sheet: Share profile and a deck's Share link. Connect AI's link still copies.
 //   4  Swiping: from the left edge goes back on every pushed page; a swipe on a tab's first page moves to the next tab or the one
 //      before (and not at either end, not from a row that scrolls sideways, not while studying).
 //   5  Haptics: the ones that matter fire (a tab, a segmented control, a switch, flipping and grading a card, a right and a wrong
@@ -299,13 +298,6 @@ final class PolishTests: XCTestCase {
     button(app, "Share link").tap()
     check(shareSheetShown(app), "and opens the share sheet")
     closeShareSheet(app)
-    // A class's invite.
-    let code = social(uma, "class.make", ["name": "Bio " + run, "school": "UC"])["code"] as? String ?? ""
-    let app2 = launch(as: uma, ["-open", "class:" + code])
-    check(wait(button(app2, "Share invite link")) && !button(app2, "Copy invite link").exists, "a class's invite says Share invite link")
-    button(app2, "Share invite link").tap()
-    check(shareSheetShown(app2), "and opens the share sheet")
-    closeShareSheet(app2)
     // Connect AI's link is for pasting: it still copies.
     let app3 = launch(as: uma, ["-open", "connect"])
     tap(button(app3, "Copy link"), "Connect AI's Copy link")
@@ -424,7 +416,7 @@ final class PolishTests: XCTestCase {
     check(audit(app).components(separatedBy: ",").filter { $0 == "selection:tab" }.count == before, "a tap on the tab you're on gives none")
     tap(button(app, "Library"), "the Library tab")
     tap(button(app, "All cards"), "All cards")
-    check(buzzed(app, "selection:segmented"), "a segmented control (Decks, All cards, Classes) gives a selection tap")
+    check(buzzed(app, "selection:segmented"), "a segmented control (Decks, All cards) gives a selection tap")
     tap(button(app, "Decks"), "Decks")
     // a tap on a plain row buzzes nothing
     let n0 = audit(app).components(separatedBy: ",").count

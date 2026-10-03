@@ -5,7 +5,7 @@
   "description": "Lucida vs Gizmo: price, free limits, AI, export, live games, privacy, with sources. Gizmo has phone apps and an AI tutor. Lucida has export and no hearts.",
   "h1": "Lucida vs Gizmo",
   "lead": "Gizmo is an AI flashcard app with iPhone and Android apps that turns PDFs, videos and notes into cards and quizzes, with daily limits on its free plan. Lucida has no App Store app yet, but it has no hearts, lets you export everything, makes cards from your files (3 makes a day on Free), and lets your own AI (Claude, ChatGPT) make and edit cards too.",
-  "updated": "2026-10-01",
+  "updated": "2026-10-02",
   "published": "2026-09-30",
   "table": {
     "columns": [
@@ -55,11 +55,6 @@
         "Share a deck by link, QR code or invite. Public decks can be found by other users. Its App Store listing says 1,000,000+ free public flashcards."
       ],
       [
-        "Classes",
-        "Make a class with a join code, assign decks by a date, and see progress that students choose to share. Free.",
-        "Study groups and friends. We found no teacher classes in its help center."
-      ],
-      [
         "Games",
         "Live: play a deck, or a topic you type, with up to 60 friends on their phones. They join with a code or QR, no account. Free.",
         "Gizmo Live: a real-time quiz on a deck or any topic. Join with a 6-character code or QR code. At least 2 players, no maximum, free."
@@ -89,7 +84,7 @@
       "bullets": [
         "**Phone apps.** iPhone, iPad and Android apps, plus a web app. Lucida has no App Store app yet and works in a browser.",
         "**More AI built in.** Magic Import turns PDFs, recordings, photos, PowerPoint files, websites and YouTube links into cards, and an AI tutor can teach a topic step by step. You don’t need a separate AI subscription. Lucida makes cards from many of the same things, but not from a web page address, and its own AI is used for making cards, live games from a topic and Explain.",
-        "**Game-style study.** XP, levels, leagues, streaks and Monster Hunt. Lucida keeps a streak and stats, and points appear only in live games.",
+        "**Game-style study.** XP, levels, leagues, streaks and Monster Hunt. Lucida has a Stats page on Pro, and points appear only in live games.",
         "**Live games with no player cap.** Gizmo says there is no maximum. Lucida Live takes up to 60.",
         "**More card types made for quizzing,** including matching and ordering. Lucida has four card kinds and five Learn question kinds.",
         "**A big public library.** Its App Store listing says 1,000,000+ free public flashcards."
@@ -101,7 +96,6 @@
         "**Your data out.** Gizmo’s help center says exporting cards and decks isn’t available yet. Lucida exports every deck as CSV and everything, reviews included, as JSON.",
         "**No hearts.** Gizmo’s free plan has hearts (15, then a 10-minute wait) and two Magic Imports a day. Lucida’s free plan has no hearts and no waits while you study. Its card maker allows 3 makes a day, and your own AI can make as many cards as you want.",
         "**Any AI, and it can edit.** Claude, ChatGPT, Cursor or any MCP app makes cards, fixes them, writes quiz questions and sees what is due. You choose what it may do and can check its cards first.",
-        "**Classes.** Make a class with a join code, assign decks by a date and see progress students choose to share. Gizmo has study groups with friends.",
         "**Privacy.** Lucida’s policy says it doesn’t use your cards to train AI models. Gizmo’s notice says it may use personal information to train the models behind its AI features."
       ]
     },

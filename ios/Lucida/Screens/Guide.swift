@@ -1,7 +1,8 @@
 // iPhone · A deck's Notes page (PhoneGuide: Writing, Block menu, Format bar, Toggle open, Toggle closed, Section folded, Blank note, Reading on a shared deck,
 // Older versions, A new page, and the Dark and Gray twins): the Guide and its extra pages as one page that is always formatted, where you tap and type
 // (Design/NotesViews.swift; its rules in Data/Notes.swift), opened from the deck page's Notes (a tap on the words opens it there). At the top: back, the deck's
-// name, the quiet saving line and ⋯ (Make cards from this page, Older versions, Rename page, Delete page); under it the pages as pills, and + for a new one.
+// name, the quiet saving line and ⋯ (Make cards from this page, New page, Older versions, Rename page, Delete page); under it the pages as pills once there
+// are two or more (no Guide pill on its own: the owner, 2026-10-02).
 // It saves as it's typed (a moment after the last key, one save after another: GuideEditorModel), and Done (the back arrow) sends what is waiting first.
 // What is saved is Markdown, written from the page's blocks by web/guide.js itself (GuideEngine), so the iPhone keeps exactly what the web keeps.
 import SwiftUI
@@ -65,7 +66,7 @@ struct GuideScreen: View {
       ZStack(alignment: .bottom) {
         VStack(spacing: 0) {
           GuideTopBar(model: model, name: n.deckName, canEdit: n.canEdit, reading: n.reading, more: $more) { Task { await done() } }
-          if n.tabs.count > 1 || n.canAdd { GuidePagesRow(tabs: n.tabs, pageId: n.pageId, canAdd: n.canAdd, pick: pick, add: addPage) }
+          if n.tabs.count > 1 { GuidePagesRow(tabs: n.tabs, pageId: n.pageId, pick: pick) }
           if n.hist { GuideHistory(model: model, title: "Older versions of " + (n.pageId == "main" ? "the Guide" : n.title)) { Task { await model.toggleHistory() } } }
           else {
             GuidePageArea(notes: notes, scroll: scroll, setup: setup(n), renaming: $renaming, title: n.title, hl: store.demo ? NotesDemo.of(n.view)?.bar : nil) { model.rename($0) }
@@ -74,7 +75,7 @@ struct GuideScreen: View {
         .padding(.top, Screen.top(52))
         .padding(.bottom, keys ? under + 50 : keyboard.height)
         if keys { NotesKeys(page: notes, aa: $aa, picture: store.demo ? {} : { pictureAfter = notes.editing; picking = true }).padding(.bottom, under) }
-        if more { GuideMoreMenu(n: n, close: { withAnimation(Motion.leave) { more = false } }, make: { makeCards(n) }, history: { more = false; Task { await model.toggleHistory() } },
+        if more { GuideMoreMenu(n: n, close: { withAnimation(Motion.leave) { more = false } }, make: { makeCards(n) }, add: { more = false; addPage() }, history: { more = false; Task { await model.toggleHistory() } },
                                 rename: { more = false; renaming = true }, delete: { more = false; askDelete(n) }) }
       }
       .foregroundStyle(t.text)
@@ -113,10 +114,11 @@ struct GuideScreen: View {
     }
     if !store.demo && !store.guide(deckId).can { nav.back(); return }
     load(n)
-    // the caret where the page was tapped on the deck page
-    let at = nav.guideAt.split(separator: ":").compactMap { Int($0) }
+    // the caret where the page was tapped on the deck page, or at the end of what is written (the deck page's + › Notes)
+    let want = nav.guideAt, at = want.split(separator: ":").compactMap { Int($0) }
     nav.guideAt = ""
     if n.canEdit && !store.demo && at.count == 2 { notes.focusAt(at[0], at[1]) }
+    else if n.canEdit && !store.demo && want == "end" && !n.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { notes.focusEnd() }
   }
   /// The page's words go in (a design screen's state picks which toggles are open, what is folded and what is selected).
   private func load(_ n: GuideNow) {
@@ -192,14 +194,12 @@ struct GuideTopBar: View {
   }
 }
 
-/// A pill for the Guide and for each extra page, and + for a new one.
+/// A pill for the Guide and for each extra page, once there are two or more (New page is in ⋯).
 struct GuidePagesRow: View {
   @Environment(\.theme) private var t
   let tabs: [MakeGuidePage]
   let pageId: String
-  let canAdd: Bool
   let pick: (String) -> Void
-  let add: () -> Void
   var body: some View {
     ScrollView(.horizontal, showsIndicators: false) {
       HStack(spacing: 4) {
@@ -210,10 +210,6 @@ struct GuidePagesRow: View {
               .background(Capsule().fill(on ? t.surf : .clear))
           }
           .buttonStyle(.press).accessibilityLabel(x.title).accessibilityAddTraits(on ? .isSelected : [])
-        }
-        if canAdd {
-          Button(action: add) { Icon("plus", 15, 2.2).foregroundStyle(t.muted).frame(width: 32, height: 32).contentShape(Circle()) }
-            .buttonStyle(.press).accessibilityLabel("Add a page")
         }
       }
       .padding(.horizontal, 16)
@@ -228,6 +224,7 @@ struct GuideMoreMenu: View {
   let n: GuideNow
   let close: () -> Void
   let make: () -> Void
+  let add: () -> Void
   let history: () -> Void
   let rename: () -> Void
   let delete: () -> Void
@@ -236,6 +233,7 @@ struct GuideMoreMenu: View {
       Color.black.opacity(0.001).contentShape(Rectangle()).onTapGesture(perform: close)
       VStack(spacing: 2) {
         item("sparkle", "Make cards from this " + (n.pageId == "main" ? "guide" : "page"), action: make)
+        if n.canAdd { item("plus", "New page", action: add) }
         item("history", "Older versions", action: history)
         if n.pageId != "main" {
           item("pencil", "Rename page", action: rename)

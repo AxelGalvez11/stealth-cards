@@ -5,7 +5,7 @@
   "description": "Lucida vs Mochi: price, FSRS, AI, Anki import, offline and sharing, with sources. Mochi is local-first and Markdown-based. Lucida is a browser app.",
   "h1": "Lucida vs Mochi",
   "lead": "Mochi is a local-first, Markdown-based flashcard and notes app with offline apps on every platform, and Pro is $5 a month (billed yearly) for sync and AI. Lucida runs in the browser with free sync, sharing, Learn mode and live games, and it makes cards from your files, while your own AI (Claude, ChatGPT) can make them too.",
-  "updated": "2026-10-01",
+  "updated": "2026-10-02",
   "published": "2026-09-30",
   "table": {
     "columns": [
@@ -55,11 +55,6 @@
         "Publish a deck with a link (Pro) or send a .mochi file. People can clone a published deck into their own workspace."
       ],
       [
-        "Classes",
-        "Make a class with a join code, assign decks by a date, and see progress that students choose to share. Free.",
-        "None found."
-      ],
-      [
         "Games",
         "Live: play a deck with up to 60 friends on their phones. They join with a code or QR, no account. Free.",
         "None found."
@@ -102,7 +97,6 @@
         "**Sync is free.** Sign in and your cards are on every device. On Mochi, sync is part of Pro.",
         "**Sharing is free** and social: public profiles, Discover, study a deck as it is or copy it, suggest changes and version history. On Mochi, publishing a deck is part of Pro.",
         "**Learn mode and live games** are built in and free: five kinds of questions from your cards, and games for up to 60 friends. We found neither in Mochi’s docs.",
-        "**Classes.** Assign decks by a date and see progress that students choose to share.",
         "**Your own AI, through your chat apps.** Claude, ChatGPT or any MCP app makes and edits your cards, with no token meter from Lucida.",
         "**Four grades** (Forgot, Hard, Good, Easy). Mochi records Remembered or Forgot, and its docs note that FSRS then loses a little of the information Hard and Easy would carry."
       ]

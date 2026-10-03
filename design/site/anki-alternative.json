@@ -5,7 +5,7 @@
   "description": "Looking for an Anki alternative? Compare Lucida, RemNote, Mochi, Knowt and Brainscape on price, FSRS, AI, offline use and importing your Anki decks.",
   "h1": "The best Anki alternatives",
   "lead": "The right Anki alternative depends on what you want to change: Lucida for FSRS in a browser with cards made from your files or by your own AI, RemNote or Mochi for notes, apps and offline study, and Knowt or Brainscape for a quick start with AI built in. If Anki already works for you, keep it: it is free on computers and Android and has more than 1,600 add-ons.",
-  "updated": "2026-10-01",
+  "updated": "2026-10-02",
   "published": "2026-09-30",
   "table": {
     "columns": [
@@ -100,15 +100,6 @@
         "Share with learners; other decks are Pro"
       ],
       [
-        "Classes",
-        "Not built in",
-        "Yes, free",
-        "None found",
-        "None found",
-        "Yes, with analytics",
-        "Classes; student data is Enterprise"
-      ],
-      [
         "Live games",
         "Not built in",
         "Yes, free",
@@ -157,7 +148,7 @@
     {
       "h2": "Lucida: Anki’s scheduling in a browser, with your AI",
       "paras": [
-        "Lucida plans every review with FSRS, like Anki, but runs in a browser with nothing to install. It makes cards from your files, pictures, recordings, YouTube links or a topic (3 makes a day on Free) and shows them to you first. Your own AI (Claude, ChatGPT, Cursor or any MCP app) can also make and edit the cards through your Lucida link, and you choose what it may do. Learn mode, live games, classes and sharing are free.",
+        "Lucida plans every review with FSRS, like Anki, but runs in a browser with nothing to install. It makes cards from your files, pictures, recordings, YouTube links or a topic (3 makes a day on Free) and shows them to you first. Your own AI (Claude, ChatGPT, Cursor or any MCP app) can also make and edit the cards through your Lucida link, and you choose what it may do. Learn mode, live games and sharing are free.",
         "What you give up: no offline mode, no add-ons, no custom card templates, and no .apkg import. You can bring decks over through Anki’s Notes in Plain Text export, which keeps cards, bold and italics, cloze blanks and deck names but not pictures, sounds or review history."
       ]
     },

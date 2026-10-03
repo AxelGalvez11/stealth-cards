@@ -436,11 +436,11 @@ struct StatsUpgrade: View {
         .clipped().accessibilityHidden(true)
       VStack(alignment: .leading, spacing: 18) {
         VStack(alignment: .leading, spacing: 8) {
-          HStack(spacing: 10) { Text("See what you’re weak at").css(22, .semibold, ls: -0.03).lineLimit(1).fixedSize(); ProBadge() }
-          WebText(text: "What you remember, what you’re weak at and why, and what to study next.", size: 15, lh: 1.5, color: t.muted)
+          HStack(spacing: 10) { Text("See how you’re doing").css(22, .semibold, ls: -0.03).lineLimit(1).fixedSize(); ProBadge() }
+          WebText(text: "Your streak and reviews, what you remember, what you’re weak at and why, and what to study next.", size: 15, lh: 1.5, color: t.muted)
         }
         VStack(alignment: .leading, spacing: 10) {
-          ForEach(["Memory by deck, tag, and week", "Your weakest tags and hardest cards", "Time per card and exam readiness"], id: \.self) { x in
+          ForEach(["Your streak, reviews and what you remember", "Your weakest tags and hardest cards", "Time per card and exam readiness"], id: \.self) { x in
             HStack(spacing: 10) {
               Icon("check", 13, 2.6).foregroundStyle(.white).frame(width: 22, height: 22)
                 .background(Circle().fill(LinearGradient(colors: [Color(hex: 0x7E94FB), Color(hex: 0x2CB2EA)], startPoint: .topLeading, endPoint: .bottomTrailing)))

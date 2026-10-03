@@ -2,10 +2,10 @@
   "slug": "features/spaced-repetition",
   "kind": "feature",
   "title": "Spaced repetition flashcards with FSRS, free",
-  "description": "Lucida plans every review with FSRS, so each flashcard comes back just before you’d forget it. Free, with your own goal and steps. Pro adds exam dates.",
+  "description": "Lucida plans every review with FSRS, so each flashcard comes back just before you’d forget it. Free, with your own goal for each deck. Pro adds exam dates.",
   "h1": "Spaced repetition with FSRS",
-  "lead": "Lucida plans every review with FSRS, an open-source spaced repetition algorithm: after each answer it works out the day you’d still have about a 90% chance of remembering that card, and brings the card back then. It’s in the free plan, and you can change the goal, the gaps and the learning steps for each deck.",
-  "updated": "2026-09-30",
+  "lead": "Lucida plans every review with FSRS, an open-source spaced repetition algorithm: after each answer it works out the day you’d still have about a 90% chance of remembering that card, and brings the card back then. It’s in the free plan, and you can change the goal, the longest gap and the new cards a day for each deck.",
+  "updated": "2026-10-02",
   "table": {
     "columns": [
       "",
@@ -15,13 +15,13 @@
     "rows": [
       [
         "Algorithm",
-        "FSRS version 5 (19 parameters), with short learning steps for new cards",
-        "Turn FSRS off in Settings or for one deck"
+        "FSRS version 5 (19 parameters)",
+        "No. Four grades and the check or X always use it. To study without review dates, grade with piles"
       ],
       [
         "Grades",
         "Forgot, Hard, Good or Easy, and each button shows the next gap",
-        "Per deck: four grades, a simple check or X, or piles (piles only sort cards)"
+        "Per deck: four grades, a simple check or X (both use FSRS), or piles (piles only sort cards and give no review dates)"
       ],
       [
         "Remember goal",
@@ -29,9 +29,9 @@
         "70 to 97% for each deck. Pro shows how many reviews a day each goal costs"
       ],
       [
-        "Learning steps",
-        "1 minute, then 10 minutes",
-        "Per deck: steps of 1 minute, 10 minutes, 1 hour or 1 day"
+        "First reviews of a new card",
+        "After 1 minute, then after 10 minutes",
+        "No"
       ],
       [
         "Longest gap",
@@ -86,10 +86,10 @@
       "bullets": [
         "**1. See the front and try to answer.** Say or write your answer before you flip. The retrieval practice guide from Agarwal and colleagues says that actually recalling and writing down an answer helps more than flipping the card early.",
         "**2. Flip and say how well you knew it.** Choose Forgot, Hard, Good or Easy. Each button shows how long until you’d see the card again, like 10m, 6d, 12d or 28d.",
-        "**3. New cards start with short steps.** A new card comes back after 1 minute, then after 10 minutes. After the last step it graduates, and from then on it comes back after days. Press Easy on a new card and it skips the steps. Keep steps short: Anki’s manual recommends learning steps under a day when you use FSRS, because repeating a card many times in one day adds little to long-term memory.",
+        "**3. New cards come back soon.** A new card comes back after 1 minute, then after 10 minutes, and from then on it comes back after days. Press Easy on a new card and it skips the short waits. Short first waits fit Anki’s manual, which recommends learning steps under a day when you use FSRS, because repeating a card many times in one day adds little to long-term memory.",
         "**4. Your goal sets the gap.** For a card you’ve learned, Lucida picks the whole number of days at which your chance of remembering falls to your goal (90% by default), up to the deck’s longest gap. A card you knew well gets a long gap. A card you found hard gets a shorter one.",
-        "**5. Forgot means relearning.** The card goes to a 10-minute relearning step, then comes back with a shorter gap than before. For a card you’ve learned, Hard, Good and Easy each give a gap at least a day longer than the button before.",
-        "**6. Cards come due at the start of their day.** Review, at the top of your Library, takes everything due: cards in a short step first, then reviews, then the day’s new cards. Made a slip? Undo puts the last card back."
+        "**5. Forgot means relearning.** The card comes back after 10 minutes, then with a shorter gap than before. For a card you’ve learned, Hard, Good and Easy each give a gap at least a day longer than the button before.",
+        "**6. Cards come due at the start of their day.** Review, at the top of your Library, takes everything due: cards coming back within minutes first, then reviews, then the day’s new cards. Made a slip? Undo puts the last card back."
       ]
     },
     {
@@ -145,7 +145,7 @@
     },
     {
       "q": "What is FSRS?",
-      "a": "FSRS (Free Spaced Repetition Scheduler) is an open-source algorithm that estimates how likely you are to remember each card and schedules the next review for when that chance reaches your goal. Anki has offered it since version 23.10, and Lucida uses it for every deck."
+      "a": "FSRS (Free Spaced Repetition Scheduler) is an open-source algorithm that estimates how likely you are to remember each card and schedules the next review for when that chance reaches your goal. Anki has offered it since version 23.10, and Lucida uses it to plan your reviews."
     },
     {
       "q": "Is FSRS better than SM-2?",
@@ -165,7 +165,7 @@
     },
     {
       "q": "Can I turn spaced repetition off?",
-      "a": "Yes. Turn off Schedule with FSRS in Settings or for one deck, or grade with piles, which only sort cards. With it off, cards don’t get a next review date."
+      "a": "Only by grading a deck with piles, which only sort cards and give no next review date. Four grades and the check or X always schedule with FSRS."
     },
     {
       "q": "Is spaced repetition proven to work?",

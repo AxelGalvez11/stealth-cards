@@ -1,5 +1,5 @@
 // How far you are on one deck, for a class's assignments: the server sends it to the class when you share your progress
-// (web/classes.mjs), and the app shows your own on Today and on the class page (web/db.js). It's only these numbers,
+// (web/classes.mjs; the app shows no classes now, the server keeps them for older iPhone builds). It's only these numbers,
 // never your answers: cards learned (studied until they come back days later; on a deck sorted into piles, any card in a
 // pile), cards due now, how often you remembered a card when it came back (the last 30 days), and when you last studied.
 const DAY = 86400000;

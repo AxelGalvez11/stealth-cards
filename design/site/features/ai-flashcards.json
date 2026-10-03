@@ -142,7 +142,7 @@
     {
       "h2": "Getting good cards from an AI",
       "paras": [
-        "An AI is quick at drafting cards and not always good at it. In a 2026 test by Ozzie Kirkby and Andy Matuschak, using cards written from a reader’s highlights, even the best model they tried, GPT-5.2, made cards the authors rated unusable (off target, or too vague to work months later) 36% of the time. That was a different job from studying for a class, but the lesson holds: read what it makes. Lucida shows the cards it makes before they are saved, and with your own AI you can turn on Let me check AI cards first for anything that matters, like an exam.",
+        "An AI is quick at drafting cards and not always good at it. In a 2026 test by Ozzie Kirkby and Andy Matuschak, using cards written from a reader’s highlights, even the best model they tried, GPT-5.2, made cards the authors rated unusable (off target, or too vague to work months later) 36% of the time. That was a different job from studying for a course, but the lesson holds: read what it makes. Lucida shows the cards it makes before they are saved, and with your own AI you can turn on Let me check AI cards first for anything that matters, like an exam.",
         "Some prompt habits help. They come from Piotr Wozniak’s twenty rules of formulating knowledge, which Anki’s manual recommends too:"
       ],
       "bullets": [
@@ -239,7 +239,7 @@
     },
     {
       "q": "Does making AI cards cost extra?",
-      "a": "No. On the free plan your own AI app can make as many cards as you want, and Lucida’s own card maker is free for 3 makes a day. Pro ($5.99 a month or $49.99 a year, as of September 2026) adds extras like 30 makes a day, exam dates, weak-spot stats and natural voices for sound cards."
+      "a": "No. On the free plan your own AI app can make as many cards as you want, and Lucida’s own card maker is free for 3 makes a day. Pro ($5.99 a month or $49.99 a year, as of September 2026) adds extras like Stats, 30 makes a day, exam dates and natural voices for sound cards."
     }
   ],
   "sources": [

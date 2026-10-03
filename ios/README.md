@@ -55,17 +55,18 @@ review of every deck's X and Done, a practice test opened again, `-open today`, 
 
 The Library makes no cards itself (the owner, 2026-10-02: "remove the library composer, upload buttons, cards due accross all canvas screens", then
 "remove the 'make cards from library'"): no Make box, no Upload, Paste, YouTube and More row, no line of what's due, and its + is New deck and Import
-cards. Its top is **Assigned** (what your classes assigned you, `Screens/LibraryTop.swift`), only when there is something. A brand-new account's Library
-is Assigned, then three plain tiles side by side, New deck, Import cards and Connect AI, with no other words (`StartTiles`). Cards are made from a
+cards. Its switch is Decks and All cards (no Classes: the owner took them out on 2026-10-02). A brand-new account's Library is three plain tiles
+side by side, New deck, Import cards and Connect AI, with no other words (`StartTiles`, `Screens/LibraryTop.swift`). Cards are made from a
 deck: its cover's Make cards and New card (an empty deck, where New deck opens, is its cover and nothing under it). News is the bell in Discover's
 header. While a sheet covers the page (Make cards, a source, a diagram, Make diagram), the page under it is hidden from VoiceOver, so only the
-sheet's buttons are found. Boards: `PhoneLibrary` (`-caughtUp`, `-assignments`, `-menu open`), `PhoneLibraryFolder`, `PhoneLibraryAssigned`,
-`PhoneDecksEmpty`, `PhoneDeckEmpty`, `PhoneDiscover`.
+sheet's buttons are found. Boards: `PhoneLibrary` (`-caughtUp`, `-menu open`), `PhoneLibraryFolder`, `PhoneDecksEmpty`, `PhoneDeckEmpty`,
+`PhoneDiscover`.
 
     ios/tools/e2e-home.sh <simulator id>
 
 starts a fresh server on port 3953 and the stand-in AI on 3954, and runs `LucidaUITests/HomeTests`: the first page (no box, row or due line, the +
-menu), a deck's Make cards and New card, an empty deck, a brand-new account's three tiles, Assigned, and News on Discover.
+menu), a deck's Make cards and New card, an empty deck, a brand-new account's three tiles, no Classes (a class still on the server shows
+nothing), and News on Discover.
 
 ## Import cards
 
@@ -193,16 +194,16 @@ end-to-end test (`LucidaUITests/QuizTests.swift`), with a pretend OpenRouter (`t
 
 Apple's rule for apps where people share things (guideline 1.2) wants a way to report content, and the web app has one: a
 quiet **Report** on someone else's shared deck (on its cover, after the bell), on someone else's profile (after Share), and
-on a suggestion once it's opened (a person's; not the cards your own AI made). Each opens the Report sheet the classes already
-had (`Screens/ClassSheets.swift`: four reasons, a line that Other needs, Send, then "Thanks. We'll take a look."), and the
+on a suggestion once it's opened (a person's; not the cards your own AI made). Each opens the Report sheet
+(`Screens/ReportSheets.swift`: four reasons, a line that Other needs, Send, then "Thanks. We'll take a look."), and the
 server's own words when it says no (`web/classes.mjs` sendReport: "It's your deck.", "You have 10 reports waiting.", ...) show
-in the sheet. A verified teacher or school (Settings → Profile → **Get verified**, approved by the made-up person `admin` on
+in the sheet. A verified teacher or school (Settings → Account → **Get verified**, its sheet in `ReportSheets.swift`, approved by the made-up person `admin` on
 a copy of the server) sees **Check this deck** under a shared deck's buttons, on a deck someone else owns whose check isn't
 current; it then says "Checked by you" until the owner changes the deck, and the button comes back. Settings says **Verified
 teacher** (or school) with the check. News says when you're verified and when a deck of yours was hidden after a report (with
 Lucida's mark), and a helper's News row for a suggestion on a community deck opens Suggestions (every deck you own or help
 with, like the web's /suggestions). The boards: `PhonePublicDeckReport`, `PhonePublicDeckCheck`, `PhoneProfileReport`,
-`PhoneSuggestionsReport`, and `PhoneSettingsVerified` (a board's `-verified "Waiting for review"|Teacher|School` shows the
+`PhoneSuggestionsReport`, `PhoneSettingsGetVerified` (the sheet over Settings; `-open verify` against a server), and `PhoneSettingsVerified` (a board's `-verified "Waiting for review"|Teacher|School` shows the
 other states of Get verified). `-open report:<deck|profile|suggestion>:<id>[:<name>]` opens the Report sheet for a deck (its
 shared id), a person (their handle), or a suggestion, even where its page wouldn't offer Report (your own deck, say, to see
 what the server answers).
@@ -377,30 +378,14 @@ The first lays out mind maps of every shape in node and in Swift and compares ev
 the Diagrams answers: `STUB_AI=<stub-ai.mjs>`), makes seven owners with their lectures, tables, maps and uploads, a shared deck and someone who studies it (`ios/tests/js/diagrams-seed.mjs`),
 and runs `LucidaUITests/DiagramsTests` in nine flows (the tab, a picture and Make cards, Rename and Delete, Make diagram, the Free limit, Upload, the Image kind, a shared and a studied deck, dark mode).
 
-## Classes and schools
 
-The Library's third view (Decks · All cards · Classes): your classes as tiles, Join a class with its 6-letter code, New
-class, and a class's own page: as its owner or a helper (assignments with how many who share are done, each member's
-progress, "Not shared" for the rest, decks, invite, Get verified, people, Rename, Delete), as a member (what's left for you
-on each assignment, whether you share your progress, Leave), or as an invite you haven't taken (Join). Add a deck, Assign
-(a deck, a goal, a date), Report, and Get verified are sheets. The Library's Assigned lists what your classes assigned you. The answers
-come from the same server as the web app's (`Data/ClassData.swift`, like `web/classes.mjs` and `web/net.js`); your own
-progress on a class deck is worked out here from your own cards (a port of `web/progress.js`) and sent to a class only if
-you turned sharing on. Universal links aren't set up, so the way into a class is Join with its code; Share invite link opens the
-phone's share sheet with the web app's link. The boards: `PhoneClasses` (and `Dark`, `Empty`, `New`, `Join`),
-`PhoneClass` (and `Dark`, `Gray`, `Member`, `New`, `Invite`, `Loading`, `Missing`, `AddDeck`, `Assign`, `Report`, `Verify`), and
-`PhoneLibraryAssigned`.
+## Classes (taken out)
 
-Against a copy of the server, `-open classes` opens Library → Classes and `-open class:<CODE>` opens one class's page
-(an invite, if you aren't in it). The whole thing is tested end to end by tapping through the app as five made-up people
-(a teacher makes a class, adds and assigns a deck; two students join, one shares progress and one doesn't; they study; the Library
-lists the assignment; a report; Get verified, approved by the made-up person `admin`; helpers, leaving, taking someone out,
-deleting the class; a code no class has):
-
-    ios/tools/e2e-classes.sh <simulator id>
-
-It starts a fresh server on port 3733 and runs `LucidaUITests/ClassesTests` (which only runs when that script asks for it,
-so `ios/tools/e2e.sh` keeps running the study network's checks alone).
+The owner took Classes out of the app on 2026-10-02 ("remove the 'classes' page everywhere, because i dont think we need that right now, its a
+social thing"): no Classes in the Library's switch, no Assigned, no class pages or sheets, and `-open classes` and `-open class:<CODE>` are gone. A
+deck that was only in a class is Private in Deck settings › Sharing. The server keeps its classes and `web/classes.mjs`'s endpoints for the builds
+already on TestFlight; verification and reports (`Data/VerifyData.swift`) stay. HomeTests' fifth flow checks that a class still on the server
+shows nothing.
 
 ## Themes
 
@@ -508,14 +493,14 @@ fails on a system `.alert`, `.confirmationDialog`, `Menu`, `Picker`, `DatePicker
 
 - **A question** (`nav.ask(title, line:, action:, danger:) { … }`, `Design/Question.swift`): a sheet from the bottom over the dimmed page, with a grabber, a title, at most one short
   line, Cancel (`question.cancel`) and the answer (`question.go`; red when it deletes). A tap on the dimmed part is Cancel. It asks for Delete deck / Remove from library (Deck settings),
-  Remove folder, Delete card (the editor), Delete source (a source's page), Delete page (the Guide's editor), Disconnect (Connect AI), Leave class, Delete class and Take out of class
-  (a class's page), and Sign out (Settings' account card). The words are the web's (`AskSample` has the canvas's, for `-ask "Delete deck"` on a design screen).
+  Remove folder, Delete card (the editor), Delete source (a source's page), Delete page (the Guide's editor), Disconnect (Connect AI), and Sign out
+  (Settings' account card). The words are the web's (`AskSample` has the canvas's, for `-ask "Delete deck"` on a design screen).
 - **A message** (`ToastHost`, in `RootView`): `store.error` (a save that failed, a picture that couldn't be used) is a quiet pill near the bottom for about five seconds, or until it is
   tapped; VoiceOver says it when it comes. It replaces the system alert.
 - **Lists** open Lucida's list sheet (`Design/PickSheet.swift`, `nav.picker`): Settings' New cards a day, Remember goal and Daily reminder, and the language of made cards in Make cards.
   `-dropdown "Daily reminder"` (or `"New cards a day"`, `"Remember goal"`) opens one on Settings' design screen; `-board PhoneMake -state "Paste (language list)"` the language list.
-- **A calendar** (`Design/CalendarPicker.swift`, `nav.openCalendar`): a deck's exam date and a class's due date open a small popover under the button, like the web's: the month and its arrows, the
-  days (today ringed, the day picked filled, days before today dimmed), a tap on a day picks it and closes it. `-calendar "Exam date"` (Deck settings → Studying) and `-calendar "Due date"` (Assign a deck).
+- **A calendar** (`Design/CalendarPicker.swift`, `nav.openCalendar`): a deck's exam date opens a small popover under the button, like the web's: the month and its arrows, the
+  days (today ringed, the day picked filled, days before today dimmed), a tap on a day picks it and closes it. `-calendar "Exam date"` (Deck settings → Studying).
 - **The recording's player** (`SourcePlayerView`): a round Play and Pause button, the time, a thin track to touch or drag (and VoiceOver's adjust), the length, and a speed button (1×, 1.25×, 1.5×, 2×, .75×).
   A photo's page has Lucida's dots; **the loading mark** (`Design/Loading.swift`, three dots rising one after another, still with Reduce Motion) replaces the system spinner.
 - **The camera** (`Screens/Camera.swift`, `nav.openCamera`): Take a photo in Make cards opens a full screen over everything with the camera's picture (AVFoundation), a close button, the flash (Off, Auto,
@@ -523,7 +508,7 @@ fails on a system `.alert`, `.confirmationDialog`, `Menu`, `Picker`, `DatePicker
   The simulator has no camera: `-fakeCamera` gives it a picture to take, and `-board PhoneMake -state Camera` shows the screen.
 - **Task boxes** in a Guide are Lucida's own check (`GuideCheckbox`), like the web's `.gd-box`. No system navigation bar shows on any page.
 - `ios/tools/e2e-ownui.sh [simulator id]` is the end-to-end test (`LucidaUITests/OwnUITests.swift`, a fresh server on port 3993 and `ios/tools/fail-proxy.mjs` on 3995, which fails every save while a file exists): the
-  questions (Remove folder, Delete deck, Delete card, Sign out), the lists, the calendars, the camera, the message, and no system navigation bar, toolbar, alert, sheet, date picker, wheel or menu on any page.
+  questions (Remove folder, Delete deck, Delete card, Sign out), the lists, the calendar, the camera, the message, and no system navigation bar, toolbar, alert, sheet, date picker, wheel or menu on any page.
 - **A keyboard still up** is put away when a question, a calendar, a list without a search of its own or the camera opens (`Keyboard.hide()`): Lucida's sheets are not above the keyboard the way a system alert is.
 - **What stays**: the permission questions, Sign in with Apple's sheet and Google's account window, the App Store's purchase sheet, the keyboard and the text editing menu, the Files picker and Apple's photo
   library picker, and the share sheet.
@@ -538,7 +523,7 @@ when a check fails) and then lists every haptic in the app.
 - **Remove from folder**, not "No folder": a deck's ⋯ menu in the Library and Deck settings' Folder chips offer it only for a deck that is
   in a folder, first, above the folders. Making a copy of someone's deck starts in "Library" (the top level).
 - **Share opens the phone's share sheet** (`ShareSheet.present`, `Design/PageViews.swift`): Share profile (both buttons), a deck's Share link,
-  a class's Share invite link, and a shared deck's share button. Connect AI's link is for pasting into another app, so it still copies.
+  and a shared deck's share button. Connect AI's link is for pasting into another app, so it still copies.
 - **Swiping** (`Design/Swipe.swift`): from the left edge goes back on every pushed page (`BackSwipe`: the pages hide the navigation bar,
   which turns UIKit's own swipe off; this turns it back on, and still isn't allowed while something is over the page or a page is
   moving), and a swipe on a tab's first page moves to the next tab or the one before (`TabPager`: the page follows the finger and

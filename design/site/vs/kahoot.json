@@ -2,10 +2,10 @@
   "slug": "vs/kahoot",
   "kind": "compare",
   "title": "Lucida vs Kahoot: flashcards and live games (2026)",
-  "description": "Lucida vs Kahoot: live games, player limits, flashcards, spaced repetition, price and privacy, with sources. Kahoot is built for classes. Lucida for study.",
+  "description": "Lucida vs Kahoot: live games, player limits, flashcards, spaced repetition, price and privacy, with sources. Kahoot is built for schools. Lucida for study.",
   "h1": "Lucida vs Kahoot",
-  "lead": "Kahoot is the well-known live quiz game for classrooms and events, built for large groups, reports and many question types. Lucida is a flashcard app with spaced repetition whose Live mode turns any of your decks into a game for up to 60 friends on their phones, free.",
-  "updated": "2026-10-01",
+  "lead": "Kahoot is the well-known live quiz game for schools and events, built for large groups, reports and many question types. Lucida is a flashcard app with spaced repetition whose Live mode turns any of your decks into a game for up to 60 friends on their phones, free.",
+  "updated": "2026-10-02",
   "published": "2026-09-30",
   "table": {
     "columns": [
@@ -55,11 +55,6 @@
         "A huge public library (its plans page says half a billion community questions). Share kahoots by link."
       ],
       [
-        "Classes",
-        "Make a class with a join code, assign decks by a date, and see progress that students choose to share. Free.",
-        "Kahoot! for schools: host games, assign kahoots and get reports. Kahoot says 10 million teachers hosted a kahoot in the past 12 months."
-      ],
-      [
         "Games",
         "Live: play a deck with up to 60 friends on their phones. They join with a code or QR, no account. Free.",
         "This is the product: live games on a shared screen. Kahoot says it has had 14 billion participants since 2013. Team play and more game experiences come with paid plans."
@@ -102,20 +97,20 @@
         "**A free game for more players.** Live hosts up to 60 players on the free plan. Kahoot’s free plan lists 40 players on its school page and 10 on its personal page.",
         "**No quiz to build.** The game uses your deck’s cards, or questions your AI wrote, so a deck you already study is ready to play. You can also type a topic, and Lucida writes about 10 questions.",
         "**Players need no account.** Friends join with a code or a QR code and a name.",
-        "**Everything else in one place:** Learn mode, cards Lucida or your own AI makes, sharing, classes and export."
+        "**Everything else in one place:** Learn mode, cards Lucida or your own AI makes, sharing and export."
       ]
     },
     {
       "h2": "Using both",
       "paras": [
-        "Study a deck in Lucida every day, then run a Live game before the test. For a big class, a hall or an event, use Kahoot.",
+        "Study a deck in Lucida every day, then run a Live game before the test. For a large group, a hall or an event, use Kahoot.",
         "To move questions, export a Lucida deck as CSV and copy the fronts and backs into Kahoot’s spreadsheet template. Each Kahoot question needs at least two answers, so you add the wrong ones, and the template takes standard quiz questions only."
       ]
     },
     {
       "h2": "Who should pick which",
       "bullets": [
-        "**Pick Kahoot** for classroom or event games with many players, reports, team modes and slides.",
+        "**Pick Kahoot** for school or event games with many players, reports, team modes and slides.",
         "**Pick Lucida** to study cards every day with spaced repetition and play a deck game with friends or a study group."
       ]
     },
@@ -145,7 +140,7 @@
     },
     {
       "q": "What is a free alternative to Kahoot for studying with friends?",
-      "a": "Lucida’s Live (free, up to 60 players, join with a code), Gizmo Live (free, at least 2 players and no maximum), Knowt Play (free to host from your own sets, with several game modes) and Quizlet Live (a matching game started from a teacher-identified account). Kahoot is still the one built for big classes and events."
+      "a": "Lucida’s Live (free, up to 60 players, join with a code), Gizmo Live (free, at least 2 players and no maximum), Knowt Play (free to host from your own sets, with several game modes) and Quizlet Live (a matching game started from a teacher-identified account). Kahoot is still the one built for big groups and events."
     },
     {
       "q": "Can I turn my flashcards into a Kahoot?",
@@ -191,7 +186,7 @@
       "checked": "2026-09-30"
     },
     {
-      "label": "About Kahoot! (participants, teachers)",
+      "label": "About Kahoot! (participants)",
       "url": "https://kahoot.com/company/",
       "checked": "2026-09-30"
     },
@@ -249,7 +244,6 @@
     "compare",
     "pricing",
     "features/live-games",
-    "features/classes",
     "for/teachers"
   ],
   "keywords": [

@@ -1,11 +1,11 @@
 {
   "slug": "for/teachers",
   "kind": "use",
-  "title": "Flashcards for teachers: classes and live games, free",
-  "description": "Assign decks with due dates, run live review games students join with a code, and see progress students choose to share. Free, for ages 13 and up.",
+  "title": "Flashcards for teachers: live games and shared decks, free",
+  "description": "Run live review games students join with a code, share decks by link, and take or skip students’ suggested fixes. Free, for ages 13 and up.",
   "h1": "Lucida for teachers",
-  "lead": "Lucida gives teachers a free class with a six-letter code, decks assigned by a due date, progress that students choose to share, and live review games they join on their phones with no account. It’s built for students 13 and up, teachers see only simple progress numbers and never individual answers, and there’s no link to Google Classroom or other school systems.",
-  "updated": "2026-10-01",
+  "lead": "Lucida gives teachers free live review games that students join on their phones with a 6-digit code and no account, plus decks to share by link that students can study, copy or suggest fixes to. It’s built for students 13 and up, live games aren’t graded, and there’s no gradebook, roster import or link to school systems.",
+  "updated": "2026-10-02",
   "table": {
     "columns": [
       "Tool",
@@ -14,19 +14,19 @@
     ],
     "rows": [
       [
-        "Classes",
-        "A six-letter code and invite link. Add your decks, assign them with a due date, and see progress that students choose to share",
-        "Yes"
-      ],
-      [
         "Live games",
         "A quiz game from a deck. Students join on their phones with a 6-digit code. Up to 60 players",
         "No"
       ],
       [
         "Shared decks",
-        "Send a deck by link. Students study it as it is, and can suggest fixes that you take or skip",
+        "Send a deck by link. Students study it as it is, or make a copy of their own",
         "Yes, to study or copy it"
+      ],
+      [
+        "Suggested fixes",
+        "Students suggest changes to a deck you share. You take or skip each one",
+        "Yes"
       ],
       [
         "Making decks",
@@ -37,28 +37,34 @@
   },
   "sections": [
     {
-      "h2": "Why flashcards in class",
+      "h2": "Why flashcards work in school",
       "paras": [
-        "Retrieval practice means asking students to recall what they learned instead of rereading it, and classroom research supports it. In three experiments with sixth graders, low-stakes quizzes raised scores on chapter and semester exams (Roediger and colleagues, 2011). The retrieval practice guide from Agarwal and colleagues advises keeping it low-stakes or no-stakes, doing it often, spacing it out, and giving feedback. Flashcards and live games show the answer right after each try, and Lucida’s schedule spaces the reviews for you."
+        "Retrieval practice means asking students to recall what they learned instead of rereading it, and research in schools supports it. In three experiments with sixth graders, low-stakes quizzes raised scores on chapter and semester exams (Roediger and colleagues, 2011). The retrieval practice guide from Agarwal and colleagues advises keeping it low-stakes or no-stakes, doing it often, spacing it out, and giving feedback. Flashcards and live games show the answer right after each try, and Lucida’s schedule spaces the reviews for you."
       ]
     },
     {
       "h2": "Run a unit, step by step",
       "bullets": [
         "**1. Make the deck.** Type cards, import them, make cards in Lucida from your slides, or ask your own AI to draft cards. Lucida shows the cards it makes before they are saved, and with your own AI you can turn on Let me check AI cards first, so you read them before students do.",
-        "**2. Make a class.** You get a six-letter code and an invite link. Post it where your students look.",
-        "**3. Add and assign the deck.** Choose Learn every card or Review what’s due each day, and a due date.",
+        "**2. Share it by link.** Open the deck’s settings, choose Sharing, pick Link only (or Public), and post the link where your students look.",
+        "**3. Let students study it.** They sign in, then study the deck as it is or make a copy of their own. Their schedule, streak and scores stay theirs and never go to you.",
         "**4. Use Live for review days.** Open a room from the deck on your computer, show the code on the big screen, and students join on their phones.",
-        "**5. Check in.** The class page shows, for students who share, how many cards they’ve learned, how many are due, and how often they remembered a card.",
+        "**5. See the hardest cards (Pro).** On a deck you share, Pro shows which cards people miss most, as percentages without names.",
         "**6. Improve the deck.** Students can suggest fixes. You take or skip each one, and everyone studying the deck gets the update."
+      ]
+    },
+    {
+      "h2": "Live games for review days",
+      "paras": [
+        "From any deck of yours, choose Play live, pick how many questions (5, 10 or 20) and the time for each (10, 20 or 30 seconds), then open the room and show the 6-digit code on the big screen. Students go to lucida.cards/join on their phones and type the code and a name. A room holds up to 60 players, and players need no account.",
+        "Everyone answers the same multiple-choice questions for points, and a leaderboard follows each question. Live games aren’t graded and don’t save a report, so keep the points for fun. You can also start a game from a topic you type, which counts as one of your daily makes. See [live games](/features/live-games)."
       ]
     },
     {
       "h2": "Privacy and student data",
       "bullets": [
         "Students must be 13 or older. Lucida’s terms require it, and its privacy policy says it isn’t meant for younger children.",
-        "Students choose whether to share progress with the class. It’s off until they say yes.",
-        "Teachers see numbers only: cards learned, cards due, how often a student remembered a card over the last 30 days, and when they last studied. They never see individual answers.",
+        "When students study your shared deck, their schedule, streak and scores never go to you.",
         "Lucida’s privacy policy says it shows no ads, doesn’t sell your data, and doesn’t use cards to train AI models. Supabase stores the data in the United States, and students can export or delete it.",
         "When you make cards in Lucida, the text, pictures or audio you add go to an AI service to write the cards. Lucida asks for services that say they don’t keep it or train on it.",
         "People who join a live game give a name and nothing else: no account and no email.",
@@ -68,13 +74,14 @@
     {
       "h2": "Verified teachers",
       "paras": [
-        "Teachers can ask to be verified, in Settings, with a school email or a link that shows where they teach. The Lucida team reviews each request. A verified teacher gets a check on their profile and can mark shared decks as Checked, which shows a badge until the deck changes. See [shared decks](/features/shared-decks) and [classes](/features/classes)."
+        "Teachers can ask to be verified, in Settings, with a school email or a link that shows where they teach. The Lucida team reviews each request. A verified teacher gets a check on their profile and can mark shared decks as Checked, which shows a badge until the deck changes. Discover has a Checked by teachers section. The badge means one teacher checked the deck, and it isn’t a guarantee. See [shared decks](/features/shared-decks)."
       ]
     },
     {
       "h2": "What Lucida doesn’t do for teachers",
       "bullets": [
-        "There’s no gradebook, roster import, or link to Google Classroom or other school systems.",
+        "There’s no gradebook, roster import, or link to school systems.",
+        "You can’t assign a deck to students or set a due date.",
         "There are no per-student answer reports. On Pro, you can see which cards on a deck you share people miss most, as percentages without names.",
         "Live games aren’t graded and don’t save a report.",
         "Lucida isn’t for students under 13.",
@@ -85,19 +92,19 @@
   "faq": [
     {
       "q": "Is Lucida free for teachers?",
-      "a": "Yes. Classes, shared decks and live games are free. Pro ($5.99 a month or $49.99 a year, as of September 2026) adds extras like weak-spot stats and the hardest cards on decks you share. The pricing page has no separate school plan."
+      "a": "Yes. Shared decks and live games are free. Pro ($5.99 a month or $49.99 a year, as of September 2026) adds extras like Stats and the hardest cards on decks you share. The pricing page has no separate school plan."
     },
     {
-      "q": "How do I use flashcards in the classroom?",
-      "a": "Use them as low-stakes retrieval practice: short, frequent recall with feedback. Assign a deck with a due date, run a live round on review days, and keep points out of the gradebook."
+      "q": "How do I use flashcards with students?",
+      "a": "Use them as low-stakes retrieval practice: short, frequent recall with feedback. Share a deck by link, run a live round on review days, and keep the points out of your grades."
     },
     {
       "q": "Do students need an account?",
-      "a": "To join a class or study a shared deck, yes. To join a live game, no: they need only the code and a name."
+      "a": "To study or copy a shared deck, yes. To join a live game, no: they need only the code and a name."
     },
     {
       "q": "Can I see my students’ progress?",
-      "a": "Yes, for students who choose to share it: cards learned out of the total, cards due, how often they remembered a card in the last 30 days, and when they last studied. You never see individual answers."
+      "a": "Not student by student. Their schedule, streak and scores never go to you, and live games don’t save a report. On Pro, you can see which cards on a deck you share people miss most, as percentages without names."
     },
     {
       "q": "How do I run a live quiz from my flashcards?",
@@ -105,7 +112,7 @@
     },
     {
       "q": "Can I use Lucida instead of Quizlet or Kahoot?",
-      "a": "Lucida covers flashcards, a free Learn mode, classes and a live quiz game. For side-by-side comparisons with sources, see [Lucida vs Quizlet](/vs/quizlet) and [Lucida vs Kahoot](/vs/kahoot)."
+      "a": "Lucida covers flashcards, a free Learn mode, shared decks and a live quiz game. For side-by-side comparisons with sources, see [Lucida vs Quizlet](/vs/quizlet) and [Lucida vs Kahoot](/vs/kahoot)."
     },
     {
       "q": "Can Lucida or my AI make a deck from my slides?",
@@ -116,12 +123,16 @@
       "a": "13 and up. Lucida’s terms require users to be at least 13, and its privacy policy says it isn’t meant for children under 13."
     },
     {
-      "q": "Does Lucida work with Google Classroom?",
-      "a": "No. There’s no link to Google Classroom or other school systems. You share the class code or invite link yourself."
+      "q": "Does Lucida connect to my school’s systems?",
+      "a": "No. There’s no gradebook, roster import, or link to school systems. You send students a deck’s link yourself."
     },
     {
       "q": "Can students suggest corrections to my deck?",
-      "a": "Yes. Anyone signed in can suggest changes, up to five waiting on a deck at a time. You take or skip each one, and everyone studying the deck gets the ones you take."
+      "a": "Yes. Anyone signed in can suggest changes, and one person can have up to five waiting on a deck at a time. You take or skip each one, and everyone studying the deck gets the ones you take."
+    },
+    {
+      "q": "How do I get verified as a teacher?",
+      "a": "In Settings, ask to be verified with a school email or a link that shows where you teach. The Lucida team reviews each request. A verified teacher gets a check on their profile and can mark shared decks as Checked."
     }
   ],
   "sources": [
@@ -152,7 +163,6 @@
     }
   ],
   "related": [
-    "features/classes",
     "features/live-games",
     "features/shared-decks",
     "features/ai-flashcards",
@@ -165,15 +175,15 @@
   "keywords": [
     "flashcards for teachers",
     "free flashcard app for teachers",
-    "how to use flashcards in the classroom",
-    "assign flashcards to students",
-    "classroom review games",
+    "how to use flashcards with students",
+    "share flashcards with students",
+    "review games for teachers",
     "kahoot alternative for teachers",
     "quizlet alternative for teachers",
-    "retrieval practice classroom",
+    "retrieval practice for teachers",
     "teacher flashcard app",
-    "student progress flashcards",
-    "classroom review games like kahoot",
-    "quizlet for teachers free"
+    "review games like kahoot for teachers",
+    "quizlet for teachers free",
+    "live quiz game for a review day"
   ]
 }

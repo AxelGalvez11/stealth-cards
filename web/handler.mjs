@@ -110,7 +110,7 @@ const devPerson = async uid => { const me = devMe(uid), ap = await apple.applePl
 // read the deck's name and cards even before the app draws them.
 const escHtml = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 async function publicPage(req, res, path) {
-  const m = await (path.startsWith('/class/') ? classes.metaFor(path) : social.metaFor(path)).catch(e => { console.error('meta', e); return null; });
+  const m = await social.metaFor(path).catch(e => { console.error('meta', e); return null; });
   let html = await readFile(join(ROOT, 'app.html'), 'utf8').catch(() => null);
   if (!html) return send(res, 404, 'Not found', 'text/plain');
   if (m) {
@@ -598,7 +598,7 @@ export async function handle(req, res) {
       res.writeHead(302, { location: '/', 'set-cookie': 'lc_dev=' + n + '; Path=/; HttpOnly; SameSite=Lax; Max-Age=' + (n ? 86400 * 30 : 0), 'cache-control': 'no-store' });
       return res.end();
     }
-    if (req.method === 'GET' && (/^\/@[A-Za-z0-9_.]{3,30}(\/[A-Za-z0-9-]{1,60})?\/?$/.test(path) || /^\/d\/s[a-z0-9]{4,40}$/.test(path) || /^\/class\/[A-Za-z]{6}\/?$/.test(path))) return await publicPage(req, res, path);
+    if (req.method === 'GET' && (/^\/@[A-Za-z0-9_.]{3,30}(\/[A-Za-z0-9-]{1,60})?\/?$/.test(path) || /^\/d\/s[a-z0-9]{4,40}$/.test(path))) return await publicPage(req, res, path);
     if (path === '/sitemap.xml' && req.method === 'GET') { res.writeHead(200, { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=3600' }); return res.end(await social.sitemap(originOf(req))); }
     if (path.startsWith('/api/public/') && req.method === 'GET') {
       let viewer = devOf(req);

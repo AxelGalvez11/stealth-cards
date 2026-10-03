@@ -2,10 +2,10 @@
   "slug": "vs/remnote",
   "kind": "compare",
   "title": "Lucida vs RemNote: flashcard apps compared (2026)",
-  "description": "Lucida vs RemNote: price, FSRS, AI, Anki import, offline and classes, with sources. RemNote mixes notes and cards. Lucida is flashcards only, in a browser.",
+  "description": "Lucida vs RemNote: price, FSRS, AI, Anki import, offline and games, with sources. RemNote mixes notes and cards. Lucida is flashcards only, in a browser.",
   "h1": "Lucida vs RemNote",
   "lead": "RemNote is a note-taking app with flashcards built in, so it fits if you want notes and cards in one place, with desktop and phone apps that work offline. Lucida is flashcards only, in a browser, so it fits if you want a simple deck app where Lucida makes the cards from your files, or your own AI (Claude, ChatGPT) does.",
-  "updated": "2026-10-01",
+  "updated": "2026-10-02",
   "published": "2026-09-30",
   "table": {
     "columns": [
@@ -55,11 +55,6 @@
         "Share documents and cards, browse a Shared Flashcards library, and collaborate on notes."
       ],
       [
-        "Classes",
-        "Make a class with a join code, assign decks by a date, and see progress that students choose to share. Free.",
-        "None found in its help center or pricing page."
-      ],
-      [
         "Games",
         "Live: play a deck with up to 60 friends on their phones. They join with a code or QR, no account. Free.",
         "None found."
@@ -102,7 +97,7 @@
         "**Simple.** Decks and cards, and nothing else to learn: no outline, no knowledge base and nothing to set up.",
         "**Free picture cards.** Lucida’s free plan has up to 100 pictures and sounds. RemNote’s free plan has 5 image-occlusion images.",
         "**Learn mode is free:** five kinds of questions made from your cards, with no credits. RemNote’s quizzes are part of its AI features, which run on monthly credits.",
-        "**Live games and classes.** Lucida has live games for up to 60 friends, and classes with assignments and progress students choose to share. We found neither in RemNote’s help center or pricing page.",
+        "**Live games.** Lucida has live games for up to 60 friends. We found none in RemNote’s help center or pricing page.",
         "**Your own AI, no credit meter from Lucida.** Your AI app makes and edits cards through your Lucida link, and on Free it can make as many as you want.",
         "**A lower monthly price for Pro:** $5.99 a month, against $10 a month for RemNote Pro ($8 a month billed yearly). The two plans include different things.",
         "**Your data out.** Export each deck as CSV, or everything including reviews as JSON."

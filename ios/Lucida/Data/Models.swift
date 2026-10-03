@@ -22,8 +22,6 @@ struct Library: Decodable {
   var profile: ProfileRef?
   /// False on a server started as the Free app (LUCIDA_PLAN=free, or a made-up person on Free); the Pro tools are off.
   var pro = true
-  /// The classes you're in, with their assignments (web/classes.mjs keeps them here, so the Library shows what's assigned).
-  var classes: [LibClass]
   /// Your finished practice tests, newest first (web/store.mjs test.save).
   var tests: [PastTest]
   /// How many batches of Lucida's own Learn mode questions are left today (nil from a server that doesn't say; Learn mode asks for none at 0).
@@ -32,13 +30,12 @@ struct Library: Decodable {
   /// by deck id (Data/MakeData.swift).
   var make = MakeInfo()
   var materials: [String: DeckMaterials] = [:]
-  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn, profile, pro, classes, tests, quizLeft, make }
+  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn, profile, pro, tests, quizLeft, make }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     rev = c.v(.rev, 0); settings = c.v(.settings, UserSettings()); ai = c.v(.ai, AIState()); folders = c.v(.folders, [])
     decks = c.v(.decks, []); cards = c.v(.cards, []); logs = c.v(.logs, []); me = c.v(.me, nil); aiOn = c.v(.aiOn, false); profile = c.v(.profile, nil)
     pro = c.v(.pro, true)
-    classes = c.v(.classes, [])
     tests = c.v(.tests, []); quizLeft = c.v(.quizLeft, nil)
     make = c.v(.make, MakeInfo())
     // (Each deck's sources and Guide are read from the same list of decks, apart from Deck itself.)
@@ -46,7 +43,7 @@ struct Library: Decodable {
   }
   init(rev: Int = 0, settings: UserSettings = UserSettings(), ai: AIState = AIState(), folders: [Folder] = [], decks: [Deck] = [], cards: [Card] = [], logs: [ReviewLog] = [], me: Me? = nil, aiOn: Bool = false) {
     self.rev = rev; self.settings = settings; self.ai = ai; self.folders = folders; self.decks = decks; self.cards = cards; self.logs = logs; self.me = me; self.aiOn = aiOn
-    classes = []; tests = []
+    tests = []
   }
 }
 

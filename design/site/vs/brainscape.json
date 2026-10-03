@@ -5,7 +5,7 @@
   "description": "Lucida vs Brainscape: price, spaced repetition, AI, images, export and sharing, with sources. Brainscape has expert-made decks. Lucida has more for free.",
   "h1": "Lucida vs Brainscape",
   "lead": "Brainscape is a polished flashcard app with its own spaced repetition (you rate each card 1 to 5), expert-made Certified decks and phone apps, but pictures, sounds and export are Pro features. Lucida makes pictures and sounds (up to 100), Learn mode, sharing and export free, and it makes cards from your files, while your own AI (Claude, ChatGPT) can make them too.",
-  "updated": "2026-10-01",
+  "updated": "2026-10-02",
   "published": "2026-09-30",
   "table": {
     "columns": [
@@ -52,12 +52,7 @@
       [
         "Sharing",
         "Decks are private, link-only or public. Profiles, Discover, study a deck as it is or copy it, suggest changes, version history. All free.",
-        "Share decks and classes with peers or students and control who can edit. Decks shared with you are free to study, and 2,500 preloaded cards are free. Certified (expert-made) decks and other learners’ decks in its library need Pro."
-      ],
-      [
-        "Classes",
-        "Make a class with a join code, assign decks by a date, and see progress that students choose to share. Free.",
-        "Classes group your decks, and you can invite learners. Detailed student study data is an Enterprise feature."
+        "Share decks with peers or students and control who can edit. Decks shared with you are free to study, and 2,500 preloaded cards are free. Certified (expert-made) decks and other learners’ decks in its library need Pro."
       ],
       [
         "Games",
