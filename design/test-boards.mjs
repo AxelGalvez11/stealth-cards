@@ -147,7 +147,7 @@ export default function testKit(c) {
   const answerLine = (label, value, color = '{{t.text}}') => `<div style="display: flex; gap: 12px; font-size: 15px; line-height: 1.4;"><span style="width: 104px; flex-shrink: 0; color: {{t.muted}};">${label}</span><span style="flex-grow: 1; min-width: 0; color: ${color}; font-weight: 500; overflow-wrap: anywhere;">${value}</span></div>`;
   // Each explanation ends with the conversation about its question and the composer (design/chat.mjs), in the test's colors.
   const chat = phone => chatMarkup({ svg, I }, 'r.chat', { text: '{{t.text}}', muted: '{{t.muted}}', bubble: '{{t.bg}}', field: '{{t.bg}}', again: '{{t.again}}', btn: '{{t.inv}}', btnFg: '{{t.invText}}' }, { phone, fs: 15, gap: 6, pad: 16 });
-  const row = phone => `<div data-q="{{r.n}}" style="box-sizing: border-box; padding: ${phone ? '16px' : '20px 24px'}; border-radius: ${phone ? 20 : 24}px; border: 1px solid {{t.line}}; display: flex; flex-direction: column; gap: ${phone ? 10 : 12}px;">
+  const row = phone => `<div data-q="{{r.n}}" ref="{{r.peek}}" style="box-sizing: border-box; padding: ${phone ? '16px' : '20px 24px'}; border-radius: ${phone ? 20 : 24}px; border: 1px solid {{t.line}}; display: flex; flex-direction: column; gap: ${phone ? 10 : 12}px;">
       <div style="display: flex; align-items: center; gap: 12px;"><span style="font-size: 13px; font-weight: 600; color: {{t.muted}}; flex-grow: 1;">{{r.n}} · {{r.kindLabel}}</span>${mark}</div>
       <sc-if value="{{r.hasText}}" hint-placeholder-val="{{ true }}"><div style="font-size: ${phone ? 16 : 17}px; font-weight: 600; line-height: 1.35;">{{r.q}}</div></sc-if>
       <sc-if value="{{r.hasClaim}}" hint-placeholder-val="{{ false }}"><div style="padding: 12px 14px; border-radius: 14px; background: {{t.surf}}; font-size: 15px; font-weight: 600; line-height: 1.35;">{{r.claim}}</div></sc-if>
@@ -329,7 +329,10 @@ renderVals() { ${DB_JS}
         ask: () => { this.setState({ exOpen: { ...(s.exOpen || {}), [r.n]: true } }); if (mock) this.setState({ exOn: { ...(s.exOn || {}), [r.n]: true } }); else if (!ex.text && r.card) db.act.explain(r.card, r.q); },
         closeEx: () => { const k = 'r' + r.n; this.setState({ exOpen: { ...(this.state.exOpen || {}), [r.n]: false }, chatDraft: { ...(this.state.chatDraft || {}), [k]: '' }, chatMock: { ...(this.state.chatMock || {}), [k]: [] } }); if (live && r.card) db.act.followUpClear(r.card); },
         exOpen: open && !!ex.on, exBusy: !!ex.busy, exText: ex.busy ? '' : ex.text || '', exError: ex.busy ? '' : ex.error || '',
-        hasNote: !!ex.note && !!ex.text && !ex.busy && !chat.limited, note: ex.note || '', chat };
+        hasNote: !!ex.note && !!ex.text && !ex.busy && !chat.limited, note: ex.note || '', chat,
+        // (on the canvas, the explanationOpen Tweak brings question 3 into view: its list scrolls there once, as a press on Explain would)
+        peek: el => { if (!el || !mock || !P.explainOpen || r.n !== 3 || this.peeked === el) return; this.peeked = el;
+          for (let p = el.parentElement; p; p = p.parentElement) if (/auto|scroll/.test(getComputedStyle(p).overflowY)) { p.scrollTop = el.getBoundingClientRect().top - p.getBoundingClientRect().top + p.scrollTop - 16; break; } } };
     }),
     retake: () => { if (live) db.act.testRetake(); else go('Multiple choice'); }, study: () => { if (live) db.act.testStudy(); },
     done: () => { if (live) Promise.resolve(db.act.go(R.back)).then(() => db.act.testLeave()); else go('Set up'); }

@@ -2708,7 +2708,7 @@ renderVals() {
   ${EXPLAIN_JS}
   ${SW_JS}
   const rev = this.state.revealed;
-  const ex = explainView(rv.ex, rv.card && rv.card.id, '', rev, ${JSON.stringify('It pumps protons (H⁺) out of the matrix into the space between the two membranes. That builds a gradient, like water held behind a dam, and ATP synthase uses the flow back in to make ATP. Remember it as pump uphill first, then cash in on the way down.')}, { sample: ${JSON.stringify(CHAT_SAMPLE.review)}, pal: { on: cp.inv, onFg: cp.invText, off: cp.surf2, offFg: cp.muted }, phone: ${phone} });
+  const ex = explainView(rv.ex, rv.card && rv.card.id, '', rev, ${JSON.stringify('It pumps protons (H⁺) out of the matrix into the space between the two membranes. That builds a gradient, like water held behind a dam, and ATP synthase uses the flow back in to make ATP. Remember it as pump uphill first, then cash in on the way down.')}, { sample: ${JSON.stringify(CHAT_SAMPLE.review)}, pal: cp.card === cp.surf ? { on: cp.inv, onFg: cp.invText, off: 'rgba(255,255,255,.12)', offFg: cp.muted, fill: cp.surf2 } : { on: cp.inv, onFg: cp.invText, off: cp.surf2, offFg: cp.muted, fill: cp.surf }, phone: ${phone} });
   // Explain's round button, top right beside the settings: pressed while the explanation is open, like the settings button; on a
   // phone it keeps its place, unseen, until the card is turned over.
   const exBtn = { bg: ex.panel ? t.inv : t.surf, fg: ex.panel ? t.invText : t.text, vis: ex.show ? 'visible' : 'hidden' };
@@ -2837,7 +2837,7 @@ const explainButton = phone => `<sc-if value="{{${phone ? 'ex.avail' : 'ex.show'
 // they're taller than the panel, and the composer at the bottom (design/chat.mjs).
 const explainPanel = phone => {
   const pad = phone ? 16 : 24, gap = phone ? 8 : 10;
-  const chat = chatMarkup({ svg, I }, 'ex.chat', { text: '{{cp.text}}', muted: '{{cp.muted}}', bubble: '{{cp.surf}}', field: '{{cp.surf}}', again: '{{cp.again}}', btn: '{{cp.inv}}', btnFg: '{{cp.invText}}' }, { phone, fs: phone ? 15 : 17, gap, pad });
+  const chat = chatMarkup({ svg, I }, 'ex.chat', { text: '{{cp.text}}', muted: '{{cp.muted}}', bubble: '{{ex.chat.fill}}', field: '{{ex.chat.fill}}', again: '{{cp.again}}', btn: '{{cp.inv}}', btnFg: '{{cp.invText}}' }, { phone, fs: phone ? 15 : 17, gap, pad });
   return `<sc-if value="{{ex.panel}}" hint-placeholder-val="{{ false }}"><div role="region" aria-label="Explanation" class="sc-fade sc-xx" style="box-sizing: border-box; min-width: 0; overflow: hidden; border-radius: ${phone ? 24 : 28}px; background: {{cp.card}}; border: 1px solid {{cp.line}}; box-shadow: {{cp.shadow}}; color: {{cp.text}}; display: flex; flex-direction: column; text-align: left;">
     <div style="flex-shrink: 0; padding: ${phone ? 14 : 22}px ${pad}px 0; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: {{cp.muted}};">${svg(I.sparkle, 13, 2)}<span style="flex-grow: 1;">Explained by AI</span><button type="button" onClick="{{ex.close}}" aria-label="Close the explanation" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: {{cp.surf}}; color: {{cp.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 10, 2.4)}</button></div>
     <div class="sc-xs" ref="{{ex.chat.end}}" style="flex: 0 1 auto; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: ${gap}px ${pad}px; display: flex; flex-direction: column; gap: ${gap}px;">
@@ -2879,6 +2879,9 @@ const EXPLAIN_JS = `${CHAT_JS}
     return { show, avail: !!(exv.on && id), closed: !open, open, panel: show && open, side: show && open ? 'sc-xo' : '', label: exv.text ? 'Explanation' : 'Explain', expanded: show && open ? 'true' : 'false',
       busy: !!exv.busy, hasText: !!exv.text && !exv.busy, text: exv.text || '', hasError: !!exv.error && !exv.busy, error: exv.error || '', goPro: !!exv.goPro,
       proHref, hasNote: !!exv.note && !!exv.text && !talk.limited, note: exv.note || '', chat: talk,
+      // (a phone's Learn page is taller than its board once the explanation is open: on the canvas it shows the page's end, where the app
+      // brings the explanation and its composer into view)
+      pageEnd: el => { if (!el || !db.mock) return; const at = show && open ? 'end' : 'top'; if (this.pageAt === at) return; this.pageAt = at; el.scrollTop = at === 'end' ? el.scrollHeight : 0; },
       ask, close, toggle: () => (show && open ? close() : ask()) };
   };`;
 const flipCard = (w, h, pad, big) => `<button type="button" onClick="{{reveal}}" aria-label="{{flipLabel}}" data-key="Space" class="{{cardIn}}" style="width: ${w}; height: ${h}; padding: 0; border: 0; background: transparent; perspective: 1600px; font: inherit; color: inherit; cursor: pointer; flex-grow: ${h === 'auto' ? 1 : 0};">
@@ -5013,7 +5016,7 @@ const webQuizOf = bg => `<div style="position: relative; isolation: isolate; wid
   ${learnSettings(false)}
 </div>`;
 const webQuiz = webQuizOf(studyBgLayer);
-const phoneQuizOf = bg => `<div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 18px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
+const phoneQuizOf = bg => `<div ref="{{ex.pageEnd}}" style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 18px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
   ${bg}
   ${learnTopPhone('PhoneDeck.dc.html', true)}
   <div class="sc-q" style="display: flex; flex-direction: column; gap: 16px; animation: {{qAnim}};">
@@ -5146,7 +5149,7 @@ const webQuizType = `<div style="position: relative; isolation: isolate; width: 
   </main>
   ${learnSettings(false)}
 </div>`;
-const phoneQuizType = `<div style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 16px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
+const phoneQuizType = `<div ref="{{ex.pageEnd}}" style="position: relative; isolation: isolate; width: 390px; height: 844px; box-sizing: border-box; padding: 60px 16px 34px; display: flex; flex-direction: column; gap: 16px; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{k.ink}};">
   ${studyBgLayer}
   ${learnTopPhone('PhoneDeck.dc.html', true)}
   <div class="sc-q" style="display: flex; flex-direction: column; gap: 16px; animation: {{qAnim}};">

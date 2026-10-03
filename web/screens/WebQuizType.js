@@ -477,7 +477,7 @@ renderVals() { const db = this.props.db || this.mock(); const chrome = db.chrome
     const last = turns[turns.length - 1], endKey = id + '|' + turns.length + '|' + (last ? (last.busy ? 'busy' : last.a.length + ':' + last.error) : '') + '|' + !!lim;
     return {
       open: !!o.show && !lim, limited: !!o.show && !!lim, limitText: lim ? lim.text || '' : '', goPro: !!(lim && lim.goPro), proHref: o.proHref,
-      turns, hasTurns: turns.length > 0, draft, off: ready ? 'false' : 'true', goBg: ready ? o.pal.on : o.pal.off, goFg: ready ? o.pal.onFg : o.pal.offFg,
+      turns, hasTurns: turns.length > 0, draft, off: ready ? 'false' : 'true', goBg: ready ? o.pal.on : o.pal.off, goFg: ready ? o.pal.onFg : o.pal.offFg, fill: o.pal.fill || '',
       float: fl ? 'position: fixed; z-index: 60; top: ' + fl.top + 'px; left: ' + fl.left + 'px; width: ' + fl.width + 'px; box-shadow: 0 8px 28px rgba(0,0,0,.16);' : '',
       slot: fl ? 'min-height: ' + fl.h + 'px;' : '',
       set: e => setDraft(e && e.target ? e.target.value : ''),
@@ -526,6 +526,9 @@ renderVals() { const db = this.props.db || this.mock(); const chrome = db.chrome
     return { show, avail: !!(exv.on && id), closed: !open, open, panel: show && open, side: show && open ? 'sc-xo' : '', label: exv.text ? 'Explanation' : 'Explain', expanded: show && open ? 'true' : 'false',
       busy: !!exv.busy, hasText: !!exv.text && !exv.busy, text: exv.text || '', hasError: !!exv.error && !exv.busy, error: exv.error || '', goPro: !!exv.goPro,
       proHref, hasNote: !!exv.note && !!exv.text && !talk.limited, note: exv.note || '', chat: talk,
+      // (a phone's Learn page is taller than its board once the explanation is open: on the canvas it shows the page's end, where the app
+      // brings the explanation and its composer into view)
+      pageEnd: el => { if (!el || !db.mock) return; const at = show && open ? 'end' : 'top'; if (this.pageAt === at) return; this.pageAt = at; el.scrollTop = at === 'end' ? el.scrollHeight : 0; },
       ask, close, toggle: () => (show && open ? close() : ask()) };
   };
   const qF = S ? S.faceOf('front', 'learn') : null;

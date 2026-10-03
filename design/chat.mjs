@@ -89,7 +89,7 @@ export const CHAT_JS = String.raw`const chatView = (key, id, question, exv, o) =
     const last = turns[turns.length - 1], endKey = id + '|' + turns.length + '|' + (last ? (last.busy ? 'busy' : last.a.length + ':' + last.error) : '') + '|' + !!lim;
     return {
       open: !!o.show && !lim, limited: !!o.show && !!lim, limitText: lim ? lim.text || '' : '', goPro: !!(lim && lim.goPro), proHref: o.proHref,
-      turns, hasTurns: turns.length > 0, draft, off: ready ? 'false' : 'true', goBg: ready ? o.pal.on : o.pal.off, goFg: ready ? o.pal.onFg : o.pal.offFg,
+      turns, hasTurns: turns.length > 0, draft, off: ready ? 'false' : 'true', goBg: ready ? o.pal.on : o.pal.off, goFg: ready ? o.pal.onFg : o.pal.offFg, fill: o.pal.fill || '',
       float: fl ? 'position: fixed; z-index: 60; top: ' + fl.top + 'px; left: ' + fl.left + 'px; width: ' + fl.width + 'px; box-shadow: 0 8px 28px rgba(0,0,0,.16);' : '',
       slot: fl ? 'min-height: ' + fl.h + 'px;' : '',
       set: e => setDraft(e && e.target ? e.target.value : ''),
