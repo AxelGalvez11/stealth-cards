@@ -113,10 +113,11 @@ struct GuideScreen: View {
     }
     if !store.demo && !store.guide(deckId).can { nav.back(); return }
     load(n)
-    // the caret where the page was tapped on the deck page
-    let at = nav.guideAt.split(separator: ":").compactMap { Int($0) }
+    // the caret where the page was tapped on the deck page, or at the end of what is written (the deck page's + › Notes)
+    let want = nav.guideAt, at = want.split(separator: ":").compactMap { Int($0) }
     nav.guideAt = ""
     if n.canEdit && !store.demo && at.count == 2 { notes.focusAt(at[0], at[1]) }
+    else if n.canEdit && !store.demo && want == "end" && !n.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { notes.focusEnd() }
   }
   /// The page's words go in (a design screen's state picks which toggles are open, what is folded and what is selected).
   private func load(_ n: GuideNow) {

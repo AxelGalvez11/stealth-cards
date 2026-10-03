@@ -125,6 +125,8 @@ for (const guide of GUIDE_STATES) PROP_SETS.push({ guide }, { guide, dark: true 
 for (const view of GUIDE_VIEWS) PROP_SETS.push({ view }, { view, dark: true });
 for (const liveFrom of LIVE_FROM) PROP_SETS.push({ liveFrom }, { liveFrom, dark: true });
 for (const topicState of LIVE_TOPIC_STATES) PROP_SETS.push({ topicState });
+// The deck page's Study ▾ and + menus open (its `menu` Tweak), light, dark and gray, on a deck you study from someone and on your copy of one.
+PROP_SETS.push({ menu: 'Study' }, { menu: 'Add' }, { menu: 'Study', dark: true }, { menu: 'Add', dark: true, dim: true }, { menu: 'Add', linked: 'study' }, { menu: 'Study', linked: 'copy' }, { menu: 'Add', guide: 'No guide yet' });
 // A card made from a source says so in the editor (and the deck page's source opens where the card points).
 PROP_SETS.push({ madeFrom: false }, { madeFrom: true, dark: true }, { guide: 'A source open', sourceAt: 'p. 4' }, { guide: 'A source open', sourceAt: 'p. 4', section: 'Sources' });
 

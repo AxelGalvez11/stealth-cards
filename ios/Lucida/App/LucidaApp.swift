@@ -346,6 +346,9 @@ extension Board {
     case "PhoneActivity": nav.path = [.news]
     case "PhoneActivityEmpty": store.props.netEmpty = true; nav.path = [.news]
     case "PhoneDeckStudied": store.props.linked = "study"; nav.tab = .library; nav.path = [.deck("cell")]
+    // The deck page with its Study menu (Flashcards, Learn) or its + menu (New card, Make cards, Source, Notes, Upload diagram, Make diagram) open.
+    case "PhoneDeckStudyMenu": store.props.deckMenu = "Study"; nav.tab = .library; nav.path = [.deck("cell")]
+    case "PhoneDeckAddMenu": store.props.deckMenu = "Add"; nav.tab = .library; nav.path = [.deck("cell")]
     case "PhoneDeckCopy": store.props.linked = "copy"; nav.tab = .library; nav.path = [.deck("cell")]
     case "PhoneDeckUpdates": store.props.linked = "copy"; nav.tab = .library; nav.path = [.deck("cell")]; nav.sheet = .deckUpdates("cell")
     case "PhoneDeckSettingsShare": store.props.shared = "Public"; store.props.deckSettings = "share"; nav.tab = .library; nav.path = [.deck("cell")]

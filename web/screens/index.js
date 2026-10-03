@@ -331,6 +331,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneDeckAddMenu",
+  "title": "iPhone · Deck page · + menu open",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneDeckCopy",
   "title": "iPhone · Deck page · your copy, with the owner’s changes waiting",
   "w": 390,
@@ -393,6 +399,12 @@ export default [
  {
   "name": "PhoneDeckStudied",
   "title": "iPhone · Deck page · a deck you study from someone else",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneDeckStudyMenu",
+  "title": "iPhone · Deck page · Study menu open",
   "w": 390,
   "h": 844
  },
@@ -2059,6 +2071,12 @@ export default [
   "h": 900
  },
  {
+  "name": "WebDeckAddMenu",
+  "title": "Web · Deck page · + menu open",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebDeckCopy",
   "title": "Web · Deck page · your copy, with the owner’s changes waiting",
   "w": 1440,
@@ -2139,6 +2157,12 @@ export default [
  {
   "name": "WebDeckStudied",
   "title": "Web · Deck page · a deck you study from someone else",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebDeckStudyMenu",
+  "title": "Web · Deck page · Study menu open",
   "w": 1440,
   "h": 900
  },

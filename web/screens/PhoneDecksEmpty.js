@@ -450,7 +450,6 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);const d
       ...(C ? { base: C.base, ink: C.ink, shadow: 'none', plain: false, skin: true, art: C.art } : { plain: true, skin: false, art: null }) },
     coverTitle: C ? C.titleAt(34) : '', coverTitleS: C ? C.titleHead(32, dk.name) : '',
     coverIsImage: pic === 'mock', coverHasPhoto: !!photo, coverPhoto: photo,
-    newCardHref: db.mock ? 'PhoneEditor.dc.html' : dk.newCardHref, makeHref: db.mock ? 'PhoneMake.dc.html' : '/make?deck=' + encodeURIComponent(dk.id),
     newDeckHref: db.mock ? 'PhoneNewDeck.dc.html' : db.href('newDeck'), importHref: db.mock ? 'PhoneImport.dc.html' : db.href('import', ''), connectHref: db.mock ? 'PhoneConnect.dc.html' : db.href('connect'),
     openSettings: () => { if (!db.mock) db.act.go(dk.settingsHref); } }; }
 }
