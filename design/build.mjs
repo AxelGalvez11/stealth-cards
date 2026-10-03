@@ -4814,15 +4814,16 @@ const LEARN_K = `const K = sd && this.props.dim
 // Progress through the set: learned (purple), still learning (light purple), not yet (track), with "+1" when one is learned.
 const learnBar = w => `<div style="${w ? `width: ${w}px;` : 'flex-grow: 1;'} height: 10px; border-radius: 5px; background: {{k.track}}; overflow: hidden; display: flex;"><div style="width: {{doneW}}; background: {{k.bar}}; transition: width .5s cubic-bezier(.2,.8,.2,1);"></div><div style="width: {{partW}}; background: {{k.part}}; transition: width .5s cubic-bezier(.2,.8,.2,1);"></div></div>`;
 const learnPlus = `<sc-if value="{{plusOne}}" hint-placeholder-val="{{ false }}"><span class="sc-plus" aria-hidden="true" style="position: absolute; left: 100%; top: -3px; margin-left: 6px; font-size: 13px; font-weight: 700; color: {{k.bar}}; animation: {{plusAnim}};">+1</span></sc-if>`;
-// The top: stop, settings, progress, and the set, on soft glass chips over the deck's background (on a plain white page, the
-// page's light gray, like flashcards' buttons, or they wouldn't show).
-// Settings (a gear by X) open a panel on the web and a sheet on the iPhone with the deck's background, as flashcards' do.
+// The top (canvas V179): Stop on the left, the progress in the middle, and Explain and the settings gear on the right (on a phone the row is
+// Stop, the progress, N/M, Explain and the gear), on soft glass chips over the deck's background (on a plain white page, the page's light
+// gray, like flashcards' buttons, or they wouldn't show). Matching has no Explain, only the gear.
+// Settings (the gear) open a panel on the web and a sheet on the iPhone with the deck's background, as flashcards' do.
 const learnGear = size => `<button type="button" onClick="{{toggleSettings}}" aria-label="Learn settings" data-tip="Learn settings" aria-expanded="{{settingsExpanded}}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border: 0; border-radius: ${size / 2}px; background: {{settingsBtnBg}}; color: {{settingsBtnFg}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.gear, size > 40 ? 18 : 16, 2)}</button>`;
 // Learn's Explain (the owner, 2026-10-02, as on a flashcard: "move it upper right similar shape to the flashcard settings"): a round
-// button just after Learn's settings gear and its size, once a question is answered, with Lucida's tooltip "Explain"; pressed
-// while the explanation is open, and pressing it again closes it. On a phone its place is kept while the question waits for its
-// answer, so the bar beside it doesn't move. The explanation opens where it did: beside the question, or under the answers.
-const learnExplainBtn = (size, phone) => `<sc-if value="{{${phone ? 'ex.avail' : 'ex.show'}}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ex.toggle}}" aria-label="Explain" data-tip="Explain" aria-expanded="{{ex.expanded}}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border: 0; border-radius: ${size / 2}px; background: {{exBtn.bg}}; color: {{exBtn.fg}}; display: flex; align-items: center; justify-content: center; cursor: pointer;${phone ? ' visibility: {{exBtn.vis}};' : ''}">${svg(I.sparkle, size > 40 ? 18 : 16, 2)}</button></sc-if>`;
+// button just before Learn's settings gear and its size, with Lucida's tooltip "Explain". It shows whenever the card can be explained, faded
+// and disabled until the question is answered (canvas V179); pressed while the explanation is open, and pressing it again closes it. The
+// explanation opens where it did: beside the question, or under the answers.
+const learnExplainBtn = size => `<sc-if value="{{ex.avail}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{exBtn.click}}" aria-disabled="{{exBtn.dis}}" aria-label="Explain" data-tip="Explain" aria-expanded="{{ex.expanded}}" style="width: ${size}px; height: ${size}px; flex-shrink: 0; border: 0; border-radius: ${size / 2}px; background: {{exBtn.bg}}; color: {{exBtn.fg}}; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: {{exBtn.op}};">${svg(I.sparkle, size > 40 ? 18 : 16, 2)}</button></sc-if>`;
 const learnSettings = phone => phone ? `<sc-if value="{{settingsOpen}}" hint-placeholder-val="{{ false }}">
     <div style="position: absolute; inset: 0; z-index: 5; background: {{t.dim}};"></div>
     <div role="dialog" aria-label="Learn settings" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; box-sizing: border-box; padding: 10px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; color: {{t.text}}; display: flex; flex-direction: column; gap: 18px;">
@@ -4837,11 +4838,11 @@ const learnSettings = phone => phone ? `<sc-if value="{{settingsOpen}}" hint-pla
     </div>
   </sc-if>`;
 const learnTop = (back, explain = false) => `<header style="height: 76px; flex-shrink: 0; box-sizing: border-box; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px;">
-    <div style="display: flex; gap: 8px;"><a href="${back}" aria-label="Stop for now" data-tip="Stop for now" style="width: 40px; height: 40px; border-radius: 20px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2.2)}</a>${learnGear(40)}${explain ? learnExplainBtn(40, false) : ''}</div>
+    <div style="display: flex; gap: 8px;"><a href="${back}" aria-label="Stop for now" data-tip="Stop for now" style="width: 40px; height: 40px; border-radius: 20px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 16, 2.2)}</a></div>
     <div style="display: flex; align-items: center; gap: 14px;">${learnBar(360)}<span role="status" style="position: relative; font-size: 14px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span> of {{total}} learned${learnPlus}</span></div>
-    <div style="display: flex; justify-content: flex-end; min-width: 0;"><span style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{k.chip}}; font-size: 13px; font-weight: 600; white-space: nowrap;">${svg(I.sparkle, 14, 1.8)}<span>Learn · {{setName}}</span></span></div>
+    <div style="display: flex; justify-content: flex-end; gap: 8px; min-width: 0;">${explain ? learnExplainBtn(40) : ''}${learnGear(40)}</div>
   </header>`;
-const learnTopPhone = (back, explain = false) => `<div style="display: flex; align-items: center; gap: 12px;"><a href="${back}" aria-label="Stop for now" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 18, 2)}</a>${explain ? `<div style="display: flex; gap: 8px;">${learnGear(44)}${learnExplainBtn(44, true)}</div>` : learnGear(44)}${learnBar(0)}<span role="status" style="position: relative; font-size: 13px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span>/{{total}}${learnPlus}</span></div>`;
+const learnTopPhone = (back, explain = false) => `<div style="display: flex; align-items: center; gap: 12px;"><a href="${back}" aria-label="Stop for now" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{k.chip}}; display: flex; align-items: center; justify-content: center;">${svg(I.close, 18, 2)}</a>${learnBar(0)}<span role="status" style="position: relative; font-size: 13px; white-space: nowrap;"><span style="font-weight: 700;">{{learned}}</span>/{{total}}${learnPlus}</span><div style="display: flex; gap: 8px; flex-shrink: 0;">${explain ? learnExplainBtn(44) : ''}${learnGear(44)}</div></div>`;
 const quizSeg = list => `<div role="group" style="display: flex; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{${list}}}" as="o" hint-placeholder-count="4"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="flex: 1 1 0; min-width: 0; height: 38px; padding: 0 6px; border: 0; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">{{o.label}}</button></sc-for></div>`;
 const quizField = (label, body) => `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">${label}</span>${body}</div>`;
 const quizBtn = (label, href, inv, grow, icon = '', click = '') => `<a href="${href}"${click ? ` onClick="{{${click}}}"` : ''} style="flex-grow: ${grow}; height: 52px; border-radius: 999px; background: ${inv ? '{{t.inv}}' : '{{t.surf}}'}; color: ${inv ? '{{t.invText}}' : '{{t.text}}'}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600;">${icon ? svg(I[icon], 16, 2) : ''}${label}</a>`;
@@ -5048,7 +5049,7 @@ renderVals() { ${DB_JS}
   const ex = explainView(L && L.ex, L ? L.id : 'q' + (this.state.i || 0), q.q, done, ${JSON.stringify(EX_SAMPLE_LEARN)}, { sample: ${JSON.stringify(CHAT_SAMPLE.learn)}, pal: { on: K.btn, onFg: K.btnFg, off: K.track, offFg: K.ink2 }, phone: ${phone} });
   ${LEARN_IMG_JS}
   // Explain's round button beside the gear, in Learn's colors: pressed while the explanation is open.
-  const exBtn = { bg: ex.panel ? K.btn : K.chip, fg: ex.panel ? K.btnFg : K.ink, vis: ex.show ? 'visible' : 'hidden' };
+  const exBtn = { bg: ex.panel ? K.btn : K.chip, fg: ex.panel ? K.btnFg : K.ink, vis: ex.show ? 'visible' : 'hidden', op: ex.show ? '1' : '.4', dis: ex.show ? 'false' : 'true', click: e => { if (ex.show) ex.toggle(e); } };
   return { t, ex, exBtn, qc, dark: !!this.props.dark, ...v, kind: q.kind, question: q.q, hasClaim: !!q.claim, claim: q.claim || '', ...learnImg(L ? L.image : q.image, L ? L.occ : q.occ, done),
     options: q.options.map((label, j) => {
       const right = done && j === q.right, wrong = done && j === pick && j !== q.right, other = done && !right && !wrong;
@@ -5176,7 +5177,7 @@ renderVals() { ${DB_JS}
   }
   const ex = explainView(L && L.ex, L ? L.id : 'typeq', question, checked, ${JSON.stringify("The Golgi apparatus takes proteins from the rough ER, finishes them with sugar tags, and ships them out in little bubbles called vesicles. Think of it as the cell’s post office: sort, label, send.")}, { sample: ${JSON.stringify(CHAT_SAMPLE.type)}, pal: { on: K.btn, onFg: K.btnFg, off: K.track, offFg: K.ink2 }, phone: ${phone} });
   ${LEARN_IMG_JS}
-  const exBtn = { bg: ex.panel ? K.btn : K.chip, fg: ex.panel ? K.btnFg : K.ink, vis: ex.show ? 'visible' : 'hidden' };
+  const exBtn = { bg: ex.panel ? K.btn : K.chip, fg: ex.panel ? K.btnFg : K.ink, vis: ex.show ? 'visible' : 'hidden', op: ex.show ? '1' : '.4', dis: ex.show ? 'false' : 'true', click: e => { if (ex.show) ex.toggle(e); } };
   return { t, ex, exBtn, qc, dark: !!this.props.dark, ...v, kind: 'Type the answer', question, ...learnImg(L && L.image, L && L.occ, checked), 
     typed, checked, notChecked: !checked, canOverride: checked && !ok, check, override, next,
     setTyped: e => { const x = e && e.target ? e.target.value : ''; if (L) this.state.typed = x; else this.setState({ typed: x, checked: false }); },
