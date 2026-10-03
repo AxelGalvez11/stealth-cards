@@ -196,7 +196,7 @@ final class SharedDeckPagesTests: XCTestCase {
     check(button(app, "Study").exists && button(app, "Make a copy").exists && button(app, "Save").exists && button(app, "Suggest a change").exists && button(app, "Get updates").exists,
           "and Study, Make a copy, Save, Suggest a change, Get updates")
     check(button(app, "Back").exists && button(app, "Share").exists, "the cover has Back and Share")
-    check(any(app, "5 cards").exists && (button(app, "Cards").value as? String) == "5", "the cards are listed, with how many")
+    check(any(app, "5 cards").exists && ((button(app, "Cards").value as? String) ?? "").isEmpty, "the cards are listed, with how many on the cover (its tab has no count: 5d27d04e)")
     check(buttonStarting(app, "Where does glycolysis happen?").exists, "each card shows its question")
     tap(buttonStarting(app, "Where does glycolysis happen?"))
     check(wait(text(app, "In the mitochondria")), "pressing a card shows its answer")

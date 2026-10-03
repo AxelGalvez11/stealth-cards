@@ -312,7 +312,7 @@ final class StudyNetworkTests: XCTestCase {
     // The learner takes the studied deck out of the library (Deck settings: Remove from library, then its confirm).
     toLibrary(app)
     if !wait(button(app, "New folder"), 3) { button(app, "Library").tap() }
-    let studiedRow = any(app, "From Maria Santos")
+    let studiedRow = buttonStarting(app, "MCAT Biochemistry")   // (a Library row has no From line: d8127447)
     check(wait(studiedRow), "the studied deck is in the Library")
     studiedRow.tap()
     button(app, "Deck settings").tap()
@@ -320,7 +320,7 @@ final class StudyNetworkTests: XCTestCase {
     check(wait(app.staticTexts["Remove “MCAT Biochemistry” from your library?"]) && app.staticTexts["Your progress on it goes too."].exists, "Remove from library asks first, in plain words")
     check(app.alerts.count == 0 && app.sheets.count == 0, "in Lucida’s own question, not the system’s")
     app.buttons["question.go"].tap()
-    check(gone(any(app, "From Maria Santos"), 10), "and the deck leaves the Library")
+    check(gone(buttonStarting(app, "MCAT Biochemistry"), 10), "and the deck leaves the Library")
     check(!((state(learner)["decks"] as? [[String: Any]]) ?? []).contains { $0["id"] as? String == studied }, "the server has it gone too")
 
     print("Study network: \(passed) passed, \(failed) failed")
