@@ -354,8 +354,11 @@ final class SharedDeckPagesTests: XCTestCase {
     let rows = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Maria Santos, 1 change'"))
     _ = wait(rows.firstMatch, 12)
     let until = Date().addingTimeInterval(6)
-    while rows.count < 3 && Date() < until { Thread.sleep(forTimeInterval: 0.3) }
-    check(rows.count == 3, "Alex’s Suggestions list has the three")
+    // (A row can show up as more than one element: the rows are told apart by where they are.)
+    let shown = { Set(rows.allElementsBoundByIndex.filter { $0.exists }.map { Int($0.frame.midY) }).count }
+    while shown() < 3 && Date() < until { Thread.sleep(forTimeInterval: 0.3) }
+    print("Suggestions rows: \(shown()) (\(rows.count) elements)")
+    check(shown() == 3, "Alex’s Suggestions list has the three")
     for i in 0..<3 where !text(app, "“From my TA’s review”").exists {
       tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Maria Santos, 1 change'")).element(boundBy: i))
       _ = wait(text(app, "“From my TA’s review”"), 2)
