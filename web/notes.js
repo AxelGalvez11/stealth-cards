@@ -1317,11 +1317,11 @@ export function makeNotes(G) {
     }
     // A phone: the tree in Lucida's own sheet from the bottom (its name, Close, a row for each heading), over the dimmed page; a heading scrolls there and
     // closes it, and so do a tap on the page behind, Close and Escape. (On the canvas it is drawn in the board's own box: sheetHost.)
-    function openSheet() {
+    function openSheet(byKey) {
       if (OL.sheet || OL.heads.length < 2) return;
       const host = o.sheetHost || root, wrap = el('div', 'nb-otl-sheetw' + (o.sheetHost ? '' : ' nb-otl-fixed')), scrim = el('div', 'nb-otl-scrim');
       // (not aria-modal: the app's own dialogs, web/ui.js, would set the page aside until its next paint; this sheet keeps the keyboard's focus in itself)
-      const sheet = el('div', 'nb-otl-sheet', { role: 'dialog', 'aria-label': 'Outline' }), head = el('div', 'nb-otl-shead');
+      const sheet = el('div', 'nb-otl-sheet', { role: 'dialog', 'aria-label': 'Outline', tabindex: '-1' }), head = el('div', 'nb-otl-shead');
       const close = el('button', 'nb-otl-x', { type: 'button', 'aria-label': 'Close', html: svg('close', 14, 2.2) }), list = el('div', 'nb-otl-list');
       head.append(el('span', 'nb-otl-stitle', { text: 'Outline' }), close);
       sheet.append(head, list); wrap.append(scrim, sheet); host.appendChild(wrap);
@@ -1333,10 +1333,11 @@ export function makeNotes(G) {
       wrap.addEventListener('keydown', ev => {
         if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); return closeSheet(); }
         // (the keyboard's focus stays in the sheet while it is open)
-        if (ev.key === 'Tab') { const f = [close, ...list.children], at = f.indexOf(document.activeElement); ev.preventDefault(); f[(at + (ev.shiftKey ? f.length - 1 : 1) + f.length) % f.length].focus(); }
+        if (ev.key === 'Tab') { const f = [close, ...list.children], n = f.length, at = f.indexOf(document.activeElement); ev.preventDefault(); f[at < 0 ? (ev.shiftKey ? n - 1 : 0) : (at + (ev.shiftKey ? n - 1 : 1)) % n].focus(); }
       });
       railEl.setAttribute('aria-expanded', 'true');
-      if (!o.demo) setTimeout(() => { if (OL.sheet && OL.sheet.wrap === wrap) (list.querySelector('.nb-cur') || close).focus({ preventScroll: true }); }, 0);
+      // (the keyboard's focus goes into the sheet: opened with a key, on the heading being read; with a tap, on the sheet itself, so no ring shows on a row)
+      if (!o.demo) setTimeout(() => { if (OL.sheet && OL.sheet.wrap === wrap) (byKey ? list.querySelector('.nb-cur') || close : sheet).focus({ preventScroll: true }); }, 0);
     }
     function drawSheet() {
       const l = OL.sheet.list; l.textContent = '';
@@ -1377,7 +1378,7 @@ export function makeNotes(G) {
     olEl.addEventListener('focusin', () => { OL.focus = true; olShow(); });
     olEl.addEventListener('focusout', () => setTimeout(() => { if (olEl.contains(document.activeElement)) return; OL.focus = false; OL.esc = false; olShow(); }, 0));
     olEl.addEventListener('keydown', onOlKey);
-    railEl.addEventListener('click', () => { if (o.phone) return openSheet(); if (OL.touch) { OL.tap = !OL.open; olShow(); } });
+    railEl.addEventListener('click', ev => { if (o.phone) return openSheet(ev.detail === 0); if (OL.touch) { OL.tap = !OL.open; olShow(); } });
     panelEl.addEventListener('click', ev => {
       const b = ev.target.closest && ev.target.closest('.nb-otl-item'); if (!b) return;
       goTo(b.getAttribute('data-for'));

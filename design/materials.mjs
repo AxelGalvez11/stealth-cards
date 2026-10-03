@@ -349,6 +349,8 @@ export const NOTES_CSS = [
   '.nb-otl-list{min-height:0;overflow-y:auto;scrollbar-width:none;display:flex;flex-direction:column}',
   '.nb-otl-row{flex-shrink:0;min-height:52px;box-sizing:border-box;padding:8px 4px;border:0;border-bottom:1px solid var(--gd-line);background:transparent;color:var(--gd-text);font:inherit;font-size:16px;font-weight:400;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}',
   '.nb-otl-row.nb-i1{padding-left:22px}.nb-otl-row.nb-i2{padding-left:40px}.nb-otl-row.nb-cur{font-weight:600}',
+  // (a tap puts the keyboard's focus on the sheet itself, which shows no ring; a key, on a row, whose ring sits inside it so the list's edge doesn't cut it)
+  '.nb-otl-sheetw .nb-otl-sheet:focus{outline:none}.nb-otl-sheetw .nb-otl-row:focus-visible{outline-offset:-2px}',
   '@media (prefers-reduced-motion:reduce){.nb-in,.nb-menu.nb-show,.nb-bar.nb-show{animation:none}.nb-tg svg,.nb-fold svg,.nb-fold{transition:none}',
   '.nb-otl-line,.nb-otl-panel,.nb-otl.nb-otl-open>.nb-otl-panel{transition:none}.nb-otl-scrim,.nb-otl-sheet,.nb-otl-gone>.nb-otl-scrim,.nb-otl-gone>.nb-otl-sheet{animation:none}}'
 ].join('');
