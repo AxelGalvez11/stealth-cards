@@ -4366,7 +4366,7 @@ renderVals0() { const t = this.theme(!!this.props.dark, !!this.props.dim);const 
     dsTabs: [['general', 'General'], ['study', 'Studying'], ['share', 'Sharing']].map(([id, label]) => ({ label, ...segOf(id, dsTab), pick: () => this.setState({ dsTab: id }) })),
     exportDeck: () => db.act.exportDeck(dk.id), deleteDeck: () => db.act.deleteDeck(dk.id), deleteLabel: lk && !lk.gone ? 'Remove from library' : 'Delete deck',
     // The deck's folder, and its background for Learn mode, flashcards, and Live.
-    folderChips: [...(dk.folder ? [{ id: null, name: 'Remove from folder' }] : []), ...db.folders()].map(f => { const on = (dk.folder || null) === f.id; return { label: f.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : t.text, pick: () => db.act.moveDeck(dk.id, f.id) }; }),
+    folderChips: [...(dk.folder ? [{ id: null, name: 'Remove from folder' }] : []), ...db.folders()].map(f => { const on = (dk.folder || null) === f.id; return { label: f.name, pressed: on ? 'true' : 'false', bg: on ? t.inv : t.surf, fg: on ? t.invText : f.id === null ? t.again : t.text, pick: () => db.act.moveDeck(dk.id, f.id) }; }),
     noFolders: !db.folders().length, ...bgPick(dk, S),
     // How many cards, and whose deck it is when it's someone else's (the owner, 2026-10-02: "remove the '38 added by ai'").
     deckLine: plural(dk.total, 'card').replace(String(dk.total), dk.totalLabel) + (lk ? ' · from ' + lk.owner.name : ''),

@@ -463,6 +463,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneLibraryFolderMenu",
+  "title": "iPhone · Library · a folder · its ⋯ menu open (New deck, Rename, Remove folder)",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneLibraryGray",
   "title": "iPhone · Library (dark, gray)",
   "w": 390,
@@ -2175,6 +2181,12 @@ export default [
  {
   "name": "WebLibraryFolder",
   "title": "Web · Library · a folder",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebLibraryFolderMenu",
+  "title": "Web · Library · a folder · its ⋯ menu open (New deck, Rename, Remove folder)",
   "w": 1440,
   "h": 900
  },

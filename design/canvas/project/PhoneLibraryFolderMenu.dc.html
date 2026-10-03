@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>iPhone · Library · a folder · its ⋯ menu open (New deck, Rename, Remove folder)</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./lucida.css">
+<script src="./lucida-logic.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+@import url("./lucida.css");
+
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; overflow: hidden;"><dc-import name="PhoneLibrary" folder="f1" folder-menu="{{yes}}" hint-size="390px,844px"></dc-import></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends LucidaLogic(DCLogic, 0) {
+renderVals() { return { yes: true }; }
+}
+</script>
+</body>
+</html>
