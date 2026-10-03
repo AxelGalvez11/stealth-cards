@@ -71,7 +71,7 @@ struct DemoProps {
   /// The card editor: which kind of card, and whether you're typing (the keyboard is up).
   var cardType = "Basic"
   var editorTyping = false
-  /// Review with the AI's explanation open (PhoneReviewExplain; `-explainOpen` on Learn and the practice test's results too), and a question
+  /// Review with the AI's explanation open (PhoneReviewExplain; `-explainOpen` on Learn too), and a question
   /// asked about the card and answered (PhoneReviewExplainAsk, `-followUp`: the canvas boards' followUp Tweak).
   var explainOpen = false
   var followUp = false
@@ -79,8 +79,6 @@ struct DemoProps {
   var naming: String? = nil
   /// Learn mode with its settings open (PhoneQuizSettings).
   var learnSettings = false
-  /// The practice test's board (its Tweaks): which screen, and whether the timer shows.
-  var testScreen = "Set up", testTimed = true
   /// The onboarding open on this step (PhoneWelcome and its twins: "Pick AI", "Steps", "Connected", "Pick source",
   /// "Source steps", "Found", or "Done").
   var welcomeStep = "Pick AI"
@@ -125,13 +123,9 @@ final class Store: ObservableObject {
   /// The design screens: sample data, nothing saved.
   let demo: Bool
   @Published var props = DemoProps()
-  @Published var lib = Library() { didSet { allCardsMemo = nil; studyMemo = StudyMemo(); learnMemo = [:]; answerMemo = [:] } }
+  @Published var lib = Library() { didSet { allCardsMemo = nil; studyMemo = StudyMemo(); learnMemo = [:] } }
   /// A deck's cards a question can be made from, with their answers, until the library changes (LearnEngine.learnIn).
   var learnMemo: [String: [(c: Card, a: String)]] = [:]
-  /// How many different answers each deck has (a practice test's choices need another one), until the library changes.
-  var answerMemo: [String: Int] = [:]
-  /// The practice test in progress (TestEngine.swift).
-  let testBox = TestBox()
   /// Lucida's own Learn mode questions (LearnEngine.swift wantQuiz): a batch is being written; the AI is off or today's batches are used
   /// (no more asking until the app opens again); and when to try again after something went wrong.
   var quizBusy = false, quizOff = false, quizRetryAt = 0.0
@@ -147,8 +141,6 @@ final class Store: ObservableObject {
   @Published var demoPaused: [String: Bool] = [:]
   @Published var demoGraded = 0
   @Published var demoLearn = DemoLearn()
-  /// The practice test on a design screen (TestDemo.swift).
-  @Published var demoTest = DemoTest()
   /// What a design screen changed on the study network (Net.swift), and a Get verified request sent on it (VerifyData.swift).
   @Published var demoNet = DemoNet()
   @Published var demoVerifySent = false

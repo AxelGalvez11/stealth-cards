@@ -15,7 +15,7 @@
 //      student in it, one with no deck yet and its teacher see only Decks and All cards, no Assigned and no class words; the teacher's deck
 //      that's in it is a plain private deck (no Class mark; its Sharing says Private, "Only you.").
 //   6  Notifications is the bell in Discover's header; it opens Notifications, and Back is Discover.
-//   7  A folder's page has nothing to make cards either, and keeps its Practice test.
+//   7  A folder's page has nothing to make cards either, and no Practice test (the owner, 2026-10-03: "remove practices tests altogether").
 // Run it with ios/tools/e2e-home.sh (a fresh server and the stand-in AI). It only runs when LUCIDA_HOME is set.
 import XCTest
 
@@ -255,9 +255,9 @@ final class HomeTests: AppCase {
     let fid = act(who, "folder.add", ["name": "Science"])["id"] as? String ?? ""
     act(who, "deck.move", ["id": ids["Biology"] ?? "", "folder": fid])
     let app = launch(as: who, ["-open", "folder:Science"])
-    check(wait(button(app, "Rename")) && wait(any(app, "Biology")), "a folder's page opens, with its deck")
+    check(wait(button(app, "Folder options")) && wait(any(app, "Biology")), "a folder's page opens, with its deck")
     check(noMaking(app) && !button(app, "Make cards").exists, "it has nothing to make cards either")
-    check(wait(buttonStarting(app, "Practice test")), "and keeps its Practice test")
+    check(!buttonStarting(app, "Practice test").exists, "and no Practice test, its actions are in its ⋯ (canvas V188)")
     snap("home-folder")
   }
 }

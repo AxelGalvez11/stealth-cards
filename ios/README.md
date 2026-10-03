@@ -51,7 +51,7 @@ The background's shader is compiled when the app first shows it (Design/Aura.swi
 
 There is no Today page (the owner, 2026-10-01: "could we just get rid of the 'today' page so users just focus on the library and deck creation in there?").
 The tab bar is Library, Discover, Stats and Profile, the app opens on the Library, and everything that went to Today goes there: the welcome's end, a
-review of every deck's X and Done, a practice test opened again, `-open today`, and the daily reminder's notice.
+review of every deck's X and Done, `-open today`, and the daily reminder's notice.
 
 The Library makes no cards itself (the owner, 2026-10-02: "remove the library composer, upload buttons, cards due accross all canvas screens", then
 "remove the 'make cards from library'"): no Make box, no Upload, Paste, YouTube and More row, no line of what's due, and its + is New deck and Import
@@ -154,39 +154,16 @@ More launch arguments (debug builds): `-open statsdeep -tab Memory` (or `Weak sp
 `tests/run.sh parity` checks the ports against the web app's own code on a seeded library and made-up variations of it (no
 simulator), and `tests/run.sh e2e` runs the `-check`s in the simulator against a local server (`DEVICE=<simulator id>`).
 
-## Practice test
+## No practice tests
 
-**Practice test** is on a folder's page (every deck in it that isn't paused); a deck's page has none (the owner, 2026-10-02: "remove practice
-tests"). It opens
-a sheet (how many questions, which kinds, a time limit, and "Tests don’t change your review schedule."), then the test: numbered
-questions you can go back through and flag, a list of all the questions, a quiet clock when you asked for one, and nothing about right or
-wrong until Submit (which asks first when some are unanswered). The results show the score, the time, every question with your answer
-and the right one, Explain where the card has it, **Count it as right** on a written answer the spelling check missed, **Retake the ones I
-missed**, and **Study the missed cards now** (a normal review of just those cards, then back to the results). `Data/TestEngine.swift` is a
-port of the web's engine (`web/db.js`, "Practice test": Learn's `choiceQuestion`, a card of its own for each question, matching as four
-or five pairs, the kinds in sections); `Data/TestDemo.swift` is the design screens' sample test; `Screens/PracticeTest.swift` has the
-pieces (`TestStartButton`, `TestFolderBits`, `TestStartSheet`, `TestScreen`). A test never changes a schedule or logs a
-review. The test in progress is kept on the phone (`UserDefaults`, `lucida.test`) and is open again, where it was, when the app opens; its
-clock counts only while it shows. A finished test is saved with the library (`test.save`, and `test.fix` for Count it as right), and the
-folder's page says how its last one went.
-
-The board is `PhoneTest` (the folder's pieces are states of `PhoneLibrary`); with it, `-screen "Set up"`,
-`Multiple choice`, `True or false`, `Fill in the blank`, `Written`, `Matching`, `Submit`, `Leave`, `Results` or `"Results · missed"` picks the
-screen and `-timed false` takes the clock off. More launch arguments (debug builds): `-open folder:<name>` (the folder with that name),
-`-testAudit` (an invisible element tells the end-to-end test which answer is right for the question on screen) and `-testSpent <ms>` (the
-test in progress has already been open that long, to check the clock without waiting).
-
-    ios/tools/e2e-test.sh <simulator id>
-
-It starts a fresh server on port 3947 and runs `LucidaUITests/PracticeTestTests` (which only runs when that script asks for it): the
-set-up, a test of choices and true-or-false (numbers, back, flags, the list, Submit asking, the results, Retake the ones I missed, past
-results on the deck page), written answers with typos, Count it as right and Study the missed cards now, matching, the clock (the test
-open again after the app closes, running out by itself, leaving), a folder's test, and fill in the blank; a test changes no schedule.
+There are no practice tests (the owner, 2026-10-03: "remove practices tests altogether, just live mode, learn mode, and flashcard mode"): a deck is
+studied with Flashcards and Learn (and played live from a computer). The app has no test screens, routes or design screens; a library from before
+keeps its old results on the server, unused (`/api/state` leaves them out). `-open folder:<name>` (debug builds) opens the folder with that name.
 
 ## Questions Lucida writes for Learn mode
 
 When Learn mode starts and the next cards have no question yet, the app asks the server's Lucida AI for 20 at once (`Store.wantQuiz` in `Data/LearnEngine.swift`, `API.quizBatch`, `POST /api/quiz`, like the web's), and again about 5 questions from the end;
-the questions are saved on the cards (marked `by: "Lucida"`; a fill-in-the-blank one is `kind: "blank"`) and Learn mode and the practice test use them with the card's own words. Nobody waits: until
+the questions are saved on the cards (marked `by: "Lucida"`; a fill-in-the-blank one is `kind: "blank"`) and Learn mode uses them with the card's own words. Nobody waits: until
 they arrive Learn mode asks with its builders, and when the AI is off or the day's batches are used (Free 3, Pro 30) it goes on with them without a word. `tools/e2e-quiz.sh <simulator id>` is the
 end-to-end test (`LucidaUITests/QuizTests.swift`), with a pretend OpenRouter (`tools/stub-openrouter.mjs`) and a second server that has no AI.
 
@@ -565,22 +542,21 @@ when a check fails) and then lists every haptic in the app.
   view without sliding. A short fade, none with Reduce Motion. (The web app does the same on a phone; on a computer it opens beside the card.) On a
   flashcard its button is round, in the top bar just left of Review settings and the same size (the owner, 2026-10-02: "move it upper right similar
   shape to the flashcard settings"): it shows once the card is turned over (its place is kept meanwhile, so the progress bar doesn't move), is
-  pressed while the explanation is open, and closes it when pressed again. Learn mode has the same round button at the end of its top row, just before its gear (the row is Stop, the progress, N/M, Explain and the gear: canvas V179), faded and disabled until the question is answered (`Screens/Learn.swift`);
-  the practice test's results keep the small `ExplainButton` on each question.
+  pressed while the explanation is open, and closes it when pressed again. Learn mode has the same round button at the end of its top row, just before its gear (the row is Stop, the progress, N/M, Explain and the gear: canvas V179), faded and disabled until the question is answered (`Screens/Learn.swift`).
 - **Asking about the card** (`Screens/Explain.swift`: `ExplainComposer`, `ExplainTurns`, `Store.followUp`; the web's design/chat.mjs): every explanation ends
   with "Ask about this card" and a round Send. Return sends (on a hardware keyboard Shift+Return is a new line); the question is a short bubble on the right
   and its answer comes under it in the explanation's text style, "Thinking…" meanwhile, or what went wrong in the quiet red line. While a question is typed
-  the composer sits on top of the keyboard: in Review the card steps aside and the grade buttons wait under the keyboard, and in Learn mode and the test's
-  results the page ends at the keyboard and scrolls the composer up to it. Each question is one of the day's explanations (`POST api/explain/ask`); once
+  the composer sits on top of the keyboard: in Review the card steps aside and the grade buttons wait under the keyboard, and in Learn mode
+  the page ends at the keyboard and scrolls the composer up to it. Each question is one of the day's explanations (`POST api/explain/ask`); once
   they're used up the composer is the server's upgrade line with Go Pro (`Library.explainLimit`). Closing the explanation, the next card or question, or
   leaving the page forgets the conversation (`Store.chats` is never saved). Design screens: `PhoneReviewExplainAsk`, and `-explainOpen true -followUp true`
-  on `PhoneQuizAnswered`, `PhoneQuizType` and `PhoneTest -screen Results` (a question typed there gets the sample answer). `ios/tools/e2e-ask.sh <simulator id>`
+  on `PhoneQuizAnswered` and `PhoneQuizType` (a question typed there gets the sample answer). `ios/tools/e2e-ask.sh <simulator id>`
   runs `LucidaUITests/AskTests` (a fresh server on port 3976 and the stand-in AI on 3977).
 - **The study screen** (the owner's comments, 2026-10-02): behind flashcards and Learn mode a deck shows a plain page (white, black at night) until a
   background is picked for it (`Store.bgKind` in `Design/StudyBackground.swift`, like the web's `bgKindOf`: the server marks a pick `bg.chosen`,
   `DeckBg.chosen`, since every deck is made with kind "deck"); with a theme on the default is the theme's own, and its tile in `BgChooser` puts a deck
   back to the default. The boxes over a picture are yellow (`Generated.occ`, from design/build.mjs `OCC`: #FFD60A with black numbers) in review, Cards to
-  check, Learn, the practice test and the card editor (`Design/Occlusion.swift`); the asked box has an edge in the outline color, which stays when its
+  check, Learn and the card editor (`Design/Occlusion.swift`); the asked box has an edge in the outline color, which stays when its
   yellow fades. The boxes that only mark where a card's boxes go (Make's picture-card thumbnails, a diagram's Show boxes) are see-through yellow with a black
   edge. PolishTests' ninth flow reads the yellow from screenshots.
 - **The deck cover's parallax** (`Design/Parallax.swift`): scrolling up, the cover on a deck's page and on a shared deck's page moves at
