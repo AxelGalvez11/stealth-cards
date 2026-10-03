@@ -277,12 +277,6 @@ export default [
   "h": 844
  },
  {
-  "name": "PhoneDeckSettingsGoal",
-  "title": "iPhone · Deck settings · Studying · goal raised to 95% (reviews a day)",
-  "w": 390,
-  "h": 844
- },
- {
   "name": "PhoneDeckSettingsShare",
   "title": "iPhone · Deck settings · Sharing (a public deck)",
   "w": 390,
@@ -1905,12 +1899,6 @@ export default [
  {
   "name": "WebDeckSettingsFrom",
   "title": "Web · Deck settings · Sharing (a deck you study)",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebDeckSettingsGoal",
-  "title": "Web · Deck settings · Studying · goal raised to 95% (reviews a day)",
   "w": 1440,
   "h": 900
  },
