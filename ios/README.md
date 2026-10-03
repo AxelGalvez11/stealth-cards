@@ -158,8 +158,7 @@ simulator), and `tests/run.sh e2e` runs the `-check`s in the simulator against a
 ## Practice test
 
 **Practice test** has no button on any page now: a deck's page lost it (the owner, 2026-10-02: "remove practice tests") and so did a
-folder's page (canvas V188), so in debug builds `-open test:<folder name>` opens a folder's test (every deck in it that isn't paused), as
-the web's /library/folder/<id>/test does. It opens
+folder's page (canvas V188). It opens
 a sheet (how many questions, which kinds, a time limit), then the test: numbered
 questions you can go back through and flag, a list of all the questions, a quiet clock when you asked for one, and nothing about right or
 wrong until Submit (which asks first when some are unanswered). The results show the score, the time, every question with your answer
@@ -174,7 +173,7 @@ folder's page says nothing about it (the owner: "remove this").
 
 The board is `PhoneTest`; with it, `-screen "Set up"`,
 `Multiple choice`, `True or false`, `Fill in the blank`, `Written`, `Matching`, `Submit`, `Leave`, `Results` or `"Results · missed"` picks the
-screen and `-timed false` takes the clock off. More launch arguments (debug builds): `-open folder:<name>` (the folder with that name), `-open test:<name>` (that folder's test set-up),
+screen and `-timed false` takes the clock off. More launch arguments (debug builds): `-open folder:<name>` (the folder with that name),
 `-testAudit` (an invisible element tells the end-to-end test which answer is right for the question on screen) and `-testSpent <ms>` (the
 test in progress has already been open that long, to check the clock without waiting).
 

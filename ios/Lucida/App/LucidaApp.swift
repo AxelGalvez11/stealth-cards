@@ -191,10 +191,6 @@ struct RootView: View {
           // `folder:<name>`: the folder with that name.
           case let o where o.hasPrefix("folder:"):
             if let f = store.lib.folders.first(where: { $0.name == String(o.dropFirst(7)) }) { nav.tab = .library; nav.path = [.folder(f.id)] }
-          // `test:<folder name>`: a practice test's set-up over that folder's page. No page has a Practice test button (a deck's since
-          // the owner's "remove practice tests", a folder's since canvas V188), so this is the way in, like the web's /library/folder/<id>/test.
-          case let o where o.hasPrefix("test:"):
-            if let f = store.lib.folders.first(where: { $0.name == String(o.dropFirst(5)) }) { nav.tab = .library; nav.path = [.folder(f.id)]; nav.sheet = .testStart(.folder(f.id)) }
           default: break
           }
         }
