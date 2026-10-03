@@ -1641,6 +1641,12 @@ const webEditorBig = `<div style="position: relative; width: 1440px; height: 900
 const ED0 = "{ edits: {}, type: null, sel: null, pend: null, past: [], future: [], last: '', lastAt: 0, key: 0, restore: false, sig: '' }";
 // The editor's logic: the side panel's, the iPhone's, and the big editor's. The cards screen (Option B, below) passes
 // `open`, the card it shows (the one picked in its list), and `more`, what it adds to the editor's values.
+// Suggest a change on someone's shared deck opens the card editor in a suggest mode (prop suggest; the owner, 2026-10-02: "this should be like the
+// editing card window"): its title, a Send button, and a Why? note with Suggest removing it at the bottom (SUGGEST_FOOTER).
+const SUGGEST_TAIL = phone => phone
+  ? ',\n    saveLabel: this.props.suggest ? \'Send\' : \'Save\', sgOff: !this.props.suggest,\n    // Suggest a change on someone\'s shared deck opens this same editor (the owner, 2026-10-02: "this should be like the editing card window").\n    sg: { on: !!this.props.suggest, sendLabel: this.state.sgSent ? \'Sent\' : \'Send suggestions\', send: () => this.setState({ sgSent: true }), why: this.state.sgWhy || \'\', setWhy: e => this.setState({ sgWhy: e.target.value }),\n      canRemove: !!this.props.suggest && !!saved, removePressed: this.state.sgRemove ? \'true\' : \'false\', removeBg: this.state.sgRemove ? t.inv : t.surf, removeFg: this.state.sgRemove ? t.invText : t.text,\n      removeLabel: this.state.sgRemove ? \'Removing it\' : \'Suggest removing it\', toggleRemove: () => this.setState({ sgRemove: !this.state.sgRemove }) },\n    ...(this.props.suggest ? { title: saved ? \'Suggest a change\' : \'Suggest a card\', phoneBack: db.mock ? \'PhonePublicDeck.dc.html\' : backHref } : {})'
+  : ',\n    screenTitle: this.props.suggest ? \'Suggest changes\' : \'Edit cards\', sgOff: !this.props.suggest,\n    // Suggest a change on someone\'s shared deck opens this same editor (the owner, 2026-10-02: "this should be like the editing card window").\n    sg: { on: !!this.props.suggest, sendLabel: this.state.sgSent ? \'Sent\' : \'Send suggestions\', send: () => this.setState({ sgSent: true }), why: this.state.sgWhy || \'\', setWhy: e => this.setState({ sgWhy: e.target.value }),\n      canRemove: !!this.props.suggest && !this.props.newCard, removePressed: this.state.sgRemove ? \'true\' : \'false\', removeBg: this.state.sgRemove ? t.inv : t.surf, removeFg: this.state.sgRemove ? t.invText : t.text,\n      removeLabel: this.state.sgRemove ? \'Removing it\' : \'Suggest removing it\', toggleRemove: () => this.setState({ sgRemove: !this.state.sgRemove }) },\n    ...(this.props.suggest ? { backHref: db.mock ? \'WebPublicDeck.dc.html\' : backHref } : {})';
+const SUGGEST_FOOTER = '<sc-if value="{{sg.on}}" hint-placeholder-val="{{ false }}"><div style="margin-top: auto; padding-top: 16px; border-top: 1px solid {{t.line}}; display: flex; align-items: center; gap: 10px;"><label style="flex-grow: 1; min-width: 0; height: 44px; padding: 0 16px; display: flex; align-items: center; border-radius: 999px; background: {{t.surf}};"><span style="position: absolute; left: -9999px;">Why? (optional)</span><input type="text" value="{{sg.why}}" onChange="{{sg.setWhy}}" maxlength="280" placeholder="Why? (optional)" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: 15px;"></label><sc-if value="{{sg.canRemove}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{sg.toggleRemove}}" aria-pressed="{{sg.removePressed}}" class="sc-press" style="height: 44px; padding: 0 16px; border: 0; border-radius: 999px; background: {{sg.removeBg}}; color: {{sg.removeFg}}; font: inherit; font-size: 14px; font-weight: 600; white-space: nowrap; cursor: pointer;">{{sg.removeLabel}}</button></sc-if></div></sc-if>';
 const editorLogic = (open = 'this.props.cardId ? db.card(this.props.cardId) : null', more = '') => `
 constructor(props) {
   super(props);
@@ -2281,7 +2287,7 @@ renderVals() {
     }${more}
   };
 }`;
-const EDITOR_LOGIC = editorLogic();
+const EDITOR_LOGIC = editorLogic(undefined, SUGGEST_TAIL(true));
 
 // ---------- Option B: the deck's cards on a screen of their own ----------
 // The owner, after the bigger editor: "for the flashcard adding could you make it a whole new screen mockup, im thinking
@@ -2303,8 +2309,8 @@ const CARDS_CSS = '.sc-card-row[aria-current="false"]:hover{background-color:col
 const webCards = `<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}};">
   <header style="position: relative; height: 64px; flex-shrink: 0; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid {{t.line}};">
     <a href="{{backHref}}" onClick="{{done}}" style="height: 36px; padding: 0 14px 0 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600;">${svg(I.back, 14, 2.2)}{{deckName}}</a>
-    <h1 style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; font-size: 15px; font-weight: 600; white-space: nowrap;">Edit cards</h1>
-    <a href="{{backHref}}" onClick="{{done}}" style="height: 36px; padding: 0 20px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600;">{{doneLabel}}</a>
+    <h1 style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; font-size: 15px; font-weight: 600; white-space: nowrap;">{{screenTitle}}</h1>
+    <sc-if value="{{sgOff}}" hint-placeholder-val="{{ true }}"><a href="{{backHref}}" onClick="{{done}}" style="height: 36px; padding: 0 20px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600;">{{doneLabel}}</a></sc-if><sc-if value="{{sg.on}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{sg.send}}" class="sc-press" style="height: 36px; padding: 0 20px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">{{sg.sendLabel}}</button></sc-if>
   </header>
   <div style="flex-grow: 1; min-height: 0; display: flex;">
     <section aria-label="Cards in {{deckName}}" style="width: 360px; flex-shrink: 0; box-sizing: border-box; border-right: 1px solid {{t.line}}; display: flex; flex-direction: column;">
@@ -2334,7 +2340,7 @@ const webCards = `<div style="width: 1440px; height: 900px; box-sizing: border-b
         <sc-if value="{{isNew}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{discard}}" style="height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Discard</button><button type="button" onClick="{{addCard}}" data-key="mod+enter" style="height: 40px; padding: 0 22px; display: inline-flex; align-items: center; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Add card <span style="font-family: ${MONO}; font-size: 12px; opacity: .6; margin-left: 8px;">⌘↵</span></button></sc-if>
       </div>
       ${SLASH_MENU(420)}
-    </main>
+    ${SUGGEST_FOOTER}</main>
   </div>
 </div>`;
 // Its logic: the editor's, showing the card picked in the list, and the list's (listVals). Each card keeps its own place
@@ -2643,7 +2649,7 @@ listVals(o) {
     isNew: !saved, canDelete: !!saved && !this.temp(id), newCard: () => this.openNew(), addCard: ev => { if (ev && ev.preventDefault) ev.preventDefault(); this.addNew(missing); },
     deleteCard: () => this.dropSaved(ids), discard: () => this.discardNew(ids),
     done: ev => { if (db.mock) return; if (ev && ev.preventDefault) ev.preventDefault(); if (!this.exiting) this.leave(backHref); },
-    doneLabel: this.exiting ? 'Saving…' : 'Done'
+    doneLabel: this.exiting ? 'Saving…' : 'Done'${SUGGEST_TAIL(false)}
   };
 }`;
 
@@ -3823,11 +3829,11 @@ renderVals() { ${T}${DECK_DB_JS}${COVER_LOGIC}${deckMaterialsJs(true)}
 // The fields scroll under the header when they're taller than the sheet. The keyboard is drawn on the canvas only: in
 // the app, the phone shows its own.
 const phoneEditor = `<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
-  <dc-import name="PhoneDeck" dark="{{dark}}" dim="{{dim}}" deck-id="{{deckId}}" hint-size="390px,844px"></dc-import>
+  <sc-if value="{{sgOff}}" hint-placeholder-val="{{ true }}"><dc-import name="PhoneDeck" dark="{{dark}}" dim="{{dim}}" deck-id="{{deckId}}" hint-size="390px,844px"></dc-import></sc-if><sc-if value="{{sg.on}}" hint-placeholder-val="{{ false }}"><dc-import name="PhonePublicDeck" dark="{{dark}}" dim="{{dim}}" hint-size="390px,844px"></dc-import></sc-if>
   <div class="sc-scrim" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; top: 56px; box-sizing: border-box; padding: 10px 20px 34px; border-radius: 36px 36px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;">
     <div style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: {{t.surf2}};"></div>
-    <div style="display: flex; align-items: center; justify-content: space-between;"><a href="{{phoneBack}}" style="font-size: 16px; color: {{t.muted}}; min-height: 44px; display: flex; align-items: center;">Cancel</a><span style="font-size: 17px; font-weight: 600;">{{title}}</span><a href="{{phoneBack}}" onClick="{{save}}" style="font-size: 16px; font-weight: 600; min-height: 44px; display: flex; align-items: center;">Save</a></div>
+    <div style="display: flex; align-items: center; justify-content: space-between;"><a href="{{phoneBack}}" style="font-size: 16px; color: {{t.muted}}; min-height: 44px; display: flex; align-items: center;">Cancel</a><span style="font-size: 17px; font-weight: 600;">{{title}}</span><a href="{{phoneBack}}" onClick="{{save}}" style="font-size: 16px; font-weight: 600; min-height: 44px; display: flex; align-items: center;">{{saveLabel}}</a></div>
     ${TYPE_SEG}
     <div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: none;"><div style="display: flex; flex-direction: column; gap: 16px;">
     ${editorFieldsOf(true)}
@@ -3835,7 +3841,7 @@ const phoneEditor = `<div style="position: relative; width: 390px; height: 844px
     <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">${chip(svg(I.decks, 12, 2) + '{{deckName}}', 'height: 32px; padding: 0 12px; font-size: 13px; font-weight: 600;')}${TAG_EDIT('cardTags', 'cardPick', true)}</div>
     <sc-if value="{{canDelete}}" hint-placeholder-val="{{ false }}"><div style="display: flex; align-items: center; gap: 24px;"><button type="button" onClick="{{togglePause}}" aria-pressed="{{pausedNow}}" style="min-height: 44px; padding: 0; border: 0; background: transparent; color: {{t.text}}; display: inline-flex; align-items: center; gap: 7px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">${svg(I.pauseRing, 16, 2)}<span>{{pauseCardLabel}}</span></button><button type="button" onClick="{{remove}}" style="min-height: 44px; padding: 0; border: 0; background: transparent; color: {{t.again}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Delete card</button></div></sc-if>
     </div></div>
-  </div>
+  ${SUGGEST_FOOTER}</div>
   <sc-if value="{{drawKb}}" hint-placeholder-val="{{ true }}">${KEYBOARD(FMT_BAR)}</sc-if>
 </div>`;
 
@@ -8720,7 +8726,7 @@ const files = {
   'WebEditorBigDark': ['Web · Bigger card editor (dark, mockup)', darkOf('WebEditorBig', W, H), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorBigImageDark': ['Web · Bigger card editor · image with boxes (dark, mockup)', attrOf('WebEditorBig', W, H, 'card-type="Image" dark="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
   // The cards screen: the deck's cards on a screen of their own (cardType: which card it opens on).
-  'WebCardsScreen': ['Web · Edit cards', webCards, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, newCard: { editor: 'boolean', default: false }, recording: { editor: 'boolean', default: false }, paused: { editor: 'boolean', default: false }, madeFrom: { editor: 'boolean', default: true }, tagsOpen: { editor: 'boolean', default: false } }, logic: CARDS_LOGIC, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
+  'WebCardsScreen': ['Web · Edit cards', webCards, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, newCard: { editor: 'boolean', default: false }, suggest: { editor: 'boolean', default: false }, recording: { editor: 'boolean', default: false }, paused: { editor: 'boolean', default: false }, madeFrom: { editor: 'boolean', default: true }, tagsOpen: { editor: 'boolean', default: false } }, logic: CARDS_LOGIC, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
   'WebCardsScreenNew': ['Web · Edit cards · writing a new card', attrOf('WebCardsScreen', W, H, 'new-card="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
   'WebCardsScreenImage': ['Web · Edit cards · image with boxes', typeOf('WebCardsScreen', W, H, 'Image'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
   'WebCardsScreenBlank': ['Web · Edit cards · fill in the blank', typeOf('WebCardsScreen', W, H, 'Blank'), { logic: darkLogic, css: EDITOR_CSS + CARDS_CSS, w: W, h: H }],
@@ -8816,7 +8822,7 @@ const files = {
   'PhoneDeckStudied': ['iPhone · Deck page · a deck you study from someone else', attrOf('PhoneDeck', PW, PH, 'linked="study"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckCopy': ['iPhone · Deck page · your copy, with the owner’s changes waiting', attrOf('PhoneDeck', PW, PH, 'linked="copy"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckUpdates': ['iPhone · Deck page · your copy · the owner’s changes (take or skip)', attrOf('PhoneDeck', PW, PH, 'linked="copy" updates-open="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
-  'PhoneEditor': ['iPhone · Card editor', phoneEditor, { props: { ...DARK, keyboard: { editor: 'boolean', default: true }, textStyles: { editor: 'boolean', default: false }, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false }, cardId: { editor: 'string', default: '' }, paused: { editor: 'boolean', default: false }, madeFrom: { editor: 'boolean', default: true } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: PW, h: PH }],
+  'PhoneEditor': ['iPhone · Card editor', phoneEditor, { props: { ...DARK, keyboard: { editor: 'boolean', default: true }, textStyles: { editor: 'boolean', default: false }, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false }, cardId: { editor: 'string', default: '' }, suggest: { editor: 'boolean', default: false }, paused: { editor: 'boolean', default: false }, madeFrom: { editor: 'boolean', default: true } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneEditorAudio': ['iPhone · Card editor · audio', attrOf('PhoneEditor', PW, PH, 'card-type="Audio" keyboard="{{no}}"'), { logic: yesNoLogic, css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneEditorRecording': ['iPhone · Card editor · recording audio', attrOf('PhoneEditor', PW, PH, 'card-type="Audio" keyboard="{{no}}" recording="{{yes}}"'), { logic: yesNoLogic, css: EDITOR_CSS, w: PW, h: PH }],
   'PhoneEditorPaused': ['iPhone · Card editor · editing a paused card (Unpause card)', attrOf('PhoneEditor', PW, PH, 'card-id="k1" paused="{{yes}}" keyboard="{{no}}"'), { logic: yesNoLogic, css: EDITOR_CSS, w: PW, h: PH }],
@@ -8976,8 +8982,8 @@ const files = {
   'WebPublicDeckCopy': ['Web · Shared deck page · Make a copy', attrOf('WebPublicDeck', W, H, 'copy-open="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckReport': ['Web · Shared deck page · Report', attrOf('WebPublicDeck', W, H, 'report="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckCheck': ['Web · Shared deck page · a verified teacher’s view (Check this deck)', attrOf('WebPublicDeck', W, H, 'verified="Teacher"'), { logic: darkLogic, w: W, h: H }],
-  'WebPublicDeckSuggest': ['Web · Shared deck page · Suggest a change, on a card', attrOf('WebPublicDeck', W, H, 'suggest="c2"'), { logic: darkLogic, w: W, h: H }],
-  'WebPublicDeckSuggestNew': ['Web · Shared deck page · Suggest a change, a new card', attrOf('WebPublicDeck', W, H, 'suggest="new"'), { logic: darkLogic, w: W, h: H }],
+  'WebPublicDeckSuggest': ['Web · Shared deck page · Suggest a change, on a card', attrOf('WebCardsScreen', W, H, 'suggest="{{yes}}"'), { logic: `renderVals() { return { yes: true, no: false }; }`, w: W, h: H }],
+  'WebPublicDeckSuggestNew': ['Web · Shared deck page · Suggest a change, a new card', attrOf('WebCardsScreen', W, H, 'suggest="{{yes}}" new-card="{{yes}}"'), { logic: `renderVals() { return { yes: true, no: false }; }`, w: W, h: H }],
   'WebPublicDeckHistory': ['Web · Shared deck page · History', attrOf('WebPublicDeck', W, H, 'deck-tab="History"'), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckPeople': ['Web · Shared deck page · People', attrOf('WebPublicDeck', W, H, 'deck-tab="People"'), { logic: darkLogic, w: W, h: H }],
   'WebPublicDeckSignedOut': ['Web · Shared deck page · signed out (anyone can look)', attrOf('WebPublicDeck', W, H, 'signed-out="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
@@ -8991,8 +8997,8 @@ const files = {
   'PhonePublicDeckCopy': ['iPhone · Shared deck page · Make a copy', attrOf('PhonePublicDeck', PW, PH, 'copy-open="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
   'PhonePublicDeckReport': ['iPhone · Shared deck page · Report', attrOf('PhonePublicDeck', PW, PH, 'report="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
   'PhonePublicDeckCheck': ['iPhone · Shared deck page · a verified teacher’s view (Check this deck)', attrOf('PhonePublicDeck', PW, PH, 'verified="Teacher"'), { logic: darkLogic, w: PW, h: PH }],
-  'PhonePublicDeckSuggest': ['iPhone · Shared deck page · Suggest a change, on a card', attrOf('PhonePublicDeck', PW, PH, 'suggest="c2"'), { logic: darkLogic, w: PW, h: PH }],
-  'PhonePublicDeckSuggestNew': ['iPhone · Shared deck page · Suggest a change, a new card', attrOf('PhonePublicDeck', PW, PH, 'suggest="new"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhonePublicDeckSuggest': ['iPhone · Shared deck page · Suggest a change, on a card', attrOf('PhoneEditor', PW, PH, 'suggest="{{yes}}" card-id="k1" keyboard="{{no}}"'), { logic: `renderVals() { return { yes: true, no: false }; }`, w: PW, h: PH }],
+  'PhonePublicDeckSuggestNew': ['iPhone · Shared deck page · Suggest a change, a new card', attrOf('PhoneEditor', PW, PH, 'suggest="{{yes}}" keyboard="{{no}}"'), { logic: `renderVals() { return { yes: true, no: false }; }`, w: PW, h: PH }],
   'PhonePublicDeckSignedOut': ['iPhone · Shared deck page · signed out', attrOf('PhonePublicDeck', PW, PH, 'signed-out="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
   'PhonePublicDeckDark': ['iPhone · Shared deck page · dark', darkOf('PhonePublicDeck', PW, PH), { logic: darkLogic, w: PW, h: PH }],
   'PhonePublicDeckGray': ['iPhone · Shared deck page · gray', grayOf('PhonePublicDeck', PW, PH), { logic: darkLogic, w: PW, h: PH }],

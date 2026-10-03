@@ -777,7 +777,13 @@ renderVals() {
       if (missing === 'image') return this.pickImage();
       if (missing) return this.focusField(missing);
       db.act.saveCard(saved ? saved.id : null, dk.id, this.payload(ty, f), backHref);
-    }
+    },
+    saveLabel: this.props.suggest ? 'Send' : 'Save', sgOff: !this.props.suggest,
+    // Suggest a change on someone's shared deck opens this same editor (the owner, 2026-10-02: "this should be like the editing card window").
+    sg: { on: !!this.props.suggest, sendLabel: this.state.sgSent ? 'Sent' : 'Send suggestions', send: () => this.setState({ sgSent: true }), why: this.state.sgWhy || '', setWhy: e => this.setState({ sgWhy: e.target.value }),
+      canRemove: !!this.props.suggest && !!saved, removePressed: this.state.sgRemove ? 'true' : 'false', removeBg: this.state.sgRemove ? t.inv : t.surf, removeFg: this.state.sgRemove ? t.invText : t.text,
+      removeLabel: this.state.sgRemove ? 'Removing it' : 'Suggest removing it', toggleRemove: () => this.setState({ sgRemove: !this.state.sgRemove }) },
+    ...(this.props.suggest ? { title: saved ? 'Suggest a change' : 'Suggest a card', phoneBack: db.mock ? 'PhonePublicDeck.dc.html' : backHref } : {})
   };
 }
 }
