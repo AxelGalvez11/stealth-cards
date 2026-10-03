@@ -470,7 +470,6 @@ struct DeckSettingsSheet: View {
   let close: () -> Void
   @State private var name: String? = nil
   @State private var pickingCover = false
-  /// The goal the settings opened with (the cost of a goal counts from there).
 
   var body: some View {
     VStack(alignment: .leading, spacing: 14) {

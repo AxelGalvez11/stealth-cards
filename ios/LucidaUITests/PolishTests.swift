@@ -321,7 +321,7 @@ final class PolishTests: XCTestCase {
 
     // ----- between tabs -----
     flick(app, from: 0.9, to: 0.1)
-    check(litIs(app, "Discover") && wait(button(app, "News")), "a swipe left on the Library moves to Discover (and the tab bar follows)")
+    check(litIs(app, "Discover") && wait(button(app, "Notifications")), "a swipe left on the Library moves to Discover (and the tab bar follows)")
     // A row of chips that scrolls sideways keeps its own swipe.
     let chip = buttonStarting(app, "For you")
     if wait(chip, 8) {
@@ -382,10 +382,11 @@ final class PolishTests: XCTestCase {
     edgeBack(app)
     check(wait(button(app, "Share profile")), "and once more to your profile")
     tap(button(app, "Discover"), "the Discover tab")
-    tap(button(app, "News"), "the bell")
-    check(wait(app.staticTexts["News"]) || wait(button(app, "Back")), "News opens")
+    // (The bell and its page are Notifications since canvas V18x, c0338eb6; they were News.)
+    tap(button(app, "Notifications"), "the bell")
+    check(wait(app.staticTexts["Notifications"]) || wait(button(app, "Back")), "Notifications opens")
     edgeBack(app)
-    check(wait(button(app, "News")) && gone(button(app, "Back")), "News: the edge swipe goes back (to Discover)")
+    check(wait(button(app, "Notifications")) && gone(button(app, "Back")), "Notifications: the edge swipe goes back (to Discover)")
     let app2 = launch(as: ivy, ["-open", "profile:" + otherHandle, "-popAudit"])
     check(wait(app2.staticTexts["@" + otherHandle]) && wait(button(app2, "Back")), "someone else's profile opens")
     edgeBack(app2)

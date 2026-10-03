@@ -157,23 +157,24 @@ simulator), and `tests/run.sh e2e` runs the `-check`s in the simulator against a
 
 ## Practice test
 
-**Practice test** is on a folder's page (every deck in it that isn't paused); a deck's page has none (the owner, 2026-10-02: "remove practice
-tests"). It opens
-a sheet (how many questions, which kinds, a time limit, and "Tests don’t change your review schedule."), then the test: numbered
+**Practice test** has no button on any page now: a deck's page lost it (the owner, 2026-10-02: "remove practice tests") and so did a
+folder's page (canvas V188), so in debug builds `-open test:<folder name>` opens a folder's test (every deck in it that isn't paused), as
+the web's /library/folder/<id>/test does. It opens
+a sheet (how many questions, which kinds, a time limit), then the test: numbered
 questions you can go back through and flag, a list of all the questions, a quiet clock when you asked for one, and nothing about right or
 wrong until Submit (which asks first when some are unanswered). The results show the score, the time, every question with your answer
 and the right one, Explain where the card has it, **Count it as right** on a written answer the spelling check missed, **Retake the ones I
 missed**, and **Study the missed cards now** (a normal review of just those cards, then back to the results). `Data/TestEngine.swift` is a
 port of the web's engine (`web/db.js`, "Practice test": Learn's `choiceQuestion`, a card of its own for each question, matching as four
 or five pairs, the kinds in sections); `Data/TestDemo.swift` is the design screens' sample test; `Screens/PracticeTest.swift` has the
-pieces (`TestStartButton`, `TestFolderBits`, `TestStartSheet`, `TestScreen`). A test never changes a schedule or logs a
+pieces (`TestStartSheet`, `TestScreen`). A test never changes a schedule or logs a
 review. The test in progress is kept on the phone (`UserDefaults`, `lucida.test`) and is open again, where it was, when the app opens; its
-clock counts only while it shows. A finished test is saved with the library (`test.save`, and `test.fix` for Count it as right), and the
-folder's page says how its last one went.
+clock counts only while it shows. A finished test is saved with the library (`test.save`, and `test.fix` for Count it as right); the
+folder's page says nothing about it (the owner: "remove this").
 
-The board is `PhoneTest` (the folder's pieces are states of `PhoneLibrary`); with it, `-screen "Set up"`,
+The board is `PhoneTest`; with it, `-screen "Set up"`,
 `Multiple choice`, `True or false`, `Fill in the blank`, `Written`, `Matching`, `Submit`, `Leave`, `Results` or `"Results · missed"` picks the
-screen and `-timed false` takes the clock off. More launch arguments (debug builds): `-open folder:<name>` (the folder with that name),
+screen and `-timed false` takes the clock off. More launch arguments (debug builds): `-open folder:<name>` (the folder with that name), `-open test:<name>` (that folder's test set-up),
 `-testAudit` (an invisible element tells the end-to-end test which answer is right for the question on screen) and `-testSpent <ms>` (the
 test in progress has already been open that long, to check the clock without waiting).
 
