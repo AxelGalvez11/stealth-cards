@@ -134,7 +134,7 @@ struct GuideScreen: View {
         NotesRail.open(nav: nav, heads: notes.outline, outline: outline, page: notes)
       }
     }
-    if !store.demo && !store.guide(deckId).can { nav.back(); return }
+    // (a deck you only study opens its Notes page to read, as the web's: no ⋯, no Add a page inside, nothing to write in)
     load(n)
     // the caret where the page was tapped on the deck page, or at the end of what is written (the deck page's + › Notes); or a new note (the Notes list's New note,
     // or + on a row: a page inside that note), which opens as a blank note with the caret in its title
