@@ -397,6 +397,18 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneGuideNested",
+  "title": "iPhone · Notes page · a page inside another note",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneGuidePages",
+  "title": "iPhone · Notes page · a note with pages inside",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneHistory",
   "title": "iPhone · History",
   "w": 390,
@@ -2085,6 +2097,18 @@ export default [
  {
   "name": "WebGuide",
   "title": "Web · Notes page (pick the view)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebGuideNested",
+  "title": "Web · Notes page · a page inside another note",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebGuidePages",
+  "title": "Web · Notes page · a note with pages inside",
   "w": 1440,
   "h": 900
  },
