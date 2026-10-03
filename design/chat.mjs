@@ -50,6 +50,13 @@ export function chatMarkup({ svg, I }, X, c, o) {
 export const CHAT_CSS = '.sc-ask-in{transition:box-shadow .15s}.sc-ask-in:focus-within{box-shadow:inset 0 0 0 1.5px var(--ask-ring)}.sc-ask-ta::placeholder{color:var(--ask-ph);opacity:1}.sc-ask-ta{scrollbar-width:thin}'
   + '@media (prefers-reduced-motion:reduce){.sc-ask-in{transition:none}}';
 
+// A board method: leaving the page forgets the conversations it asked (as closing Explain does), and stops following the keyboard.
+export const CHAT_METHOD = `componentWillUnmount() {
+  const db = this.props && this.props.db, v = typeof window !== 'undefined' && window.visualViewport;
+  if (v && this.chatOnVv) { v.removeEventListener('resize', this.chatOnVv); v.removeEventListener('scroll', this.chatOnVv); this.chatOnVv = null; }
+  if (db && db.act && db.act.followUpClear) for (const id of this.chatIds || []) db.act.followUpClear(id);
+}`;
+
 // The conversation's values for a board's renderVals (`db` and `this` are the board's). `key` keeps each panel's typing apart (a test has one
 // panel a question), `id` is the card, `question` how Learn mode or the test asked it, `exv` db's view of the card's explanation (its `turns` and
 // the day's `limit`), and `o`: `show` (the explanation is on screen, so the composer can be), `sample` (the canvas's question and answer),
@@ -68,7 +75,7 @@ export const CHAT_JS = String.raw`const chatView = (key, id, question, exv, o) =
       if (field) { field.value = ''; field.style.height = ''; }
       setDraft('');
       if (mock) this.setState({ chatMock: { ...(this.state.chatMock || {}), [key]: [...((this.state.chatMock || {})[key] || []), { q, a: o.sample ? o.sample.a : '' }] } });
-      else db.act.followUp(id, q, question);
+      else { this.chatIds = [...new Set([...(this.chatIds || []), id])]; db.act.followUp(id, q, question); }
     };
     // A phone's web page: while the field would be under the keyboard, it rides on it (the visible part of the page is visualViewport's, which
     // changes as the keyboard comes and goes and as the phone moves the view), and its place in the panel keeps its height.
@@ -77,7 +84,7 @@ export const CHAT_JS = String.raw`const chatView = (key, id, question, exv, o) =
     const place = () => {
       const v = vv(), slot = this.chatSlot && this.chatSlot[key];
       let f = null;
-      if (v && slot && slot.isConnected && this.chatFocus === key) {
+      if (v && slot && slot.isConnected && this.chatFocus === key && slot.querySelector('.sc-ask-in') && slot.contains(document.activeElement)) {
         const r = slot.getBoundingClientRect(), low = v.offsetTop + v.height, pill = slot.querySelector('.sc-ask-in'), ph = pill ? pill.offsetHeight : 44, sp = parseFloat(getComputedStyle(slot).paddingLeft) || 0;
         if (r.bottom > low + 1) f = { top: Math.round(low - ph - 8), left: Math.round(r.left + sp), width: Math.round(r.width - 2 * sp), h: Math.round(r.height) };
       } else unlisten();

@@ -8,7 +8,7 @@ import { extname, join, normalize, sep } from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { state, apply, withLibrary, revOf, putMediaLater, mediaLink, MEDIA, aiLeft, useAi, refundAi, saveExplain, quizLeft, useQuiz, refundQuiz, quizCandidates, saveQuiz, isPro, guideVersions } from './store.mjs';
-import { aiReady, explain } from './ai.mjs';
+import { aiReady, explain, followUp } from './ai.mjs';
 import { writeQuiz, BATCH } from './quizai.mjs';
 import { FREE_EXPLAINS, PRO_EXPLAINS, FREE_QUIZ_BATCHES, PRO_QUIZ_BATCHES } from './plans.mjs';
 import * as make from './make.mjs';
@@ -61,7 +61,7 @@ const held = () => {
 // Free app too, with LUCIDA_PLAN=free; see store.mjs).
 // `quizLeft`: how many batches of Lucida's own Learn mode questions are left today (the app asks for none when it's 0). A deck's Guide
 // keeps older versions, which the app asks for one deck at a time; `make` is what making cards can do for this person.
-const view = me => { const { guideHistory, make: _bookkeeping, ...rest } = state(); return { ...rest, me, aiOn: aiReady(), pro: isPro(), quizLeft: aiReady() ? quizLeft(new Date().toISOString().slice(0, 10), isPro() ? PRO_QUIZ_BATCHES : FREE_QUIZ_BATCHES) : 0, make: make.makeInfo(isPro()) }; };
+const view = me => { const { guideHistory, make: _bookkeeping, ...rest } = state(); return { ...rest, me, aiOn: aiReady(), pro: isPro(), explainLimit: explainLimitNow(isPro()), quizLeft: aiReady() ? quizLeft(new Date().toISOString().slice(0, 10), isPro() ? PRO_QUIZ_BATCHES : FREE_QUIZ_BATCHES) : 0, make: make.makeInfo(isPro()) }; };
 // The study network's actions (see social.mjs), each run in the signed-in person's library.
 const SOCIAL = {
   'profile.ensure': (uid, me) => social.ensureProfile(uid, me).then(p => ({ handle: p.handle })),
@@ -516,9 +516,14 @@ async function inLibrary(uid, fn, opts) {
   }
   throw new Error('Your cards changed somewhere else at the same moment. Try again.');
 }
+// What the app says when the day's explanations are used up (Free's are Go Pro's to give; Pro's fair-use ceiling waits for tomorrow), and
+// whether they are now (/api/state's explainLimit): Explain's panel then shows these words in its composer's place.
+function explainLimit(pro) { return { text: pro ? 'That’s a lot of explanations for one day. More tomorrow.' : 'That’s today’s ' + FREE_EXPLAINS + ' free explanations. Go Pro for as many as you like.', goPro: !pro }; }
+function explainLimitNow(pro) { return aiReady() && aiLeft(new Date().toISOString().slice(0, 10), pro ? PRO_EXPLAINS : FREE_EXPLAINS) === 0 ? explainLimit(pro) : null; }
 // Explain a card with AI (ai.mjs). It's written once and saved on the card, so showing it again costs nothing. Free
 // gets FREE_EXPLAINS a day, Pro PRO_EXPLAINS. The AI is asked between two saves, so it's never asked twice when
-// another change lands at the same moment, and a failed answer gives the day's count back.
+// another change lands at the same moment, and a failed answer gives the day's count back. An answer that used the
+// day's last one says so (`limit`).
 async function explainReq(res, uid, me, a) {
   if (!aiReady()) return send(res, 503, { error: 'AI explanations aren’t set up yet.' });
   const pro = !me || !!me.plan.pro, limit = pro ? PRO_EXPLAINS : FREE_EXPLAINS, day = new Date().toISOString().slice(0, 10), opts = { pro: me ? me.plan.pro : undefined };
@@ -526,7 +531,7 @@ async function explainReq(res, uid, me, a) {
     const c = state().cards.find(x => x.id === a.cardId);
     if (!c) return { code: 404, error: 'There’s no card like that.' };
     if (c.explain && c.explain.text) return { text: c.explain.text, left: aiLeft(day, limit) };
-    if (!useAi(day, limit)) return { code: 402, pro: !pro, error: pro ? 'That’s a lot of explanations for one day. More tomorrow.' : 'That’s today’s ' + FREE_EXPLAINS + ' free explanations. Go Pro for as many as you like.' };
+    if (!useAi(day, limit)) return { code: 402, pro: !pro, error: explainLimit(pro).text };
     return { card: JSON.parse(JSON.stringify(c)), deck: (state().decks.find(d => d.id === c.deckId) || {}).name || '' };
   }, opts);
   if (!first.card) return send(res, first.code || 200, first);
@@ -534,7 +539,31 @@ async function explainReq(res, uid, me, a) {
   try { text = await explain(first.card, { deck: first.deck, question: String(a.question || '').slice(0, 500) }); }
   catch (e) { await inLibrary(uid, () => refundAi(day), opts); return send(res, 502, { error: e.message }); }
   const left = await inLibrary(uid, () => { saveExplain(first.card.id, text, 'Lucida'); return aiLeft(day, limit); }, opts);
-  return send(res, 200, { text, left, free: !pro });
+  return send(res, 200, { text, left, free: !pro, limit: left === 0 ? explainLimit(pro) : null });
+}
+
+// A question about a card, asked in Explain (ai.mjs followUp): it is one of the day's explanations, like Explain's own (a failed answer gives
+// it back), so Free's "N free explanations left today" goes down by one. The conversation so far comes with the question (`turns`, the last
+// few) and the answer goes back with nothing kept: only the card's explanation, which Explain saved already, is read from the library.
+//   { cardId, q, turns: [{ q, a }], question }  →  { text, left, free, limit }
+async function askReq(res, uid, me, a) {
+  if (!aiReady()) return send(res, 503, { error: 'AI explanations aren’t set up yet.' });
+  const q = String(a.q || '').trim().slice(0, 500);
+  if (!q) return send(res, 400, { error: 'Ask a question about the card.' });
+  const pro = !me || !!me.plan.pro, limit = pro ? PRO_EXPLAINS : FREE_EXPLAINS, day = new Date().toISOString().slice(0, 10), opts = { pro: me ? me.plan.pro : undefined };
+  const first = await inLibrary(uid, () => {
+    const c = state().cards.find(x => x.id === a.cardId);
+    if (!c) return { code: 404, error: 'There’s no card like that.' };
+    if (!useAi(day, limit)) return { code: 402, pro: !pro, error: explainLimit(pro).text };
+    return { card: JSON.parse(JSON.stringify(c)), deck: (state().decks.find(d => d.id === c.deckId) || {}).name || '', left: aiLeft(day, limit) };
+  }, opts);
+  if (!first.card) return send(res, first.code || 200, first);
+  const turns = (Array.isArray(a.turns) ? a.turns : []).filter(t => t && typeof t.q === 'string' && typeof t.a === 'string' && t.q.trim() && t.a.trim()).slice(-8)
+    .map(t => ({ q: t.q.trim().slice(0, 500), a: t.a.trim().slice(0, 1500) }));
+  let text;
+  try { text = await followUp(first.card, { deck: first.deck, question: String(a.question || '').slice(0, 500), explanation: (first.card.explain && first.card.explain.text) || '', turns, ask: q }); }
+  catch (e) { await inLibrary(uid, () => refundAi(day), opts); return send(res, 502, { error: e.message }); }
+  return send(res, 200, { text, left: first.left, free: !pro, limit: first.left === 0 ? explainLimit(pro) : null });
 }
 
 // Lucida's own questions for Learn mode (quizai.mjs): up to 20 of the asked-for cards that have none yet get one each, saved on the cards, so a
@@ -661,6 +690,7 @@ export async function handle(req, res) {
       const body = req.method === 'POST' ? await readBody(req, path === '/api/media' ? 20e6 : 5e6) : null;
       if (path.startsWith('/api/oauth/')) return await oauth.api(req, res, path, body, { uid: uid || 'local', email: (me && me.email) || '' });
       if (path === '/api/explain' && req.method === 'POST') return await explainReq(res, uid, me, jsonOf(body));
+      if (path === '/api/explain/ask' && req.method === 'POST') return await askReq(res, uid, me, jsonOf(body));
       if (path === '/api/quiz' && req.method === 'POST') return await quizReq(res, uid, me, jsonOf(body));
       // Neither works inside a library request: a purchase isn't in the library, and Delete account removes it.
       if (path === '/api/iap' && req.method === 'POST') return await iapReq(res, uid, me, jsonOf(body));

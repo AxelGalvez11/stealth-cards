@@ -104,6 +104,11 @@
 class Component extends LucidaLogic(DCLogic, 0) {
 
 constructor(props) { super(props); this.state = { typed: 'golgi body', checked: true, qid: null, exOpen: !!(props && props.explainOpen), exMock: !!(props && props.explainOpen), exFor: props && props.explainOpen ? 'typeq' : null }; }
+componentWillUnmount() {
+  const db = this.props && this.props.db, v = typeof window !== 'undefined' && window.visualViewport;
+  if (v && this.chatOnVv) { v.removeEventListener('resize', this.chatOnVv); v.removeEventListener('scroll', this.chatOnVv); this.chatOnVv = null; }
+  if (db && db.act && db.act.followUpClear) for (const id of this.chatIds || []) db.act.followUpClear(id);
+}
 renderVals() { const db = this.props.db || this.mock(); const chrome = db.chrome();
   const bgKindOf = (b, img, S) => {
     const k = b && ['deck', 'plain', 'sky', 'sunset', 'photo'].includes(b.kind) && !(b.kind === 'photo' && !img) ? b.kind : '';
@@ -165,7 +170,7 @@ renderVals() { const db = this.props.db || this.mock(); const chrome = db.chrome
       if (field) { field.value = ''; field.style.height = ''; }
       setDraft('');
       if (mock) this.setState({ chatMock: { ...(this.state.chatMock || {}), [key]: [...((this.state.chatMock || {})[key] || []), { q, a: o.sample ? o.sample.a : '' }] } });
-      else db.act.followUp(id, q, question);
+      else { this.chatIds = [...new Set([...(this.chatIds || []), id])]; db.act.followUp(id, q, question); }
     };
     // A phone's web page: while the field would be under the keyboard, it rides on it (the visible part of the page is visualViewport's, which
     // changes as the keyboard comes and goes and as the phone moves the view), and its place in the panel keeps its height.
@@ -174,7 +179,7 @@ renderVals() { const db = this.props.db || this.mock(); const chrome = db.chrome
     const place = () => {
       const v = vv(), slot = this.chatSlot && this.chatSlot[key];
       let f = null;
-      if (v && slot && slot.isConnected && this.chatFocus === key) {
+      if (v && slot && slot.isConnected && this.chatFocus === key && slot.querySelector('.sc-ask-in') && slot.contains(document.activeElement)) {
         const r = slot.getBoundingClientRect(), low = v.offsetTop + v.height, pill = slot.querySelector('.sc-ask-in'), ph = pill ? pill.offsetHeight : 44, sp = parseFloat(getComputedStyle(slot).paddingLeft) || 0;
         if (r.bottom > low + 1) f = { top: Math.round(low - ph - 8), left: Math.round(r.left + sp), width: Math.round(r.width - 2 * sp), h: Math.round(r.height) };
       } else unlisten();

@@ -22,7 +22,7 @@ import { LEVELS, YEARS, SUBJECTS } from '../web/school.js';
 import testKit from './test-boards.mjs';
 import { makeBoards, deckBlocks, publicGuideBlocks, PUBLIC_GUIDE_JS, DECK_MATERIALS_JS, GUIDE_CSS, GUIDE_STATES, MATERIALS_MOCK, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
 import { DIAGRAM_METHOD, DIAGRAM_CSS, PUBLIC_DIAGRAMS_JS, publicDiagramBlocks } from './diagrams.mjs';
-import { CHAT_SAMPLE, chatMarkup, CHAT_CSS, CHAT_JS } from './chat.mjs';
+import { CHAT_SAMPLE, chatMarkup, CHAT_CSS, CHAT_JS, CHAT_METHOD } from './chat.mjs';
 import { askMarkup, toastMarkup, ASK_SAMPLES, ASK_JS, askProp, dateMarkup, DATE_JS, dropMarkup, dropSheet, dropPill, DROP_JS, PLAYER_JS } from './ui.mjs';
 // The themes (Pro), for boards' logic: key, board name, short and full names.
 const THEME_LIST = JSON.stringify(THEMES.map(({ key, board, short, name }) => ({ key, board: board || '', short, name })));
@@ -2691,6 +2691,7 @@ const CARD_VIEW_JS = `const R = this.rich(), ro = this.cardPal || { t, dark: !!t
 const BLANK_JS = `rev ? { text: c.back, bg: t.inv, fg: t.invText, cls: flipOn ? 'sc-blank' : '' } : { text: '\\u2003\\u2003\\u2003\\u2003', bg: t.surf2, fg: 'transparent', cls: '' }`;
 const REVIEW_LOGIC = (total, phone = false) => `
 constructor(props) { super(props); this.state = { revealed: !!props.startRevealed, settings: null, pileDraft: props.newPileOpen ? 'Tricky ones' : null, exOpen: !!props.explainOpen, exFor: props.explainOpen ? 'r0' : null }; }
+${CHAT_METHOD}
 renderVals() {
   ${DB_JS}
   // Settings › Studying › Flip animation: off, and the other side just appears (no turn, no pop, no fade).
@@ -5031,6 +5032,7 @@ const phoneQuizOf = bg => `<div ref="{{ex.pageEnd}}" style="position: relative; 
 const phoneQuiz = phoneQuizOf(studyBgLayer);
 const QUIZ_LOGIC = phone => `
 constructor(props) { super(props); this.state = { i: 0, pick: props && props.answered ? 1 : null, gained: 0, exOpen: !!(props && props.explainOpen), exMock: !!(props && props.explainOpen), exFor: props && props.explainOpen ? 'q0' : null }; }
+${CHAT_METHOD}
 renderVals() { ${DB_JS}
   ${LEARN_VIEW_JS(phone)}
   ${EXPLAIN_JS}
@@ -5164,6 +5166,7 @@ const phoneQuizType = `<div ref="{{ex.pageEnd}}" style="position: relative; isol
 </div>`;
 const TYPE_LOGIC = phone => `
 constructor(props) { super(props); this.state = { typed: 'golgi body', checked: true, qid: null, exOpen: !!(props && props.explainOpen), exMock: !!(props && props.explainOpen), exFor: props && props.explainOpen ? 'typeq' : null }; }
+${CHAT_METHOD}
 renderVals() { ${DB_JS}
   ${LEARN_VIEW_JS(phone)}
   ${EXPLAIN_JS}

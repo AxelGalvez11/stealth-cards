@@ -7,7 +7,7 @@
 // timer is a quiet number; nothing says right or wrong until you submit. Motion is quick and subtle (a question slides in 6 px), and
 // off with Reduce Motion. Dark and gray (Tweaks) look like the neighbors'.
 // The canvas's sample test (also copied into the iPhone app by design/to-ios.mjs, for its design screens).
-import { CHAT_SAMPLE, chatMarkup, CHAT_CSS, CHAT_JS } from './chat.mjs';
+import { CHAT_SAMPLE, chatMarkup, CHAT_CSS, CHAT_JS, CHAT_METHOD } from './chat.mjs';
 
 export const TEST_SAMPLE = {
   name: 'Cell Biology', cards: 412, n: 20, answered: [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14], flagged: [5, 12], at: { mc: 3, tf: 10, blank: 13, match: 15, type: 18, submit: 20 },
@@ -200,6 +200,7 @@ export default function testKit(c) {
 
   const logic = phone => `
 constructor(props) { super(props); this.state = {}; }
+${CHAT_METHOD}
 renderVals() { ${DB_JS}
   ${T}
   ${CHAT_JS}
