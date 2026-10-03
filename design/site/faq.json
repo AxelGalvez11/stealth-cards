@@ -78,12 +78,12 @@
     {
       "group": "Spaced repetition",
       "q": "What is FSRS, and which version does Lucida use?",
-      "a": "FSRS (Free Spaced Repetition Scheduler) is an open-source algorithm that estimates how likely you are to remember each card and schedules the next review for when that chance reaches your goal. Lucida uses FSRS version 5. See [spaced repetition](/features/spaced-repetition)."
+      "a": "FSRS (Free Spaced Repetition Scheduler) is an open-source algorithm that estimates how likely you are to remember each card and schedules the next review for when that chance falls to 90%. Lucida uses FSRS version 5. See [spaced repetition](/features/spaced-repetition)."
     },
     {
-      "group": "Spaced repetition",
-      "q": "What does the Remember goal do?",
-      "a": "It’s the chance you want of remembering a card when it comes back. The default is 90%, and each deck can go from 70 to 97%. Higher goals mean shorter gaps and more reviews a day."
+      "q": "When does a card come back?",
+      "a": "When your chance of remembering it has fallen to 90%. Lucida uses that for every deck, so there’s nothing to set.",
+      "group": "Spaced repetition"
     },
     {
       "group": "Spaced repetition",

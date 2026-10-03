@@ -165,8 +165,8 @@ enum DebugChecks {
     // The grade buttons' gaps use the fit.
     let E = s.engine
     if let c = E.queue(nil).first(where: { $0.lane == "rev" }), Engine.scheduled(c.deck) {
-      let now = nowMs(), std = FSRS.preview(c.card.srs, now: now, goal: Double(c.deck.goal) / 100, maxDays: GAPS[min(max(c.deck.gapIdx, 0), 6)], steps: c.deck.steps)
-      let tuned = FSRS.preview(c.card.srs, now: now, goal: Double(c.deck.goal) / 100, maxDays: GAPS[min(max(c.deck.gapIdx, 0), 6)], steps: c.deck.steps, w: E.tunedW)
+      let now = nowMs(), std = FSRS.preview(c.card.srs, now: now, goal: GOAL, maxDays: MAX_DAYS, steps: c.deck.steps)
+      let tuned = FSRS.preview(c.card.srs, now: now, goal: GOAL, maxDays: MAX_DAYS, steps: c.deck.steps, w: E.tunedW)
       say(E.tunedW?.count == 19, "tune: the app grades with the fit")
       print("GAPS standard \([1, 2, 3, 4].map { FSRS.waitLabel(std[$0]!, now) }) tuned \([1, 2, 3, 4].map { FSRS.waitLabel(tuned[$0]!, now) })")
     }

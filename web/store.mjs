@@ -11,7 +11,7 @@ import { cloud, library, files } from './supa.mjs';
 import { newLink } from './auth.mjs';
 import { FREE_MEDIA, GUIDE } from './plans.mjs';
 import { grade as fsrsGrade, newCard, cleanW } from './fsrs.js';
-import { GAPS, LEECH_AT, LEECH_TAG, leechAt, leechAct, scheduled } from './sched.js';
+import { GAPS, GOAL, MAX_DAYS, LEECH_AT, LEECH_TAG, leechAt, leechAct, scheduled } from './sched.js';
 import R from './rich.js';
 import { placeBefore, cardBefore, cardToDeck } from './order.js';
 import { THEME_KEYS } from './themes/index.js';
@@ -738,7 +738,7 @@ function run(a, who) {
       else {
         const g = Math.min(4, Math.max(1, Math.round(+a.rating || 3)));
         log.rating = g;
-        if (scheduled(d)) c.srs = fsrsGrade(c.srs, g, now, { goal: d.goal / 100, maxDays: GAPS[d.gapIdx ?? 3], steps: d.steps, w: tunedW() });
+        if (scheduled(d)) c.srs = fsrsGrade(c.srs, g, now, { goal: GOAL, maxDays: MAX_DAYS, steps: d.steps, w: tunedW() });
         else c.srs = { ...c.srs, reps: (c.srs.reps || 0) + 1, last: now };
         // Like Anki: at the rule's count, and again every half of it after (so a card unpaused, or one already past a
         // lowered count, is caught at its next few forgets).
@@ -828,7 +828,9 @@ function run(a, who) {
       if (readOnly(d)) throw notYours(d);
       const g = guidePage(d, 'main');
       if ((g.pages || []).length >= GUIDE.pages) throw new Error('A deck can have ' + GUIDE.pages + ' extra pages.');
-      const pg = { id: id('g'), title: pageTitle(a.title) || 'New page', text: '', at: Date.now() };
+      // It can sit inside another page, as Notion's do: the Guide ('main') or one of its pages (anything else puts it at the top).
+      const parent = a.parent === 'main' || (g.pages || []).some(x => x.id === a.parent) ? a.parent : '';
+      const pg = { id: id('g'), parent, title: pageTitle(a.title) || 'New page', text: '', at: Date.now() };
       g.pages = [...(g.pages || []), pg];
       touch(d.id, who);
       return { id: pg.id };
@@ -845,7 +847,8 @@ function run(a, who) {
       const d = findDeck(a.deckId); if (!d) throw new Error('No such deck');
       if (readOnly(d)) throw notYours(d);
       const pg = guidePage(d, a.page); if (pg === d.guide) throw new Error('The Guide stays. Clear its words instead.');
-      d.guide.pages = d.guide.pages.filter(x => x !== pg);
+      // the pages inside it move up to where it was, so nothing written is lost
+      d.guide.pages = d.guide.pages.filter(x => x !== pg).map(x => (x.parent === pg.id ? { ...x, parent: pg.parent || '' } : x));
       if (S.guideHistory && S.guideHistory[d.id]) delete S.guideHistory[d.id][pg.id];
       touch(d.id, who);
       return { id: pg.id };

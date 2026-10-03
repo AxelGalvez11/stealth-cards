@@ -1,58 +1,9 @@
-// iPhone · Deck settings → Studying, Pro's part (PhoneDeckSettingsStudy, PhoneDeckSettingsGoal, PhoneDeckSettingsStudyFree):
-// three memory goals to compare with the reviews a day each one means, an exam date, and what happens to cards you keep
-// forgetting. On Free, a "Plan your reviews" card with Go Pro instead.
+// iPhone · Deck settings → Studying, Pro's part (PhoneDeckSettingsStudy, PhoneDeckSettingsStudyFree): an exam date, and what happens
+// to cards you keep forgetting. On Free, a "Plan your reviews" card with Go Pro instead. (No memory goal: every deck is held to 90%.)
 import SwiftUI
 
 /// The pill on a Pro tool's Go Pro card and elsewhere: "Pro" on a periwinkle-to-sky gradient.
 /// (ProBadge, in Settings, is the same one.)
-
-/// Relaxed 85%, Balanced 90%, Intense 95%: each with its reviews a day, the chosen one in black.
-struct GoalPresets: View {
-  @Environment(\.theme) private var t
-  @EnvironmentObject private var store: Store
-  let d: DeckVM
-  var body: some View {
-    HStack(spacing: 8) {
-      ForEach([("Relaxed", 85), ("Balanced", 90), ("Intense", 95)], id: \.1) { label, g in
-        let on = d.goal == g
-        Button { store.updateDeck(d.id, ["goal": g]) } label: {
-          VStack(alignment: .leading, spacing: 2) {
-            Text(label).css(13, .semibold).lineLimit(1)
-            Text("\(g)% · \(Int(FSRS.jsRound(store.workload(d.id, g)))) a day").css(12).opacity(0.72).lineLimit(1).truncationMode(.tail)
-          }
-          .foregroundStyle(on ? t.invText : t.text)
-          .padding(.horizontal, 12).padding(.vertical, 10)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(on ? t.inv : t.surf))
-        }
-        .buttonStyle(.press)
-        .accessibilityAddTraits(on ? .isSelected : [])
-      }
-    }
-  }
-}
-
-/// "About 32 reviews a day", and beside it how much that changed since the settings opened ("+24 a day").
-struct WorkloadLine: View {
-  @Environment(\.theme) private var t
-  @EnvironmentObject private var store: Store
-  let d: DeckVM
-  /// The goal the settings opened with.
-  let from: Int
-  var body: some View {
-    let now = Int(FSRS.jsRound(store.workload(d.id, d.goal))), change = now - Int(FSRS.jsRound(store.workload(d.id, from)))
-    HStack(spacing: 8) {
-      Text(store.workload(d.id, d.goal) < 0.5 ? "Under 1 review a day" : "About " + plural(now, "review") + " a day").css(13)
-      if d.goal != from && change != 0 {
-        Text((change > 0 ? "+" : "−") + "\(abs(change)) a day").css(12, .semibold).monospacedDigit().foregroundStyle(t.muted)
-          .padding(.horizontal, 9).frame(height: 22).background(Capsule().fill(t.surf))
-      }
-    }
-    .frame(minHeight: 24, alignment: .leading)
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .accessibilityElement(children: .combine)
-  }
-}
 
 /// Pro's part of Studying, under New cards a day: the exam date and the rule for cards you keep forgetting; on Free, an
 /// old exam date to take off (or the card that says what Pro adds).
@@ -96,7 +47,7 @@ struct StudyPro: View {
   private var teaser: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 8) { Text("Plan your reviews").css(15, .semibold); ProBadge() }
-      WebText(text: "See how many reviews a day each goal means, set an exam date, and choose what happens to cards you keep forgetting.", size: 13, lh: 1.45, color: t.muted)
+      WebText(text: "Set an exam date, and choose what happens to cards you keep forgetting.", size: 13, lh: 1.45, color: t.muted)
       Button { nav.goPro() } label: {
         Text("Go Pro").css(14, .semibold).foregroundStyle(t.invText).padding(.horizontal, 16).frame(height: 36).background(Capsule().fill(t.inv))
       }

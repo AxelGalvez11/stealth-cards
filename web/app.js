@@ -111,7 +111,7 @@ function resolve(path, q) {
     const empty = !db.decks().length && !db.raw().folders.length;
     if (empty && !lib[1] && !lib[2]) return { name: P + 'DecksEmpty' };
     // All cards can open filtered (the Stats page links to your hardest cards and the ones you keep forgetting).
-    return { name: narrow.matches ? 'PhoneLibrary' : 'WebDecks', props: { mode: lib[1] ? 'cards' : 'decks', folder: lib[2] || '', level: lib[1] ? q.get('level') || '' : '' } };
+    return { name: narrow.matches ? 'PhoneLibrary' : 'WebDecks', props: { mode: lib[1] ? 'cards' : 'decks', folder: lib[2] || '' } };
   }
   if (path === '/decks/new') return { name: P + 'NewDeck' };
   // Making cards from a file, photos, a recording, a video, text or a topic (web/make.js). `source` opens one kind's page, `deck` is where
@@ -129,7 +129,7 @@ function resolve(path, q) {
     if (deck[2] === '/suggestions') return { name: P + 'Suggestions', props: { deckId: id } };
     // A deck's Notes (its Guide and pages), written here: ?page= one of its pages, ?at=<line>:<place> where a press on the Notes tab put the caret, or ?at=end (the deck page's
     // + › Notes: ready to type at the end of what is written). A deck you study as it is shows its owner's, which is theirs to change.
-    if (deck[2] === '/guide') return dRow && dRow.readOnly ? { redirect: '/deck/' + id } : { name: P + 'Guide', props: { deckId: id, page: q.get('page') || '', at: /^(\d{1,5}:\d{1,6}|end)$/.test(q.get('at') || '') ? q.get('at') : '' } };
+    if (deck[2] === '/guide') return dRow && dRow.readOnly ? { redirect: '/deck/' + id } : { name: P + 'Guide', props: { deckId: id, page: q.get('page') || '', newPage: q.get('new') === '1', newParent: q.get('parent') || '', at: /^(\d{1,5}:\d{1,6}|end)$/.test(q.get('at') || '') ? q.get('at') : '' } };
     // Playing a deck live needs a big screen, so it starts from a computer.
     if (deck[2] === '/live') return narrow.matches ? { redirect: '/deck/' + id } : { name: 'LiveSetup', props: { deckId: id } };
     // Learn mode starts from a sheet over the deck, and so does a practice test.
@@ -160,7 +160,7 @@ function resolve(path, q) {
   }
   // Sorting into piles doesn't grade, so that session ends on its own page.
   if (path === '/review/done') return { name: P + (db.session().onlyPiles ? 'DonePiles' : 'Done') };
-  if (path === '/stats') return { name: P + (db.hasReviews() ? 'Stats' : 'StatsEmpty') };
+  if (path === '/stats') return { name: P + (db.hasReviews() || !db.pro() ? 'Stats' : 'StatsEmpty') };   // Free: the upgrade card even before any reviews
   if (path === '/connect') return { name: P + 'Connect', props: narrow.matches ? {} : { back: settingsFrom || '/library' } };
   // Settings is a page of its own: the sections down the left and the chosen one on the right (/settings is Account, and /settings/<section> is
   // the others), so Back and links work. A narrow screen shows the list of sections as one page, and each section as a page of its own.

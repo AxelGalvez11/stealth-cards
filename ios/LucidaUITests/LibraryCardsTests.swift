@@ -1,8 +1,9 @@
 // The owner's canvas comments of 2026-10-02 on the iPhone app, end to end (the web's Cards screen has no iPhone twin):
 //   1  All cards ("remove the 4 grades"): no Difficulty control (All · New · Easy · Medium · Hard) any more; Tags, All decks and the search
-//      still filter, together; each card's row still says how hard it is.
-//   2  Stats → Weak spots: Hardest cards has Study these and no See all (it opened All cards on Hard); Keep forgetting's See them still opens
-//      All cards on Keep forgetting.
+//      still filter, together; rows show no grade or next date ("remove the 'difficulty and next columns'"), and there is no Keep
+//      forgetting or Paused filter ("remove the 'keep forgetting and paused' options").
+//   2  Stats → Weak spots: Hardest cards has Study these and no See all (it opened All cards on Hard); Keep forgetting has no See them
+//      either, since All cards has no Keep forgetting or Paused filter any more ("remove the ‘keep forgetting and paused’ options").
 //   3  Deck settings → General ("naming section should be moved below header section"): Name is right under the Header section, then
 //      Background and Folder; decks have no tags any more ("remove 'tags' from decks, only cards have tags"); the name still renames the deck.
 //   4  New deck: no Name, Tags or Grade with; the name is typed on the cover ("allow users to directly edit the name in the box above"); the
@@ -45,8 +46,9 @@ final class LibraryCardsTests: AppCase {
     check(wait(text(app, "5 cards")), "and lists every card (5 cards)")
     check(gradeButtons(app) == 0, "with no Difficulty control (no All · New · Easy · Medium · Hard)")
     check(!any(app, "Difficulty").exists, "and nothing called Difficulty")
-    check(any(app, "Hard").exists && any(app, "New").exists, "each row still says how hard its card is (New, Hard)")
-    check(wait(buttonStarting(app, "Keep forgetting")), "Keep forgetting is there, for the card forgotten eight times")
+    check(!any(app, "Hard").exists && !any(app, "Medium").exists && !any(app, "Easy").exists, "and the rows show no grade (no Difficulty column)")
+    check(!buttonStarting(app, "Keep forgetting").exists && !buttonStarting(app, "Paused").exists, "no Keep forgetting or Paused filter, even with a card forgotten eight times")
+    check(!any(app, "Pause all").exists && !any(app, "Unpause all").exists, "and no Pause all")
     snap("libcards-all")
     tap(buttonStarting(app, "Tags"), "Tags")
     check(wait(buttonStarting(app, "Organelles")) && buttonStarting(app, "Energy").exists, "Tags opens the menu of tags")
@@ -76,12 +78,7 @@ final class LibraryCardsTests: AppCase {
     check(wait(button(app, "Study these")), "Hardest cards has Study these")
     check(!button(app, "See all").exists, "and no See all (there is no Difficulty filter for it to open)")
     snap("libcards-stats")
-    scrollTo(app, button(app, "See them"))
-    check(wait(button(app, "See them")), "Cards you keep forgetting still has See them")
-    tap(button(app, "See them"), "See them")
-    let chip = buttonStarting(app, "Keep forgetting")
-    check(wait(chip) && chip.isSelected, "which opens All cards on Keep forgetting")
-    check(wait(text(app, "1 card")) && gradeButtons(app) == 0, "showing the card you keep forgetting, and no Difficulty control")
+    check(!button(app, "See them").exists, "Cards you keep forgetting has no See them (All cards has no filter for it), only Study them")
   }
 
   // ---------- 3: Deck settings ----------

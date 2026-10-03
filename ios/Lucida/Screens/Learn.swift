@@ -313,15 +313,18 @@ private struct LearnBody: View {
     (Text(ok ? (learnedNow ? "Learned." : "Right.") : "Not quite.").fontWeight(.bold).foregroundStyle(ok ? t.good : t.again) + Text(" " + text)).css(16, lh: 1.5)
   }
 
+  /// The card a question came from, as a small bubble right after the verdict (it was a "From your card" box: the owner's comment, the
+  /// status chat's canvas V175). One line, cut short; VoiceOver reads all of it.
   private func from(_ front: String, _ back: String) -> some View {
-    VStack(alignment: .leading, spacing: 4) {
-      Text("From your card").foregroundStyle(look.ink2)
-      (Text(front + " ") + Text("→").foregroundStyle(look.ink2) + Text(" " + back).fontWeight(.bold))
+    HStack(spacing: 5) {
+      Icon("decks", 12, 2)
+      Text(front + " → " + back).lineLimit(1).truncationMode(.tail)
     }
-    .css(13, lh: 1.4)
-    .padding(.horizontal, 16).padding(.vertical, 12)
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(look.card).learnShadow(look.shadow))
+    .css(12, .medium).foregroundStyle(look.ink2)
+    .padding(.horizontal, 10).frame(height: 24)
+    .background(Capsule().fill(look.card).learnShadow(look.shadow))
+    .frame(maxWidth: 200, alignment: .leading)
+    .accessibilityElement(children: .ignore).accessibilityLabel("From your card: " + front + ", " + back)
   }
 
   private func nextButton(_ action: @escaping () -> Void) -> some View {
@@ -400,9 +403,9 @@ private struct LearnBody: View {
         if done {
           VStack(alignment: .leading, spacing: 12) {
             why(ok, learnedNow: v.learnedNow, text)
+            // The card it came from, in its own words (an AI's question words it another way), as a bubble after the verdict.
+            from(card?.0 ?? (v.cardText.isEmpty ? v.text : v.cardText), card?.1 ?? v.answer).padding(.top, -6)
             explain(v, answered: done)
-            // The card it came from, in its own words (an AI's question words it another way).
-            from(card?.0 ?? (v.cardText.isEmpty ? v.text : v.cardText), card?.1 ?? v.answer)
           }
           .padding(.horizontal, 4)
           .popTransition()
@@ -499,6 +502,7 @@ private struct LearnBody: View {
         if v.checked {
           VStack(alignment: .leading, spacing: 12) {
             why(v.ok, learnedNow: v.learnedNow, text)
+            from(v.text, v.answer).padding(.top, -6)
             if !v.ok {
               Button { store.demo ? store.demoOverride() : store.learnOverride() } label: {
                 Text("I was right").css(13, .semibold).foregroundStyle(look.ink).padding(.horizontal, 14).frame(height: 36).background(Capsule().fill(look.card).learnShadow(look.shadow))
@@ -506,7 +510,6 @@ private struct LearnBody: View {
               .buttonStyle(.press)
             }
             explain(v, answered: v.checked)
-            from(v.text, v.answer)
           }
           .padding(.horizontal, 4)
         }

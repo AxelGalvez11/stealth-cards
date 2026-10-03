@@ -4,7 +4,7 @@ import SwiftUI
 
 struct StatsVM {
   var empty = false
-  /// Your memory goal (Settings → Remember goal), which the deep tabs mark.
+  /// The memory goal every deck is held to (90%), which the deep tabs mark.
   var goal = 90
   var streak = "", remembered = "", reviews = "", cards = ""
   /// Study days, oldest week first, 7 a column: 0 (none) to 4 (busiest).
@@ -23,13 +23,13 @@ extension Store {
     let E = engine, st = E.streaks, now = nowMs()
     // Flashcard grades this month (Learn mode answers are logged too, but aren't reviews).
     let logs = lib.logs.filter { $0.at >= now - 30 * DAY && Insights.isGrade($0) }, pct = Engine.rememberedPct(logs)
-    if lib.logs.isEmpty { return StatsVM(empty: true, goal: lib.settings.goal, streak: "0 days", remembered: "—", reviews: "0", cards: grouped(lib.cards.count)) }
+    if lib.logs.isEmpty { return StatsVM(empty: true, goal: Int((GOAL * 100).rounded()), streak: "0 days", remembered: "—", reviews: "0", cards: grouped(lib.cards.count)) }
     // 38 weeks ending this week, Monday first; busier days are darker, compared with your busiest day; the last 17 show.
     var counts: [Double: Int] = [:]
     for l in lib.logs { counts[dayAt(l.at), default: 0] += 1 }
     let monday = dayAt(now, -((weekday(now) + 6) % 7)), start = dayAt(monday, -37 * 7)
     let vals = (0..<(38 * 7)).map { counts[dayAt(start, $0)] ?? 0 }, top = max(1, vals.max() ?? 1)
-    return StatsVM(goal: lib.settings.goal, streak: plural(st.streak, "day"), remembered: pct.map { "\($0)%" } ?? "—", reviews: grouped(logs.count), cards: grouped(lib.cards.count),
+    return StatsVM(goal: Int((GOAL * 100).rounded()), streak: plural(st.streak, "day"), remembered: pct.map { "\($0)%" } ?? "—", reviews: grouped(logs.count), cards: grouped(lib.cards.count),
                    heat: vals.suffix(17 * 7).map { $0 == 0 ? 0 : min(4, 1 + Int(3.999 * Double($0) / Double(top))) }, forecast: E.forecast(7, lib.decks.filter { !$0.paused }))
   }
 }
@@ -48,11 +48,10 @@ struct StatsScreen: View {
       if !s.empty {
         Segmented(options: ["Overview", "Memory", "Weak spots", "Pace"].map { ($0, $0) }, current: tab, height: 34, size: 13, gap: 2, hPad: 4) { tab = $0 }
       }
-      // No reviews yet: the empty page for everyone, as on the web (/stats is StatsEmpty until the first review); after that, Free sees the
-      // upgrade card on every tab.
-      if s.empty { overview(s) }
-      else if !store.isPro { StatsUpgrade(shop: store.shop) }
-      else if tab == "Overview" { overview(s) }
+      // On Free every tab is the upgrade card, reviews or not; "No reviews yet" is only for Pro (as on the web: /stats is StatsEmpty for Pro
+      // until the first review).
+      if !store.isPro { StatsUpgrade(shop: store.shop) }
+      else if s.empty || tab == "Overview" { overview(s) }
       else { DeepStats(tab: tab, goal: s.goal) }
     }
     .foregroundStyle(t.text)

@@ -15,7 +15,7 @@
 //   5  No Classes (the owner, 2026-10-02: "remove the 'classes' page everywhere"): with a class still on the server (older apps use it), a
 //      student in it, one with no deck yet and its teacher see only Decks and All cards, no Assigned and no class words; the teacher's deck
 //      that's in it is a plain private deck (no Class mark; its Sharing says Private, "Only you.").
-//   6  News is the bell in Discover's header; it opens News, and Back is Discover.
+//   6  Notifications is the bell in Discover's header; it opens Notifications, and Back is Discover.
 //   7  A folder's page has nothing to make cards either, and keeps its Practice test.
 // Run it with ios/tools/e2e-home.sh (a fresh server and the stand-in AI). It only runs when LUCIDA_HOME is set.
 import XCTest
@@ -247,15 +247,15 @@ final class HomeTests: AppCase {
     let who = "hmg" + run
     _ = person(who, decks: [("Biology", 1)])
     let app = launch(as: who)
-    check(wait(button(app, "Add")) && !buttonStarting(app, "News").exists, "the Library has no bell")
+    check(wait(button(app, "Add")) && !buttonStarting(app, "Notifications").exists, "the Library has no bell")
     tap(button(app, "Discover"), "Discover")
-    let bell = buttonStarting(app, "News")
+    let bell = buttonStarting(app, "Notifications")
     check(wait(bell) && bell.frame.minY < 140, "Discover's header has the bell")
     snap("home-discover")
     bell.tap()
-    check(wait(app.staticTexts["News"]) && wait(button(app, "Back")), "it opens News")
+    check(wait(app.staticTexts["Notifications"]) && wait(button(app, "Back")), "it opens Notifications")
     button(app, "Back").tap()
-    check(wait(buttonStarting(app, "News")) && litIs(app, "Discover"), "and Back is Discover")
+    check(wait(buttonStarting(app, "Notifications")) && litIs(app, "Discover"), "and Back is Discover")
   }
 
   // ---------- 7: a folder's page ----------

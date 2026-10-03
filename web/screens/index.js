@@ -182,25 +182,25 @@ export default [
  },
  {
   "name": "PhoneActivity",
-  "title": "iPhone · News",
+  "title": "iPhone · Notifications",
   "w": 390,
   "h": 844
  },
  {
   "name": "PhoneActivityDark",
-  "title": "iPhone · News (dark)",
+  "title": "iPhone · Notifications (dark)",
   "w": 390,
   "h": 844
  },
  {
   "name": "PhoneActivityEmpty",
-  "title": "iPhone · News · nothing new",
+  "title": "iPhone · Notifications · nothing new",
   "w": 390,
   "h": 844
  },
  {
   "name": "PhoneActivityGray",
-  "title": "iPhone · News (dark, gray)",
+  "title": "iPhone · Notifications (dark, gray)",
   "w": 390,
   "h": 844
  },
@@ -241,6 +241,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneDeckDiagrams",
+  "title": "iPhone · Deck page · Diagrams tab",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneDeckEmpty",
   "title": "iPhone · Deck · no cards yet",
   "w": 390,
@@ -271,12 +277,6 @@ export default [
   "h": 844
  },
  {
-  "name": "PhoneDeckSettingsGoal",
-  "title": "iPhone · Deck settings · Studying · goal raised to 95% (reviews a day)",
-  "w": 390,
-  "h": 844
- },
- {
   "name": "PhoneDeckSettingsShare",
   "title": "iPhone · Deck settings · Sharing (a public deck)",
   "w": 390,
@@ -291,6 +291,12 @@ export default [
  {
   "name": "PhoneDeckSettingsStudyFree",
   "title": "iPhone · Deck settings · Studying · on Free (what Pro adds)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneDeckSources",
+  "title": "iPhone · Deck page · Sources tab",
   "w": 390,
   "h": 844
  },
@@ -391,6 +397,18 @@ export default [
   "h": 844
  },
  {
+  "name": "PhoneGuideNested",
+  "title": "iPhone · Notes page · a page inside another note",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhoneGuidePages",
+  "title": "iPhone · Notes page · a note with pages inside",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneHistory",
   "title": "iPhone · History",
   "w": 390,
@@ -441,12 +459,6 @@ export default [
  {
   "name": "PhoneLibraryGray",
   "title": "iPhone · Library (dark, gray)",
-  "w": 390,
-  "h": 844
- },
- {
-  "name": "PhoneLibraryLeeches",
-  "title": "iPhone · Library · all cards · cards you keep forgetting (Pause all)",
   "w": 390,
   "h": 844
  },
@@ -806,7 +818,7 @@ export default [
  },
  {
   "name": "PhoneStatsEmpty",
-  "title": "iPhone · Stats · no reviews yet",
+  "title": "iPhone · Stats · no reviews yet (Pro)",
   "w": 390,
   "h": 844
  },
@@ -1736,25 +1748,25 @@ export default [
  },
  {
   "name": "WebActivity",
-  "title": "Web · News",
+  "title": "Web · Notifications",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebActivityDark",
-  "title": "Web · News (dark)",
+  "title": "Web · Notifications (dark)",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebActivityEmpty",
-  "title": "Web · News · nothing new",
+  "title": "Web · Notifications · nothing new",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebActivityGray",
-  "title": "Web · News (dark, gray)",
+  "title": "Web · Notifications (dark, gray)",
   "w": 1440,
   "h": 900
  },
@@ -1861,6 +1873,12 @@ export default [
   "h": 900
  },
  {
+  "name": "WebDeckDiagrams",
+  "title": "Web · Deck page · Diagrams tab",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebDeckEmpty",
   "title": "Web · Deck · no cards yet",
   "w": 1440,
@@ -1897,12 +1915,6 @@ export default [
   "h": 900
  },
  {
-  "name": "WebDeckSettingsGoal",
-  "title": "Web · Deck settings · Studying · goal raised to 95% (reviews a day)",
-  "w": 1440,
-  "h": 900
- },
- {
   "name": "WebDeckSettingsShare",
   "title": "Web · Deck settings · Sharing (a public deck)",
   "w": 1440,
@@ -1929,6 +1941,12 @@ export default [
  {
   "name": "WebDeckShared",
   "title": "Web · Deck page · shared (public, with suggestions waiting)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebDeckSources",
+  "title": "Web · Deck page · Sources tab",
   "w": 1440,
   "h": 900
  },
@@ -2083,6 +2101,18 @@ export default [
   "h": 900
  },
  {
+  "name": "WebGuideNested",
+  "title": "Web · Notes page · a page inside another note",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebGuidePages",
+  "title": "Web · Notes page · a note with pages inside",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "WebHistory",
   "title": "Web · History (your deck)",
   "w": 1440,
@@ -2139,12 +2169,6 @@ export default [
  {
   "name": "WebLibraryGray",
   "title": "Web · Library (dark, gray)",
-  "w": 1440,
-  "h": 900
- },
- {
-  "name": "WebLibraryLeeches",
-  "title": "Web · Library · all cards · cards you keep forgetting (Pause all)",
   "w": 1440,
   "h": 900
  },
@@ -2546,7 +2570,7 @@ export default [
  },
  {
   "name": "WebStatsEmpty",
-  "title": "Web · Stats · no reviews yet",
+  "title": "Web · Stats · no reviews yet (Pro)",
   "w": 1440,
   "h": 900
  },

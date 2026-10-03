@@ -29,7 +29,7 @@ extension Store {
     for x in piled where !names.contains(x.pile!) { names.append(x.pile!) }
     let nx = E.nextDue
     return SessionVM(pct: rated.isEmpty ? 100 : Int((Double(rated.filter { ($0.rating ?? 0) > 1 }.count) / Double(rated.count) * 100).rounded()),
-                     goal: d?.goal ?? lib.settings.goal, cards: g.count,
+                     goal: Int((GOAL * 100).rounded()), cards: g.count,
                      minutes: session.map { max(1, Int(((nowMs() - $0.started) / MIN).rounded())) } ?? 0,
                      fresh: g.filter { $0.was == "new" }.count, split: (1...4).map { r in rated.filter { $0.rating == r }.count },
                      streak: E.streaks.streak, next: nx.map { $0.short + " · \($0.n)" } ?? "Nothing due",

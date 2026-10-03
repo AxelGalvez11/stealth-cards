@@ -82,7 +82,7 @@ async function speakFile(words, lang, notes, room) {
 
 const CHECK_GUIDE = 'The learner asked to check AI changes first, and a Guide can’t wait for that check. Show them the text in the chat so they can paste it into the Guide themselves.';
 // A deck's Guide as a list of pages: the Guide itself ("main") first, then its extra pages.
-const guidePages = d => { const g = d.guide || { text: '', pages: [] }; return [{ id: 'main', title: 'Guide', characters: (g.text || '').length }, ...(g.pages || []).map(p => ({ id: p.id, title: p.title, characters: (p.text || '').length }))]; };
+const guidePages = d => { const g = d.guide || { text: '', pages: [] }; return [{ id: 'main', title: 'Guide', characters: (g.text || '').length }, ...(g.pages || []).map(p => ({ id: p.id, title: p.title, inside: p.parent || undefined, characters: (p.text || '').length }))]; };
 
 const TOOLS = [
   { name: 'list_decks', perm: 'read', description: 'List the learner’s decks, each with its id, folder, tags, how many cards it has, how many are due and new, its exam date, and whether it is shared or came from someone else. Use it first: the other tools take a deck’s name or id.', inputSchema: { type: 'object', properties: {} },
@@ -250,7 +250,7 @@ const TOOLS = [
       return text(apply({ type: 'card.delete', ids: a.ids }, who));
     } },
   // A deck's Guide: a Markdown page like a README, with extra pages beside it (store.mjs "A deck's Guide").
-  { name: 'list_guide_pages', perm: 'read', description: 'List a deck’s Guide pages: the Guide itself (its main page) and any extra pages, each with its id, title and length. The Guide is a Markdown page the learner keeps about the deck, like a README.',
+  { name: 'list_guide_pages', perm: 'read', description: 'List a deck’s Guide pages: the Guide itself (its main page) and any extra pages, each with its id, title and length, and the id of the page it sits inside (inside: "main" is the Guide), as Notion’s pages nest. The Guide is a Markdown page the learner keeps about the deck, like a README.',
     inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' } }, required: ['deck'] },
     run: a => { const d = deckBy(a.deck); if (!d) return fail('No deck called ' + a.deck); return text(guidePages(d)); } },
   { name: 'get_guide', perm: 'read', description: 'Read a deck’s Guide (the notes page the learner keeps about the deck), or one of its extra pages. It is Markdown, plus toggles: a line ":::toggle Its title", what opens under it (any Markdown, even more toggles), and a line ":::" that closes it. Use list_guide_pages to see the extra pages.',
@@ -275,12 +275,14 @@ const TOOLS = [
       apply({ type: 'guide.save', deckId: d.id, page: p.id, text: next, snapshot: true }, who);
       return text('Wrote ' + (p.id === 'main' ? 'the Guide' : 'the page “' + p.title + '”') + ' of ' + d.name + '. The old words are kept as an older version.');
     } },
-  { name: 'add_guide_page', perm: 'text', description: 'Add an extra page beside a deck’s Guide, like a page of a small wiki ("Lecture 3 summary", "Mnemonics"). A deck can have up to 10. Give it Markdown text now (toggles too, as update_guide says), or fill it in later with update_guide.',
-    inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, title: { type: 'string' }, text: { type: 'string', description: 'The page’s Markdown.' } }, required: ['deck', 'title'] },
+  { name: 'add_guide_page', perm: 'text', description: 'Add an extra page beside a deck’s Guide, like a page of a small wiki ("Lecture 3 summary", "Mnemonics"). A deck can have up to 10. Give it Markdown text now (toggles too, as update_guide says), or fill it in later with update_guide. Put it inside another page with `inside` (that page’s id or title, or "main" for the Guide); leave it out for a page at the top.',
+    inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, title: { type: 'string' }, text: { type: 'string', description: 'The page’s Markdown.' }, inside: { type: 'string', description: 'The page it goes inside: its id or title, or "main" for the Guide. Leave out for the top.' } }, required: ['deck', 'title'] },
     run: (a, who) => {
       if (state().ai.perms.check) return fail(CHECK_GUIDE);
       const d = deckBy(a.deck); if (!d) return fail('No deck called ' + a.deck);
-      const r = apply({ type: 'guide.page.add', deckId: d.id, title: a.title }, who);
+      const pages = guidePages(d), wanted = String(a.inside || '').trim(), under = !wanted ? null : pages.find(x => x.id === wanted) || pages.find(x => x.title.toLowerCase() === wanted.toLowerCase());
+      if (wanted && !under) return fail('There is no page called ' + a.inside + ' in ' + d.name + ' to put it inside.');
+      const r = apply({ type: 'guide.page.add', deckId: d.id, title: a.title, parent: under ? under.id : '' }, who);
       if (a.text) apply({ type: 'guide.save', deckId: d.id, page: r.id, text: String(a.text) }, who);
       return text('Added the page “' + String(a.title).trim().slice(0, 80) + '” to ' + d.name + '. Its id is ' + r.id + '.');
     } },

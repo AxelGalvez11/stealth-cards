@@ -251,7 +251,6 @@ extension Board {
     case "PhoneDeckSettings": store.props.deckSettings = "general"; nav.tab = .library; nav.path = [.deck("cell")]
     case "PhoneDeckSettingsStudy": store.props.deckSettings = "study"; nav.tab = .library; nav.path = [.deck("cell")]
     // The goal already stepped up to 95% (its cost counts from 90%), and the Free app's Studying (what Pro adds).
-    case "PhoneDeckSettingsGoal": store.props.deckSettings = "study"; store.props.stepGoal = true; store.demoDeck.goal = 95; nav.tab = .library; nav.path = [.deck("cell")]
     case "PhoneDeckSettingsStudyFree": store.props.deckSettings = "study"; store.props.free = true; nav.tab = .library; nav.path = [.deck("cell")]
     case "PhoneReview": nav.full = .review(deckId: "cell", pile: nil)
     case "PhoneReviewFour": store.props.revealed = true; nav.full = .review(deckId: "cell", pile: nil)
@@ -271,8 +270,6 @@ extension Board {
     case "PhoneDecksEmpty": store.props.newUser = true; nav.tab = .library
     case "PhoneLibrary": nav.tab = .library
     case "PhoneLibraryCards": nav.tab = .library; nav.libCards = true
-    // All cards on the ones you keep forgetting (Pause all).
-    case "PhoneLibraryLeeches": nav.tab = .library; nav.libCards = true; store.props.libState = "leech"
     case "PhoneLibraryFolder": nav.tab = .library; nav.path = [.folder("f1")]
     // The New folder popup, with a name typed (the phone's own keyboard is up); it opens once the Library is showing.
     case "PhoneLibraryNewFolder": nav.tab = .library; store.props.naming = "Biology"
