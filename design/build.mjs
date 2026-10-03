@@ -1643,11 +1643,133 @@ const ED0 = "{ edits: {}, type: null, sel: null, pend: null, past: [], future: [
 // The editor's logic: the side panel's, the iPhone's, and the big editor's. The cards screen (Option B, below) passes
 // `open`, the card it shows (the one picked in its list), and `more`, what it adds to the editor's values.
 // Suggest a change on someone's shared deck opens the card editor in a suggest mode (prop suggest; the owner, 2026-10-02: "this should be like the
-// editing card window"): its title, a Send button, and a Why? note with Suggest removing it at the bottom (SUGGEST_FOOTER).
-const SUGGEST_TAIL = phone => phone
-  ? ',\n    saveLabel: this.props.suggest ? \'Send\' : \'Save\', sgOff: !this.props.suggest,\n    // Suggest a change on someone\'s shared deck opens this same editor (the owner, 2026-10-02: "this should be like the editing card window").\n    sg: { on: !!this.props.suggest, sendLabel: this.state.sgSent ? \'Sent\' : \'Send suggestions\', send: () => this.setState({ sgSent: true }), why: this.state.sgWhy || \'\', setWhy: e => this.setState({ sgWhy: e.target.value }),\n      canRemove: !!this.props.suggest && !!saved, removePressed: this.state.sgRemove ? \'true\' : \'false\', removeBg: this.state.sgRemove ? t.inv : t.surf, removeFg: this.state.sgRemove ? t.invText : t.text,\n      removeLabel: this.state.sgRemove ? \'Removing it\' : \'Suggest removing it\', toggleRemove: () => this.setState({ sgRemove: !this.state.sgRemove }) },\n    ...(this.props.suggest ? { title: saved ? \'Suggest a change\' : \'Suggest a card\', phoneBack: db.mock ? \'PhonePublicDeck.dc.html\' : backHref } : {})'
-  : ',\n    screenTitle: this.props.suggest ? \'Suggest changes\' : \'Edit cards\', sgOff: !this.props.suggest,\n    // Suggest a change on someone\'s shared deck opens this same editor (the owner, 2026-10-02: "this should be like the editing card window").\n    sg: { on: !!this.props.suggest, sendLabel: this.state.sgSent ? \'Sent\' : \'Send suggestions\', send: () => this.setState({ sgSent: true }), why: this.state.sgWhy || \'\', setWhy: e => this.setState({ sgWhy: e.target.value }),\n      canRemove: !!this.props.suggest && !this.props.newCard, removePressed: this.state.sgRemove ? \'true\' : \'false\', removeBg: this.state.sgRemove ? t.inv : t.surf, removeFg: this.state.sgRemove ? t.invText : t.text,\n      removeLabel: this.state.sgRemove ? \'Removing it\' : \'Suggest removing it\', toggleRemove: () => this.setState({ sgRemove: !this.state.sgRemove }) },\n    ...(this.props.suggest ? { backHref: db.mock ? \'WebPublicDeck.dc.html\' : backHref } : {})';
+// editing card window"): its title, a Send button, and a Why? note with Suggest removing it at the bottom (SUGGEST_FOOTER). Its values
+// (suggestVals) and what it does (SUGGEST_LOGIC) are below, with the rest of the editor's logic.
+const SUGGEST_TAIL = phone => `,
+    // Suggest a change on someone's shared deck opens this same editor (the owner, 2026-10-02: "this should be like the editing card window").
+    ...this.suggestVals({ db, t, saved, backHref, phone: ${phone} })`;
 const SUGGEST_FOOTER = '<sc-if value="{{sg.on}}" hint-placeholder-val="{{ false }}"><div style="margin-top: auto; padding-top: 16px; border-top: 1px solid {{t.line}}; display: flex; align-items: center; gap: 10px;"><label style="flex-grow: 1; min-width: 0; height: 44px; padding: 0 16px; display: flex; align-items: center; border-radius: 999px; background: {{t.surf}};"><span style="position: absolute; left: -9999px;">Why? (optional)</span><input type="text" value="{{sg.why}}" onChange="{{sg.setWhy}}" maxlength="280" placeholder="Why? (optional)" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: 15px;"></label><sc-if value="{{sg.canRemove}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{sg.toggleRemove}}" aria-pressed="{{sg.removePressed}}" class="sc-press" style="height: 44px; padding: 0 16px; border: 0; border-radius: 999px; background: {{sg.removeBg}}; color: {{sg.removeFg}}; font: inherit; font-size: 14px; font-weight: 600; white-space: nowrap; cursor: pointer;">{{sg.removeLabel}}</button></sc-if></div></sc-if>';
+// ---------- Suggest a change (the app) ----------
+// Suggest a change on someone's shared deck (its page's Suggest a change, or a card's) opens the editor in its suggest mode:
+// prop suggest, with the deck's address (sharedId, or handle and slug; web/app.js: /d/<id>/suggest?card=<card id> or
+// /@maria/mcat-biochemistry/suggest?card=new). It edits that deck's cards as its page has them (the person isn't their
+// owner), and nothing saves to any deck. On a computer (the cards screen) each card changed or added, or marked Suggest
+// removing it, is one change of a batch, which Send suggestions sends with the why as one suggestion (db.act.suggest); on
+// a phone the sheet is one card, and Send sends its change. The canvas shows the editor's sample cards, as before.
+const SUGGEST_LOGIC = `// What a suggestion can change on a card (web/social.mjs FIELDS; a card's language isn't written here).
+sgFields() { return ['kind', 'front', 'back', 'text', 'note', 'tags', 'image', 'audio', 'speak', 'boxes', 'occ']; }
+// The shared deck's page (web/net.js): by its lasting id, or by its owner's name and its own.
+sgPageNow(db) { const p = this.props; return p.sharedId ? db.net.deckById(p.sharedId) : db.net.deck(p.handle, p.slug); }
+// The database the editor reads: the app's, or (suggesting) the shared deck's cards in its shape (suggestDb). While a
+// newer page is on its way, it keeps the one it had.
+sdb() {
+  const db = this.props.db || this.mock();
+  if (!this.props.suggest || db.mock) return db;
+  const page = this.sgPageNow(db);
+  if (page && !page.missing && !page.offline) this.sgPage = page;
+  if (!this.sgDb || this.sgDb.page !== this.sgPage) this.sgDb = { page: this.sgPage, db: this.suggestDb(db, this.sgPage) };
+  return this.sgDb.db;
+}
+// The shared deck's cards as the editor reads a deck's (card, cards, group, deck, tags), with nothing that changes a deck.
+// A picture or a sound can't come with a suggestion (the server takes only the deck's own), so picking or recording one says so.
+suggestDb(db, page) {
+  const list = (page && page.cardsList) || [], byId = new Map(list.map(c => [c.id, c])), icon = { basic: 'text', cloze: 'blank', image: 'image', audio: 'audio' };
+  // A card of your own that came from this deck (a link from the deck you study) is the deck's card.
+  const find = id => { if (!id) return null; if (byId.has(id)) return byId.get(id); const own = db.card ? db.card(id) : null; return (own && own.origin && byId.get(own.origin)) || null; };
+  const card = c => (c ? { id: c.id, deckId: 'shared', kind: c.kind || 'basic', front: c.front || '', back: c.back || '', text: c.text || '', note: c.note || '', tags: c.tags || [],
+    image: c.image || null, audio: c.audio || null, wave: c.wave || null, speak: c.speak || '', lang: c.lang || '', auto: c.auto !== false, boxes: c.boxes || [], occ: c.occ === 'all' ? 'all' : 'one',
+    box: c.box == null ? null : c.box, cloze: c.cloze == null ? null : c.cloze, group: c.group || null, clozeMode: c.cloze === -1 ? 'one' : 'each', paused: false, src: null } : null);
+  const p = this.props, deck = { id: 'shared', name: (page && page.name) || '', tags: [], href: (page && page.url) || (p.sharedId ? '/d/' + p.sharedId : p.handle ? '/@' + p.handle + '/' + p.slug : '/discover') };
+  const no = () => { db.say('A suggestion can’t bring a new picture or sound.'); return Promise.resolve(null); };
+  return Object.assign(Object.create(db), {
+    deck: () => deck, card: id => card(find(id)),
+    cards: () => list.map(c => ({ id: c.id, kind: c.kind, icon: icon[c.kind] || 'text', group: c.group || null, tags: c.tags || [] })),
+    group: id => { const c = find(id); return !c ? [] : c.group ? list.filter(x => x.group === c.group).map(card) : [card(c)]; },
+    tags: () => [...new Set(list.flatMap(c => c.tags || []))], recording: () => null, sources: () => [],
+    act: Object.assign(Object.create(db.act), { pickFile: no, pickSound: no, record: no, stopRecording: () => {} })
+  });
+}
+// A deck that isn't shared any more has nothing to suggest to (its page says so), and the deck's owner edits it instead (Edit
+// cards). The cards screen opens on its card once the deck's page is here (focusOpen).
+sgCheck() {
+  const db = this.props.db, p = this.props;
+  if (!p.suggest || !db || db.mock) return;
+  if (this.sgFocus && this.focusOpen) { this.sgFocus = false; this.focusOpen(); }
+  const page = this.sgLeft ? null : this.sgPageNow(db);
+  if (!page || !(page.missing || (page.me && page.me.owner))) return;
+  this.sgLeft = true;
+  const mine = !page.missing && db.decks ? db.decks().find(x => x.shared && x.shared.id === page.id) : null;
+  db.act.go(mine ? '/deck/' + mine.id + '/card' + (p.cardId ? '/' + encodeURIComponent(p.cardId) : '') : p.sharedId ? '/d/' + p.sharedId : '/@' + p.handle + '/' + p.slug, true);
+}
+// What a change says: the fields of a card that differ from the deck's (only those go, so what the editor doesn't show stays
+// as it is), or a new card's (null: no change, or a new card with no words).
+sgAfter(saved, ty, f) {
+  const keys = this.sgFields(), a = this.payload(ty, f), R = this.rich(), out = {};
+  if (!saved) {
+    if (!['front', 'back', 'text', 'speak'].some(k => R.plain(a[k] || '').trim())) return null;
+    for (const k of keys) if (a[k] != null && a[k] !== '') out[k] = a[k];
+    return out;
+  }
+  const b = this.payload({ basic: 'Basic', cloze: 'Blank', image: 'Image', audio: 'Audio' }[saved.kind] || 'Basic', saved);
+  for (const k of keys) if (a[k] !== undefined && JSON.stringify(a[k]) !== JSON.stringify(b[k] === undefined ? null : b[k])) out[k] = a[k];
+  return Object.keys(out).length ? out : null;
+}
+// The quiet line once a suggestion is sent: its owner will see it, or (a helper's) it's in the deck now.
+sgSentLine(r, page) {
+  const n = String((page && page.owner && page.owner.name) || '').trim(), first = /^(dr|prof|mr|mrs|ms)\\.?\\s/i.test(n) ? n : n.split(/\\s+/)[0] || n;
+  return r && r.taken ? 'It’s in the deck now.' : 'Sent. ' + (first || 'The owner') + ' will see it.';
+}
+// Send on a phone: this card's change (its new words, the card taken out with Suggest removing it, or a new card) goes to the
+// deck's owner as one suggestion, with the why. Sent, the sheet closes on the deck's page and Lucida's quiet message says so;
+// what goes wrong (five suggestions already waiting, say) shows the server's words there, and the sheet stays with the change.
+async sgSendOne(db, saved, ty, f, missing, backHref) {
+  const page = this.sgPage;
+  if (this.state.sgBusy || !page) return;
+  let changes;
+  if (saved && this.state.sgRemove) changes = db.group(saved.id).map(c => ({ op: 'remove', card: c.id }));
+  else {
+    const after = this.sgAfter(saved, ty, f);
+    if (!after) return db.say('Add a change first.');
+    if (missing === 'image') return this.pickImage();
+    if (missing) return this.focusField(missing);
+    changes = [saved ? { op: 'edit', card: saved.id, after } : { op: 'add', after }];
+  }
+  this.setState({ sgBusy: true });
+  try {
+    const r = await db.act.suggest(page.id, changes, String(this.state.sgWhy || '').trim());
+    this.setState({ sgBusy: false });
+    if (!r) return;
+    db.say(this.sgSentLine(r, page));
+    db.act.go(backHref);
+  } catch (err) { this.setState({ sgBusy: false }); db.say((err && err.message) || 'Something went wrong. Try again.'); }
+}
+// Suggest removing it: on a phone the sheet's card, on a computer the card on screen (each card keeps its own mark).
+sgToggle(phone, cur) {
+  if (phone) return this.setState({ sgRemove: !this.state.sgRemove });
+  if (!cur) return;
+  const marks = this.sgOut || (this.sgOut = new Set());
+  if (marks.has(cur)) marks.delete(cur); else marks.add(cur);
+  this.setState({ sgLine: '', sgOk: false });
+}
+// The suggest mode's values: the title, Send, the Why? note and Suggest removing it (SUGGEST_FOOTER), and on a computer the
+// quiet line (Sending…, the sent line, or what went wrong). Nothing that saves, pauses or deletes a card shows, and neither does
+// where a card was made from (a deck's sources are its owner's).
+suggestVals({ db, t, saved, backHref, phone }) {
+  const on = !!this.props.suggest, st = this.state, mock = !!db.mock, cur = phone ? (saved ? saved.id : '') : on && this.pick !== 'new' ? this.pick : '';
+  const out = phone ? !!st.sgRemove : !!cur && !!this.sgOut && this.sgOut.has(cur);
+  const b = on && !phone && !mock ? this.sgBatch(db) : null, any = !!b && (b.out.length > 0 || b.held.length > 0 || !!b.draft);
+  const sg = { on, sendLabel: st.sgBusy ? 'Sending…' : st.sgSent && !any ? 'Sent' : 'Send suggestions', why: st.sgWhy || '', setWhy: e => this.setState({ sgWhy: e && e.target ? e.target.value : '' }),
+    send: () => (mock || phone ? this.setState({ sgSent: true, sgOk: true, sgLine: this.sgSentLine(null, mock ? db.net.deck() : this.sgPage) }) : this.sgSendBatch()),
+    canRemove: on && !!cur, removePressed: out ? 'true' : 'false', removeBg: out ? t.inv : t.surf, removeFg: out ? t.invText : t.text,
+    removeLabel: out ? 'Removing it' : 'Suggest removing it', toggleRemove: () => this.sgToggle(phone, cur) };
+  const none = { link: false, plain: false, label: '', href: '' };
+  if (phone) return { saveLabel: on ? (st.sgBusy ? 'Sending…' : 'Send') : 'Save', sgOff: !on, sg, sharedId: on ? (this.sgPage && this.sgPage.id) || this.props.sharedId || '' : '',
+    ...(on ? { title: saved ? 'Suggest a change' : this.props.cardId && !mock && !this.sgPage ? '' : 'Suggest a card', phoneBack: mock ? 'PhonePublicDeck.dc.html' : backHref, canDelete: false, madeFrom: none } : {}) };
+  return { screenTitle: on ? 'Suggest changes' : 'Edit cards', sgOff: !on, sg,
+    ...(on ? { backHref: mock ? 'WebPublicDeck.dc.html' : backHref, canDelete: false, madeFrom: none,
+      note: { show: !!st.sgBusy || !!st.sgLine, done: !st.sgBusy && !!st.sgOk, label: st.sgBusy ? 'Sending…' : st.sgLine || '' },
+      done: ev => { if (mock) return; if (ev && ev.preventDefault) ev.preventDefault(); this.sgLeave(backHref); } } : {}) };
+}`;
 const editorLogic = (open = 'this.props.cardId ? db.card(this.props.cardId) : null', more = '') => `
 constructor(props) {
   super(props);
@@ -1661,13 +1783,13 @@ constructor(props) {
   this.els = {};
   this.refFns = {};
 }
-componentDidMount() { this.placeCaret(); this.placeSlash(); this.onDocKey = ev => this.boxKey(ev); document.addEventListener('keydown', this.onDocKey); if (this.opened) this.opened(); }
-componentDidUpdate() { this.placeCaret(); this.placeSlash(); this.placeLabel(); }
+componentDidMount() { this.placeCaret(); this.placeSlash(); this.onDocKey = ev => this.boxKey(ev); document.addEventListener('keydown', this.onDocKey); if (this.opened) this.opened(); this.sgCheck(); }
+componentDidUpdate() { this.placeCaret(); this.placeSlash(); this.placeLabel(); this.sgCheck(); }
 // Leaving the editor while it records throws the recording away. (The cards screen saves what you changed first.)
 componentWillUnmount() { if (this.closing) this.closing(); if (this.onSel) document.removeEventListener('selectionchange', this.onSel); if (this.onDocKey) document.removeEventListener('keydown', this.onDocKey); const db = this.props.db; if (db && db.recording()) db.act.stopRecording(true); }
 // A saved card opens with what it says; a new one starts empty in the app (the canvas shows a sample).
 doc() {
-  const db = this.props.db || this.mock(), e = this.ed;
+  const db = this.sdb(), e = this.ed;
   const saved = ${open};
   const names = { basic: 'Basic', cloze: 'Blank', image: 'Image', audio: 'Audio' };
   const ty = e.type || (saved ? names[saved.kind] : ({ Blank: 'Blank', Image: 'Image', Audio: 'Audio' })[this.props.cardType] || 'Basic');
@@ -2018,7 +2140,7 @@ media(kind) {
   if (d.ty !== 'Audio') return this.commit({}, { type: 'Audio', kind: 'kind' });
   this.toggleRecord();
 }
-pickImage() { const ed = this.ed; (this.props.db || this.mock()).act.pickFile('image').then(url => url && this.commitIn(ed, { image: url })); }
+pickImage() { const ed = this.ed; this.sdb().act.pickFile('image').then(url => url && this.commitIn(ed, { image: url })); }
 // What a card still needs before it can be saved: its front or back, a blank, a picture, or a sound ('' once it's ready).
 // \`boxes\`: how many boxes the picture has right now (one being drawn counts).
 missingOf(ty, f, boxes) {
@@ -2151,13 +2273,15 @@ boxKey(ev) {
 }
 // Record, then Stop: the new clip (its link and its waveform) goes on the card.
 toggleRecord() {
-  const db = this.props.db || this.mock();
+  const db = this.sdb();
   if (db.recording()) { db.act.record(); return; }
   const ed = this.ed;
   db.act.record().then(clip => { if (clip) this.commitIn(ed, { audio: clip.url, wave: clip.wave }); });
 }
 renderVals() {
-  ${T}${DB_JS}
+  ${T}
+  // (Suggesting a change, the shared deck's cards: see sdb.)
+  const db = this.sdb(); const chrome = db.chrome();
   ${KB_JS}
   ${SW_JS}
   ${TAG_JS}
@@ -2282,12 +2406,15 @@ renderVals() {
     save: ev => {
       if (db.mock) return;
       ev.preventDefault();
+      // Suggesting, it's Send: this card's change goes to the deck's owner.
+      if (this.props.suggest) return this.sgSendOne(db, saved, ty, f, missing, backHref);
       if (missing === 'image') return this.pickImage();
       if (missing) return this.focusField(missing);
       db.act.saveCard(saved ? saved.id : null, dk.id, this.payload(ty, f), backHref);
     }${more}
   };
-}`;
+}
+${SUGGEST_LOGIC}`;
 const EDITOR_LOGIC = editorLogic(undefined, SUGGEST_TAIL(true));
 
 // ---------- Option B: the deck's cards on a screen of their own ----------
@@ -2386,7 +2513,11 @@ hasWords(c) { const R = this.rich(); return ['front', 'back', 'text', 'note', 's
 // new card half written, its answer being typed. The app opens on the card you picked (on the deck page, in All cards,
 // or Edit in a review), or on a new card with the caret in it.
 openCard(db) {
-  if (!this.eds) {
+  // Suggesting, the shared deck's page can still be on its way: the screen waits on an empty new card, then opens on its card.
+  const wait = !!this.props.suggest && !db.mock && !this.sgPage;
+  if (!this.eds || (this.sgWaited && !wait)) {
+    if (this.sgWaited) { this.ed = this.fresh(); this.sgFocus = true; }
+    this.sgWaited = wait;
     this.added = [];
     this.gone = [];
     this.eds = {};
@@ -2455,7 +2586,8 @@ addDraft() {
   const card = { ...f, kind: { Basic: 'basic', Blank: 'cloze', Image: 'image', Audio: 'audio' }[ty], tags: f.tags || [], id: 'n' + Date.now().toString(36) };
   this.added = [card, ...this.added];
   this.addedAt = Date.now();
-  if (db.mock) return;
+  // (Suggesting, it's a new card of the batch, sent with the rest.)
+  if (db.mock || this.props.suggest) return;
   this.addFailed = false;
   this.track(db.act.addCard(db.deck(this.props.deckId).id, this.payload(ty, f)).then(r => {
     const real = r && r.ids && r.ids[0];
@@ -2513,6 +2645,8 @@ kindNames() { return { basic: 'Basic', cloze: 'Blank', image: 'Image', audio: 'A
 edited(ed) {
   const db = this.props.db;
   if (!db || db.mock) return;
+  // Suggesting, nothing saves; a change after the quiet line said something puts it away.
+  if (this.props.suggest) { if (this.state.sgLine && !this.state.sgBusy) this.setState({ sgLine: '', sgOk: false }); return; }
   const id = Object.keys(this.eds).find(k => this.eds[k] === ed);
   if (!id || id === 'new' || this.temp(id) || this.gone.includes(id)) return;
   clearTimeout(this.timers[id]);
@@ -2521,7 +2655,7 @@ edited(ed) {
 // \`leaving\`: you're going to another card or off the screen; \`closing\`: the page itself is closing.
 save(id, leaving, closing) {
   const db = this.props.db;
-  if (!db || db.mock || !id || id === 'new' || this.temp(id) || this.gone.includes(id)) return;
+  if (!db || db.mock || this.props.suggest || !id || id === 'new' || this.temp(id) || this.gone.includes(id)) return;
   clearTimeout(this.timers[id]);
   delete this.timers[id];
   const e = this.eds[id], saved = db.card(id);
@@ -2588,8 +2722,15 @@ async leave(href) {
 opened() {
   const db = this.props.db;
   if (!db || db.mock) return;
-  this.onLeavePage = ev => { this.saveAll(true); const u = this.unsaved(); if (u.held.length || u.draft) { ev.preventDefault(); ev.returnValue = ''; } };
+  // (Suggesting, what would be lost is the changes not sent yet.)
+  this.onLeavePage = ev => {
+    if (this.props.suggest) { const b = this.sgBatch(this.sdb()); if (b.out.length || b.held.length || b.draft) { ev.preventDefault(); ev.returnValue = ''; } return; }
+    this.saveAll(true); const u = this.unsaved(); if (u.held.length || u.draft) { ev.preventDefault(); ev.returnValue = ''; } };
   addEventListener('beforeunload', this.onLeavePage);
+  if (!this.sgWaited) this.focusOpen();
+}
+// The card it opens on: a new card has the caret in it, and the list shows the card picked.
+focusOpen() {
   if (this.pick === 'new') this.focusField(this.firstField(this.doc().ty));
   else if (this.listEl) { const r = this.listEl.querySelector('[aria-current="true"]'); if (r) r.scrollIntoView({ block: 'nearest' }); }
 }
@@ -2610,8 +2751,9 @@ listVals(o) {
   // A card you left while it was missing something says so on its row: it isn't saved.
   const needs = { front: 'its front', back: 'its back', text: 'a blank', image: 'a picture', speak: 'a sound' };
   const heldWhy = (rid, c) => { const x = this.eds[rid]; if (!x || x.hold !== 'missing') return ''; const m = this.missingOf({ basic: 'Basic', cloze: 'Blank', image: 'Image', audio: 'Audio' }[c.kind], c); return m ? 'Not saved: needs ' + (m === 'back' && c.kind !== 'basic' ? 'its answer' : needs[m]) : ''; };
-  const row = (rid, c, title, sub) => { const on = rid === id, bx = c.kind === 'image' && c.image ? c.boxes || [] : null, why = heldWhy(rid, c);
-    return { title, sub: why || (c.paused ? 'Paused' + (sub ? ' · ' + sub : '') : sub), subFg: why ? t.again : t.muted, glyph: glyphs[c.kind], current: on ? 'true' : 'false', bg: on ? t.surf : 'transparent', chip: on ? t.bg : t.surf,
+  // (Suggesting, a card marked Suggest removing it says so.)
+  const row = (rid, c, title, sub) => { const on = rid === id, bx = c.kind === 'image' && c.image ? c.boxes || [] : null, why = heldWhy(rid, c), out = !!this.sgOut && this.sgOut.has(rid);
+    return { title, sub: out ? 'Removing it' : why || (c.paused ? 'Paused' + (sub ? ' · ' + sub : '') : sub), subFg: why && !out ? t.again : t.muted, glyph: glyphs[c.kind], current: on ? 'true' : 'false', bg: on ? t.surf : 'transparent', chip: on ? t.bg : t.surf,
       thumb: { show: !!bx, mock: c.image === 'mock', url: bx && c.image !== 'mock' ? c.image : '', boxes: (bx || []).map(b => ({ x: pct(b.x), y: pct(b.y), w: pct(b.w), h: pct(b.h) })) },
       pick: () => this.pickCard(rid) }; };
   // The list's filters work together: the kind of card, one of the deck's tags (Tags ▾, like the deck page's), and the search.
@@ -2652,6 +2794,65 @@ listVals(o) {
     done: ev => { if (db.mock) return; if (ev && ev.preventDefault) ev.preventDefault(); if (!this.exiting) this.leave(backHref); },
     doneLabel: this.exiting ? 'Saving…' : 'Done'${SUGGEST_TAIL(false)}
   };
+}
+// ---------- Suggesting (a computer) ----------
+// The batch: each card changed (the fields that differ from the deck's), each card marked Suggest removing it (every card of its
+// text or picture), and each new card (added with Add card, and the one being written once it's finished). \`held\`: cards changed
+// so they're missing something; \`draft\`: 'unfinished' when the new card being written isn't finished. Neither is sent.
+sgBatch(db) {
+  const out = [], held = [], marks = this.sgOut || new Set(), names = this.kindNames();
+  for (const [id, e] of Object.entries(this.eds || {})) {
+    const saved = id !== 'new' && !marks.has(id) && !this.temp(id) && db.card(id);
+    if (!saved) continue;
+    const ty = e.type || names[saved.kind], f = { ...saved, ...e.edits }, after = this.sgAfter(saved, ty, f);
+    if (after) { if (this.missingOf(ty, f)) held.push(id); else out.push({ op: 'edit', card: id, after }); }
+  }
+  for (const id of marks) if (!this.temp(id)) for (const c of db.group(id)) out.push({ op: 'remove', card: c.id });
+  for (const c of (this.added || []).slice().reverse()) {
+    if (marks.has(c.id)) continue;
+    const e = this.eds[c.id] || {}, ty = e.type || names[c.kind] || 'Basic', f = { ...c, ...(e.edits || {}) }, after = this.sgAfter(null, ty, f);
+    if (after) { if (this.missingOf(ty, f)) held.push(c.id); else out.push({ op: 'add', after }); }
+  }
+  const n = this.eds && this.eds.new, ty = n && (n.type || 'Basic'), f = n && { ...db.draft(ty), ...n.edits };
+  let draft = '';
+  if (n && this.hasWords(n.edits)) { if (this.missingOf(ty, f)) draft = 'unfinished'; else { const after = this.sgAfter(null, ty, f); if (after) out.push({ op: 'add', after }); } }
+  return { out, held, draft };
+}
+// Send suggestions: the batch goes to the deck's owner as one suggestion, with the why. What can't go yet is said first (Lucida's
+// own question). Sent, the batch starts again from the deck's cards as they are, the button says Sent, and the quiet line
+// says who will see it; what goes wrong shows the server's words in the quiet line, and the batch stays.
+async sgSendBatch() {
+  const db = this.sdb(), page = this.sgPage;
+  if (this.state.sgBusy || !page) return;
+  const { out, held, draft } = this.sgBatch(db), n = held.length;
+  if (!out.length && !n && !draft) return this.setState({ sgLine: 'Add a change first.', sgOk: false });
+  if (n || draft) {
+    const line = n && draft ? 'Some changes and your new card are missing something, so they won’t be sent.'
+      : n ? (n === 1 ? 'A card you changed is missing something, so the change won’t be sent.' : n + ' cards you changed are missing something, so the changes won’t be sent.')
+      : 'Your new card isn’t finished, so it won’t be sent.';
+    if (!out.length) return this.setState({ sgLine: line, sgOk: false });
+    if (!(await db.ask({ title: 'Send anyway?', line, action: 'Send' }))) return;
+  }
+  this.setState({ sgBusy: true, sgLine: '', sgOk: false });
+  try {
+    const r = await db.act.suggest(page.id, out, String(this.state.sgWhy || '').trim());
+    if (!r) return this.setState({ sgBusy: false });
+    this.sgReset(db);
+    this.setState({ sgBusy: false, sgSent: true, sgOk: true, sgWhy: '', sgLine: this.sgSentLine(r, page) });
+  } catch (err) { this.setState({ sgBusy: false, sgOk: false, sgLine: (err && err.message) || 'Something went wrong. Try again.' }); }
+}
+// After sending: nothing changed, added, or marked; the card on screen stays (as the deck has it), or a new card starts.
+sgReset(db) {
+  const keep = this.pick !== 'new' && !this.temp(this.pick) && db.card(this.pick) ? this.pick : null;
+  this.eds = {}; this.added = []; this.gone = []; this.sgOut = new Set();
+  this.pick = keep || 'new';
+  this.ed = this.eds[this.pick] = keep ? this.fresh() : this.fresh({ type: 'Basic', edits: { front: '', back: '', text: '', note: '', speak: '', boxes: [] } });
+}
+// Back (the deck's name): to the shared deck's page. Changes not sent would be lost, so it asks first (Lucida's own question).
+async sgLeave(href) {
+  const db = this.sdb(), b = this.sgBatch(db);
+  if ((b.out.length || b.held.length || b.draft) && !(await db.ask({ title: 'Leave without sending?', line: 'Your suggestions won’t be sent.', action: 'Leave' }))) return;
+  db.act.go(href);
 }`;
 
 // ---------- Review (shared by web + phone) ----------
@@ -3854,7 +4055,7 @@ renderVals() { ${T}${DECK_DB_JS}${COVER_LOGIC}${deckMaterialsJs(true)}
 // The fields scroll under the header when they're taller than the sheet. The keyboard is drawn on the canvas only: in
 // the app, the phone shows its own.
 const phoneEditor = `<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
-  <sc-if value="{{sgOff}}" hint-placeholder-val="{{ true }}"><dc-import name="PhoneDeck" dark="{{dark}}" dim="{{dim}}" deck-id="{{deckId}}" hint-size="390px,844px"></dc-import></sc-if><sc-if value="{{sg.on}}" hint-placeholder-val="{{ false }}"><dc-import name="PhonePublicDeck" dark="{{dark}}" dim="{{dim}}" hint-size="390px,844px"></dc-import></sc-if>
+  <sc-if value="{{sgOff}}" hint-placeholder-val="{{ true }}"><dc-import name="PhoneDeck" dark="{{dark}}" dim="{{dim}}" deck-id="{{deckId}}" hint-size="390px,844px"></dc-import></sc-if><sc-if value="{{sg.on}}" hint-placeholder-val="{{ false }}"><dc-import name="PhonePublicDeck" dark="{{dark}}" dim="{{dim}}" shared-id="{{sharedId}}" hint-size="390px,844px"></dc-import></sc-if>
   <div class="sc-scrim" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; top: 56px; box-sizing: border-box; padding: 10px 20px 34px; border-radius: 36px 36px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;">
     <div style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: {{t.surf2}};"></div>
@@ -7962,7 +8163,7 @@ const PD_TABS = `<div role="tablist" aria-label="This deck" style="display: flex
 const PD_CARDS = phone => `<sc-if value="{{tabCards}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column;">
         <sc-for list="{{rows}}" as="c" hint-placeholder-count="${phone ? 5 : 6}"><div style="border-bottom: 1px solid {{t.line}};">
           <button type="button" onClick="{{c.toggle}}" aria-expanded="{{c.expanded}}" style="width: 100%; min-height: 60px; padding: 10px 0; border: 0; background: transparent; color: {{t.text}}; font: inherit; text-align: left; display: flex; align-items: center; gap: 16px; cursor: pointer;"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;"><span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{c.ask}}</span><span style="font-size: ${phone ? 13 : 12}px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{c.line}}</span></span>${WHO_AV('c', 24)}</button>
-          <sc-if value="{{c.open}}" hint-placeholder-val="{{ false }}"><div style="padding: 0 40px 14px 0; display: flex; flex-direction: column; align-items: flex-start; gap: 10px;"><span style="font-size: 14px; line-height: 1.45; color: {{t.muted}}; overflow-wrap: anywhere;">{{c.answer}}</span><sc-if value="{{c.canSuggest}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{c.suggest}}" class="sc-press" style="height: 32px; padding: 0 12px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">${svg(I.message, 14, 2)}Suggest a change</button></sc-if><sc-if value="{{c.canEdit}}" hint-placeholder-val="{{ false }}"><a href="{{c.editHref}}" class="sc-press" style="height: 32px; padding: 0 12px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">${svg(I.pencil, 14, 2)}Edit</a></sc-if></div></sc-if>
+          <sc-if value="{{c.open}}" hint-placeholder-val="{{ false }}"><div style="padding: 0 40px 14px 0; display: flex; flex-direction: column; align-items: flex-start; gap: 10px;"><span style="font-size: 14px; line-height: 1.45; color: {{t.muted}}; overflow-wrap: anywhere;">{{c.answer}}</span><sc-if value="{{c.canSuggest}}" hint-placeholder-val="{{ true }}"><a href="{{c.suggestHref}}" class="sc-press" style="height: 32px; padding: 0 12px; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">${svg(I.message, 14, 2)}Suggest a change</a></sc-if><sc-if value="{{c.canEdit}}" hint-placeholder-val="{{ false }}"><a href="{{c.editHref}}" class="sc-press" style="height: 32px; padding: 0 12px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">${svg(I.pencil, 14, 2)}Edit</a></sc-if></div></sc-if>
         </div></sc-for>
         <sc-if value="{{hasMoreRows}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{showMore}}" class="sc-press" style="margin-top: 14px; align-self: flex-start; height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Show more</button></sc-if>
         <sc-if value="{{hasMoreCards}}" hint-placeholder-val="{{ true }}"><div style="padding: 16px 0 4px; font-size: 13px; color: {{t.muted}};">{{moreLine}}</div></sc-if>
@@ -7989,42 +8190,6 @@ const COPY_FORM = phone => `<div style="display: flex; align-items: center; gap:
     <div style="display: flex; align-items: center; gap: 12px;"><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 600;">{{cp.updatesLabel}}</span><span style="font-size: 13px; color: {{t.muted}};">You choose which changes to take.</span></span>${SWITCH('cp.updatesSw', 'cp.toggleUpdates', 'Get the owner’s updates')}</div>
     <sc-if value="{{cp.hasError}}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size: 13px; color: {{t.again}};">{{cp.error}}</span></sc-if>
     <div style="display: flex; ${phone ? '' : 'justify-content: flex-end; '}gap: 10px;"><button type="button" onClick="{{cp.cancel}}" data-key="escape" class="sc-press" style="${phone ? 'flex: 1 1 0; ' : ''}height: 48px; padding: 0 22px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Cancel</button><button type="button" onClick="{{cp.save}}" aria-disabled="{{cp.off}}" class="sc-press" style="${phone ? 'flex: 1 1 0; ' : ''}height: 48px; padding: 0 24px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; opacity: {{cp.op}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;"><span>{{cp.action}}</span></button></div>`;
-// A field for a card's words while suggesting a change.
-const SP_FIELD = (label, v, fn, rows, ph = '') => `<label style="display: flex; flex-direction: column; gap: 6px;"><span style="font-size: 13px; font-weight: 600;">${label}</span><textarea rows="${rows}" onChange="{{${fn}}}" placeholder="${ph}" aria-label="${label}" style="resize: none; box-sizing: border-box; width: 100%; border: 0; outline: 0; border-radius: 16px; padding: 12px 14px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 15px; line-height: 1.45;">{{${v}}}</textarea></label>`;
-const SP_BACK = `<button type="button" onClick="{{sp.back}}" aria-label="Back to the cards" class="sc-press" style="width: 32px; height: 32px; flex-shrink: 0; border: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.back, 14, 2.2)}</button>`;
-const SP_ADD = `<button type="button" onClick="{{sp.add}}" aria-disabled="{{sp.addOff}}" class="sc-press" style="height: 44px; flex-shrink: 0; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; opacity: {{sp.addOp}}; font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">${svg(I.plus, 15, 2.2)}<span>{{sp.addLabel}}</span></button>`;
-// Suggest a change: pick a card (search the deck) or start a new one, change its words or take it out, add it to your
-// changes, and send them all with a line saying why. Shared by the web panel and the iPhone sheet.
-const SUGGEST_BODY = phone => `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="font-size: ${phone ? 18 : 20}px; font-weight: 600; letter-spacing: -.01em;">Suggest a change</span>${phone
-    ? '<button type="button" onClick="{{sp.close}}" data-key="escape" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Cancel</button>'
-    : `<button type="button" onClick="{{sp.close}}" data-key="escape" aria-label="Close" style="width: 36px; height: 36px; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 14, 2.2)}</button>`}</div>
-    <sc-if value="{{sp.sent}}" hint-placeholder-val="{{ false }}"><div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center;"><span style="width: 64px; height: 64px; border-radius: 32px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center;">${svg(I.check, 28, 2.4)}</span><span role="status" style="font-size: 20px; font-weight: 600; letter-spacing: -.01em;">{{sp.sentTitle}}</span></div>
-      <button type="button" onClick="{{sp.close}}" class="sc-press" style="height: 48px; flex-shrink: 0; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Done</button></sc-if>
-    <sc-if value="{{sp.editing}}" hint-placeholder-val="{{ true }}"><div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; margin: 0 -4px; padding: 2px 4px; display: flex; flex-direction: column; gap: 14px;">
-      <sc-if value="{{sp.picking}}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 8px;"><label style="flex-grow: 1; min-width: 0; height: 44px; box-sizing: border-box; padding: 0 14px; border-radius: 999px; background: {{t.surf}}; color: {{t.muted}}; display: flex; align-items: center; gap: 8px;">${svg(I.search, 15)}<input value="{{sp.q}}" onChange="{{sp.setQ}}" placeholder="Find a card to fix" aria-label="Find a card to fix" style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: ${phone ? 16 : 14}px;"></label><button type="button" onClick="{{sp.startNew}}" class="sc-press" style="height: 44px; flex-shrink: 0; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">${svg(I.plus, 15, 2.2)}New card</button></div>
-        <div style="display: flex; flex-direction: column;"><sc-for list="{{sp.found}}" as="c" hint-placeholder-count="5"><button type="button" onClick="{{c.pick}}" style="width: 100%; padding: 11px 2px; border: 0; border-bottom: 1px solid {{t.line}}; background: transparent; color: {{t.text}}; font: inherit; text-align: left; display: flex; flex-direction: column; gap: 2px; cursor: pointer;"><span style="max-width: 100%; font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{c.ask}}</span><span style="font-size: 12px; color: {{t.muted}};">{{c.kind}}</span></button></sc-for>
-          <sc-if value="{{sp.noneFound}}" hint-placeholder-val="{{ false }}"><span style="padding: 12px 2px; font-size: 14px; color: {{t.muted}};">No card has those words.</span></sc-if></div></sc-if>
-      <sc-if value="{{sp.onCard}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 12px;">
-        <div style="display: flex; align-items: center; gap: 8px;">${SP_BACK}<span style="flex-grow: 1; min-width: 0; font-size: 13px; color: {{t.muted}};">{{sp.cardKind}}</span><button type="button" onClick="{{sp.toggleRemove}}" aria-pressed="{{sp.removePressed}}" class="sc-press" style="height: 32px; flex-shrink: 0; padding: 0 12px; border: 0; border-radius: 999px; background: {{sp.removeBg}}; color: {{sp.removeFg}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">Remove this card</button></div>
-        <sc-if value="{{sp.removing}}" hint-placeholder-val="{{ false }}"><div style="padding: 12px 16px; border-radius: 14px; background: {{t.againTint}}; color: {{ink.before}}; font-size: 14px; line-height: 1.45; text-decoration: line-through;">{{sp.cardWords}}</div></sc-if>
-        <sc-if value="{{sp.fixCloze}}" hint-placeholder-val="{{ false }}">${SP_FIELD('Text', 'sp.text', 'sp.setText', 4)}</sc-if>
-        <sc-if value="{{sp.fixFront}}" hint-placeholder-val="{{ true }}">${SP_FIELD('Front', 'sp.front', 'sp.setFront', 2)}</sc-if>
-        <sc-if value="{{sp.fixBack}}" hint-placeholder-val="{{ true }}">${SP_FIELD('Back', 'sp.backText', 'sp.setBack', 3)}</sc-if>
-        ${SP_ADD}
-      </div></sc-if>
-      <sc-if value="{{sp.onNew}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 12px;">
-        <div style="display: flex; align-items: center; gap: 8px;">${SP_BACK}<span style="flex-grow: 1; min-width: 0; font-size: 15px; font-weight: 600;">New card</span><div role="group" aria-label="Kind of card" style="display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: {{t.surf}}; flex-shrink: 0;"><sc-for list="{{sp.kinds}}" as="o" hint-placeholder-count="2"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="height: 30px; padding: 0 12px; border: 0; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">{{o.label}}</button></sc-for></div></div>
-        <sc-if value="{{sp.newCloze}}" hint-placeholder-val="{{ false }}">${SP_FIELD('Text', 'sp.text', 'sp.setText', 4, 'The [[mitochondrion]] makes most of the cell’s ATP.')}</sc-if>
-        <sc-if value="{{sp.newBasic}}" hint-placeholder-val="{{ true }}">${SP_FIELD('Front', 'sp.front', 'sp.setFront', 2, 'Question')}${SP_FIELD('Back', 'sp.backText', 'sp.setBack', 3, 'Answer')}</sc-if>
-        ${SP_ADD}
-      </div></sc-if>
-      <sc-if value="{{sp.hasDrafts}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">{{sp.draftsTitle}}</span><sc-for list="{{sp.drafts}}" as="x" hint-placeholder-count="2"><div style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 6px 0 12px; border-radius: 14px; background: {{t.surf}};"><span style="flex-shrink: 0; height: 24px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.bg}}; font-size: 12px; font-weight: 600;">{{x.label}}</span><span style="flex-grow: 1; min-width: 0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{x.words}}</span><button type="button" onClick="{{x.remove}}" aria-label="Take this change out" style="width: 32px; height: 32px; flex-shrink: 0; border: 0; border-radius: 16px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 12, 2.4)}</button></div></sc-for></div></sc-if>
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 10px; flex-shrink: 0;">
-      <input type="text" value="{{sp.why}}" onChange="{{sp.setWhy}}" placeholder="Why? (optional)" aria-label="Why?" maxlength="280" style="height: 46px; box-sizing: border-box; padding: 0 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: ${phone ? 16 : 15}px;">
-      <sc-if value="{{sp.hasError}}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size: 13px; color: {{t.again}};">{{sp.error}}</span></sc-if>
-      <button type="button" onClick="{{sp.send}}" aria-disabled="{{sp.sendOff}}" class="sc-press" style="height: 48px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; opacity: {{sp.sendOp}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;"><span>{{sp.sendLabel}}</span></button>
-    </div></sc-if>`;
 const PUBLIC_DECK_LOGIC = phone => `
 constructor(props) { super(props); this.state = {}; }
 componentDidMount() { this.named(); }
@@ -8034,7 +8199,8 @@ named() { const db = this.props.db; if (db && !db.mock && this.deckName && docum
 renderVals() {
   ${T}${DB_JS}${NET_JS}${SW_JS}${NETX_JS}
   const p = this.props, st = this.state, set = patch => this.setState(patch), B = '${phone ? 'Phone' : 'Web'}', out = !!db.signedOut || !!p.signedOut;
-  const fresh = p.missing ? { missing: true } : p.id ? db.net.deckById(p.id) : db.net.deck(p.handle, p.slug);
+  // (Behind the phone editor's sheet while suggesting a change, the deck comes as its shared-id, and with no address yet it waits.)
+  const sid = p.id || p.sharedId, fresh = p.missing ? { missing: true } : sid ? db.net.deckById(sid) : p.handle || db.mock ? db.net.deck(p.handle, p.slug) : undefined;
   // While a newer answer is on its way (after Save, Get updates, …), the page keeps showing the one it has.
   if (fresh !== undefined) this.page = fresh;
   const page = fresh === undefined ? this.page : fresh, loading = page === undefined, bad = !!(page && (page.missing || page.offline)), ready = !loading && !bad;
@@ -8067,11 +8233,14 @@ renderVals() {
     if (src) return { note: 'Added by ' + src, ai: src, name: '' };
     return { note: '', ai: '', name: ownerName };
   };
+  // Suggest a change (the page's, and each card's) opens the card editor in its suggest mode, on that card or on a new one (web/app.js:
+  // the page's address, then /suggest?card=). Signed out, the app has you sign in first, then opens it.
+  const suggestAt = id => goTo((d.url || '/d/' + d.id) + '/suggest?card=' + encodeURIComponent(id || 'new'), B + (id ? 'PublicDeckSuggest' : 'PublicDeckSuggestNew'));
   const list = d.cardsList || [], limit = st.limit || ${phone ? 40 : 80}, openCard = st.openCard || '';
   const rows = list.slice(0, limit).map(c => { const w = touch(c);
     return { id: c.id, ask: askOf(c) || 'Card', answer: answerOf(c) || '—', line: (KINDS[c.kind] || 'Card') + (w.note ? ' · ' + w.note : ''), ...whoOf(w.ai, byName[w.name] || { name: w.name || ownerName }),
       open: openCard === c.id, expanded: openCard === c.id ? 'true' : 'false', toggle: () => set({ openCard: openCard === c.id ? '' : c.id }),
-      canSuggest: learner, suggest: () => openSuggest(c.id), canEdit: owns, editHref: goTo(mine ? '/deck/' + mine.id + '/card/' + c.id : deckHref, ${phone ? "'PhoneEditor'" : "'WebCardsScreen'"}) }; });
+      canSuggest: learner, suggestHref: suggestAt(c.id), canEdit: owns, editHref: goTo(mine ? '/deck/' + mine.id + '/card/' + c.id : deckHref, ${phone ? "'PhoneEditor'" : "'WebCardsScreen'"}) }; });
   // People: the owner, helpers, everyone whose changes it took, and the teacher who checked it.
   const faceOf = h => (d.people || []).find(x => x.handle === h.handle) || h, seen = new Set(), peopleRows = [];
   const addPerson = (x, role) => { if (!x || !x.handle || seen.has(x.handle)) return; seen.add(x.handle); peopleRows.push({ ...person(faceOf(x)), role }); };
@@ -8081,49 +8250,6 @@ renderVals() {
   // The story: its first version, then the latest few.
   const made = (d.made || []).slice().reverse(), firstV = made.find(v => v.kind === 'made'), story = [firstV, ...made.filter(v => v !== firstV).slice(-4)].filter(Boolean)
     .map(v => ({ ...versionView(v), line: 'Version ' + v.version + (v.at ? ' · ' + (v.kind === 'made' ? day(v.at) : rel(v.at)) : '') }));
-  // Suggest a change: opened from its button, from a card, or by the link (?suggest=<card>, where the card can also be
-  // one in your own library that came from this deck).
-  const findCard = id => { if (!id) return null; const c = list.find(x => x.id === id); if (c) return c; const own = !db.mock && db.card ? db.card(id) : null; return (own && own.origin && list.find(x => x.id === own.origin)) || null; };
-  const start = String(p.suggest || ''), startCard = findCard(start), sample = db.mock && start === 'new';
-  const spOpen = learner && (st.spOpen ?? !!start), step = st.spStep || (start === 'new' ? 'new' : startCard ? 'card' : 'pick');
-  const card = step === 'card' ? (st.spCard ? list.find(x => x.id === st.spCard) : startCard) || null : null;
-  const drafts = st.drafts || (sample ? [{ op: 'edit', card: 'c2', after: { front: 'Which enzyme is the rate-limiting step of glycolysis?', back: 'Phosphofructokinase-1 (PFK-1). Hexokinase starts glycolysis but does not limit its rate.' } }] : []);
-  const f0 = card ? { front: card.front || '', back: card.back || '', text: card.text || '' } : sample && st.spStep == null ? { front: 'What activates PFK-1?', back: 'AMP and fructose-2,6-bisphosphate.', text: '' } : { front: '', back: '', text: '' };
-  const front = st.spFront ?? f0.front, back = st.spBack ?? f0.back, text = st.spText ?? f0.text, newKind = st.spKind || 'basic', removing = !!st.spRemove;
-  const cloze = !!card && card.kind === 'cloze', boxCard = !!card && card.box != null;
-  // The change being written: a card's new words, the card taken out, or a new card (a text with blanks needs a [[blank]]).
-  const current = step === 'card' && card ? (removing ? { op: 'remove', card: card.id } : (() => { const after = cloze ? { text } : boxCard ? { front } : { front, back };
-      return Object.keys(after).some(k => String(after[k]).trim() !== String(card[k] || '').trim()) ? { op: 'edit', card: card.id, after } : null; })())
-    : step === 'new' ? (newKind === 'cloze' ? (/\\[\\[[^\\]]+\\]\\]/.test(text) ? { op: 'add', after: { kind: 'cloze', text } } : null) : String(front).trim() ? { op: 'add', after: { kind: 'basic', front, back } } : null) : null;
-  const draftView = x => { const c = x.card ? list.find(y => y.id === x.card) : null;
-    if (x.op === 'add') return { label: 'New card', words: askOf(x.after) || wordsOf(x.after) };
-    if (x.op === 'remove') return { label: 'Remove', words: askOf(c) };
-    const a = { ...(c || {}), ...x.after }; return { label: answerOf(c) !== answerOf(a) ? 'Answer' : askOf(c) !== askOf(a) ? 'Question' : 'Edit', words: askOf(a) }; };
-  const fresh0 = { spFront: undefined, spBack: undefined, spText: undefined, spRemove: false };
-  const openSuggest = id => set({ spOpen: true, spStep: id ? 'card' : 'pick', spCard: id || '', ...fresh0, spSent: false, spErr: '' });
-  const q = String(st.spQ || '').trim().toLowerCase(), found = list.filter(c => !q || (askOf(c) + ' ' + answerOf(c)).toLowerCase().includes(q)).slice(0, 40);
-  const sending = !!st.spBusy, all = [...drafts, ...(current ? [current] : [])];
-  const sp = {
-    open: spOpen, sent: !!st.spSent, editing: !st.spSent, sentTitle: st.spTaken ? 'It’s in the deck now.' : 'Sent. ' + firstName(ownerName) + ' will see it.',
-    close: () => set({ spOpen: false, spSent: false, spErr: '' }), back: () => set({ spStep: 'pick', ...fresh0 }),
-    picking: step === 'pick' || (step === 'card' && !card), onCard: step === 'card' && !!card, onNew: step === 'new',
-    q: st.spQ || '', setQ: e => set({ spQ: val(e) }), noneFound: !found.length,
-    found: found.map(c => ({ ask: askOf(c) || 'Card', kind: KINDS[c.kind] || 'Card', pick: () => set({ spStep: 'card', spCard: c.id, ...fresh0 }) })),
-    startNew: () => set({ spStep: 'new', ...fresh0, spKind: 'basic' }),
-    cardKind: card ? KINDS[card.kind] || 'Card' : '', cardWords: card ? wordsOf(card) : '',
-    removing, removePressed: removing ? 'true' : 'false', removeBg: removing ? t.again : t.surf, removeFg: removing ? '#FFFFFF' : t.text, toggleRemove: () => set({ spRemove: !removing }),
-    fixCloze: !removing && cloze, fixFront: !removing && !cloze, fixBack: !removing && !cloze && !boxCard,
-    front, backText: back, text, setFront: e => set({ spFront: val(e) }), setBack: e => set({ spBack: val(e) }), setText: e => set({ spText: val(e) }),
-    kinds: [['basic', 'Basic'], ['cloze', 'Fill in the blank']].map(([id, label]) => ({ label, pressed: id === newKind ? 'true' : 'false', bg: id === newKind ? t.bg : 'transparent', fg: id === newKind ? t.text : t.muted, sh: id === newKind ? '0 1px 3px rgba(0,0,0,.14)' : 'none', pick: () => set({ spKind: id }) })),
-    newCloze: newKind === 'cloze', newBasic: newKind !== 'cloze',
-    add: () => { if (current) set({ drafts: [...drafts, current], spStep: 'pick', spQ: '', ...fresh0 }); }, addOff: current ? 'false' : 'true', addOp: current ? '1' : '.4', addLabel: step === 'new' ? 'Add this card' : 'Add this change',
-    hasDrafts: drafts.length > 0, draftsTitle: 'Your changes · ' + drafts.length, drafts: drafts.map((x, i) => ({ ...draftView(x), remove: () => set({ drafts: drafts.filter((_, j) => j !== i) }) })),
-    why: st.why ?? '', setWhy: e => set({ why: val(e) }),
-    send: async () => { if (!all.length || this.state.spBusy) return; set({ spBusy: true, spErr: '' });
-      try { const r = await db.act.suggest(d.id, all, String(this.state.why || '').trim()); this.setState({ spBusy: false, spSent: true, spTaken: !!(r && r.taken), drafts: [], spStep: 'pick', spQ: '', why: '', ...fresh0 }); }
-      catch (e) { this.setState({ spBusy: false, spErr: fail(e) }); } },
-    sendOff: all.length && !sending ? 'false' : 'true', sendOp: all.length ? '1' : '.4', sendLabel: sending ? 'Sending…' : 'Send to ' + firstName(ownerName), hasError: !!st.spErr, error: st.spErr || ''
-  };
   // Copy to your library.
   const folders = (db.folders ? db.folders() : []).map(f => ({ id: f.id, name: f.name })), folderId = st.cpFolder ?? '';
   const cpOpen = learner && (st.cpOpen ?? !!p.copyOpen), cpName = st.cpName ?? d.name, updates = st.cpUpdates ?? true;
@@ -8162,7 +8288,7 @@ renderVals() {
     notCopied: !copied, isCopied: !!copied, copiedHref: goTo('/deck/' + copied, B + 'Deck'), openCopy: () => set({ cpOpen: true, cpAt: Date.now(), cpErr: '', cpName: undefined, cpFolders: false }),
     starred: starOn, notStarred: !starOn, starPressed: starOn ? 'true' : 'false', saveLabel: (starOn ? 'Saved · ' : 'Save · ') + kfmt(stars), saveShort: kfmt(stars), toggleStar: toggle('star', on => db.act.star(d.id, on), !starOn),
     showWatch: learner && !studying, watchPressed: watchOn ? 'true' : 'false', watchLabel: watchOn ? 'Getting updates' : 'Get updates', watching: watchOn, notWatching: !watchOn, toggleWatch: toggle('watch', on => db.act.watch(d.id, on), !watchOn),
-    openSuggestAny: () => openSuggest(''),
+    suggestNewHref: out && db.mock ? '${phone ? 'PhoneSignIn' : 'WebSignIn'}.dc.html' : suggestAt(''),
     editHref: goTo(deckHref, B + 'Deck'), suggestionsHref: goTo(mine ? '/deck/' + mine.id + '/suggestions' : '/suggestions', B + 'Suggestions'), shareHref: goTo(mine ? deckHref + '?settings=1' : deckHref, B + 'DeckSettings'),
     suggestionsLabel: me && me.open ? 'Suggestions · ' + me.open : 'Suggestions', openCount: String((me && me.open) || ''), hasOpen: !!(me && me.open),
     linkLabel: this.sharing() ? 'Share link' : st.linkCopied ? 'Copied' : 'Copy link',
@@ -8174,7 +8300,7 @@ renderVals() {
     rows, noCards: ready && !list.length, hasMoreRows: list.length > limit, showMore: () => set({ limit: limit + 100 }),
     hasMoreCards: list.length <= limit && d.moreCards > 0, moreLine: '+ ' + kfmt(d.moreCards || 0) + ' more cards',
     recent: (d.made || []).slice(0, 5).map(v => { const x = versionView(v); return { ...x, line: ${phone ? "x.label + ' · ' + x.when" : 'x.sub'} }; }), historyHref: goTo((d.url || '') + '/history', B + 'History'),
-    peopleRows, story, sp, cp, backHref: goTo('/discover', B + 'Discover')
+    peopleRows, story, cp, backHref: goTo('/discover', B + 'Discover')
   };
 }`;
 const PGW = publicGuideBlocks({ svg, I }, false), PGP = publicGuideBlocks({ svg, I }, true);
@@ -8196,7 +8322,7 @@ const webPublicDeck = netRoot('Discover', `
         <sc-if value="{{notCopied}}" hint-placeholder-val="{{ true }}">${pdBtn(svg(I.copy, 16, 2) + 'Make a copy', { onClick: '{{openCopy}}' })}</sc-if>
         <sc-if value="{{isCopied}}" hint-placeholder-val="{{ false }}">${pdBtn(svg(I.copy, 16, 2) + 'Your copy', { href: '{{copiedHref}}' })}</sc-if>
         ${pdBtn(STAR_ICON(16) + '<span>{{saveLabel}}</span>', { onClick: '{{toggleStar}}', attrs: ' aria-pressed="{{starPressed}}"' })}
-        ${pdBtn(svg(I.message, 16, 2) + 'Suggest a change', { onClick: '{{openSuggestAny}}' })}
+        ${pdBtn(svg(I.message, 16, 2) + 'Suggest a change', { href: '{{suggestNewHref}}' })}
       </sc-if>
       <sc-if value="{{asOwner}}" hint-placeholder-val="{{ false }}">
         ${pdBtn(svg(I.pencil, 16, 2) + 'Edit in your library', { href: '{{editHref}}', inv: true })}
@@ -8207,7 +8333,7 @@ const webPublicDeck = netRoot('Discover', `
         ${pdBtn('Study', { href: '{{signInHref}}', inv: true, extra: ' padding: 0 28px;' })}
         ${pdBtn(svg(I.copy, 16, 2) + 'Make a copy', { href: '{{signInHref}}' })}
         ${pdBtn(svg(I.star, 16, 2) + '<span>{{saveLabel}}</span>', { href: '{{signInHref}}' })}
-        ${pdBtn(svg(I.message, 16, 2) + 'Suggest a change', { href: '{{signInHref}}' })}
+        ${pdBtn(svg(I.message, 16, 2) + 'Suggest a change', { href: '{{suggestNewHref}}' })}
       </sc-if>
       <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
         <sc-if value="{{canCheck}}" hint-placeholder-val="{{ false }}">${pdBtn(svg(I.shield, 16, 2) + '<span>{{checkLabel}}</span>', { onClick: '{{checkIt}}' })}</sc-if>
@@ -8236,12 +8362,6 @@ const webPublicDeck = netRoot('Discover', `
     ${COPY_FORM(false)}
   </div>
 </div></sc-if>
-<sc-if value="{{sp.open}}" hint-placeholder-val="{{ false }}">
-  <div class="sc-scrim" onClick="{{sp.close}}" style="position: absolute; inset: 0; background: color-mix(in srgb, {{t.dim}} 55%, transparent);"></div>
-  <aside role="dialog" aria-label="Suggest a change" class="sc-panel" style="position: absolute; top: 12px; right: 12px; bottom: 12px; width: 480px; box-sizing: border-box; padding: 24px; border-radius: 20px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 16px; overflow: hidden;">
-    ${SUGGEST_BODY(false)}
-  </aside>
-</sc-if>
 ${REPORT_SHEET(false)}`);
 const phonePublicDeck = phone(`<div style="padding: 0 0 120px; display: flex; flex-direction: column; gap: 16px;">
   <sc-if value="{{notReady}}" hint-placeholder-val="{{ false }}"><div style="padding: 64px 20px 0; display: flex; flex-direction: column; gap: 16px;">${roundBtn('back', 'Back', '{{backHref}}')}${NET_LOADING(2)}${NET_MISSING}</div></sc-if>
@@ -8268,7 +8388,7 @@ const phonePublicDeck = phone(`<div style="padding: 0 0 120px; display: flex; fl
       <sc-if value="{{notCopied}}" hint-placeholder-val="{{ true }}">${pdRound(svg(I.copy, 20, 2), 'Make a copy', { onClick: '{{openCopy}}' })}</sc-if>
       <sc-if value="{{isCopied}}" hint-placeholder-val="{{ false }}">${pdRound(svg(I.copy, 20, 2), 'Your copy', { href: '{{copiedHref}}' })}</sc-if>
       ${pdRound(STAR_ICON(20), 'Save', { onClick: '{{toggleStar}}', attrs: ' aria-pressed="{{starPressed}}"' })}
-      ${pdRound(svg(I.message, 20, 2), 'Suggest a change', { onClick: '{{openSuggestAny}}' })}
+      ${pdRound(svg(I.message, 20, 2), 'Suggest a change', { href: '{{suggestNewHref}}' })}
     </div></sc-if>
     <sc-if value="{{canCheck}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{checkIt}}" class="sc-press" style="height: 48px; border: 0; border-radius: 999px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">${svg(I.shield, 16, 2)}<span>{{checkLabel}}</span></button></sc-if>
     <sc-if value="{{mineChecked}}" hint-placeholder-val="{{ false }}">${CHECKED_BY_YOU(true)}</sc-if>
@@ -8279,7 +8399,7 @@ const phonePublicDeck = phone(`<div style="padding: 0 0 120px; display: flex; fl
     </div></sc-if>
     <sc-if value="{{asVisitor}}" hint-placeholder-val="{{ false }}"><div style="display: flex; gap: 10px;">
       <a href="{{signInPhone}}" class="sc-press" style="flex-grow: 1; min-width: 0; height: 56px; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600;">Study</a>
-      ${pdRound(svg(I.copy, 20, 2), 'Make a copy', { href: '{{signInPhone}}' })}${pdRound(svg(I.star, 20, 2), 'Save', { href: '{{signInPhone}}' })}${pdRound(svg(I.message, 20, 2), 'Suggest a change', { href: '{{signInPhone}}' })}
+      ${pdRound(svg(I.copy, 20, 2), 'Make a copy', { href: '{{signInPhone}}' })}${pdRound(svg(I.star, 20, 2), 'Save', { href: '{{signInPhone}}' })}${pdRound(svg(I.message, 20, 2), 'Suggest a change', { href: '{{suggestNewHref}}' })}
     </div></sc-if>
     <sc-if value="{{hasError}}" hint-placeholder-val="{{ false }}"><div role="alert" style="margin-top: -6px; font-size: 13px; color: {{t.again}};">{{error}}</div></sc-if>
     ${PGP.guide}${PGDP.card}${PGP.made}
@@ -8296,12 +8416,6 @@ ${PGDP.viewer}<sc-if value="{{cp.open}}" hint-placeholder-val="{{ false }}">
   <div class="sc-scrim" onClick="{{cp.cancel}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="Copy to your library" class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 22px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;">
     ${COPY_FORM(true)}
-  </div>
-</sc-if>
-<sc-if value="{{sp.open}}" hint-placeholder-val="{{ false }}">
-  <div class="sc-scrim" onClick="{{sp.close}}" style="position: absolute; inset: 0; background: {{t.dim}};"></div>
-  <div role="dialog" aria-label="Suggest a change" class="sc-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; top: 56px; box-sizing: border-box; padding: 16px 20px 34px; border-radius: 32px 32px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 14px;">
-    ${SUGGEST_BODY(true)}
   </div>
 </sc-if>
 ${REPORT_SHEET(true)}`);

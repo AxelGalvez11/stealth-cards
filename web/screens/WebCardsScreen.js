@@ -925,13 +925,13 @@ constructor(props) {
   this.els = {};
   this.refFns = {};
 }
-componentDidMount() { this.placeCaret(); this.placeSlash(); this.onDocKey = ev => this.boxKey(ev); document.addEventListener('keydown', this.onDocKey); if (this.opened) this.opened(); }
-componentDidUpdate() { this.placeCaret(); this.placeSlash(); this.placeLabel(); }
+componentDidMount() { this.placeCaret(); this.placeSlash(); this.onDocKey = ev => this.boxKey(ev); document.addEventListener('keydown', this.onDocKey); if (this.opened) this.opened(); this.sgCheck(); }
+componentDidUpdate() { this.placeCaret(); this.placeSlash(); this.placeLabel(); this.sgCheck(); }
 // Leaving the editor while it records throws the recording away. (The cards screen saves what you changed first.)
 componentWillUnmount() { if (this.closing) this.closing(); if (this.onSel) document.removeEventListener('selectionchange', this.onSel); if (this.onDocKey) document.removeEventListener('keydown', this.onDocKey); const db = this.props.db; if (db && db.recording()) db.act.stopRecording(true); }
 // A saved card opens with what it says; a new one starts empty in the app (the canvas shows a sample).
 doc() {
-  const db = this.props.db || this.mock(), e = this.ed;
+  const db = this.sdb(), e = this.ed;
   const saved = this.openCard(db);
   const names = { basic: 'Basic', cloze: 'Blank', image: 'Image', audio: 'Audio' };
   const ty = e.type || (saved ? names[saved.kind] : ({ Blank: 'Blank', Image: 'Image', Audio: 'Audio' })[this.props.cardType] || 'Basic');
@@ -1282,7 +1282,7 @@ media(kind) {
   if (d.ty !== 'Audio') return this.commit({}, { type: 'Audio', kind: 'kind' });
   this.toggleRecord();
 }
-pickImage() { const ed = this.ed; (this.props.db || this.mock()).act.pickFile('image').then(url => url && this.commitIn(ed, { image: url })); }
+pickImage() { const ed = this.ed; this.sdb().act.pickFile('image').then(url => url && this.commitIn(ed, { image: url })); }
 // What a card still needs before it can be saved: its front or back, a blank, a picture, or a sound ('' once it's ready).
 // `boxes`: how many boxes the picture has right now (one being drawn counts).
 missingOf(ty, f, boxes) {
@@ -1415,7 +1415,7 @@ boxKey(ev) {
 }
 // Record, then Stop: the new clip (its link and its waveform) goes on the card.
 toggleRecord() {
-  const db = this.props.db || this.mock();
+  const db = this.sdb();
   if (db.recording()) { db.act.record(); return; }
   const ed = this.ed;
   db.act.record().then(clip => { if (clip) this.commitIn(ed, { audio: clip.url, wave: clip.wave }); });
@@ -1426,7 +1426,9 @@ askPreview(t, samples) {
   return q ? { show: true, title: q.title, line: q.line, hasLine: !!q.line, action: q.action, danger: q.danger ? 'yes' : '', bg: q.danger ? t.againTint : t.inv, fg: q.danger ? t.again : t.invText, yes: () => {}, no: () => {} } : { show: false };
 }
 renderVals0() {
-  const t = this.theme(!!this.props.dark, !!this.props.dim);const db = this.props.db || this.mock(); const chrome = db.chrome();
+  const t = this.theme(!!this.props.dark, !!this.props.dim);
+  // (Suggesting a change, the shared deck's cards: see sdb.)
+  const db = this.sdb(); const chrome = db.chrome();
   const kb = this.props.dark
     ? { panel: '#2A2A2D', key: '#48484C', ink: '#FFFFFF', edge: '0 1px 0 rgba(0,0,0,.35)', bar: '#2C2C2F', barInk: '#EBEBF0', barLine: 'rgba(255,255,255,.14)', on: '#45454A', barShadow: '0 8px 28px rgba(0,0,0,.5), 0 0 0 .5px rgba(255,255,255,.1)' }
     : { panel: '#E3E4E9', key: '#FFFFFF', ink: '#000000', edge: '0 1px 0 rgba(0,0,0,.08)', bar: '#FFFFFF', barInk: '#3C3C43', barLine: 'rgba(60,60,67,.16)', on: '#ECECF1', barShadow: '0 8px 28px rgba(0,0,0,.1), 0 0 0 .5px rgba(0,0,0,.06)' };
@@ -1617,12 +1619,128 @@ renderVals0() {
     save: ev => {
       if (db.mock) return;
       ev.preventDefault();
+      // Suggesting, it's Send: this card's change goes to the deck's owner.
+      if (this.props.suggest) return this.sgSendOne(db, saved, ty, f, missing, backHref);
       if (missing === 'image') return this.pickImage();
       if (missing) return this.focusField(missing);
       db.act.saveCard(saved ? saved.id : null, dk.id, this.payload(ty, f), backHref);
     },
     ...this.listVals({ db, t, saved, missing, R, tagChip, backHref })
   };
+}
+// What a suggestion can change on a card (web/social.mjs FIELDS; a card's language isn't written here).
+sgFields() { return ['kind', 'front', 'back', 'text', 'note', 'tags', 'image', 'audio', 'speak', 'boxes', 'occ']; }
+// The shared deck's page (web/net.js): by its lasting id, or by its owner's name and its own.
+sgPageNow(db) { const p = this.props; return p.sharedId ? db.net.deckById(p.sharedId) : db.net.deck(p.handle, p.slug); }
+// The database the editor reads: the app's, or (suggesting) the shared deck's cards in its shape (suggestDb). While a
+// newer page is on its way, it keeps the one it had.
+sdb() {
+  const db = this.props.db || this.mock();
+  if (!this.props.suggest || db.mock) return db;
+  const page = this.sgPageNow(db);
+  if (page && !page.missing && !page.offline) this.sgPage = page;
+  if (!this.sgDb || this.sgDb.page !== this.sgPage) this.sgDb = { page: this.sgPage, db: this.suggestDb(db, this.sgPage) };
+  return this.sgDb.db;
+}
+// The shared deck's cards as the editor reads a deck's (card, cards, group, deck, tags), with nothing that changes a deck.
+// A picture or a sound can't come with a suggestion (the server takes only the deck's own), so picking or recording one says so.
+suggestDb(db, page) {
+  const list = (page && page.cardsList) || [], byId = new Map(list.map(c => [c.id, c])), icon = { basic: 'text', cloze: 'blank', image: 'image', audio: 'audio' };
+  // A card of your own that came from this deck (a link from the deck you study) is the deck's card.
+  const find = id => { if (!id) return null; if (byId.has(id)) return byId.get(id); const own = db.card ? db.card(id) : null; return (own && own.origin && byId.get(own.origin)) || null; };
+  const card = c => (c ? { id: c.id, deckId: 'shared', kind: c.kind || 'basic', front: c.front || '', back: c.back || '', text: c.text || '', note: c.note || '', tags: c.tags || [],
+    image: c.image || null, audio: c.audio || null, wave: c.wave || null, speak: c.speak || '', lang: c.lang || '', auto: c.auto !== false, boxes: c.boxes || [], occ: c.occ === 'all' ? 'all' : 'one',
+    box: c.box == null ? null : c.box, cloze: c.cloze == null ? null : c.cloze, group: c.group || null, clozeMode: c.cloze === -1 ? 'one' : 'each', paused: false, src: null } : null);
+  const p = this.props, deck = { id: 'shared', name: (page && page.name) || '', tags: [], href: (page && page.url) || (p.sharedId ? '/d/' + p.sharedId : p.handle ? '/@' + p.handle + '/' + p.slug : '/discover') };
+  const no = () => { db.say('A suggestion can’t bring a new picture or sound.'); return Promise.resolve(null); };
+  return Object.assign(Object.create(db), {
+    deck: () => deck, card: id => card(find(id)),
+    cards: () => list.map(c => ({ id: c.id, kind: c.kind, icon: icon[c.kind] || 'text', group: c.group || null, tags: c.tags || [] })),
+    group: id => { const c = find(id); return !c ? [] : c.group ? list.filter(x => x.group === c.group).map(card) : [card(c)]; },
+    tags: () => [...new Set(list.flatMap(c => c.tags || []))], recording: () => null, sources: () => [],
+    act: Object.assign(Object.create(db.act), { pickFile: no, pickSound: no, record: no, stopRecording: () => {} })
+  });
+}
+// A deck that isn't shared any more has nothing to suggest to (its page says so), and the deck's owner edits it instead (Edit
+// cards). The cards screen opens on its card once the deck's page is here (focusOpen).
+sgCheck() {
+  const db = this.props.db, p = this.props;
+  if (!p.suggest || !db || db.mock) return;
+  if (this.sgFocus && this.focusOpen) { this.sgFocus = false; this.focusOpen(); }
+  const page = this.sgLeft ? null : this.sgPageNow(db);
+  if (!page || !(page.missing || (page.me && page.me.owner))) return;
+  this.sgLeft = true;
+  const mine = !page.missing && db.decks ? db.decks().find(x => x.shared && x.shared.id === page.id) : null;
+  db.act.go(mine ? '/deck/' + mine.id + '/card' + (p.cardId ? '/' + encodeURIComponent(p.cardId) : '') : p.sharedId ? '/d/' + p.sharedId : '/@' + p.handle + '/' + p.slug, true);
+}
+// What a change says: the fields of a card that differ from the deck's (only those go, so what the editor doesn't show stays
+// as it is), or a new card's (null: no change, or a new card with no words).
+sgAfter(saved, ty, f) {
+  const keys = this.sgFields(), a = this.payload(ty, f), R = this.rich(), out = {};
+  if (!saved) {
+    if (!['front', 'back', 'text', 'speak'].some(k => R.plain(a[k] || '').trim())) return null;
+    for (const k of keys) if (a[k] != null && a[k] !== '') out[k] = a[k];
+    return out;
+  }
+  const b = this.payload({ basic: 'Basic', cloze: 'Blank', image: 'Image', audio: 'Audio' }[saved.kind] || 'Basic', saved);
+  for (const k of keys) if (a[k] !== undefined && JSON.stringify(a[k]) !== JSON.stringify(b[k] === undefined ? null : b[k])) out[k] = a[k];
+  return Object.keys(out).length ? out : null;
+}
+// The quiet line once a suggestion is sent: its owner will see it, or (a helper's) it's in the deck now.
+sgSentLine(r, page) {
+  const n = String((page && page.owner && page.owner.name) || '').trim(), first = /^(dr|prof|mr|mrs|ms)\.?\s/i.test(n) ? n : n.split(/\s+/)[0] || n;
+  return r && r.taken ? 'It’s in the deck now.' : 'Sent. ' + (first || 'The owner') + ' will see it.';
+}
+// Send on a phone: this card's change (its new words, the card taken out with Suggest removing it, or a new card) goes to the
+// deck's owner as one suggestion, with the why. Sent, the sheet closes on the deck's page and Lucida's quiet message says so;
+// what goes wrong (five suggestions already waiting, say) shows the server's words there, and the sheet stays with the change.
+async sgSendOne(db, saved, ty, f, missing, backHref) {
+  const page = this.sgPage;
+  if (this.state.sgBusy || !page) return;
+  let changes;
+  if (saved && this.state.sgRemove) changes = db.group(saved.id).map(c => ({ op: 'remove', card: c.id }));
+  else {
+    const after = this.sgAfter(saved, ty, f);
+    if (!after) return db.say('Add a change first.');
+    if (missing === 'image') return this.pickImage();
+    if (missing) return this.focusField(missing);
+    changes = [saved ? { op: 'edit', card: saved.id, after } : { op: 'add', after }];
+  }
+  this.setState({ sgBusy: true });
+  try {
+    const r = await db.act.suggest(page.id, changes, String(this.state.sgWhy || '').trim());
+    this.setState({ sgBusy: false });
+    if (!r) return;
+    db.say(this.sgSentLine(r, page));
+    db.act.go(backHref);
+  } catch (err) { this.setState({ sgBusy: false }); db.say((err && err.message) || 'Something went wrong. Try again.'); }
+}
+// Suggest removing it: on a phone the sheet's card, on a computer the card on screen (each card keeps its own mark).
+sgToggle(phone, cur) {
+  if (phone) return this.setState({ sgRemove: !this.state.sgRemove });
+  if (!cur) return;
+  const marks = this.sgOut || (this.sgOut = new Set());
+  if (marks.has(cur)) marks.delete(cur); else marks.add(cur);
+  this.setState({ sgLine: '', sgOk: false });
+}
+// The suggest mode's values: the title, Send, the Why? note and Suggest removing it (SUGGEST_FOOTER), and on a computer the
+// quiet line (Sending…, the sent line, or what went wrong). Nothing that saves, pauses or deletes a card shows, and neither does
+// where a card was made from (a deck's sources are its owner's).
+suggestVals({ db, t, saved, backHref, phone }) {
+  const on = !!this.props.suggest, st = this.state, mock = !!db.mock, cur = phone ? (saved ? saved.id : '') : on && this.pick !== 'new' ? this.pick : '';
+  const out = phone ? !!st.sgRemove : !!cur && !!this.sgOut && this.sgOut.has(cur);
+  const b = on && !phone && !mock ? this.sgBatch(db) : null, any = !!b && (b.out.length > 0 || b.held.length > 0 || !!b.draft);
+  const sg = { on, sendLabel: st.sgBusy ? 'Sending…' : st.sgSent && !any ? 'Sent' : 'Send suggestions', why: st.sgWhy || '', setWhy: e => this.setState({ sgWhy: e && e.target ? e.target.value : '' }),
+    send: () => (mock || phone ? this.setState({ sgSent: true, sgOk: true, sgLine: this.sgSentLine(null, mock ? db.net.deck() : this.sgPage) }) : this.sgSendBatch()),
+    canRemove: on && !!cur, removePressed: out ? 'true' : 'false', removeBg: out ? t.inv : t.surf, removeFg: out ? t.invText : t.text,
+    removeLabel: out ? 'Removing it' : 'Suggest removing it', toggleRemove: () => this.sgToggle(phone, cur) };
+  const none = { link: false, plain: false, label: '', href: '' };
+  if (phone) return { saveLabel: on ? (st.sgBusy ? 'Sending…' : 'Send') : 'Save', sgOff: !on, sg, sharedId: on ? (this.sgPage && this.sgPage.id) || this.props.sharedId || '' : '',
+    ...(on ? { title: saved ? 'Suggest a change' : this.props.cardId && !mock && !this.sgPage ? '' : 'Suggest a card', phoneBack: mock ? 'PhonePublicDeck.dc.html' : backHref, canDelete: false, madeFrom: none } : {}) };
+  return { screenTitle: on ? 'Suggest changes' : 'Edit cards', sgOff: !on, sg,
+    ...(on ? { backHref: mock ? 'WebPublicDeck.dc.html' : backHref, canDelete: false, madeFrom: none,
+      note: { show: !!st.sgBusy || !!st.sgLine, done: !st.sgBusy && !!st.sgOk, label: st.sgBusy ? 'Sending…' : st.sgLine || '' },
+      done: ev => { if (mock) return; if (ev && ev.preventDefault) ev.preventDefault(); this.sgLeave(backHref); } } : {}) };
 }
 fresh(o) { return { ...{ edits: {}, type: null, sel: null, pend: null, past: [], future: [], last: '', lastAt: 0, key: 0, restore: false, sig: '' }, ...o }; }
 // The sample has no saved cards, so on the canvas each one opens with what its row says (and the sample picture or sound).
@@ -1660,7 +1778,11 @@ hasWords(c) { const R = this.rich(); return ['front', 'back', 'text', 'note', 's
 // new card half written, its answer being typed. The app opens on the card you picked (on the deck page, in All cards,
 // or Edit in a review), or on a new card with the caret in it.
 openCard(db) {
-  if (!this.eds) {
+  // Suggesting, the shared deck's page can still be on its way: the screen waits on an empty new card, then opens on its card.
+  const wait = !!this.props.suggest && !db.mock && !this.sgPage;
+  if (!this.eds || (this.sgWaited && !wait)) {
+    if (this.sgWaited) { this.ed = this.fresh(); this.sgFocus = true; }
+    this.sgWaited = wait;
     this.added = [];
     this.gone = [];
     this.eds = {};
@@ -1729,7 +1851,8 @@ addDraft() {
   const card = { ...f, kind: { Basic: 'basic', Blank: 'cloze', Image: 'image', Audio: 'audio' }[ty], tags: f.tags || [], id: 'n' + Date.now().toString(36) };
   this.added = [card, ...this.added];
   this.addedAt = Date.now();
-  if (db.mock) return;
+  // (Suggesting, it's a new card of the batch, sent with the rest.)
+  if (db.mock || this.props.suggest) return;
   this.addFailed = false;
   this.track(db.act.addCard(db.deck(this.props.deckId).id, this.payload(ty, f)).then(r => {
     const real = r && r.ids && r.ids[0];
@@ -1787,6 +1910,8 @@ kindNames() { return { basic: 'Basic', cloze: 'Blank', image: 'Image', audio: 'A
 edited(ed) {
   const db = this.props.db;
   if (!db || db.mock) return;
+  // Suggesting, nothing saves; a change after the quiet line said something puts it away.
+  if (this.props.suggest) { if (this.state.sgLine && !this.state.sgBusy) this.setState({ sgLine: '', sgOk: false }); return; }
   const id = Object.keys(this.eds).find(k => this.eds[k] === ed);
   if (!id || id === 'new' || this.temp(id) || this.gone.includes(id)) return;
   clearTimeout(this.timers[id]);
@@ -1795,7 +1920,7 @@ edited(ed) {
 // `leaving`: you're going to another card or off the screen; `closing`: the page itself is closing.
 save(id, leaving, closing) {
   const db = this.props.db;
-  if (!db || db.mock || !id || id === 'new' || this.temp(id) || this.gone.includes(id)) return;
+  if (!db || db.mock || this.props.suggest || !id || id === 'new' || this.temp(id) || this.gone.includes(id)) return;
   clearTimeout(this.timers[id]);
   delete this.timers[id];
   const e = this.eds[id], saved = db.card(id);
@@ -1862,8 +1987,15 @@ async leave(href) {
 opened() {
   const db = this.props.db;
   if (!db || db.mock) return;
-  this.onLeavePage = ev => { this.saveAll(true); const u = this.unsaved(); if (u.held.length || u.draft) { ev.preventDefault(); ev.returnValue = ''; } };
+  // (Suggesting, what would be lost is the changes not sent yet.)
+  this.onLeavePage = ev => {
+    if (this.props.suggest) { const b = this.sgBatch(this.sdb()); if (b.out.length || b.held.length || b.draft) { ev.preventDefault(); ev.returnValue = ''; } return; }
+    this.saveAll(true); const u = this.unsaved(); if (u.held.length || u.draft) { ev.preventDefault(); ev.returnValue = ''; } };
   addEventListener('beforeunload', this.onLeavePage);
+  if (!this.sgWaited) this.focusOpen();
+}
+// The card it opens on: a new card has the caret in it, and the list shows the card picked.
+focusOpen() {
   if (this.pick === 'new') this.focusField(this.firstField(this.doc().ty));
   else if (this.listEl) { const r = this.listEl.querySelector('[aria-current="true"]'); if (r) r.scrollIntoView({ block: 'nearest' }); }
 }
@@ -1884,8 +2016,9 @@ listVals(o) {
   // A card you left while it was missing something says so on its row: it isn't saved.
   const needs = { front: 'its front', back: 'its back', text: 'a blank', image: 'a picture', speak: 'a sound' };
   const heldWhy = (rid, c) => { const x = this.eds[rid]; if (!x || x.hold !== 'missing') return ''; const m = this.missingOf({ basic: 'Basic', cloze: 'Blank', image: 'Image', audio: 'Audio' }[c.kind], c); return m ? 'Not saved: needs ' + (m === 'back' && c.kind !== 'basic' ? 'its answer' : needs[m]) : ''; };
-  const row = (rid, c, title, sub) => { const on = rid === id, bx = c.kind === 'image' && c.image ? c.boxes || [] : null, why = heldWhy(rid, c);
-    return { title, sub: why || (c.paused ? 'Paused' + (sub ? ' · ' + sub : '') : sub), subFg: why ? t.again : t.muted, glyph: glyphs[c.kind], current: on ? 'true' : 'false', bg: on ? t.surf : 'transparent', chip: on ? t.bg : t.surf,
+  // (Suggesting, a card marked Suggest removing it says so.)
+  const row = (rid, c, title, sub) => { const on = rid === id, bx = c.kind === 'image' && c.image ? c.boxes || [] : null, why = heldWhy(rid, c), out = !!this.sgOut && this.sgOut.has(rid);
+    return { title, sub: out ? 'Removing it' : why || (c.paused ? 'Paused' + (sub ? ' · ' + sub : '') : sub), subFg: why && !out ? t.again : t.muted, glyph: glyphs[c.kind], current: on ? 'true' : 'false', bg: on ? t.surf : 'transparent', chip: on ? t.bg : t.surf,
       thumb: { show: !!bx, mock: c.image === 'mock', url: bx && c.image !== 'mock' ? c.image : '', boxes: (bx || []).map(b => ({ x: pct(b.x), y: pct(b.y), w: pct(b.w), h: pct(b.h) })) },
       pick: () => this.pickCard(rid) }; };
   // The list's filters work together: the kind of card, one of the deck's tags (Tags ▾, like the deck page's), and the search.
@@ -1925,13 +2058,68 @@ listVals(o) {
     deleteCard: () => this.dropSaved(ids), discard: () => this.discardNew(ids),
     done: ev => { if (db.mock) return; if (ev && ev.preventDefault) ev.preventDefault(); if (!this.exiting) this.leave(backHref); },
     doneLabel: this.exiting ? 'Saving…' : 'Done',
-    screenTitle: this.props.suggest ? 'Suggest changes' : 'Edit cards', sgOff: !this.props.suggest,
     // Suggest a change on someone's shared deck opens this same editor (the owner, 2026-10-02: "this should be like the editing card window").
-    sg: { on: !!this.props.suggest, sendLabel: this.state.sgSent ? 'Sent' : 'Send suggestions', send: () => this.setState({ sgSent: true }), why: this.state.sgWhy || '', setWhy: e => this.setState({ sgWhy: e.target.value }),
-      canRemove: !!this.props.suggest && !this.props.newCard, removePressed: this.state.sgRemove ? 'true' : 'false', removeBg: this.state.sgRemove ? t.inv : t.surf, removeFg: this.state.sgRemove ? t.invText : t.text,
-      removeLabel: this.state.sgRemove ? 'Removing it' : 'Suggest removing it', toggleRemove: () => this.setState({ sgRemove: !this.state.sgRemove }) },
-    ...(this.props.suggest ? { backHref: db.mock ? 'WebPublicDeck.dc.html' : backHref } : {})
+    ...this.suggestVals({ db, t, saved, backHref, phone: false })
   };
+}
+// ---------- Suggesting (a computer) ----------
+// The batch: each card changed (the fields that differ from the deck's), each card marked Suggest removing it (every card of its
+// text or picture), and each new card (added with Add card, and the one being written once it's finished). `held`: cards changed
+// so they're missing something; `draft`: 'unfinished' when the new card being written isn't finished. Neither is sent.
+sgBatch(db) {
+  const out = [], held = [], marks = this.sgOut || new Set(), names = this.kindNames();
+  for (const [id, e] of Object.entries(this.eds || {})) {
+    const saved = id !== 'new' && !marks.has(id) && !this.temp(id) && db.card(id);
+    if (!saved) continue;
+    const ty = e.type || names[saved.kind], f = { ...saved, ...e.edits }, after = this.sgAfter(saved, ty, f);
+    if (after) { if (this.missingOf(ty, f)) held.push(id); else out.push({ op: 'edit', card: id, after }); }
+  }
+  for (const id of marks) if (!this.temp(id)) for (const c of db.group(id)) out.push({ op: 'remove', card: c.id });
+  for (const c of (this.added || []).slice().reverse()) {
+    if (marks.has(c.id)) continue;
+    const e = this.eds[c.id] || {}, ty = e.type || names[c.kind] || 'Basic', f = { ...c, ...(e.edits || {}) }, after = this.sgAfter(null, ty, f);
+    if (after) { if (this.missingOf(ty, f)) held.push(c.id); else out.push({ op: 'add', after }); }
+  }
+  const n = this.eds && this.eds.new, ty = n && (n.type || 'Basic'), f = n && { ...db.draft(ty), ...n.edits };
+  let draft = '';
+  if (n && this.hasWords(n.edits)) { if (this.missingOf(ty, f)) draft = 'unfinished'; else { const after = this.sgAfter(null, ty, f); if (after) out.push({ op: 'add', after }); } }
+  return { out, held, draft };
+}
+// Send suggestions: the batch goes to the deck's owner as one suggestion, with the why. What can't go yet is said first (Lucida's
+// own question). Sent, the batch starts again from the deck's cards as they are, the button says Sent, and the quiet line
+// says who will see it; what goes wrong shows the server's words in the quiet line, and the batch stays.
+async sgSendBatch() {
+  const db = this.sdb(), page = this.sgPage;
+  if (this.state.sgBusy || !page) return;
+  const { out, held, draft } = this.sgBatch(db), n = held.length;
+  if (!out.length && !n && !draft) return this.setState({ sgLine: 'Add a change first.', sgOk: false });
+  if (n || draft) {
+    const line = n && draft ? 'Some changes and your new card are missing something, so they won’t be sent.'
+      : n ? (n === 1 ? 'A card you changed is missing something, so the change won’t be sent.' : n + ' cards you changed are missing something, so the changes won’t be sent.')
+      : 'Your new card isn’t finished, so it won’t be sent.';
+    if (!out.length) return this.setState({ sgLine: line, sgOk: false });
+    if (!(await db.ask({ title: 'Send anyway?', line, action: 'Send' }))) return;
+  }
+  this.setState({ sgBusy: true, sgLine: '', sgOk: false });
+  try {
+    const r = await db.act.suggest(page.id, out, String(this.state.sgWhy || '').trim());
+    if (!r) return this.setState({ sgBusy: false });
+    this.sgReset(db);
+    this.setState({ sgBusy: false, sgSent: true, sgOk: true, sgWhy: '', sgLine: this.sgSentLine(r, page) });
+  } catch (err) { this.setState({ sgBusy: false, sgOk: false, sgLine: (err && err.message) || 'Something went wrong. Try again.' }); }
+}
+// After sending: nothing changed, added, or marked; the card on screen stays (as the deck has it), or a new card starts.
+sgReset(db) {
+  const keep = this.pick !== 'new' && !this.temp(this.pick) && db.card(this.pick) ? this.pick : null;
+  this.eds = {}; this.added = []; this.gone = []; this.sgOut = new Set();
+  this.pick = keep || 'new';
+  this.ed = this.eds[this.pick] = keep ? this.fresh() : this.fresh({ type: 'Basic', edits: { front: '', back: '', text: '', note: '', speak: '', boxes: [] } });
+}
+// Back (the deck's name): to the shared deck's page. Changes not sent would be lost, so it asks first (Lucida's own question).
+async sgLeave(href) {
+  const db = this.sdb(), b = this.sgBatch(db);
+  if ((b.out.length || b.held.length || b.draft) && !(await db.ask({ title: 'Leave without sending?', line: 'Your suggestions won’t be sent.', action: 'Leave' }))) return;
+  db.act.go(href);
 }
 }
 return Component;
