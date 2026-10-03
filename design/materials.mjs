@@ -152,8 +152,9 @@ export function makeBoards(H) {
     </div>
     ${footer}`;
 
+  // Behind it: the Library, or the deck it was opened from (prop onDeck: the owner, 2026-10-02, "pressing '+' should not take user back to the library page").
   const webMake = `<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
-  <dc-import name="WebDecks" dark="{{dark}}" dim="{{dim}}" hint-size="1440px,900px"></dc-import>
+  <sc-if value="{{overLibrary}}" hint-placeholder-val="{{ true }}"><dc-import name="WebDecks" dark="{{dark}}" dim="{{dim}}" hint-size="1440px,900px"></dc-import></sc-if><sc-if value="{{overDeck}}" hint-placeholder-val="{{ false }}"><dc-import name="WebDeck" deck-id="{{behindDeck}}" dark="{{dark}}" dim="{{dim}}" hint-size="1440px,900px"></dc-import></sc-if>
   <div style="position: absolute; inset: 0; z-index: 40; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="Make cards" style="position: absolute; z-index: 40; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 640px; max-height: 840px; box-sizing: border-box; padding: 28px; border-radius: 36px; background: {{t.bg}}; box-shadow: 0 24px 64px rgba(0,0,0,.24); display: flex; flex-direction: column; gap: 18px;">
     ${body(false)}
@@ -168,7 +169,7 @@ export function makeBoards(H) {
     ${camBtn('Switch camera', 'flip', 'right: 28px; bottom: 50px;')}
   </div></sc-if>`;
   const phoneMake = `<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: ${FONT}; color: {{t.text}};">
-  <dc-import name="PhoneLibrary" dark="{{dark}}" dim="{{dim}}" hint-size="390px,844px"></dc-import>
+  <sc-if value="{{overLibrary}}" hint-placeholder-val="{{ true }}"><dc-import name="PhoneLibrary" dark="{{dark}}" dim="{{dim}}" hint-size="390px,844px"></dc-import></sc-if><sc-if value="{{overDeck}}" hint-placeholder-val="{{ false }}"><dc-import name="PhoneDeck" deck-id="{{behindDeck}}" dark="{{dark}}" dim="{{dim}}" hint-size="390px,844px"></dc-import></sc-if>
   <div style="position: absolute; inset: 0; background: {{t.dim}};"></div>
   <div role="dialog" aria-label="Make cards" style="position: absolute; left: 0; right: 0; bottom: 0; top: 46px; box-sizing: border-box; padding: 16px 20px 30px; border-radius: 36px 36px 0 0; background: {{t.bg}}; display: flex; flex-direction: column; gap: 16px;">
     ${body(true)}
@@ -184,8 +185,10 @@ ${DROP_JS}
 renderVals() {
   ${T}${DB_JS}
   const p = this.props, R = this.rich(), md = this.md(), M = db.mock ? this.mockMaterials().make : db.make, plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
-  M.enter({ kind: p.kind, deckId: p.deckId, from: p.from, guide: p.guide, page: p.page, step: p.step });
-  const v = M.view(), step = v.step, kind = v.kind, o = v.opts, lim = v.limits, mock = !!db.mock;
+  M.enter({ kind: p.kind, deckId: p.deckId, from: p.from, guide: p.guide, page: p.page, step: p.step, onDeck: !!p.onDeck });
+  // Opened from a deck (prop onDeck: its + menu, Sources' Make cards, More from this source), Make sits over that deck, its cards go into it,
+  // and closing comes back to it, not to the Library (the owner, 2026-10-02). On the canvas that deck is Cell Biology.
+  const v = M.view(), step = v.step, kind = v.kind, o = db.mock && p.onDeck && !v.opts.deckId ? { ...v.opts, deckId: 'cell' } : v.opts, lim = v.limits, mock = !!db.mock;
   const TITLES = { file: 'Upload', photo: 'Photos', record: 'Record a lecture', paste: 'Paste', video: 'YouTube', topic: 'A topic' };
   const title = step === 'add' ? (v.from ? 'More cards' : TITLES[kind] || 'Make cards') : step === 'making' ? 'Making your cards' : step === 'review' ? 'Check your cards' : 'Make cards';
   const mmss = s => { s = Math.max(0, Math.floor(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s % 60).padStart(2, '0'); };
@@ -221,7 +224,7 @@ renderVals() {
   return {
     t, ...chrome, dark: !!p.dark, dim: !!p.dim,
     isPick: step === 'pick', isAdd: step === 'add', isMaking: step === 'making', isReview: step === 'review', isError: step === 'error', title,
-    canBack: (step === 'add' && !live) || step === 'error', canClose: step !== 'making' && !live, showFooter: step === 'add' && !live,
+    overDeck: !!p.onDeck, overLibrary: !p.onDeck, behindDeck: o.deckId || p.deckId || '', canBack: (step === 'add' && !live) || step === 'error', canClose: step !== 'making' && !live, showFooter: step === 'add' && !live,
     back: () => M.back(), close: () => (mock ? null : M.close()), cancel: () => M.cancel(), discard: () => M.discard(), retry: () => M.retry(), save: () => M.save(), make: () => M.make(),
     pickFile: () => M.choose('file'), pickPhoto: () => M.choose('photo'), pickRecord: () => M.choose('record'), pickPaste: () => M.choose('paste'), pickVideo: () => M.choose('video'), pickTopic: () => M.choose('topic'),
     // A topic can also be a live game (it needs a big screen, so only the web offers it): the setup opens with the topic filled in.
@@ -265,7 +268,7 @@ renderVals() {
   };
 }`;
 
-  const props = { ...DARK, grain: MESH('Iris').grain, step: { editor: 'enum', default: 'Pick', options: MAKE_STEPS } };
+  const props = { ...DARK, grain: MESH('Iris').grain, step: { editor: 'enum', default: 'Pick', options: MAKE_STEPS }, onDeck: { editor: 'boolean', default: false } };
   return {
     'WebMake': ['Web · Make cards (pick the step)', webMake, { props, logic: logic(false), css: GUIDE_CSS, w: W, h: HH }],
     'PhoneMake': ['iPhone · Make cards (pick the step)', phoneMake, { props, logic: logic(true), css: GUIDE_CSS, w: PW, h: PH }],
@@ -454,7 +457,7 @@ export const DECK_MATERIALS_JS = String.raw`
       noTextLine: kind === 'file' ? (vs.pages ? plural(vs.pages, 'page') + '. ' : '') + 'The cards from it say which page they came from.' : 'Nothing to show.',
       hasOpen: kind === 'video' ? !!vs.url : (kind === 'file' || kind === 'recording') && !!fileHref,
       openHref: kind === 'video' ? vs.url + (secs ? (/\?/.test(vs.url) ? '&' : '?') + 't=' + secs + 's' : '') : kind === 'file' && pageNo ? fileHref + '#page=' + pageNo : kind === 'recording' && secsIn ? fileHref + '#t=' + secsIn : fileHref, openLabel: kind === 'video' ? 'Open the video' : kind === 'recording' ? 'Open the recording' : 'Open the file',
-      canEdit: G.can, moreHref: mock ? 'WebMake.dc.html' : '/make?from=' + encodeURIComponent(vs.id) + '&deck=' + encodeURIComponent(dk.id), remove: () => { if (mock) return; db.act.deleteSource(dk.id, vs.id).then(() => this.setState({ viewing: '' })); } }
+      canEdit: G.can, moreHref: mock ? '@P@DeckMake.dc.html' : '/make?from=' + encodeURIComponent(vs.id) + '&deck=' + encodeURIComponent(dk.id) + '&on=deck', remove: () => { if (mock) return; db.act.deleteSource(dk.id, vs.id).then(() => this.setState({ viewing: '' })); } }
       : { open: false, name: '', line: '', close: () => {}, hasAudio: false, player: null, hasPhotos: false, photos: [], hasTopic: false, topic: '', hasParts: false, parts: [], loading: false, noText: false, noTextLine: '', hasOpen: false, openHref: '', openLabel: '', canEdit: false, moreHref: '', remove: () => {} };
     // The section on show (Cards unless the address or a tap says another, and only a section that is there): ?tab= in the address, a source opened from a card, or the canvas's setting.
     const cardsN = db.cards(dk.id).length, notesTab = hasAny || G.can, sourcesTab = !!G.can, dgTab = !!G.can || dgRows.length > 0;
@@ -485,7 +488,7 @@ export const DECK_MATERIALS_JS = String.raw`
           href: mock ? (n ? '@P@GuidePages.dc.html' : depth ? '@P@GuideNested.dc.html' : '@P@Guide.dc.html') : db.href('guide', dk.id) + (x.id === 'main' ? '' : '?page=' + encodeURIComponent(x.id)) });
         if (open) kids.forEach(k => walk(k, depth + 1)); };
       top.forEach(x => walk(x, 0)); return out; })(), notesNone: !(G.text.trim() || G.pages.length), newNoteHref: mock ? '@NOTES_BOARD@' : db.href('guide', dk.id) + '?new=1', hasText: !!text.trim(), canEdit: G.can, canMake: G.can && !!text.trim(), hasBar: G.pages.length > 0 || (G.can && !!text.trim()),
-      makeHref: mock ? 'WebMake.dc.html' : '/make?deck=' + encodeURIComponent(dk.id), guideText: !!G.text.trim(),
+      makeHref: mock ? '@P@DeckMake.dc.html' : '/make?deck=' + encodeURIComponent(dk.id) + '&on=deck', guideText: !!G.text.trim(),
       hasTabs: G.pages.length > 0, tabs: [{ id: 'main', title: 'Guide' }, ...G.pages].map(x => ({ title: x.title, pressed: x.id === pageId ? 'true' : 'false', bg: x.id === pageId ? t.bg : 'transparent', fg: x.id === pageId ? t.text : t.muted, pick: () => this.setState({ gpage: x.id }) })),
       // the page as it reads; the owner's opens to write in where it was pressed (and an empty one is a blank note)
       ref: el => { if (!el) return; const href = (mock ? 'WebGuide.dc.html' : db.href('guide', dk.id)), q = (pageId === 'main' ? '' : 'page=' + pageId);
@@ -584,8 +587,8 @@ const MATERIALS_MOCK_BASE = String.raw`mockMaterials() {
   const GMODE = p.guide || 'Guide and sources', RO = GMODE === 'Studying (read only)' || GMODE === 'Diagrams (studying)';
   return { make: MK, diagrams: this.diagramsMock(),
     publicGuide: () => (GMODE === 'No guide yet' ? { pages: [], sources: 0 } : { pages: [{ id: 'main', title: 'Guide', text: GD.text }, ...(GMODE === 'Guide pages' ? GD.pages : [])], sources: 5, diagrams: this.diagramsMock().rows().filter(r => r.group === 'Made').map(r => ({ id: r.id, kind: r.kind, name: r.name, at: r.at, ...(r.table ? { table: r.table } : { tree: r.tree }) })) }),
-    guide: () => ({ deckId: 'cell', text: GMODE === 'No guide yet' ? '' : GMODE === 'Long guide' ? GD.text + '\n\n' + GD.text.replace('# Cell Biology: Exam 1', '## More for the exam') : GD.text, at: 0, pages: GMODE === 'Guide pages' ? GD.pages : [], can: !RO, studying: RO }),
-    sources: () => (GMODE === 'No guide yet' || RO ? [] : GD.sources),
+    guide: () => ({ deckId: 'cell', text: p.empty || GMODE === 'No guide yet' ? '' : GMODE === 'Long guide' ? GD.text + '\n\n' + GD.text.replace('# Cell Biology: Exam 1', '## More for the exam') : GD.text, at: 0, pages: GMODE === 'Guide pages' && !p.empty ? GD.pages : [], can: !RO, studying: RO }),
+    sources: () => (GMODE === 'No guide yet' || RO || p.empty ? [] : GD.sources),
     sourceText: name => (/^sx2/.test(name) || /^sx3/.test(name) ? GD.talk : ''),
     guideHistory: () => Promise.resolve([{ at: day(8, 21), saved: 0, text: GD.text.replace('- [x] The electron transport chain', '- [ ] The electron transport chain') }, { at: day(8, 18), saved: 0, text: '# Cell Biology: Exam 1\n\nEverything for the first exam.\n' }]),
     saveGuide: () => Promise.resolve({}), addGuidePage: () => Promise.resolve('g9'), renameGuidePage: () => Promise.resolve({}), deleteGuidePage: () => Promise.resolve({}), restoreGuide: () => Promise.resolve({}), deleteSource: () => Promise.resolve({}) };

@@ -57,6 +57,8 @@ struct DemoProps {
   var free = false
   /// Stats on this tab, the card editor on this card, and the Tune to you row's state.
   var statsTab = "Overview", editCard: String? = nil, tune = "on"
+  /// A folder's page opens with its ⋯ menu open (PhoneLibraryFolderMenu).
+  var folderMenu = false
   /// Settings' plan: "Free", "Pro", "Pro, ending", "Pro, billed by Apple", or "Pro, billed on the web" (the canvas board's `plan`).
   var plan = "Pro"
   /// The Go Pro sheet's state on a design screen (its `state`: Yearly, Monthly, Buying, Error, Not yet, Offline, Loading, or

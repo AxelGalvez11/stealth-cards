@@ -3684,8 +3684,8 @@ mockMaterials() {
   const GMODE = p.guide || 'Guide and sources', RO = GMODE === 'Studying (read only)' || GMODE === 'Diagrams (studying)';
   return { make: MK, diagrams: this.diagramsMock(),
     publicGuide: () => (GMODE === 'No guide yet' ? { pages: [], sources: 0 } : { pages: [{ id: 'main', title: 'Guide', text: GD.text }, ...(GMODE === 'Guide pages' ? GD.pages : [])], sources: 5, diagrams: this.diagramsMock().rows().filter(r => r.group === 'Made').map(r => ({ id: r.id, kind: r.kind, name: r.name, at: r.at, ...(r.table ? { table: r.table } : { tree: r.tree }) })) }),
-    guide: () => ({ deckId: 'cell', text: GMODE === 'No guide yet' ? '' : GMODE === 'Long guide' ? GD.text + '\n\n' + GD.text.replace('# Cell Biology: Exam 1', '## More for the exam') : GD.text, at: 0, pages: GMODE === 'Guide pages' ? GD.pages : [], can: !RO, studying: RO }),
-    sources: () => (GMODE === 'No guide yet' || RO ? [] : GD.sources),
+    guide: () => ({ deckId: 'cell', text: p.empty || GMODE === 'No guide yet' ? '' : GMODE === 'Long guide' ? GD.text + '\n\n' + GD.text.replace('# Cell Biology: Exam 1', '## More for the exam') : GD.text, at: 0, pages: GMODE === 'Guide pages' && !p.empty ? GD.pages : [], can: !RO, studying: RO }),
+    sources: () => (GMODE === 'No guide yet' || RO || p.empty ? [] : GD.sources),
     sourceText: name => (/^sx2/.test(name) || /^sx3/.test(name) ? GD.talk : ''),
     guideHistory: () => Promise.resolve([{ at: day(8, 21), saved: 0, text: GD.text.replace('- [x] The electron transport chain', '- [ ] The electron transport chain') }, { at: day(8, 18), saved: 0, text: '# Cell Biology: Exam 1\n\nEverything for the first exam.\n' }]),
     saveGuide: () => Promise.resolve({}), addGuidePage: () => Promise.resolve('g9'), renameGuidePage: () => Promise.resolve({}), deleteGuidePage: () => Promise.resolve({}), restoreGuide: () => Promise.resolve({}), deleteSource: () => Promise.resolve({}) };
@@ -3712,7 +3712,7 @@ diagramsMock() {
     lecture('g5', 'Enzyme reaction rates', 'Lecture 3 slides', 'Slide 14', CHART, 600, 400, [], 'chart'),
     { id: 'g6', kind: 'upload', name: 'Whiteboard, Sep 22', group: 'Uploaded', at: day(8, 22), src: null, picture: FLOW, w: 720, h: 480, labels: null, figure: '', table: null, tree: null, from: null, cards: 0, size: 0 }
   ];
-  const none = G === 'Diagrams (none yet)', study = G === 'Diagrams (studying)';
+  const none = G === 'Diagrams (none yet)' || !!p.empty, study = G === 'Diagrams (studying)';
   const list = none ? [] : study ? rows.filter(r => r.group === 'Made') : rows;
   const open = { 'A picture open': 'g3', 'An uploaded picture open': 'g6', 'A table open': 'g1', 'A mind map open': 'g2', 'Renaming a diagram': 'g3', 'Delete asked': 'g3' }[G] || '';
   const view = { open, sheet: /^Make diagram|^Making a diagram/.test(G), type: 'table', scope: { kind: 'all', value: '' }, making: G === 'Making a diagram', error: G === 'Make diagram (it didn’t work)' ? { message: 'That’s today’s 3 free diagrams. Go Pro for 30 a day.', pro: true, code: 'day', again: false } : null,

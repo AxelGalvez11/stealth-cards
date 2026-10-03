@@ -236,7 +236,7 @@ export const DIAGRAMS_MOCK = String.raw`diagramsMock() {
     lecture('g5', 'Enzyme reaction rates', 'Lecture 3 slides', 'Slide 14', CHART, 600, 400, [], 'chart'),
     { id: 'g6', kind: 'upload', name: 'Whiteboard, Sep 22', group: 'Uploaded', at: day(8, 22), src: null, picture: FLOW, w: 720, h: 480, labels: null, figure: '', table: null, tree: null, from: null, cards: 0, size: 0 }
   ];
-  const none = G === 'Diagrams (none yet)', study = G === 'Diagrams (studying)';
+  const none = G === 'Diagrams (none yet)' || !!p.empty, study = G === 'Diagrams (studying)';
   const list = none ? [] : study ? rows.filter(r => r.group === 'Made') : rows;
   const open = { 'A picture open': 'g3', 'An uploaded picture open': 'g6', 'A table open': 'g1', 'A mind map open': 'g2', 'Renaming a diagram': 'g3', 'Delete asked': 'g3' }[G] || '';
   const view = { open, sheet: /^Make diagram|^Making a diagram/.test(G), type: 'table', scope: { kind: 'all', value: '' }, making: G === 'Making a diagram', error: G === 'Make diagram (it didn’t work)' ? { message: 'That’s today’s 3 free diagrams. Go Pro for 30 a day.', pro: true, code: 'day', again: false } : null,
