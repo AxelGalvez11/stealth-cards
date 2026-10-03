@@ -233,6 +233,6 @@ struct NewsBell: View {
         }
     }
     .buttonStyle(.press)
-    .accessibilityLabel(count > 0 ? "News, \(count) new" : "News")
+    .accessibilityLabel(count > 0 ? "Notifications, \(count) new" : "Notifications")
   }
 }

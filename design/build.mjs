@@ -20,7 +20,7 @@ import { THEMES } from '../web/themes/index.js';
 import { THEME_KEYS, themeCss, themeFonts, themeStatic } from './themes.mjs';
 import { LEVELS, YEARS, SUBJECTS } from '../web/school.js';
 import testKit from './test-boards.mjs';
-import { makeBoards, deckBlocks, publicGuideBlocks, PUBLIC_GUIDE_JS, DECK_MATERIALS_JS, GUIDE_CSS, GUIDE_STATES, MATERIALS_MOCK, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
+import { makeBoards, deckBlocks, publicGuideBlocks, PUBLIC_GUIDE_JS, deckMaterialsJs, GUIDE_CSS, GUIDE_STATES, MATERIALS_MOCK, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
 import { DIAGRAM_METHOD, DIAGRAM_CSS, PUBLIC_DIAGRAMS_JS, publicDiagramBlocks } from './diagrams.mjs';
 import { askMarkup, toastMarkup, ASK_SAMPLES, ASK_JS, askProp, dateMarkup, DATE_JS, dropMarkup, dropSheet, dropPill, DROP_JS, PLAYER_JS } from './ui.mjs';
 // The themes (Pro), for boards' logic: key, board name, short and full names.
@@ -264,7 +264,7 @@ const navRow = (label, icon, href, on, more = '', attrs = '') => `<a href="${hre
 // by the logo, with how many are new. The button beside it collapses the sidebar to the rail, and opens it again (aria-expanded);
 // its place in the page doesn't move, so a keyboard keeps its focus when it's pressed.
 const sidebar = active => `<nav id="sidebar" class="sc-side" aria-label="Main" data-collapsed="{{nav.collapsed}}" style="flex-shrink: 0; box-sizing: border-box; padding: 24px 16px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid {{t.line}}; overflow: hidden;">
-  <div class="sc-side-head"><div class="sc-logo">${logo()}</div><div class="sc-side-btns"><a href="WebActivity.dc.html" aria-label="News" data-tip="{{nav.tip.news}}"${active === 'News' ? ' aria-current="page"' : ''} style="position: relative; width: 32px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; ${active === 'News' ? 'background: {{t.surf}}; color: {{t.text}};' : 'color: {{t.muted}};'}">${svg(I.bell, 18, 1.8)}<sc-if value="{{nav.hasNews}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: 1px; right: 0; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 8px; background: #E5484D; color: #FFFFFF; font-size: 10px; font-weight: 700; line-height: 16px; text-align: center;">{{nav.news}}</span></sc-if></a><button type="button" onClick="{{nav.toggleSide}}" aria-label="{{nav.sideLabel}}" aria-expanded="{{nav.sideOpen}}" aria-controls="sidebar" data-tip="{{nav.sideLabel}}" class="sc-press" style="width: 32px; height: 32px; flex-shrink: 0; padding: 0; border: 0; border-radius: 16px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.sidebar, 18, 1.8)}</button></div></div>
+  <div class="sc-side-head"><div class="sc-logo">${logo()}</div><div class="sc-side-btns"><a href="WebActivity.dc.html" aria-label="Notifications" data-tip="{{nav.tip.news}}"${active === 'News' ? ' aria-current="page"' : ''} style="position: relative; width: 32px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; ${active === 'News' ? 'background: {{t.surf}}; color: {{t.text}};' : 'color: {{t.muted}};'}">${svg(I.bell, 18, 1.8)}<sc-if value="{{nav.hasNews}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: 1px; right: 0; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 8px; background: #E5484D; color: #FFFFFF; font-size: 10px; font-weight: 700; line-height: 16px; text-align: center;">{{nav.news}}</span></sc-if></a><button type="button" onClick="{{nav.toggleSide}}" aria-label="{{nav.sideLabel}}" aria-expanded="{{nav.sideOpen}}" aria-controls="sidebar" data-tip="{{nav.sideLabel}}" class="sc-press" style="width: 32px; height: 32px; flex-shrink: 0; padding: 0; border: 0; border-radius: 16px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.sidebar, 18, 1.8)}</button></div></div>
   ${NAV_A.map(([label, ic, href]) => navRow(label, ic === 'me' ? MY_ICON_A : svg(I[ic]), href, label === active, '', label === 'Profile' ? ' aria-label="Your profile"' : '')).join('\n  ')}
   <div style="flex-grow: 1;"></div>
   ${navRow('Settings', svg(I.gear), 'WebSettings.dc.html', active === 'Settings', '', ' aria-label="Settings"')}
@@ -1216,7 +1216,7 @@ const EXAM_ROW = `<div style="display: flex; flex-direction: column; gap: 6px;">
 // Cards you keep forgetting: how many forgets make one, and whether it gets the Leech tag or is paused.
 const LEECH_ROW = `<div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 14px; font-weight: 600;">Cards you keep forgetting</span><div style="display: flex; align-items: center; gap: 10px;"><span style="font-size: 13px; color: {{t.muted}};">After</span>${miniStep('leechN', 'lessLeech', 'moreLeech', '{{t.surf}}')}<span style="font-size: 13px; color: {{t.muted}};">forgets</span></div>${panelSeg('leechActs', 'What happens to them', 2)}</div>`;
 // On Free: what Pro adds here.
-const STUDY_TEASER = `<div style="padding: 16px 18px; border-radius: 20px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 8px;"><span style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600;">Plan your reviews${PRO_BADGE}</span><span style="font-size: 13px; line-height: 1.45; color: {{t.muted}};">See how many reviews a day each goal means, set an exam date, and choose what happens to cards you keep forgetting.</span><a href="{{proHref}}" class="sc-press" style="align-self: flex-start; margin-top: 4px; height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600;">Go Pro</a></div>`;
+const STUDY_TEASER = `<div style="padding: 16px 18px; border-radius: 20px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 8px;"><span style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600;">Plan your reviews${PRO_BADGE}</span><span style="font-size: 13px; line-height: 1.45; color: {{t.muted}};">Set an exam date, and choose what happens to cards you keep forgetting.</span><a href="{{proHref}}" class="sc-press" style="align-self: flex-start; margin-top: 4px; height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600;">Go Pro</a></div>`;
 const deckSettingsBody = phone => `<div style="display: flex; align-items: center; justify-content: space-between;"><span style="font-size: ${phone ? 18 : 20}px; font-weight: 600; letter-spacing: -.01em;">Deck settings</span>${phone
     ? `<button type="button" onClick="{{closeSettings}}" style="height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">Done</button>`
     : `<button type="button" onClick="{{closeSettings}}" aria-label="Close settings" style="width: 36px; height: 36px; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${svg(I.close, 14, 2.2)}</button>`}</div>
@@ -1240,7 +1240,7 @@ const deckSettingsBody = phone => `<div style="display: flex; align-items: cente
       </div></sc-if>
       <sc-if value="{{dsStudy}}" hint-placeholder-val="{{ false }}"><div style="flex-grow: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 16px;">
         <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Grade with</span>${modeSeg(true)}</div>
-        <sc-if value="{{fsrsOn}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 12px;">${GOAL_PLANS}<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">${stepper('Remember goal', 'goal', 'lessGoal', 'moreGoal', true)}${stepper('Longest gap', 'gapLabel', 'lessGap', 'moreGap', true)}</div>${GOAL_COST}</div></sc-if>
+        
         <div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; font-weight: 600;">New cards a day</span><span style="font-size: 12px; color: {{t.muted}};">Unseen cards added each day</span></span>${miniStep('perDay', 'lessDay', 'moreDay', '{{t.surf}}', 'perDayIn')}</div>
         <sc-if value="{{proOn}}" hint-placeholder-val="{{ true }}">${EXAM_ROW}${LEECH_ROW}</sc-if>
         <sc-if value="{{examLeft}}" hint-placeholder-val="{{ false }}">${EXAM_ROW}</sc-if>
@@ -1381,7 +1381,7 @@ const CARD_DRAG_JS = phone => `const others = db.decks().filter(d => d.id !== dk
 const deckLogic = `
 constructor(props) { super(props); this.state = { filter: 'All', tagMenuOpen: false, tagQ: '', q: '' }; }
 renderVals() {
-  ${T}${DB_JS}${COVER_LOGIC}${DECK_MATERIALS_JS}
+  ${T}${DB_JS}${COVER_LOGIC}${deckMaterialsJs(false)}
   ${LIFT_JS}
   ${CARD_DRAG_JS(false)}
   ${DECK_MENUS_JS(false)}
@@ -3052,7 +3052,7 @@ const WEB_DEEP = `<sc-if value="{{isMemory}}" hint-placeholder-val="{{ false }}"
     <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; flex-grow: 1; min-height: 0;">
       ${statBox(boxHead('Forgotten often') + boxEmpty('weak.forgot') + `<sc-if value="{{weak.forgot.some}}" hint-placeholder-val="{{ true }}">${bigNum('{{weak.forgot.big}}', '{{weak.forgot.sub}}')}<div style="margin-top: auto;">${miniHist('weak.forgot.bars', 6, 120)}</div><span style="font-size: 12px; color: {{t.muted}};">Cards by times forgotten</span></sc-if>`)}
       ${statBox(boxHead('How hard your cards are') + boxEmpty('weak.diff') + `<sc-if value="{{weak.diff.some}}" hint-placeholder-val="{{ true }}"><div style="margin-top: auto;">${miniHist('weak.diff.bars', 9, 150)}</div><div style="display: flex; justify-content: space-between; font-size: 12px; color: {{t.muted}};"><span>Easy</span><span>Hard</span></div></sc-if>`)}
-      ${statBox(boxHead('Cards you keep forgetting') + `${bigNum('{{weak.leech.big}}', '{{weak.leech.sub}}')}<sc-if value="{{weak.leech.some}}" hint-placeholder-val="{{ true }}">${LEECH_DECKS}<div style="margin-top: auto; display: flex; gap: 8px;">${smallPill('See them', '{{weak.leech.seeHref}}')}<sc-if value="{{weak.leech.canStudy}}" hint-placeholder-val="{{ true }}">${smallPill('Study them', '{{weak.leech.studyHref}}', true)}</sc-if></div></sc-if>`)}
+      ${statBox(boxHead('Cards you keep forgetting') + `${bigNum('{{weak.leech.big}}', '{{weak.leech.sub}}')}<sc-if value="{{weak.leech.some}}" hint-placeholder-val="{{ true }}">${LEECH_DECKS}<div style="margin-top: auto; display: flex; gap: 8px;"><sc-if value="{{weak.leech.canStudy}}" hint-placeholder-val="{{ true }}">${smallPill('Study them', '{{weak.leech.studyHref}}', true)}</sc-if></div></sc-if>`)}
     </div>
   </sc-if>
   <sc-if value="{{isPace}}" hint-placeholder-val="{{ false }}">
@@ -3075,7 +3075,7 @@ const PHONE_DEEP = `<sc-if value="{{isMemory}}" hint-placeholder-val="{{ false }
   <sc-if value="{{isWeak}}" hint-placeholder-val="{{ false }}">
     ${statBox(boxHead('Weakest tags', 'Remembered least', true) + boxEmpty('weak.tags') + `<div style="display: flex; flex-direction: column;"><sc-for list="{{weak.tags.rows}}" as="g" hint-placeholder-count="5">${tagBar(true, true)}</sc-for></div>`, '', true)}
     ${statBox(boxHead('Hardest cards', '', true) + boxEmpty('weak.hard') + `<div style="display: flex; flex-direction: column;"><sc-for list="{{weak.hard.rows}}" as="h" hint-placeholder-count="4">${hardRow}</sc-for></div><sc-if value="{{weak.hard.some}}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 8px;">${smallPill('Study these', '{{weak.hard.studyHref}}', true)}</div></sc-if>`, '', true)}
-    ${statBox(boxHead('Cards you keep forgetting', '', true) + `${bigNum('{{weak.leech.big}}', '{{weak.leech.sub}}')}<sc-if value="{{weak.leech.some}}" hint-placeholder-val="{{ true }}">${LEECH_DECKS}<div style="display: flex; gap: 8px;"><sc-if value="{{weak.leech.canStudy}}" hint-placeholder-val="{{ true }}">${smallPill('Study them', '{{weak.leech.studyHref}}', true)}</sc-if>${smallPill('See them', '{{weak.leech.seeHref}}')}</div></sc-if>`, '', true)}
+    ${statBox(boxHead('Cards you keep forgetting', '', true) + `${bigNum('{{weak.leech.big}}', '{{weak.leech.sub}}')}<sc-if value="{{weak.leech.some}}" hint-placeholder-val="{{ true }}">${LEECH_DECKS}<div style="display: flex; gap: 8px;"><sc-if value="{{weak.leech.canStudy}}" hint-placeholder-val="{{ true }}">${smallPill('Study them', '{{weak.leech.studyHref}}', true)}</sc-if></div></sc-if>`, '', true)}
     ${statBox(boxHead('Forgotten often', '', true) + boxEmpty('weak.forgot') + `<sc-if value="{{weak.forgot.some}}" hint-placeholder-val="{{ true }}">${bigNum('{{weak.forgot.big}}', '{{weak.forgot.sub}}')}${miniHist('weak.forgot.bars', 6, 60)}<span style="font-size: 12px; color: {{t.muted}};">Cards by times forgotten</span></sc-if>`, '', true)}
     ${statBox(boxHead('How hard your cards are', '', true) + boxEmpty('weak.diff') + `<sc-if value="{{weak.diff.some}}" hint-placeholder-val="{{ true }}">${miniHist('weak.diff.bars', 9, 70)}<div style="display: flex; justify-content: space-between; font-size: 12px; color: {{t.muted}};"><span>Easy</span><span>Hard</span></div></sc-if>`, '', true)}
   </sc-if>
@@ -3136,7 +3136,7 @@ const DEEP_JS = phone => `
         bars: w.diffDist.map(b => ({ label: b.label, title: 'Difficulty ' + b.label + ': ' + num(b.n) + ' cards', h: Math.max(3, Math.round(b.n / dmax * ${phone ? 70 : 150})) + 'px', c: shade(b.n, dmax) })) },
       leech: { some: w.leeches.length > 0, big: num(w.leeches.length), sub: !w.leeches.length ? 'None right now' : paused ? paused + ' paused' : '', canStudy: w.leeches.some(c => !c.paused),
         decks: Object.entries(w.leeches.reduce((a, c) => ({ ...a, [c.deck]: (a[c.deck] || 0) + 1 }), {})).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name, n]) => ({ name, n: String(n) })),
-        seeHref: db.mock ? board('LibraryCards') : '/library/cards', studyHref: db.mock ? board('Review') : '/review?set=leech' } } });
+        studyHref: db.mock ? board('Review') : '/review?set=leech' } } });
     // Pace: time per card, what's coming, how your gaps grow, and any exams.
     const tm = p.time, timed = tm.n >= 5, amax = Math.max(1, ...p.ahead.map(b => b.n)), gs = p.gaps.slice(${phone ? -8 : -12}), gv = gs.filter(b => b.days != null), gmax = Math.max(1, ...gv.map(b => b.days));
     Object.assign(deepVals, { pace: {
@@ -3694,7 +3694,7 @@ const roundBtn = (ic, label, href = '', attrs = '') => href ? `<a href="${href}"
 // The bell: News (suggestions on your decks, people following you, updates to decks you follow), with how many are new. On the iPhone it
 // is in Discover's header, for someone signed in (it was in Today's until there was no Today, 2026-10-01); the web keeps it in the
 // sidebar, by the logo.
-const NEWS_BTN = `<a href="PhoneActivity.dc.html" aria-label="News" style="position: relative; width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.bell, 18, 2)}<sc-if value="{{nav.hasNews}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px; background: #E5484D; color: #FFFFFF; box-shadow: 0 0 0 2px {{t.bg}}; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;">{{nav.news}}</span></sc-if></a>`;
+const NEWS_BTN = `<a href="PhoneActivity.dc.html" aria-label="Notifications" style="position: relative; width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;">${svg(I.bell, 18, 2)}<sc-if value="{{nav.hasNews}}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px; background: #E5484D; color: #FFFFFF; box-shadow: 0 0 0 2px {{t.bg}}; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;">{{nav.news}}</span></sc-if></a>`;
 
 // Check AI cards: tap the card to see its answer (a blank fills in place), then keep or toss it.
 const INBOX_ITEMS = `[
@@ -3790,7 +3790,7 @@ ${pickSheet('lbLevel')}${pickSheet('lbSubject', true)}${pickSheet('lbSchool', tr
 ${DBP.viewer}${DBP.dgViewer}${DBP.dgSheet}`);
 const phoneDeckLogic = `
 constructor(props) { super(props); this.state = {}; }
-renderVals() { ${T}${DB_JS}${COVER_LOGIC}${DECK_MATERIALS_JS}
+renderVals() { ${T}${DB_JS}${COVER_LOGIC}${deckMaterialsJs(true)}
   ${LIFT_JS}
   ${CARD_DRAG_JS(true)}
   ${DECK_MENUS_JS(true)}
@@ -4139,7 +4139,6 @@ const phoneSettings = phone(`<div style="padding: 64px 20px 34px; display: flex;
     // Off, or a time: the iPhone's own (the web has no reminder, so a screen in the web app doesn't show the row).
     { when: 'hasReminder', row: sPick('Daily reminder', 'reminder', ['reminderNote', 'reminderPlain', 'Allow notifications for Lucida in iPhone Settings.']) },
     sPick('New cards a day', 'perDay'),
-    sPick('Remember goal', 'goal'),
     sRow('Flip animation', SWITCH('flipSw', 'toggleFlip', 'Flip animation')),
     TUNE_ROW
   ], 'showTitles'))}
@@ -4235,7 +4234,6 @@ const webSettings = webRoot(`${SETTINGS_SIDEBAR}
       ${WEB_PAGE('plan', 'Plan', [planGroups(sBox)])}
       ${WEB_PAGE('studying', 'Studying', [sBox([
         sRow('New cards a day', miniStep('perDay', 'lessDay', 'moreDay', '{{t.bg}}', 'perDayIn')),
-        sRow('Remember goal', miniStep('goal', 'lessGoal', 'moreGoal')),
         sRow('Flip animation', SWITCH('flipSw', 'toggleFlip', 'Flip animation')),
         sRow('Grade with', SEG('gradeOpts', 'Grade with')),
         sRow('Progress', SEG('progOpts', 'Progress')),
@@ -7810,12 +7808,12 @@ const NEWS_ROW = phone => `<a href="{{n.href}}" style="display: flex; align-item
 const NEWS_EMPTY = phone => `<sc-if value="{{nothing}}" hint-placeholder-val="{{ false }}"><div style="padding: ${phone ? '40px 20px' : '56px 24px'}; border-radius: ${phone ? 22 : 24}px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">Nothing new</div></sc-if>
   <sc-if value="{{offline}}" hint-placeholder-val="{{ false }}"><div style="padding: ${phone ? '40px 20px' : '56px 24px'}; border-radius: ${phone ? 22 : 24}px; background: {{t.surf}}; text-align: center; font-size: 15px; color: {{t.muted}};">Couldn’t reach Lucida. Check your connection.</div></sc-if>`;
 const webActivity = netRoot('News', `
-    <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">News</h1>
+    <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -.03em;">Notifications</h1>
     ${NET_LOADING(3)}
     <sc-if value="{{hasItems}}" hint-placeholder-val="{{ true }}"><div style="max-width: 800px; display: flex; flex-direction: column;"><sc-for list="{{items}}" as="n" hint-placeholder-count="5">${NEWS_ROW(false)}</sc-for></div></sc-if>
     ${NEWS_EMPTY(false)}`);
 const phoneActivity = phone(`<div style="padding: 64px 20px 34px; display: flex; flex-direction: column; gap: 16px;">
-  <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneDiscover.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">News</div><div style="width: 44px;"></div></div>
+  <div style="display: flex; align-items: center; gap: 12px;">${roundBtn('back', 'Back', 'PhoneDiscover.dc.html')}<div style="flex-grow: 1; font-size: 17px; font-weight: 600; text-align: center;">Notifications</div><div style="width: 44px;"></div></div>
   ${NET_LOADING(3)}
   <sc-if value="{{hasItems}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column;"><sc-for list="{{items}}" as="n" hint-placeholder-count="5">${NEWS_ROW(true)}</sc-for></div></sc-if>
   ${NEWS_EMPTY(true)}
@@ -8555,7 +8553,7 @@ const PROFILE_PROPS = { ...DARK, grain: MESH('Iris').grain, tab: { editor: 'enum
 // Pro's states on the canvas: Free (what Pro adds), the Stats page's tabs, All cards' filters, a paused card, and Tune to
 // you's states in Settings. Deck settings can open with the goal stepped from 90% to 95%.
 const FREE_PROP = { editor: 'boolean', default: false };
-const PRO_DECK_PROPS = { free: FREE_PROP, stepGoal: { editor: 'boolean', default: false } };
+const PRO_DECK_PROPS = { free: FREE_PROP };
 // The deck page's Guide and Sources: with both, with the Guide's extra pages, a long Guide, a source opened, nothing yet, or a deck you only study.
 const GUIDE_STATE = { section: { editor: 'enum', default: 'Cards', options: ['Cards', 'Notes', 'Diagrams', 'Sources'] }, guide: { editor: 'enum', default: 'Guide and sources', options: GUIDE_STATES }, sourceOpen: { editor: 'string', default: '' }, sourceAt: { editor: 'string', default: '' } };
 const STATS_PROPS = { tab: { editor: 'enum', default: 'Overview', options: ['Overview', 'Memory', 'Weak spots', 'Pace'] }, free: FREE_PROP };
@@ -8762,7 +8760,6 @@ const files = {
   'WebDeckCopy': ['Web · Deck page · your copy, with the owner’s changes waiting', attrOf('WebDeck', W, H, 'linked="copy"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckUpdates': ['Web · Deck page · your copy · the owner’s changes (take or skip)', attrOf('WebDeck', W, H, 'linked="copy" updates-open="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckSettingsFrom': ['Web · Deck settings · Sharing (a deck you study)', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" settings-tab="Sharing" linked="study"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
-  'WebDeckSettingsGoal': ['Web · Deck settings · Studying · goal raised to 95% (reviews a day)', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" settings-tab="Studying" step-goal="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckSettingsStudyFree': ['Web · Deck settings · Studying · on Free (what Pro adds)', attrOf('WebDeck', W, H, 'settings-open="{{yes}}" settings-tab="Studying" free="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckDark': ['Web · Deck page (dark)', darkOf('WebDeck', W, H), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebStatsDark': ['Web · Stats (dark)', darkOf('WebStats', W, H), { logic: darkLogic, w: W, h: H }],
@@ -8799,7 +8796,6 @@ const files = {
   'PhoneInbox': ['iPhone · Check AI cards', phoneInbox, { props: DARK, logic: phoneInboxLogic, css: REVIEW_CSS, w: PW, h: PH }],
   'PhoneDeck': ['iPhone · Deck page', phoneDeck, { props: { ...DARK, grain: MESH('Iris').grain, menu: DECK_MENU_PROP, calendar: { editor: 'enum', default: '', options: ['', 'Exam date'] }, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, ...SHARE_PROPS, ...PRO_DECK_PROPS, ...GUIDE_STATE }, logic: phoneDeckLogic, css: NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsStudy': ['iPhone · Deck settings · Studying (FSRS)', studyOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
-  'PhoneDeckSettingsGoal': ['iPhone · Deck settings · Studying · goal raised to 95% (reviews a day)', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" settings-tab="Studying" step-goal="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsStudyFree': ['iPhone · Deck settings · Studying · on Free (what Pro adds)', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" settings-tab="Studying" free="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSettingsShare': ['iPhone · Deck settings · Sharing (a public deck)', attrOf('PhoneDeck', PW, PH, 'settings-open="{{yes}}" settings-tab="Sharing" shared="Public"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckStudyMenu': ['iPhone · Deck page · Study menu open', attrOf('PhoneDeck', PW, PH, 'menu="Study"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
@@ -8887,7 +8883,7 @@ const files = {
   'PhoneSettingsFree': ['iPhone · Settings · on Free (Tune to you is Pro)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'plan="Free"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneSettingsVerified': ['iPhone · Settings · a verified teacher (Get verified says Verified teacher)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'verified="Teacher"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneSettingsGetVerified': ['iPhone · Settings · Get verified (a teacher or a school asks)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'verify-open="{{yes}}"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
-  'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, passwordOpen: BOOL, dropdown: { editor: 'enum', default: '', options: ['', 'Daily reminder', 'New cards a day', 'Remember goal'] }, photo: PHOTO_PROP, plan: SETTINGS_PLAN_PROP, tune: TUNE_PROP, verified: VERIFIED_PROP, verifyOpen: BOOL, reminder: REMINDER_PROP, reminderNote: BOOL, section: PHONE_SECTION_PROP, ...ACCOUNT_PROPS }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
+  'PhoneSettings': ['iPhone · Settings', phoneSettings, { props: { ...DARK, passwordOpen: BOOL, dropdown: { editor: 'enum', default: '', options: ['', 'Daily reminder', 'New cards a day'] }, photo: PHOTO_PROP, plan: SETTINGS_PLAN_PROP, tune: TUNE_PROP, verified: VERIFIED_PROP, verifyOpen: BOOL, reminder: REMINDER_PROP, reminderNote: BOOL, section: PHONE_SECTION_PROP, ...ACCOUNT_PROPS }, logic: phoneSettingsLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneSettingsDelete': ['iPhone · Settings · Delete account (the question)', attrOf('PhoneSettings', PW, PHONE_SETTINGS_H, 'delete-open="Asking"'), { logic: darkLogic, w: PW, h: PHONE_SETTINGS_H }],
   'PhoneDeckSettings': ['iPhone · Deck settings', openOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckDark': ['iPhone · Deck page (dark)', darkOf('PhoneDeck', PW, PH), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
@@ -8940,10 +8936,10 @@ const files = {
   'WebProfileSignedOut': ['Web · Profile · signed out (anyone can look)', attrOf('WebProfile', W, H, 'handle="mariasantos" signed-out="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
   'WebProfileDark': ['Web · Profile (dark)', darkOf('WebProfile', W, H), { logic: darkLogic, w: W, h: H }],
   'WebProfileGray': ['Web · Profile (dark, gray)', grayOf('WebProfile', W, H), { logic: darkLogic, w: W, h: H }],
-  'WebActivity': ['Web · News', webActivity, { props: { ...DARK, loading: BOOL, empty: BOOL }, logic: NEWS_LOGIC(false), w: W, h: H }],
-  'WebActivityEmpty': ['Web · News · nothing new', attrOf('WebActivity', W, H, 'empty="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
-  'WebActivityDark': ['Web · News (dark)', darkOf('WebActivity', W, H), { logic: darkLogic, w: W, h: H }],
-  'WebActivityGray': ['Web · News (dark, gray)', grayOf('WebActivity', W, H), { logic: darkLogic, w: W, h: H }],
+  'WebActivity': ['Web · Notifications', webActivity, { props: { ...DARK, loading: BOOL, empty: BOOL }, logic: NEWS_LOGIC(false), w: W, h: H }],
+  'WebActivityEmpty': ['Web · Notifications · nothing new', attrOf('WebActivity', W, H, 'empty="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebActivityDark': ['Web · Notifications (dark)', darkOf('WebActivity', W, H), { logic: darkLogic, w: W, h: H }],
+  'WebActivityGray': ['Web · Notifications (dark, gray)', grayOf('WebActivity', W, H), { logic: darkLogic, w: W, h: H }],
   'PhoneProfile': ['iPhone · Profile (yours)', phoneProfile, { props: PROFILE_PROPS, logic: PROFILE_LOGIC(true), w: PW, h: PH }],
   'PhoneProfileOther': ['iPhone · Profile · someone else’s', attrOf('PhoneProfile', PW, PH, 'handle="mariasantos"'), { logic: darkLogic, w: PW, h: PH }],
   'PhoneProfileReport': ['iPhone · Profile · someone else’s · Report', attrOf('PhoneProfile', PW, PH, 'handle="mariasantos" report="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
@@ -8959,10 +8955,10 @@ const files = {
   'PhoneProfileSignedOut': ['iPhone · Profile · signed out (anyone can look)', attrOf('PhoneProfile', PW, PH, 'handle="mariasantos" signed-out="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
   'PhoneProfileDark': ['iPhone · Profile (dark)', darkOf('PhoneProfile', PW, PH), { logic: darkLogic, w: PW, h: PH }],
   'PhoneProfileGray': ['iPhone · Profile (dark, gray)', grayOf('PhoneProfile', PW, PH), { logic: darkLogic, w: PW, h: PH }],
-  'PhoneActivity': ['iPhone · News', phoneActivity, { props: { ...DARK, loading: BOOL, empty: BOOL }, logic: NEWS_LOGIC(true), w: PW, h: PH }],
-  'PhoneActivityEmpty': ['iPhone · News · nothing new', attrOf('PhoneActivity', PW, PH, 'empty="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
-  'PhoneActivityDark': ['iPhone · News (dark)', darkOf('PhoneActivity', PW, PH), { logic: darkLogic, w: PW, h: PH }],
-  'PhoneActivityGray': ['iPhone · News (dark, gray)', grayOf('PhoneActivity', PW, PH), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneActivity': ['iPhone · Notifications', phoneActivity, { props: { ...DARK, loading: BOOL, empty: BOOL }, logic: NEWS_LOGIC(true), w: PW, h: PH }],
+  'PhoneActivityEmpty': ['iPhone · Notifications · nothing new', attrOf('PhoneActivity', PW, PH, 'empty="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneActivityDark': ['iPhone · Notifications (dark)', darkOf('PhoneActivity', PW, PH), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneActivityGray': ['iPhone · Notifications (dark, gray)', grayOf('PhoneActivity', PW, PH), { logic: darkLogic, w: PW, h: PH }],
   // A shared deck's page, suggesting changes, Suggestions, and History.
   'WebPublicDeck': ['Web · Shared deck page', webPublicDeck, { props: PD_PROPS, logic: PUBLIC_DECK_LOGIC(false), css: GUIDE_CSS + DIAGRAM_CSS, w: W, h: H }],
   'WebPublicDeckStudying': ['Web · Shared deck page · a deck you study', attrOf('WebPublicDeck', W, H, 'studying="{{yes}}"'), { logic: darkLogic, w: W, h: H }],

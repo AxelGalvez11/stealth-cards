@@ -20,7 +20,7 @@ struct NewsScreen: View {
       VStack(alignment: .leading, spacing: 16) {
         HStack(spacing: 12) {
           RoundButton(icon: "back", label: "Back") { nav.back() }
-          Text("News").css(17, .semibold).frame(maxWidth: .infinity).accessibilityAddTraits(.isHeader)
+          Text("Notifications").css(17, .semibold).frame(maxWidth: .infinity).accessibilityAddTraits(.isHeader)
           Color.clear.frame(width: 44, height: 44)
         }
         .foregroundStyle(t.text)

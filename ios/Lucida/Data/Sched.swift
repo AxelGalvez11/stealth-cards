@@ -1,11 +1,14 @@
 // Lucida's scheduling rules on top of FSRS (web/sched.js, ported), the same in the app, on the server, and in AI apps, so
 // all of them agree on what comes up: cards you paused never do, cards you keep forgetting get marked, an exam date
-// brings cards up early, and a memory goal has a price in reviews a day.
+// brings cards up early, and every deck is held to the same memory goal.
 import Foundation
 
 enum Sched {
-  // A deck's longest gap (its gapIdx picks one), in days.
+  // A deck's longest gap (its gapIdx picks one), in days. Decks no longer choose one, but old data keeps its gapIdx.
   static let GAPS = [30, 90, 180, 365, 730, 1825, 3650]
+  // Every deck is held to a 90% chance of remembering, with a year at most between reviews: there's nothing to set (the owner, 2026-10-02:
+  // "remove all of this… for all screens in iphone and web"). A deck's stored goal and gapIdx are ignored (sched.js GOAL, MAX_DAYS).
+  static let GOAL = 0.9, MAX_DAYS = 365
   /// FSRS picks when a deck's cards come back, unless it grades with piles or has FSRS turned off.
   /// FSRS always schedules 4 grades and ✓ / ✗; piles only sort cards. A deck's old `fsrs: false` no longer turns it off (the owner, 2026-10-02).
   static func scheduled(_ d: Deck?) -> Bool { d != nil && d!.grading != "piles" }
@@ -42,7 +45,7 @@ enum Sched {
   static func examIn(_ d: Deck?, _ now: Double) -> Int? { examDay(d).map { Int(FSRS.jsRound(($0 - dayAt(now)) / DAY)) } }
   /// The goal a card is held to `n` days before the exam.
   static func examGoal(_ d: Deck?, _ n: Int?) -> Double {
-    let g = Double(d?.goal == 0 ? 90 : d?.goal ?? 90) / 100, top = max(g, EXAM_GOAL)
+    let g = GOAL, top = max(g, EXAM_GOAL)
     guard let n, n >= 0, Double(n) <= EXAM_DAYS else { return g }
     return g + (top - g) * (1 - Double(n) / EXAM_DAYS)
   }
@@ -102,7 +105,7 @@ enum Sched {
   /// a forgotten one about once more, and the deck's new cards a day start on top. It's the steady rate, cheap enough to
   /// work out again at every step of the goal.
   static func workload(_ cards: [Card], _ d: Deck, _ goal: Double) -> Double {
-    let maxDays = Double(GAPS[min(max(d.gapIdx, 0), GAPS.count - 1)])
+    let maxDays = Double(MAX_DAYS)
     var rate = 0.0, left = 0
     for c in cards {
       if c.pending || c.paused { continue }
