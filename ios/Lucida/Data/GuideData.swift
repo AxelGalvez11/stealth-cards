@@ -14,12 +14,45 @@ struct GuideVM: Equatable {
   var can = false, studying = false
   /// It has words on the Guide, or has pages.
   var hasAny: Bool { !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !pages.isEmpty }
+  /// The Guide as a page of its own ("main"), then its pages.
+  var all: [MakeGuidePage] { [MakeGuidePage(id: "main", title: "Guide", text: text)] + pages }
   /// The Guide itself, or one of its pages, by id ("main" for the Guide).
   func page(_ id: String) -> (id: String, title: String, text: String) {
     if id != "main", let p = pages.first(where: { $0.id == id }) { return (p.id, p.title, p.text) }
     return ("main", "Guide", text)
   }
 }
+
+/// A note's name, its first words and how long it is, as the Notes list and a page's Pages inside show them (design/materials.mjs nbHead, nbPreview, nbPlain,
+/// nbWords: the same words as the web).
+enum NoteText {
+  /// Its lines as words: no marks of a toggle, heading, list or to-do, no bold or code marks, a link's words without its address.
+  static func plain(_ s: String) -> [String] {
+    s.components(separatedBy: "\n").map { l -> String in
+      var x = l
+      for (pat, to) in [(#"^:::toggle\s*"#, ""), (#"^:::\s*$"#, ""), (#"^#+\s*"#, ""), (#"^\s*(?:[-*+]|\d+\.)\s+(?:\[[ xX]\]\s+)?"#, ""), (#"\*\*|__|`"#, ""), (#"\[([^\]]+)\]\([^)]*\)"#, "$1")] {
+        x = x.replacingOccurrences(of: pat, with: to, options: .regularExpression)
+      }
+      return x.trimmingCharacters(in: .whitespaces)
+    }.filter { !$0.isEmpty }
+  }
+  /// Its first "# " heading's words ("" without one).
+  static func head(_ s: String) -> String {
+    guard let line = s.components(separatedBy: "\n").first(where: { $0.range(of: #"^#\s+.+$"#, options: .regularExpression) != nil }) else { return "" }
+    return line.replacingOccurrences(of: #"^#\s+"#, with: "", options: .regularExpression).replacingOccurrences(of: #"\*\*|`"#, with: "", options: .regularExpression).trimmingCharacters(in: .whitespaces)
+  }
+  /// Its first three lines after its title, joined with " · " and cut at 150 (with "…").
+  static func preview(_ s: String) -> String {
+    var lines = s.components(separatedBy: "\n")
+    if let i = lines.firstIndex(where: { $0.range(of: #"^#\s+.+$"#, options: .regularExpression) != nil }) { lines[i] = "" }
+    let o = plain(lines.joined(separator: "\n")).prefix(3).joined(separator: " · ")
+    return o.count > 150 ? String(o.prefix(147)) + "…" : o
+  }
+  static func words(_ s: String) -> Int { plain(s).joined(separator: " ").split(whereSeparator: { $0.isWhitespace }).count }
+  /// A note's name: the Guide's is its first heading ("Guide" without one), a page's its title ("Untitled" without one).
+  static func title(_ p: MakeGuidePage) -> String { (p.id == "main" ? head(p.text) : p.title).nonEmpty ?? (p.title.nonEmpty ?? "Untitled") }
+}
+private extension String { var nonEmpty: String? { isEmpty ? nil : self } }
 
 /// A shared deck's Guide for anyone (the deck page's `guide`): the pages with words, and how many sources the deck was made from (a number only: the
 /// files and their names stay private).
@@ -183,7 +216,8 @@ extension Store {
     catch { throw APIError.server("Couldn’t reach Lucida. Check your connection and try again.") }
   }
   func guideSave(_ deckId: String, page: String, text: String) async throws { try await guideAct("guide.save", ["deckId": deckId, "page": page, "text": text]) }
-  func guideAddPage(_ deckId: String, title: String) async throws -> String { try await guideAct("guide.page.add", ["deckId": deckId, "title": title])["id"] as? String ?? "" }
+  /// A new page, inside `parent` (the Guide "main", or a page: Add a page inside), or at the top ("").
+  func guideAddPage(_ deckId: String, title: String, parent: String = "") async throws -> String { try await guideAct("guide.page.add", ["deckId": deckId, "title": title, "parent": parent])["id"] as? String ?? "" }
   func guideRenamePage(_ deckId: String, page: String, title: String) async throws { try await guideAct("guide.page.rename", ["deckId": deckId, "page": page, "title": title]) }
   func guideDeletePage(_ deckId: String, page: String) async throws { try await guideAct("guide.page.delete", ["deckId": deckId, "page": page]) }
   func guideRestore(_ deckId: String, page: String, at: Double) async throws { try await guideAct("guide.restore", ["deckId": deckId, "page": page, "at": at]) }

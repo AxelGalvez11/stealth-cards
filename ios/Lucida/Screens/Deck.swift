@@ -194,11 +194,8 @@ struct DeckScreen: View {
   let id: String
   /// This page, for dragging its cards.
   @State private var board = UUID().uuidString
-  /// Which section of the page shows (Sources, Cards, Notes or Diagrams; nil: Cards, unless an address or a board says another), which page of the
-  /// Guide, and whether it's unfolded (Show more).
+  /// Which section of the page shows (Sources, Cards, Notes or Diagrams; nil: Cards, unless an address or a board says another).
   @State private var tab: String? = nil
-  @State private var gpage = "main"
-  @State private var gopen = false
   /// Study's menu (Flashcards, Learn) or +'s (New card, Make cards, Source, Notes, Upload diagram, Make diagram) is open: Lucida's own menu (AddMenu.swift).
   @State private var studyOpen = false
   @State private var addOpen = false
@@ -389,12 +386,8 @@ struct DeckScreen: View {
     #endif
   }
 
-  /// The Notes: the deck's Guide as a card (its pages as tabs when it has some).
-  private func notes(_ d: DeckVM, _ g: GuideVM) -> some View {
-    let pageId = g.pages.contains { $0.id == gpage } ? gpage : "main"
-    let tabs = g.pages.isEmpty ? [] : [(id: "main", title: "Guide")] + g.pages.map { (id: $0.id, title: $0.title) }
-    return GuideCard(deckId: d.id, tabs: tabs, page: Binding(get: { pageId }, set: { gpage = $0 }), text: g.page(pageId).text, open: $gopen, canEdit: g.can, hasAny: g.hasAny)
-  }
+  /// The Notes: a list of the deck's notes, a tree (V176, V185: Screens/DeckMaterials.swift NotesTree); each opens as its own page.
+  private func notes(_ d: DeckVM, _ g: GuideVM) -> some View { NotesTree(deckId: d.id, g: g) }
 
   /// Whose deck it is: their picture and name (tap: its page).
   private func fromRow(_ d: DeckVM, _ lk: DeckSharing.Linked) -> some View {

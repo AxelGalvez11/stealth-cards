@@ -247,6 +247,9 @@ extension Board {
     // A deck's Notes page (its view: -state Writing, "Block menu", "Format bar", "Toggle open", "Toggle closed", "Section folded", "Blank note",
     // "Reading on a shared deck", "Older versions", "A new page" or "Outline open"); PhoneGuideOutline is the last.
     case "PhoneGuide", "PhoneGuideOutline": nav.tab = .library; nav.path = [.guide(Board.sampleDeckId, "")]
+    // A note with pages inside (Lecture 3 summary) and a page inside another (Mnemonics), as the canvas's PhoneGuidePages and PhoneGuideNested (V176).
+    case "PhoneGuidePages": store.props.guideState = "Guide pages"; nav.tab = .library; nav.path = [.guide(Board.sampleDeckId, "g1")]
+    case "PhoneGuideNested": store.props.guideState = "Guide pages"; nav.tab = .library; nav.path = [.guide(Board.sampleDeckId, "g2")]
     case "PhoneDeckEmpty": store.props.emptyDeck = true; nav.tab = .library; nav.path = [.deck("pharm")]
     case "PhoneDeckSettings": store.props.deckSettings = "general"; nav.tab = .library; nav.path = [.deck("cell")]
     case "PhoneDeckSettingsStudy": store.props.deckSettings = "study"; nav.tab = .library; nav.path = [.deck("cell")]
