@@ -5,7 +5,11 @@
 //
 // WHAT IT EDITS. What is kept is Markdown (web/guide.js reads it into blocks and writes them back: blocks(md), markdown(blocks)). Here the page is those
 // blocks, one row each: text, Heading and Subheading (levels 1 and 2; Markdown's other levels stay as they are), bulleted and numbered items, to-dos, toggles,
-// quotes, dividers, code, pictures and tables. What a list item, toggle or quote holds follows it one level in.
+// quotes, dividers, code, pictures and tables, and a Note page's own: callouts (Trap, Pearl, Mnemonic, Note), chains, and a card or a page shown in it.
+// What a list item, toggle, callout or quote holds follows it one level in.
+//   - A callout's line is its title (often empty) beside its kind's small label; what it holds is drawn in its color with it, as one box.
+//   - A chain is one line whose steps are between →s ("->" typed in it becomes →), drawn as pills and written like any line.
+//   - A card or a page in the note is one block that is not words (like a picture): the page around it says what it shows (`card`, `page`).
 //   - A heading starts a section: its ▸ (on hover on a computer, always on a phone) folds what is under it until the next heading of the same or a higher level.
 //   - A toggle's line is its title; its ▸ opens what it holds.
 //   - Which toggles are open and which sections are folded is how this device shows the page, not part of the note: it is remembered in localStorage
@@ -43,11 +47,17 @@
 //   focusAt       { i, off } (or 'end') where the caret goes the first time         onEscape()  Escape with nothing open
 //   outline       the rail of the headings at the page's right (above)               sheetHost   on the canvas, where a phone's outline sheet is drawn
 //   demo          the canvas's states: { open: 'all' | 'none' | 'first', fold: [heading indexes], emptyAt: i, menu: true, bar: { i, a, b }, keys: true,
-//                 outline: true (the outline's card open; on a phone, its sheet) }
+//                 outline: true (the outline's card open; on a phone, its sheet), make: i (the + Card of block i showing) }
+//   card(id)      a card shown in the note: { front, back, weak } or null ("Card not found")      onOpenCard(id)  a press on it
+//   page(id)      a page shown in the note: { title, kind } or null ("Page not found")           onOpenPage(id)  a press on it
+//   onMakeCard({ id, markdown })   with it, the pointer on a block at the left (not inside another) shows "+ Card" at its top right (not while a phone's
+//                 keyboard is up, and it hides while keys are typed): a press gives that block's Markdown, with what it holds, and its id on this page
 // and returns { focus(at), flush(), selectedText(), blocks() }.
 export function makeNotes(G) {
-  const TEXT = { p: 1, h: 1, ul: 1, ol: 1, todo: 1, toggle: 1, quote: 1 }, HOLDS = { ul: 1, ol: 1, todo: 1, toggle: 1, quote: 1 }, ONE_LINE = { h: 1, toggle: 1 };
-  const ATOM = { hr: 1, img: 1, table: 1 }, MAX_DEPTH = 8, MEM = 'lucida.notes.view';
+  const TEXT = { p: 1, h: 1, ul: 1, ol: 1, todo: 1, toggle: 1, quote: 1, callout: 1, chain: 1 }, HOLDS = { ul: 1, ol: 1, todo: 1, toggle: 1, quote: 1, callout: 1 };
+  const ONE_LINE = { h: 1, toggle: 1, callout: 1, chain: 1 }, ATOM = { hr: 1, img: 1, table: 1, card: 1, page: 1 }, MAX_DEPTH = 8, MEM = 'lucida.notes.view';
+  // The callouts: each one's label (its color is the CSS's, nb-co-<style>).
+  const CALLOUT = { trap: 'Trap', pearl: 'Pearl', mnemonic: 'Mnemonic', note: 'Note' };
   const ownImage = src => (/^\/media\/[\w-]+\.(?:png|jpe?g|gif|webp)$/i.test(src) ? src : '');
 
   // ---------- runs: a line's words and what they are ----------
@@ -112,6 +122,8 @@ export function makeNotes(G) {
     todo: '<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/>', toggle: '<path d="M8 6l8 6-8 6z" fill="currentColor" stroke="none"/>',
     quote: '<path d="M6 7v10M11 9h8M11 15h6"/>', hr: '<path d="M4 12h16"/>', code: '<path d="M9 8l-4 4 4 4M15 8l4 4-4 4"/>',
     image: '<rect x="3.5" y="5" width="17" height="14" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M5 17l4.5-4.5 3 3L15 13l4 4"/>', table: '<rect x="3.5" y="5" width="17" height="14" rx="2.5"/><path d="M3.5 10h17M10 10v9"/>',
+    callout: '<rect x="3.5" y="5" width="17" height="14" rx="3.5"/><path d="M8 10h8M8 14h5"/>', chain: '<rect x="2.5" y="8.5" width="7" height="7" rx="3.5"/><rect x="14.5" y="8.5" width="7" height="7" rx="3.5"/><path d="M10.5 12h3"/>',
+    card: '<rect x="3.5" y="5.5" width="17" height="13" rx="3"/><path d="M12 5.5v13"/>', page: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
     down: '<path d="M6 9l6 6 6-6"/>', close: '<path d="M6 6l12 12M18 6L6 18"/>', num: '<path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 5.5l1.5-1V9M3.8 14.2a1.4 1.4 0 1 1 2.2 1.4L4 18h2.4" stroke-width="1.5"/>'
   };
   const svg = (k, s = 16, w = 2) => '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + w + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + SVG[k] + '</svg>';
@@ -128,9 +140,13 @@ export function makeNotes(G) {
     { id: 'ul', label: 'Bulleted list', icon: 'list', keys: 'bulleted list bullets unordered' }, { id: 'ol', label: 'Numbered list', icon: 'num', keys: 'numbered list numbers ordered' },
     { id: 'todo', label: 'To-do', icon: 'todo', keys: 'to-do todo task checkbox check' }, { id: 'quote', label: 'Quote', icon: 'quote', keys: 'quote' },
     { id: 'hr', label: 'Divider', icon: 'hr', keys: 'divider line rule separator' }, { id: 'code', label: 'Code', icon: 'code', keys: 'code' },
-    { id: 'img', label: 'Picture', icon: 'image', keys: 'picture image photo' }, { id: 'table', label: 'Table', icon: 'table', keys: 'table grid' }
+    { id: 'img', label: 'Picture', icon: 'image', keys: 'picture image photo' }, { id: 'table', label: 'Table', icon: 'table', keys: 'table grid' },
+    // a Note page's own: the callouts (in their colors) and a chain
+    { id: 'co-trap', label: 'Trap', icon: 'callout', tone: 'trap', keys: 'trap callout mistake warning pitfall' }, { id: 'co-pearl', label: 'Pearl', icon: 'callout', tone: 'pearl', keys: 'pearl callout key tip remember' },
+    { id: 'co-mnemonic', label: 'Mnemonic', icon: 'callout', tone: 'mnemonic', keys: 'mnemonic callout memory remember' }, { id: 'co-note', label: 'Note callout', icon: 'callout', tone: 'note', keys: 'note callout aside info' },
+    { id: 'chain', label: 'Chain', icon: 'chain', keys: 'chain steps sequence flow arrow process' }
   ];
-  const PH = { h1: 'Heading', h2: 'Subheading', h3: 'Heading', ul: 'List', ol: 'List', todo: 'To-do', toggle: 'Toggle', quote: 'Quote' };
+  const PH = { h1: 'Heading', h2: 'Subheading', h3: 'Heading', ul: 'List', ol: 'List', todo: 'To-do', toggle: 'Toggle', quote: 'Quote', callout: 'Title (optional)', chain: 'A step → the next → the next' };
 
   // ---------- a page ----------
   function Page(host, opts) {
@@ -142,12 +158,14 @@ export function makeNotes(G) {
     const plusEl = el('button', 'nb-plus', { type: 'button', 'aria-label': 'Add a block', 'data-tip': 'Add a block', html: svg('plus', 16, 2.2), tabindex: '-1' });
     const menuEl = el('div', 'nb-menu', { role: 'listbox', 'aria-label': 'Add a block' }), barEl = el('div', 'nb-bar', { role: 'toolbar', 'aria-label': 'Format' });
     const keysEl = el('div', 'nb-keys', { role: 'toolbar', 'aria-label': 'Format' });
+    // "+ Card" on the block under the pointer (with onMakeCard)
+    const mkcEl = el('button', 'nb-mkc', { type: 'button', 'aria-label': 'Make a card from this block', 'data-tip': 'Make a card from this block', tabindex: '-1', html: svg('plus', 12, 2.6) + '<span>Card</span>' });
     // the outline: a box that stays in view at the top of the note (it goes in first, only with `outline`), the rail in it, and the card of headings
     const olId = 'nb-otl' + Math.random().toString(36).slice(2, 9), olWrap = el('div', 'nb-otlw'), olEl = el('div', 'nb-otl');
     const railEl = el('button', 'nb-otl-rail', { type: 'button', 'aria-label': 'Outline', 'aria-expanded': 'false', 'aria-haspopup': 'menu', 'aria-controls': olId });
     const panelEl = el('div', 'nb-otl-panel', { id: olId, role: 'menu', 'aria-label': 'Outline' });
     olEl.append(railEl, panelEl); olWrap.appendChild(olEl);
-    root.append(docEl, plusEl, menuEl, barEl);
+    root.append(docEl, plusEl, menuEl, barEl, mkcEl);
     host.appendChild(root);
     const by = id => st.idx.get(id);
     const reindex = () => { st.idx = new Map(st.blocks.map((b, i) => [b.id, i])); };
@@ -194,10 +212,14 @@ export function makeNotes(G) {
 
     // ---------- what shows: hidden in closed toggles and folded sections, numbers, sections ----------
     function view() {
-      const out = [], list = st.blocks, cnt = [];
+      const out = [], list = st.blocks, cnt = [], cos = [];
       let hide = null;
       for (let i = 0; i < list.length; i++) {
         const b = list[i];
+        // the callouts the line is in (the innermost one gives it its box)
+        while (cos.length && cos[cos.length - 1].d >= b.d) cos.pop();
+        const inCo = cos.length ? cos[cos.length - 1] : null;
+        if (b.k === 'callout') cos.push({ id: b.id, d: b.d, style: CALLOUT[b.style] ? b.style : 'note' });
         cnt.length = b.d + 1;
         if (b.k === 'ol') cnt[b.d] = cnt[b.d] != null ? cnt[b.d] + 1 : b.start != null ? b.start : 1; else cnt[b.d] = null;
         const n = b.k === 'ol' ? cnt[b.d] : 0;
@@ -205,13 +227,25 @@ export function makeNotes(G) {
         const next = list[i + 1], kids = !!next && next.d > b.d;
         const section = b.k === 'h' && !!next && !(next.d < b.d || (next.d === b.d && next.k === 'h' && next.level <= b.level));
         const open = b.k === 'toggle' && !!st.open.get(b.id), folded = section && !!st.fold.get(b.id);
-        out.push({ b, i, n, kids, section, open, folded });
+        const co = b.k === 'callout' ? { ...cos[cos.length - 1], top: true } : inCo;
+        out.push({ b, i, n, kids, section, open, folded, co });
         if (b.k === 'toggle' && !open && kids) hide = { k: 't', d: b.d };
         else if (folded) hide = { k: 'h', d: b.d, level: b.level };
         // an open toggle with nothing in it: a quiet line to write in
-        if (b.k === 'toggle' && open && !kids && o.editable) out.push({ virtual: b.id, d: b.d + 1, i });
+        if (b.k === 'toggle' && open && !kids && o.editable) out.push({ virtual: b.id, d: b.d + 1, i, co: inCo });
       }
+      // a callout's box ends at the last line showing in it
+      for (let k = 0; k < out.length; k++) { const c = out[k].co; if (c) { const nx = out[k + 1]; out[k].coEnd = !(nx && nx.co && nx.co.id === c.id); } }
       return out;
+    }
+    // A line in a callout's box: its color, where the box starts (--cd) and its two ends.
+    function boxed(row, v) {
+      const c = v.co;
+      if (!c) return;
+      row.classList.add('nb-inco', 'nb-co-' + c.style);
+      if (c.top) row.classList.add('nb-cotop');
+      if (v.coEnd) row.classList.add('nb-coend');
+      row.style.setProperty('--cd', c.d);
     }
     const caretBlock = () => (st.sel && st.sel.a.id === st.sel.b.id && st.sel.a.off === st.sel.b.off && !st.sel.a.cell ? st.sel.a.id : '');
     // A quiet word on an empty line: a blank note's "Title" and "Start writing", and on the line being written in, what kind of line it is.
@@ -226,10 +260,21 @@ export function makeNotes(G) {
       return b.k === 'h' ? PH['h' + Math.min(b.level, 3)] : PH[b.k] || '';
     }
     function sigOf(v) {
-      if (v.virtual) return 'v' + v.d + (o.editable ? 1 : 0);
+      const box = v.co ? [v.co.style, v.co.d, !!v.co.top, !!v.coEnd] : 0;
+      if (v.virtual) return 'v' + v.d + (o.editable ? 1 : 0) + JSON.stringify(box);
       const b = v.b;
       return JSON.stringify([b.k, b.d, b.level, b.on, v.n, b.r, b.text, b.lang, b.src, b.alt, b.title, b.rows, b.align, v.open, v.folded, v.section, v.kids, placeholder(v), !!o.editable, !!o.phone, st.bsel === b.id,
-        o.demo && o.demo.bar && o.demo.bar.i === v.i ? o.demo.bar : 0]);
+        o.demo && o.demo.bar && o.demo.bar.i === v.i ? o.demo.bar : 0, box, b.style, b.ref, b.k === 'card' || b.k === 'page' ? lookup(b) : 0]);
+    }
+    // What the page around says a card or a page shown in the note is (null: not found); a host that throws counts as not found.
+    function lookup(b) {
+      const f = b.k === 'card' ? o.card : o.page;
+      if (typeof f !== 'function') return null;
+      let v = null;
+      try { v = f(b.ref); } catch (e) { v = null; }
+      if (!v || typeof v !== 'object') return null;
+      const s = (x, n) => String(x == null ? '' : x).slice(0, n);
+      return b.k === 'card' ? { front: s(v.front, 400), back: s(v.back, 400), weak: !!v.weak } : { title: s(v.title, 200), kind: s(v.kind, 40) };
     }
     // Words as text nodes (a link is an <a> only when reading), a line break as <br>, and a last <br> that holds an empty line open (it counts for nothing).
     function fillText(tx, rs, hl) {
@@ -256,27 +301,62 @@ export function makeNotes(G) {
       const t = rtext(rs);
       if (!t || t.endsWith('\n')) tx.appendChild(el('br', '', { 'data-s': '' }));
     }
+    // A chain's line: each step a pill and the → between them (with the spaces around it) quiet. Every character is still a text node where it was, so the
+    // caret and the selection count it like any line's.
+    function fillChain(tx, rs) {
+      tx.textContent = '';
+      const t = rtext(rs), parts = [], re = /\s*→\s*/g;
+      let from = 0, m;
+      while ((m = re.exec(t))) { parts.push([from, m.index, 0], [m.index, m.index + m[0].length, 1]); from = m.index + m[0].length; }
+      parts.push([from, t.length, 0]);
+      for (const [a, z, arrow] of parts) {
+        if (a >= z) continue;
+        const span = el('span', arrow ? 'nb-arr' : 'nb-step');
+        fillText(span, rcut(rs, a, z));
+        const last = span.lastChild; if (last && last.nodeName === 'BR' && last.hasAttribute('data-s')) last.remove();
+        tx.appendChild(span);
+      }
+      if (!t) tx.appendChild(el('br', '', { 'data-s': '' }));
+    }
+    // A card or a page shown in the note, from what the page around says it is (all of it put in as text).
+    function refEl(b) {
+      const v = lookup(b), card = b.k === 'card', box = el('div', 'nb-ref nb-ref-' + b.k + (v ? '' : ' nb-ref-miss'), { 'data-ref': b.ref });
+      if (!v) { box.append(el('span', 'nb-ref-ic', { html: svg(b.k, 16, 2) }), el('span', 'nb-ref-none', { text: card ? 'Card not found' : 'Page not found' })); return box; }
+      if (card) {
+        const side = (label, words) => { const c = el('div', 'nb-ref-side'); c.append(el('span', 'nb-ref-l', { text: label }), el('span', 'nb-ref-w', { text: words || ' ' })); return c; };
+        box.append(side('Card · front', v.front), side('Back', v.back));
+        if (v.weak) box.appendChild(el('span', 'nb-ref-weak', { text: 'Weak spot' }));
+        return box;
+      }
+      box.append(el('span', 'nb-ref-ic', { html: svg('page', 16, 2) }), el('span', 'nb-ref-title', { text: v.title || 'Untitled' }), el('span', 'nb-ref-kind', { text: (v.kind || 'Page') + ' · open' }));
+      return box;
+    }
     function rowEl(v) {
       if (v.virtual) {
         const row = el('div', 'nb-row nb-p nb-virtual', { 'data-for': v.virtual, contenteditable: 'false' });
         row.style.setProperty('--d', v.d);
+        boxed(row, v);
         row.appendChild(el('div', 'nb-tx', { text: 'Empty' }));
         return row;
       }
       const b = v.b, ed = !!o.editable;
       const row = el('div', 'nb-row nb-' + b.k + (b.k === 'h' ? ' nb-h' + Math.min(b.level, 4) : '') + (b.k === 'todo' && b.on ? ' nb-on' : '') + (v.open ? ' nb-open' : '') + (v.folded ? ' nb-folded' : '') + (st.bsel === b.id ? ' nb-picked' : ''), { 'data-id': b.id });
       row.style.setProperty('--d', b.d);
+      boxed(row, v);
       if (b.k === 'ol') row.setAttribute('data-n', v.n + '.');
       if (ATOM[b.k] && ed) row.setAttribute('contenteditable', 'false');
       if (b.k === 'h' && v.section && (v.folded || rtext(b.r).trim())) row.appendChild(el('span', 'nb-fold', { contenteditable: 'false', role: 'button', 'aria-expanded': v.folded ? 'false' : 'true', 'aria-label': v.folded ? 'Show this section' : 'Fold this section', html: svg('chev', 14, 2.4) }));
       if (b.k === 'toggle') row.appendChild(el('span', 'nb-mk nb-tg', { contenteditable: 'false', role: 'button', 'aria-expanded': v.open ? 'true' : 'false', 'aria-label': v.open ? 'Close' : 'Open', html: svg('toggle', 14, 2) }));
       if (b.k === 'todo') row.appendChild(el('span', 'nb-mk nb-box', { contenteditable: 'false', role: 'checkbox', 'aria-checked': b.on ? 'true' : 'false', 'aria-label': b.on ? 'Done' : 'Not done', html: svg('check', 12, 2.6) }));
+      if (b.k === 'callout') row.appendChild(el('span', 'nb-col', { contenteditable: 'false', text: CALLOUT[b.style] || 'Note' }));
       if (TEXT[b.k]) {
         const ph = placeholder(v), tx = el('div', 'nb-tx', ph ? { 'data-ph': ph } : null);
         if (ph) row.classList.add('nb-ph');
-        fillText(tx, b.r, o.demo && o.demo.bar && o.demo.bar.i === v.i ? o.demo.bar : null);
+        if (b.k === 'chain') fillChain(tx, b.r);
+        else fillText(tx, b.r, o.demo && o.demo.bar && o.demo.bar.i === v.i ? o.demo.bar : null);
         row.appendChild(tx);
-      } else if (b.k === 'code') {
+      } else if (b.k === 'card' || b.k === 'page') row.appendChild(refEl(b));
+      else if (b.k === 'code') {
         const tx = el('div', 'nb-tx nb-codetx', { spellcheck: 'false' });
         tx.appendChild(document.createTextNode(b.text));
         if (!b.text || b.text.endsWith('\n')) tx.appendChild(el('br', '', { 'data-s': '' }));
@@ -542,6 +622,11 @@ export function makeNotes(G) {
         if (sc.k === 'toggle') st.open.set(nb.id, true);
         return commit(put(out, i, nb), caret(nb.id, off - sc.cut), 'shortcut');
       }
+      // "->" in a chain is an arrow
+      if (b.k === 'chain' && text === '>' && rtext(nb.r).slice(off - 2, off) === '->') {
+        const r = rsplice(nb.r, off - 2, off, [mk('→', m)]);
+        return commit(put(out, i, { ...nb, r }), caret(nb.id, off - 1), 'type');
+      }
       // **bold**, *italic*, ~~strike~~ and `code` finish as their last mark is typed
       if (/^[*_~`]$/.test(text)) {
         const fin = finish(nb, off);
@@ -599,6 +684,12 @@ export function makeNotes(G) {
       const i = at.i != null ? at.i : by(at.id), b = list[i];
       if (b.k === 'code') return commit(put(list, i, { ...b, text: b.text.slice(0, at.off) + '\n' + b.text.slice(at.off) }), caret(b.id, at.off + 1), 'type');
       if (!TEXT[b.k]) return;
+      const len0 = rlen(b.r);
+      // a callout's line (its title): Enter at its end is the first line in it; anywhere else what follows the caret goes there
+      if (b.k === 'callout' && !(at.off === 0 && len0)) {
+        const p = withId({ k: 'p', d: b.d + 1, r: rcut(b.r, at.off, len0) });
+        return commit([...list.slice(0, i), { ...b, r: rcut(b.r, 0, at.off) }, p, ...list.slice(i + 1)], caret(p.id, 0), 'line');
+      }
       if (isEmpty(b) && b.k !== 'p' && b.k !== 'h') return commit(put(list, i, { k: 'p', d: b.d, id: b.id, r: [] }), caret(b.id, 0), 'line');
       if (isEmpty(b) && b.k === 'p' && b.d > 0) return commit(outdentAt(list, i), caret(b.id, 0), 'line');
       const len = rlen(b.r);
@@ -611,10 +702,10 @@ export function makeNotes(G) {
       // at the end of a heading with an empty line under it (a blank note's second line): the caret goes there
       const nx = list[i + 1];
       if (b.k === 'h' && at.off === len && nx && nx.k === 'p' && nx.d === b.d && isEmpty(nx)) return commit(list, caret(nx.id, 0), 'line');
-      const kind = b.k === 'h' ? 'p' : b.k, left = rcut(b.r, 0, at.off), right = rcut(b.r, at.off, len);
-      // at the very start of a line with words: an empty line goes above it, of its kind (text above a heading)
+      const kind = b.k === 'h' || b.k === 'chain' || b.k === 'callout' ? 'p' : b.k, left = rcut(b.r, 0, at.off), right = rcut(b.r, at.off, len);
+      // at the very start of a line with words: an empty line goes above it, of its kind (text above a heading or a chain)
       if (at.off === 0 && len) {
-        const above = withId({ k: b.k === 'h' ? 'p' : b.k, d: b.d, r: [] }); if (above.k === 'todo') above.on = false;
+        const above = withId({ k: kind, d: b.d, r: [] }); if (above.k === 'todo') above.on = false;
         return commit([...list.slice(0, i), above, ...list.slice(i)], caret(b.id, 0), 'line');
       }
       const nb = withId({ k: kind, d: b.d, r: right });
@@ -763,7 +854,7 @@ export function makeNotes(G) {
         if (id === 'img') { if (o.onPicture) Promise.resolve(o.onPicture()).then(src => { if (src) make(src); }, () => {}); return; }
         return make();
       }
-      const to = id === 'h1' || id === 'h2' || id === 'h3' ? 'h' : id;
+      const to = id === 'h1' || id === 'h2' || id === 'h3' ? 'h' : /^co-/.test(id) ? 'callout' : id;
       for (let k = s.i; k <= e.i; k++) {
         const b = list[k];
         if (!TEXT[b.k] && b.k !== 'code') continue;
@@ -771,6 +862,7 @@ export function makeNotes(G) {
         if (to === 'code') { nb.lang = ''; nb.text = rtext(r); }
         else nb.r = ONE_LINE[to] ? oneLine(r) : r;
         if (to === 'h') nb.level = +id.slice(1);
+        if (to === 'callout') nb.style = CALLOUT[id.slice(3)] ? id.slice(3) : 'note';
         if (to === 'todo') nb.on = b.k === 'todo' ? !!b.on : false;
         if (to === 'ol' && b.k === 'ol' && b.start != null) nb.start = b.start;
         if (to === 'toggle') st.open.set(b.id, true);
@@ -845,7 +937,7 @@ export function makeNotes(G) {
     // Plain text: Markdown when it looks like it, else a line of text for each line.
     function fromPlain(t) {
       const s = String(t).replace(/\r\n?/g, '\n').slice(0, 200000);
-      if (/^(?: {0,3}(?:#{1,6} |[-*+] |\d{1,9}[.)] |> |```|~~~|:::toggle|\|)|.*(?:\*\*|__|~~|`|\]\())/m.test(s)) return G.blocks(s);
+      if (/^(?: {0,3}(?:#{1,6} |[-*+] |\d{1,9}[.)] |> |```|~~~|:::(?:toggle|trap|pearl|mnemonic|note|chain)|::(?:card|page) |\|)|.*(?:\*\*|__|~~|`|\]\())/m.test(s)) return G.blocks(s);
       return s.split('\n').filter(l => l.trim()).map(l => ({ k: 'p', d: 0, r: [{ t: l }] }));
     }
     // A web page's or a document's HTML (read without running anything: a document of its own, never on the page), as blocks.
@@ -941,6 +1033,7 @@ export function makeNotes(G) {
     // ---------- the keys and the mouse ----------
     function onBeforeInput(ev) {
       const ty = ev.inputType || '';
+      quiet();
       if (ev.isComposing || ty === 'insertCompositionText') return;
       ev.preventDefault();
       if (!o.editable) return;
@@ -966,6 +1059,7 @@ export function makeNotes(G) {
     }
     function onKey(ev) {
       if (!o.editable) return;
+      if (!ev.metaKey && !ev.ctrlKey) quiet();
       const mod = ev.metaKey || ev.ctrlKey, key = ev.key || '', low = key.toLowerCase();
       if (st.menu && !ev.isComposing) {
         const items = menuItems();
@@ -1014,6 +1108,8 @@ export function makeNotes(G) {
       if (box) { ev.preventDefault(); const i = by(row.getAttribute('data-id')), b = st.blocks[i]; return commit(put(st.blocks, i, { ...b, on: !b.on }), st.sel, 'check'); }
       if (more) { ev.preventDefault(); return tableMore(row.getAttribute('data-id'), more.getAttribute('data-act')); }
       if (row && row.classList.contains('nb-virtual')) { ev.preventDefault(); const i = by(row.getAttribute('data-for')), b = st.blocks[i]; if (!b) return; const p = withId({ k: 'p', d: b.d + 1, r: [] }); return commit([...st.blocks.slice(0, i + 1), p, ...st.blocks.slice(i + 1)], caret(p.id, 0), 'line'); }
+      // a card or a page shown in the note: the first press picks it (Backspace takes it away), a press on it picked opens it
+      if (row && t.closest && t.closest('.nb-ref') && st.bsel === row.getAttribute('data-id')) { ev.preventDefault(); return openRef(st.blocks[by(st.bsel)]); }
       if (row && ATOM[(st.blocks[by(row.getAttribute('data-id'))] || {}).k] && !(t.closest && t.closest('.nb-cell'))) { ev.preventDefault(); return pick(row.getAttribute('data-id')); }
       // a press below the last line: write at the end (a new line when the last one isn't empty text)
       if (t === docEl) {
@@ -1034,6 +1130,8 @@ export function makeNotes(G) {
     function onClick(ev) {
       const t = ev.target, ln = !o.editable && t.closest ? t.closest('a.nb-a') : null;
       if (ln && (ln.getAttribute('href') || '')[0] === '#') { ev.preventDefault(); return jump(ln.getAttribute('href')); }
+      const ref = !o.editable && t.closest ? t.closest('.nb-ref') : null;
+      if (ref) { const r = ref.closest('.nb-row'), b = r && st.blocks[by(r.getAttribute('data-id'))]; if (b) { ev.preventDefault(); return openRef(b); } }
       if (o.editable || !o.onOpen) return;
       if (t.closest && (t.closest('a') || t.closest('.nb-tg') || t.closest('.nb-fold'))) return;
       const s = document.getSelection();
@@ -1041,6 +1139,11 @@ export function makeNotes(G) {
       const p = s && s.rangeCount && docEl.contains(s.anchorNode) ? posOf(s.anchorNode, s.anchorOffset) : null, row = t.closest && t.closest('.nb-row');
       const id = p ? p.id : row ? row.getAttribute('data-id') : '', i = id ? by(id) : st.blocks.length - 1;
       o.onOpen({ i: i == null ? 0 : i, off: p && !p.cell ? p.off : 0 });
+    }
+    function openRef(b) {
+      if (!b || !lookup(b)) return;                     // (one that isn't found opens nothing)
+      if (b.k === 'card' && typeof o.onOpenCard === 'function') o.onOpenCard(b.ref);
+      if (b.k === 'page' && typeof o.onOpenPage === 'function') o.onOpenPage(b.ref);
     }
     // A link "#some-heading" (as guide.js names headings: lower case, - for spaces): that heading, brought to the top.
     function jump(href) {
@@ -1099,7 +1202,9 @@ export function makeNotes(G) {
     // ---------- the + on an empty line, the block menu, the format bar, the phone's bar ----------
     function menuItems() {
       const q = st.menu && st.menu.slash ? st.menu.q || '' : '', w = q.trim().toLowerCase();
-      return MENU.filter(it => (it.id !== 'img' || o.onPicture) && (!w || it.label.toLowerCase().includes(w) || it.keys.split(' ').some(k => k.startsWith(w))));
+      const found = MENU.filter(it => (it.id !== 'img' || o.onPicture) && (!w || it.label.toLowerCase().includes(w) || it.keys.split(' ').some(k => k.startsWith(w))));
+      // (what is typed starting a kind's name puts that kind first: "/ch" is Chain, not To-do's "check")
+      return w ? [...found.filter(it => it.label.toLowerCase().startsWith(w)), ...found.filter(it => !it.label.toLowerCase().startsWith(w))] : found;
     }
     function openMenu(m) { st.menu = { on: 0, q: '', ...m }; drawMenu(); }
     function closeMenu() { if (!st.menu) return; st.menu = null; drawMenu(); }
@@ -1121,7 +1226,7 @@ export function makeNotes(G) {
       st.menu.on = Math.min(st.menu.on, items.length - 1);
       items.forEach((it, k) => {
         const b = el('button', 'nb-item' + (k === st.menu.on ? ' nb-on' : ''), { type: 'button', role: 'option', 'aria-selected': k === st.menu.on ? 'true' : 'false', tabindex: '-1', 'data-id': it.id });
-        const chip = el('span', 'nb-chip' + (it.small ? ' nb-small' : ''), it.icon ? { html: svg(it.icon, 15, 2) } : { text: it.glyph });
+        const chip = el('span', 'nb-chip' + (it.small ? ' nb-small' : '') + (it.tone ? ' nb-co-' + it.tone : ''), it.icon ? { html: svg(it.icon, 15, 2) } : { text: it.glyph });
         b.append(chip, el('span', 'nb-label', { text: it.label }));
         menuEl.appendChild(b);
       });
@@ -1205,6 +1310,7 @@ export function makeNotes(G) {
       }
       if (o.phone) drawKeys(live);
       olShow();
+      placeMake();
     }
     // The phone's bar above the keyboard: Aa, To-do, Bullets, Toggle, Picture and Done; while words are selected, Bold, Italic, Strikethrough, Code and Link.
     function drawKeys(sel) {
@@ -1413,6 +1519,48 @@ export function makeNotes(G) {
     }
     document.addEventListener('scroll', onScroll, true);
     window.addEventListener('resize', olSoon);
+
+    // ---------- Make a card from a block ----------
+    // The pointer on a line shows "+ Card" at the top right of the block it belongs to at the page's left (a line in a list, a toggle or a callout is part of
+    // the block it is in); a press hands that block's Markdown, with all it holds, to onMakeCard. It hides while keys are typed (until the pointer moves again)
+    // and while a phone's keyboard is up.
+    const MKC = { id: '', quiet: false };
+    function topBlock(i) { let j = i; while (j > 0 && st.blocks[j].d > 0) j--; return j; }
+    function blockMd(i) {
+      const part = st.blocks.slice(i, endOf(st.blocks, i)), base = part.length ? part[0].d : 0;
+      return G.markdown(part.map(b => ({ ...b, d: b.d - base })));
+    }
+    function placeMake() {
+      const D = o.demo && o.demo.make != null ? st.blocks[o.demo.make] : null, id = D ? D.id : MKC.id;
+      const row = id ? st.rows.get(id) : null;
+      const show = !!(o.onMakeCard && row && row.el.isConnected && (D || !MKC.quiet) && !(o.phone && o.editable && st.focused) && !st.comp && !st.menu);
+      mkcEl.classList.toggle('nb-show', show);
+      if (!show) return;
+      const r = local(row.el.getBoundingClientRect()), w = mkcEl.offsetWidth || 64, inBox = row.el.classList.contains('nb-cotop');
+      mkcEl.style.left = Math.max(0, r.r - w - (inBox ? 10 : 2)) + 'px';
+      mkcEl.style.top = (r.y + (inBox ? 8 : 2)) + 'px';
+      mkcEl.setAttribute('data-for', id);
+    }
+    function onHover(ev) {
+      if (!o.onMakeCard || ev.pointerType === 'touch' && o.editable) return;
+      const t = ev.target, row = t.closest && t.closest('.nb-row');
+      if (!row || !docEl.contains(row)) return;
+      const i = by(row.getAttribute('data-id') || row.getAttribute('data-for') || '');
+      if (i == null) return;
+      const id = st.blocks[topBlock(i)].id;
+      if (id === MKC.id && !MKC.quiet) return;
+      MKC.id = id; MKC.quiet = false; placeMake();
+    }
+    docEl.addEventListener('pointermove', onHover);
+    root.addEventListener('pointerleave', () => { MKC.id = ''; placeMake(); });
+    mkcEl.addEventListener('mousedown', ev => ev.preventDefault());
+    mkcEl.addEventListener('click', ev => {
+      ev.preventDefault();
+      const i = by(mkcEl.getAttribute('data-for') || '');
+      if (i == null || typeof o.onMakeCard !== 'function') return;
+      o.onMakeCard({ id: st.blocks[i].id, markdown: blockMd(i) });
+    });
+    const quiet = () => { if (MKC.id && !MKC.quiet) { MKC.quiet = true; placeMake(); } };
 
     // The canvas's selection: none (its states show the menu and the bar as drawn).
     function demoSel() {

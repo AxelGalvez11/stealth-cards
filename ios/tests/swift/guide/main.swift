@@ -65,6 +65,10 @@ func sig(_ b: GuideBlock) -> String {
     return "TABLE(" + align.joined(separator: ",") + ")<" + head.map { $0.map(sig).joined(separator: ",") }.joined(separator: "|") + ">"
       + rows.map { "<" + $0.map { $0.map(sig).joined(separator: ",") }.joined(separator: "|") + ">" }.joined()
   case .toggle(let inline, let bs): return "TG[" + inline.map(sig).joined(separator: ",") + "]{" + sig(bs) + "}"
+  case .callout(let style, let inline, let bs): return "CO(\(style))[" + inline.map(sig).joined(separator: ",") + "]{" + sig(bs) + "}"
+  case .chain(let steps): return "CH<" + steps.map { $0.map(sig).joined(separator: ",") }.joined(separator: "|") + ">"
+  case .card(let id): return "CARD(\(id))"
+  case .page(let id): return "PAGE(\(id))"
   }
 }
 /// A string as JSON text, the way JSON.stringify writes it (only for code blocks, whose text is compared whole).

@@ -59,6 +59,10 @@ function sigB(b) {
     case 'hr': return 'HR';
     case 'table': return 'TABLE(' + b.align.join(',') + ')<' + b.head.map(c => c.map(sigI).join(',')).join('|') + '>' + b.rows.map(r => '<' + r.map(c => c.map(sigI).join(',')).join('|') + '>').join('');
     case 'toggle': return 'TG[' + b.inline.map(sigI).join(',') + ']{' + sigBs(b.blocks) + '}';
+    case 'callout': return 'CO(' + b.style + ')[' + b.inline.map(sigI).join(',') + ']{' + sigBs(b.blocks) + '}';
+    case 'chain': return 'CH<' + b.steps.map(s => s.map(sigI).join(',')).join('|') + '>';
+    case 'card': return 'CARD(' + b.id + ')';
+    case 'page': return 'PAGE(' + b.id + ')';
   }
   return '?';
 }

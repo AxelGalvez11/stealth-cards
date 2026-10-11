@@ -52,12 +52,15 @@ struct NoteBlock: Codable, Equatable, Identifiable {
   var src = "", alt = "", title = ""
   var align: [String] = []
   var rows: [[[NoteRun]]] = []
+  /// A callout's kind (trap, pearl, mnemonic, note), and the id of a card or a page shown in a Note (web/guide.js blocks: `style`, `ref`).
+  var style = "", ref = ""
   init(_ k: String, d: Int = 0, r: [NoteRun] = [], level: Int = 1) { self.k = k; self.d = d; self.r = r; self.level = level }
-  private enum K: String, CodingKey { case k, d, r, level, on, start, lang, text, src, alt, title, align, rows }
+  private enum K: String, CodingKey { case k, d, r, level, on, start, lang, text, src, alt, title, align, rows, style, ref }
   init(from dec: Decoder) throws {
     let c = try dec.container(keyedBy: K.self)
     k = c.opt(.k, "p"); d = c.opt(.d, 0); r = c.opt(.r, []); level = c.opt(.level, 1); on = c.opt(.on, false); start = c.opt(.start, nil)
     lang = c.opt(.lang, ""); text = c.opt(.text, ""); src = c.opt(.src, ""); alt = c.opt(.alt, ""); title = c.opt(.title, ""); align = c.opt(.align, []); rows = c.opt(.rows, [])
+    style = c.opt(.style, ""); ref = c.opt(.ref, "")
   }
   func encode(to e: Encoder) throws {
     var c = e.container(keyedBy: K.self)
@@ -69,9 +72,11 @@ struct NoteBlock: Codable, Equatable, Identifiable {
     if k == "code" { try c.encode(lang, forKey: .lang); try c.encode(text, forKey: .text) }
     if k == "img" { try c.encode(src, forKey: .src); try c.encode(alt, forKey: .alt); try c.encode(title, forKey: .title) }
     if k == "table" { try c.encode(align, forKey: .align); try c.encode(rows, forKey: .rows) }
+    if k == "callout" { try c.encode(style, forKey: .style) }
+    if k == "card" || k == "page" { try c.encode(ref, forKey: .ref) }
   }
   static func == (a: NoteBlock, b: NoteBlock) -> Bool {
-    a.id == b.id && a.k == b.k && a.d == b.d && a.r == b.r && a.level == b.level && a.on == b.on && a.start == b.start && a.lang == b.lang && a.text == b.text && a.src == b.src && a.alt == b.alt && a.title == b.title && a.align == b.align && a.rows == b.rows
+    a.id == b.id && a.k == b.k && a.d == b.d && a.r == b.r && a.level == b.level && a.on == b.on && a.start == b.start && a.lang == b.lang && a.text == b.text && a.src == b.src && a.alt == b.alt && a.title == b.title && a.align == b.align && a.rows == b.rows && a.style == b.style && a.ref == b.ref
   }
   /// Its words (code is its text).
   var words: [NoteRun] { Notes.text.contains(k) ? r : k == "code" ? (text.isEmpty ? [] : [NoteRun(text)]) : [] }
@@ -81,8 +86,9 @@ struct NoteBlock: Codable, Equatable, Identifiable {
 
 // ---------- runs ----------
 enum Notes {
-  static let text: Set<String> = ["p", "h", "ul", "ol", "todo", "toggle", "quote"], holds: Set<String> = ["ul", "ol", "todo", "toggle", "quote"], oneLine: Set<String> = ["h", "toggle"]
-  static let atom: Set<String> = ["hr", "img", "table"]
+  static let text: Set<String> = ["p", "h", "ul", "ol", "todo", "toggle", "quote", "callout", "chain"], holds: Set<String> = ["ul", "ol", "todo", "toggle", "quote", "callout"]
+  static let oneLine: Set<String> = ["h", "toggle", "callout", "chain"]
+  static let atom: Set<String> = ["hr", "img", "table", "card", "page"]
   static let maxDepth = 8
   /// Neighbours with the same marks joined, nothing empty.
   static func tidy(_ rs: [NoteRun]) -> [NoteRun] {

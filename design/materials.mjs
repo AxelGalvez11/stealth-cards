@@ -315,6 +315,35 @@ export const NOTES_CSS = [
   '.nb-tbtn{border:0;padding:0;background:none;color:var(--gd-muted);font:inherit;font-size:13px;font-weight:500;cursor:pointer}.nb-tbtn:hover{color:var(--gd-text)}',
   '.nb-picked{box-shadow:0 0 0 2px var(--gd-text);border-radius:12px}.nb-virtual>.nb-tx{color:var(--gd-muted);opacity:.6;cursor:text}',
   '.nb-hl{background:rgba(0,122,255,.22);border-radius:2px}.nb-owner .nb-doc{cursor:text}',
+  // A Note page's blocks (design/pages.mjs drew them). A callout is one box in its kind's color (a trap the again red, a pearl the good green, a mnemonic
+  // the hard amber, a note the page's surface): its line has the small label and the title; each line it holds paints the same color and stretches it back
+  // to the box's left edge with a shadow of its own color (a shadow is drawn outside its box only, so nothing is painted twice, and a long page's
+  // content-visibility never clips it), and the last line showing in it rounds it off.
+  '.nb-co-trap{--co-bg:var(--nb-trapbg,#FDECEA);--co-fg:var(--nb-trap,#D92D20)}.nb-co-pearl{--co-bg:var(--nb-pearlbg,#E6F4EC);--co-fg:var(--nb-pearl,#067647)}',
+  '.nb-co-mnemonic{--co-bg:var(--nb-mnembg,#FDF1E3);--co-fg:var(--nb-mnem,#B54708)}.nb-co-note{--co-bg:var(--nb-surf);--co-fg:var(--gd-muted)}',
+  '.nb-inco{background:var(--co-bg);padding-right:16px}.nb-inco:not(.nb-cotop){margin-left:calc(var(--d) * var(--nb-ind) - 10px);box-shadow:calc((var(--cd) - var(--d)) * var(--nb-ind) + 10px) 0 0 0 var(--co-bg)}',
+  '.nb-inco.nb-h{margin-top:0;padding-top:.45em}.nb-cotop{padding:12px 16px 2px;border-radius:16px 16px 0 0;margin-top:6px}.nb-coend{padding-bottom:12px;border-bottom-left-radius:16px;border-bottom-right-radius:16px;margin-bottom:6px}',
+  '.nb-callout{display:flex;align-items:baseline;gap:10px}.nb-callout>.nb-tx{flex:1 1 auto;min-width:0;font-weight:600}',
+  '.nb-col{flex-shrink:0;font-size:12px;font-weight:700;letter-spacing:.04em;line-height:1;text-transform:uppercase;color:var(--co-fg);-webkit-user-select:none;user-select:none}',
+  // a chain: its steps as pills, the → between them quiet
+  '.nb-chain>.nb-tx{line-height:2.3;font-size:14px;font-weight:600}.nb-step{padding:5px 12px;border-radius:999px;background:var(--nb-surf);-webkit-box-decoration-break:clone;box-decoration-break:clone}.nb-arr{color:var(--gd-muted);font-weight:500}',
+  '.nb-chain.nb-ph>.nb-tx::before{font-weight:500}.nb-chain:not(.nb-inco){padding:6px 0}.nb-card,.nb-page{padding:4px 0}',
+  // a card of the deck (its front and back, and "Weak spot" when the learner keeps missing it) and another page shown in the note; a press opens them
+  '.nb-ref{display:flex;align-items:stretch;border-radius:16px;box-shadow:0 0 0 1px var(--gd-line);overflow:hidden;white-space:normal;cursor:pointer;-webkit-user-select:none;user-select:none}',
+  '.nb-ref-side{flex:1 1 0;min-width:0;padding:12px 16px;display:flex;flex-direction:column;gap:4px}.nb-ref-side+.nb-ref-side{border-left:1px solid var(--gd-line)}',
+  '.nb-ref-l{font-size:12px;font-weight:600;line-height:1.3;color:var(--gd-muted)}.nb-ref-w{font-size:15px;line-height:1.45}.nb-ref-side:first-child>.nb-ref-w{font-weight:600}',
+  '.nb-ref-weak{flex-shrink:0;align-self:center;margin:0 14px;height:24px;padding:0 10px;display:inline-flex;align-items:center;border-radius:12px;background:var(--nb-trapbg,#FDECEA);color:var(--nb-trap,#D92D20);font-size:12px;font-weight:600;white-space:nowrap}',
+  '.nb-ref-page,.nb-ref-miss{align-items:center;gap:10px;padding:12px 16px}.nb-ref-ic{display:flex;color:var(--gd-muted)}.nb-ref-title{flex-grow:1;min-width:0;font-size:15px;font-weight:600}.nb-ref-kind{flex-shrink:0;font-size:13px;color:var(--gd-muted)}',
+  '.nb-ref-miss{color:var(--gd-muted);font-size:14px;cursor:default}',
+  '.nb-phone .nb-ref-card:not(.nb-ref-miss){flex-direction:column}.nb-phone .nb-ref-side+.nb-ref-side{border-left:0;border-top:1px solid var(--gd-line)}.nb-phone .nb-ref-weak{align-self:flex-start;margin:0 16px 12px}',
+  // "+ Card" on the block under the pointer (with onMakeCard), at its top right
+  `@keyframes nbFade{from{opacity:0}}.nb-mkc{position:absolute;display:none;z-index:3;height:28px;box-sizing:border-box;padding:0 11px 0 9px;gap:4px;align-items:center;border:0;border-radius:999px;background:var(--gd-text);color:var(--nb-bg);font:inherit;font-size:12px;font-weight:600;line-height:1;white-space:nowrap;cursor:pointer;text-shadow:none}.nb-mkc.nb-show{display:inline-flex;animation:nbFade ${s3(MOTION.fade)} ease backwards}`,
+  // the same blocks in guide.js's HTML (render(): the words for search engines and what is copied)
+  '.gd-co{margin:0 0 1em;padding:12px 16px;border-radius:16px;background:var(--nb-surf)}.gd-co>p{margin:.3em 0 0}.gd-co-t{font-weight:600}',
+  '.gd-co-l{display:block;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--gd-muted)}',
+  '.gd-co-trap{background:var(--nb-trapbg,#FDECEA)}.gd-co-trap>.gd-co-l{color:var(--nb-trap,#D92D20)}.gd-co-pearl{background:var(--nb-pearlbg,#E6F4EC)}.gd-co-pearl>.gd-co-l{color:var(--nb-pearl,#067647)}',
+  '.gd-co-mnemonic{background:var(--nb-mnembg,#FDF1E3)}.gd-co-mnemonic>.gd-co-l{color:var(--nb-mnem,#B54708)}',
+  '.gd-ch{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 1em}.gd-ch>span{padding:5px 12px;border-radius:999px;background:var(--nb-surf);font-size:14px;font-weight:600}.gd-ch>.gd-ch-a{padding:0;background:none;color:var(--gd-muted)}.gd-ref:empty{display:none}',
   // A long page (over 120 lines showing) skips the layout of lines out of sight; each keeps its last height while skipped.
   '.nb-long .nb-row{content-visibility:auto;contain-intrinsic-size:auto 1.6em}',
   `@keyframes nbIn{from{opacity:0;transform:translateY(-4px)}}.nb-in{animation:nbIn ${s3(MOTION.reveal)} ${EASE} both}`,
@@ -324,6 +353,7 @@ export const NOTES_CSS = [
   `@keyframes nbPop{from{opacity:0;transform:translateY(${MOTION.slide}px)}}.nb-menu.nb-show,.nb-bar.nb-show{animation:nbPop ${s3(MOTION.pop)} ${EASE} backwards}.nb-menu.nb-show{display:flex}`,
   '.nb-item{flex-shrink:0;height:40px;padding:0 8px;display:flex;align-items:center;gap:10px;border:0;border-radius:12px;background:transparent;color:var(--gd-text);font:inherit;font-size:14px;font-weight:500;line-height:1.2;text-align:left;cursor:pointer}.nb-item.nb-on{background:var(--nb-surf)}',
   '.nb-chip{width:28px;height:28px;flex-shrink:0;border-radius:8px;background:var(--nb-surf);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;letter-spacing:-.02em}.nb-item.nb-on .nb-chip{background:var(--nb-bg)}.nb-chip.nb-small{font-size:10.5px}',
+  '.nb-chip.nb-co-trap,.nb-chip.nb-co-pearl,.nb-chip.nb-co-mnemonic,.nb-item.nb-on .nb-chip.nb-co-trap,.nb-item.nb-on .nb-chip.nb-co-pearl,.nb-item.nb-on .nb-chip.nb-co-mnemonic{background:var(--co-bg);color:var(--co-fg)}',
   '.nb-bar{position:absolute;display:none;z-index:31;padding:4px;gap:2px;align-items:center;border-radius:14px;background:var(--nb-bg);box-shadow:0 0 0 1px var(--gd-line),0 12px 32px rgba(0,0,0,.18);text-shadow:none}.nb-bar.nb-show{display:flex}',
   '.nb-bb{width:32px;height:32px;flex-shrink:0;padding:0;border:0;border-radius:9px;background:transparent;color:var(--gd-text);font:inherit;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}.nb-bb:hover,.nb-bb.nb-on{background:var(--nb-surf)}.nb-bb b{font-weight:800}.nb-bb i{font-family:Georgia,serif;font-size:16px}',
   '.nb-linkfield{width:210px;height:32px;box-sizing:border-box;padding:0 10px;border:0;outline:0;border-radius:9px;background:var(--nb-surf);color:var(--gd-text);font:inherit;font-size:14px}.nb-linkfield.nb-bad{box-shadow:inset 0 0 0 1.5px #D92D20}',
@@ -354,11 +384,12 @@ export const NOTES_CSS = [
   '.nb-otl-row.nb-i1{padding-left:22px}.nb-otl-row.nb-i2{padding-left:40px}.nb-otl-row.nb-cur{font-weight:600}',
   // (a tap puts the keyboard's focus on the sheet itself, which shows no ring; a key, on a row, whose ring sits inside it so the list's edge doesn't cut it)
   '.nb-otl-sheetw .nb-otl-sheet:focus{outline:none}.nb-otl-sheetw .nb-otl-row:focus-visible{outline-offset:-2px}',
-  '@media (prefers-reduced-motion:reduce){.nb-in,.nb-menu.nb-show,.nb-bar.nb-show{animation:none}.nb-tg svg,.nb-fold svg,.nb-fold{transition:none}',
+  '@media (prefers-reduced-motion:reduce){.nb-in,.nb-menu.nb-show,.nb-bar.nb-show,.nb-mkc.nb-show{animation:none}.nb-tg svg,.nb-fold svg,.nb-fold{transition:none}',
   '.nb-otl-line,.nb-otl-panel,.nb-otl.nb-otl-open>.nb-otl-panel{transition:none}.nb-otl-scrim,.nb-otl-sheet,.nb-otl-gone>.nb-otl-scrim,.nb-otl-gone>.nb-otl-sheet{animation:none}}'
 ].join('');
 // The colors a page of notes is drawn in, from a board's theme (`code`: what code sits on, the other color of the page it is on; `dim`: behind a phone's sheet).
-export const NOTES_VARS = (code = 't.surf') => `--gd-text: {{t.text}}; --gd-muted: {{t.muted}}; --gd-line: {{t.line}}; --nb-code: {{${code}}}; --nb-bg: {{t.bg}}; --nb-surf: {{t.surf}}; --nb-surf2: {{t.surf2}}; --nb-dim: {{t.dim}};`;
+// (and a Note page's callouts: a trap in the again red, a pearl in the good green, a mnemonic in the hard amber, each on its tint)
+export const NOTES_VARS = (code = 't.surf') => `--gd-text: {{t.text}}; --gd-muted: {{t.muted}}; --gd-line: {{t.line}}; --nb-code: {{${code}}}; --nb-bg: {{t.bg}}; --nb-surf: {{t.surf}}; --nb-surf2: {{t.surf2}}; --nb-dim: {{t.dim}}; --nb-trap: {{t.again}}; --nb-trapbg: {{t.againTint}}; --nb-pearl: {{t.good}}; --nb-pearlbg: {{t.goodTint}}; --nb-mnem: {{t.hard}}; --nb-mnembg: {{t.hardTint}};`;
 // Where a page's outline rail sits (web/notes.js): how far right of the note (in the room its box keeps there) and where it stays as the page scrolls (under the
 // top of what scrolls the page, past that box's own room at its top: a shared deck's page has 36 px, so its own is 0). It is on the Notes page and a shared deck's
 // Notes; the deck page's Notes tab has none (it becomes a list of notes: main, 2026-10-02).
@@ -474,7 +505,7 @@ export const DECK_MATERIALS_JS = String.raw`
     // Sources first (the owner, 2026-10-02: "sources should be the first tab, so sources, cards, notes, diagrams"); the page still opens on Cards.
     const tabList = [...(sourcesTab ? [{ id: 'sources', label: 'Sources', count: sourceRows.length ? String(sourceRows.length) : '' }] : []), { id: 'cards', label: 'Cards', count: String(cardsN) }, ...(notesTab ? [{ id: 'notes', label: 'Notes', count: '' }] : []), ...(pagesTab ? [{ id: 'pages', label: 'Pages', count: PGL.length ? String(PGL.length) : '' }] : []), ...(dgTab ? [{ id: 'diagrams', label: 'Diagrams', count: dgRows.length ? String(dgRows.length) : '' }] : [])]
       .map(x => ({ ...x, selected: x.id === tab ? 'true' : 'false', fg: x.id === tab ? t.text : t.muted, bar: x.id === tab ? t.text : 'transparent', pick: () => this.setState({ tab: x.id }) }));
-    const nbPlain = s => String(s || '').split('\n').map(l => l.replace(/^:::toggle\s*/, '').replace(/^:::\s*$/, '').replace(/^#+\s*/, '').replace(/^\s*(?:[-*+]|\d+\.)\s+(?:\[[ xX]\]\s+)?/, '').replace(/\*\*|__|${'`'}/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').trim()).filter(Boolean);
+    const nbPlain = s => String(s || '').split('\n').map(l => l.replace(/^:::(?:toggle|trap|pearl|mnemonic|note|chain)\s*/, '').replace(/^::(?:card|page)\s+\S+\s*$/, '').replace(/^:::\s*$/, '').replace(/^#+\s*/, '').replace(/^\s*(?:[-*+]|\d+\.)\s+(?:\[[ xX]\]\s+)?/, '').replace(/\*\*|__|${'`'}/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').trim()).filter(Boolean);
     const nbHead = s => { const m = /^#\s+(.+)$/m.exec(String(s || '')); return m ? m[1].replace(/\*\*|${'`'}/g, '').trim() : ''; };
     const nbPreview = s => { const ls = nbPlain(String(s || '').replace(/^#\s+.+$/m, '')); const o = ls.slice(0, 3).join(' · '); return o.length > 150 ? o.slice(0, 147) + '…' : o; };
     const nbWords = s => nbPlain(s).join(' ').split(/\s+/).filter(Boolean).length;
@@ -753,11 +784,15 @@ renderVals() {
   const demos = ${JSON.stringify(GUIDE_DEMOS(phone))}, demo = mock ? demos[view] : undefined;
   const image = s => (/^\\/media\\/[\\w-]+\\.(png|jpe?g|gif|webp)$/i.test(s) ? s : '');
   const tabs = [{ id: 'main', title: 'Guide' }, ...extra];
-  const nbPlain = s => String(s || '').split('\\n').map(l => l.replace(/^:::toggle\\s*/, '').replace(/^:::\\s*$/, '').replace(/^#+\\s*/, '').replace(/^\\s*(?:[-*+]|\\d+\\.)\\s+(?:\\[[ xX]\\]\\s+)?/, '').replace(/\\*\\*|__|\`/g, '').replace(/\\[([^\\]]+)\\]\\([^)]*\\)/g, '$1').trim()).filter(Boolean);
+  const nbPlain = s => String(s || '').split('\\n').map(l => l.replace(/^:::(?:toggle|trap|pearl|mnemonic|note|chain)\\s*/, '').replace(/^::(?:card|page)\\s+\\S+\\s*$/, '').replace(/^:::\\s*$/, '').replace(/^#+\\s*/, '').replace(/^\\s*(?:[-*+]|\\d+\\.)\\s+(?:\\[[ xX]\\]\\s+)?/, '').replace(/\\*\\*|__|\`/g, '').replace(/\\[([^\\]]+)\\]\\([^)]*\\)/g, '$1').trim()).filter(Boolean);
   const nbHead = s => { const m = /^#\\s+(.+)$/m.exec(String(s || '')); return m ? m[1].replace(/\\*\\*|\`/g, '').trim() : ''; };
   const nbPreview = s => { const ls = nbPlain(String(s || '').replace(/^#\\s+.+$/m, '')); const o = ls.slice(0, 3).join(' · '); return o.length > 150 ? o.slice(0, 147) + '…' : o; };
   const nbWords = s => nbPlain(s).join(' ').split(/\\s+/).filter(Boolean).length;
   const nbAll = [{ id: 'main', title: 'Guide', parent: '', text: G.text }, ...extra];
+  // A card or a page a Note shows ("::card <id>", "::page <id>"): the deck's card (its words without marks; a weak spot when it was missed twice or more), or one of its pages.
+  const nbBare = s => String(s || '').replace(/\\*\\*|__|==|~~|\\[\\[|\\]\\]|\`/g, '').replace(/\\s+/g, ' ').trim();
+  const nbCard = id => { const c = (db.cards(deckId) || []).find(x => x.id === id); return c ? { front: nbBare(c.kind === 'cloze' ? c.text : c.kind === 'audio' ? c.speak : c.front), back: nbBare(c.kind === 'cloze' ? '' : c.back), weak: !!(c.srs && (c.srs.lapses || 0) >= 2) } : null; };
+  const nbPage = id => { const x = nbAll.find(y => y.id === id); return x ? { title: nbTitle(x), kind: 'Note' } : null; };
   const nbOpen = id => async () => { await this._flush(); this.setState({ page: id, histOpen: false, renaming: false }); };
   const nbTitle = x => (x.id === 'main' ? nbHead(x.text) : x.title) || x.title || 'Untitled';
   const nbPath = (() => { const out = []; let cur = nbAll.find(x => x.id === pageId), guard = 0; while (cur && guard++ < 12) { out.unshift(cur); cur = cur.parent ? nbAll.find(x => x.id === cur.parent) : null; } return out; })();
@@ -789,6 +824,8 @@ renderVals() {
     showPage: !histOpen, histOpen, versions: histNow, noVersions: histOpen && st.hist !== null && !versions.length, histTitle: 'Older versions of ' + (pageId === 'main' ? 'the Guide' : cur.title),
     // the page (web/notes.js): the same for writing and reading; on the canvas, its states
     nbRef: el => { if (!el) return; this._nbc = this.notes().mount(el, { md: text, key: (mock ? 'canvas|' + view + '|' : '') + key, editable: canEdit, phone: ${phone ? 'true' : 'false'}, image, demo, outline: true,
+      card: nbCard, page: nbPage, onOpenCard: id => { if (!mock) this._flush().then(() => db.act.go('/deck/' + deckId + '/card/' + encodeURIComponent(id))); }, onOpenPage: id => { if (nbAll.some(x => x.id === id)) nbOpen(id)(); },
+      onMakeCard: canEdit ? x => { if (mock) return; this._flush().then(() => db.make.begin({ kind: 'paste', noNotes: true, text: x.markdown, title: dk.name + ' (a block of ' + (pageId === 'main' ? 'the Guide' : cur.title) + ')', opts: { deckId } })); } : undefined,
       onChange: setText, onPicture: canEdit ? pickPicture : undefined, focusAt: at ? { i: +at[1], off: +at[2] } : !mock && !text.trim() ? { i: 0, off: 0 } : !mock && p.at === 'end' ? 'end' : undefined, keysHost: mock ? this._keys : undefined, sheetHost: mock ? this._olHost : undefined }); },
     keysRef: el => { this._keys = el || this._keys; },
     // (on the canvas a phone's outline sheet is drawn over the whole board, in this box)
