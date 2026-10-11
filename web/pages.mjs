@@ -129,7 +129,7 @@ export async function remove(uid, id) {
   const cur = await mustGet(uid, id);
   await ask('/pages?owner=eq.' + val(owner(uid)) + '&parent=eq.' + val(id) + '&deleted=is.false', { method: 'PATCH', body: { parent: cur.parent || '', updated_at: now() } });
   await ask('/pages?id=eq.' + val(id) + '&owner=eq.' + val(owner(uid)), { method: 'PATCH', body: { deleted: true, updated_at: now() } });
-  return { id };
+  return metaOf(cur);
 }
 // Everything in a deck or folder that went (store.mjs deck.delete, after the library is saved): the pages and every version.
 export async function removeScope(uid, scope, scopeId) {

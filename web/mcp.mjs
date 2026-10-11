@@ -1,8 +1,9 @@
 // The MCP link: Claude, Cursor, or any app that speaks MCP can read and add cards. On this computer it's
 // http://localhost:3000/mcp; online each person has their own link (see handler.mjs), so an AI only sees their cards.
 // What an AI may do is set on the Connect AI page; tools it isn't allowed to use aren't offered.
-import { apply, state, blanks, mediaLeft, MEDIA_FULL, BG_KINDS, isPro, tunedW, pageScope, uidOf } from './store.mjs';
+import { apply, state, blanks, mediaLeft, MEDIA_FULL, BG_KINDS, isPro, tunedW, pageScope, uidOf, touchDeck } from './store.mjs';
 import * as pages from './pages.mjs';
+import { moveGuide } from './guidemove.mjs';
 import { noteToMarkdown } from './pageblocks.js';
 import * as social from './social.mjs';
 import { LEVELS, SUBJECTS, levelWords, subjectWords } from './school.js';
@@ -92,6 +93,12 @@ const NOTE_HELP = 'A Note’s blocks, each an object with a type (keep an existi
   '{type:"card", cardId} (shows one of the deck’s cards; list_cards gives ids) · {type:"embed", pageId} (shows another page inside). ' +
   'text, title, steps and cells are Markdown inside a line (**bold**, *italic*, `code`, [links](https://…)). In Markdown instead: ":::trap", ":::pearl", ":::mnemonic", ":::note" or ":::toggle Title" then lines then ":::", ":::chain" then one step a line then ":::", and "::card <id>" or "::page <id>" on a line. ' +
   'Example: [{"type":"heading","level":1,"text":"Cellular respiration"},{"type":"chain","steps":["Glycolysis","Krebs cycle","Electron transport"]},{"type":"callout","style":"trap","text":"Glycolysis needs no oxygen."}]';
+// The old Guide tools work on the deck's Note pages once its Guide moved into them (guidemove.mjs); a deck you study keeps its owner's Guide (null).
+async function guideNotes(d, ctx) {
+  const moved = await moveGuide(d, ctx.once); if (!moved) return null;
+  return { main: moved.main, list: (await pages.list(uidOf(), 'deck', d.id)).filter(p => p.kind === 'note') };
+}
+const findNote = (G, x) => (!x || x === 'main' ? G.list.find(p => p.id === G.main) : G.list.find(p => p.id === x) || G.list.find(p => p.title.toLowerCase() === String(x).trim().toLowerCase()));
 const noteIn = a => (Array.isArray(a.blocks) ? { blocks: a.blocks } : a.markdown != null ? { markdown: String(a.markdown) } : { blocks: [] });
 const scopeNames = () => { const S = state(); return { deck: new Map(S.decks.map(d => [d.id, d.name])), folder: new Map(S.folders.map(f => [f.id, f.name])) }; };
 const pageLine = (p, names) => ({ id: p.id, kind: p.kind, title: p.title, version: p.version, [p.scope]: (names[p.scope] && names[p.scope].get(p.scopeId)) || p.scopeId, inside: p.parent || undefined, changed_by: p.by, changed: new Date(p.updated).toISOString() });
@@ -266,23 +273,47 @@ const TOOLS = [
   // A deck's Guide: a Markdown page like a README, with extra pages beside it (store.mjs "A deck's Guide").
   { name: 'list_guide_pages', perm: 'read', description: 'List a deck’s Guide pages: the Guide itself (its main page) and any extra pages, each with its id, title and length, and the id of the page it sits inside (inside: "main" is the Guide), as Notion’s pages nest. The Guide is a Markdown page the learner keeps about the deck, like a README.',
     inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' } }, required: ['deck'] },
-    run: a => { const d = deckBy(a.deck); if (!d) return fail('No deck called ' + a.deck); return text(guidePages(d)); } },
+    run: async (a, who, ctx) => {
+      const d = deckBy(a.deck); if (!d) return fail('No deck called ' + a.deck);
+      const G = await guideNotes(d, ctx); if (!G) return text(guidePages(d));
+      return text(G.list.map(p => ({ id: p.id === G.main ? 'main' : p.id, title: p.id === G.main ? 'Guide' : p.title, inside: p.parent ? (p.parent === G.main ? 'main' : p.parent) : undefined, kind: p.kind, version: p.version })));
+    } },
   { name: 'get_guide', perm: 'read', description: 'Read a deck’s Guide (the notes page the learner keeps about the deck), or one of its extra pages. It is Markdown, plus toggles: a line ":::toggle Its title", what opens under it (any Markdown, even more toggles), and a line ":::" that closes it. Use list_guide_pages to see the extra pages.',
     inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, page: { type: 'string', description: 'An extra page’s id or title. Leave out for the Guide itself.' } }, required: ['deck'] },
-    run: a => {
+    run: async (a, who, ctx) => {
       const d = deckBy(a.deck); if (!d) return fail('No deck called ' + a.deck);
-      const pages = guidePages(d), p = a.page ? pages.find(x => x.id === a.page) || pages.find(x => x.title.toLowerCase() === String(a.page).trim().toLowerCase()) : pages[0];
+      const G = await guideNotes(d, ctx);
+      if (G) {
+        const n = findNote(G, a.page); if (!n) return a.page ? fail('There is no page called ' + a.page + ' in ' + d.name + '.') : text({ deck: d.name, page: { id: 'main', title: 'Guide' }, text: '', pages: [] });
+        const full = await pages.get(uidOf(), n.id);
+        return text({ deck: d.name, page: { id: n.id === G.main ? 'main' : n.id, title: n.id === G.main ? 'Guide' : n.title, version: full.version }, text: full.kind === 'note' ? noteToMarkdown(full.data) : '', updated: new Date(full.updated).toISOString(), pages: G.list.map(x => ({ id: x.id === G.main ? 'main' : x.id, title: x.title })), note: 'The Guide is the deck’s Note pages now: get_page and update_page do more (blocks, versions).' });
+      }
+      const gps = guidePages(d), p = a.page ? gps.find(x => x.id === a.page) || gps.find(x => x.title.toLowerCase() === String(a.page).trim().toLowerCase()) : gps[0];
       if (!p) return fail('There is no page called ' + a.page + ' in ' + d.name + '.');
       const g = p.id === 'main' ? d.guide : (d.guide.pages || []).find(x => x.id === p.id);
-      return text({ deck: d.name, page: { id: p.id, title: p.title }, text: (g && g.text) || '', updated: g && g.at ? new Date(g.at).toISOString() : undefined, pages: pages.map(x => ({ id: x.id, title: x.title, characters: x.characters })) });
+      return text({ deck: d.name, page: { id: p.id, title: p.title }, text: (g && g.text) || '', updated: g && g.at ? new Date(g.at).toISOString() : undefined, pages: gps.map(x => ({ id: x.id, title: x.title, characters: x.characters })) });
     } },
   { name: 'update_guide', perm: 'edit', description: 'Save a deck’s Guide (the notes page about the deck, in Markdown: headings, lists, task lists, links, tables, code and quotes) or one of its extra pages. Toggles fold what is under them: write a line ":::toggle Its title" (the key idea), what it holds on the lines after (any Markdown, even more toggles), and a line ":::" to close it; the learner opens and closes them. Notes read best as a ## heading for each topic with its points as toggles under it. A heading folds what is under it too. By default the text replaces what is there; the old words are kept as an older version the learner can bring back. With mode "append" the text goes after what is there. If the deck is shared, its Guide is shown on its public page, so keep it fit to be seen. Up to 40,000 characters.',
     inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, text: { type: 'string', description: 'The Markdown to write.' }, page: { type: 'string', description: 'An extra page’s id or title. Leave out for the Guide itself.' }, mode: { type: 'string', enum: ['replace', 'append'] } }, required: ['deck', 'text'] },
-    run: (a, who) => {
+    run: async (a, who, ctx) => {
       // A Guide can't wait for a check the way new cards do, so with "check AI cards and changes first" on, the learner writes it.
       if (state().ai.perms.check) return fail(CHECK_GUIDE);
       const d = deckBy(a.deck); if (!d) return fail('No deck called ' + a.deck);
-      const pages = guidePages(d), p = a.page ? pages.find(x => x.id === a.page) || pages.find(x => x.title.toLowerCase() === String(a.page).trim().toLowerCase()) : pages[0];
+      const G = await guideNotes(d, ctx);
+      if (G) {
+        try {
+          const done = await ctx.once('update_guide', async () => {
+            let n = findNote(G, a.page);
+            if (!n && a.page) throw new Error('There is no page called ' + a.page + ' in ' + d.name + '. Use add_guide_page to make one.');
+            if (!n) { const made = await pages.create(uidOf(), { scope: 'deck', scopeId: d.id, kind: 'note', title: 'Guide', data: { markdown: String(a.text ?? '') }, who, ai: true, summary: 'Wrote the Guide', pro: isPro() }); apply({ type: 'guide.moved', deckId: d.id, main: made.id, map: {} }, who); return made; }
+            const full = await pages.get(uidOf(), n.id), was = full.kind === 'note' ? noteToMarkdown(full.data) : '', body = String(a.text ?? '');
+            const next = a.mode === 'append' ? was + (was && !was.endsWith('\n') ? '\n\n' : '') + body : body;
+            return pages.update(uidOf(), n.id, { baseVersion: full.version, data: { markdown: next }, who, ai: true, summary: a.mode === 'append' ? 'Added to the page' : 'Rewrote the page', pro: isPro() });
+          });
+          return text('Wrote the page “' + (done.id === (d.guideMoved || {}).main ? 'Guide' : done.title) + '” of ' + d.name + ' (version ' + done.version + '). The old words are kept as an older version.');
+        } catch (e) { return fail(e.message); }
+      }
+      const gps = guidePages(d), p = a.page ? gps.find(x => x.id === a.page) || gps.find(x => x.title.toLowerCase() === String(a.page).trim().toLowerCase()) : gps[0];
       if (!p) return fail('There is no page called ' + a.page + ' in ' + d.name + '. Use add_guide_page to make one.');
       const was = p.id === 'main' ? (d.guide && d.guide.text) || '' : ((d.guide.pages || []).find(x => x.id === p.id) || {}).text || '';
       const body = String(a.text ?? ''), next = a.mode === 'append' ? was + (was && !was.endsWith('\n') ? '\n\n' : '') + body : body;
@@ -291,10 +322,19 @@ const TOOLS = [
     } },
   { name: 'add_guide_page', perm: 'text', description: 'Add an extra page beside a deck’s Guide, like a page of a small wiki ("Lecture 3 summary", "Mnemonics"). A deck can have up to 10. Give it Markdown text now (toggles too, as update_guide says), or fill it in later with update_guide. Put it inside another page with `inside` (that page’s id or title, or "main" for the Guide); leave it out for a page at the top.',
     inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, title: { type: 'string' }, text: { type: 'string', description: 'The page’s Markdown.' }, inside: { type: 'string', description: 'The page it goes inside: its id or title, or "main" for the Guide. Leave out for the top.' } }, required: ['deck', 'title'] },
-    run: (a, who) => {
+    run: async (a, who, ctx) => {
       if (state().ai.perms.check) return fail(CHECK_GUIDE);
       const d = deckBy(a.deck); if (!d) return fail('No deck called ' + a.deck);
-      const pages = guidePages(d), wanted = String(a.inside || '').trim(), under = !wanted ? null : pages.find(x => x.id === wanted) || pages.find(x => x.title.toLowerCase() === wanted.toLowerCase());
+      const G = await guideNotes(d, ctx);
+      if (G) {
+        const wanted = String(a.inside || '').trim(), under = wanted ? findNote(G, wanted) : null;
+        if (wanted && !under) return fail('There is no page called ' + a.inside + ' in ' + d.name + ' to put it inside.');
+        try {
+          const made = await ctx.once('add_guide_page', () => pages.create(uidOf(), { scope: 'deck', scopeId: d.id, kind: 'note', title: a.title, data: { markdown: String(a.text || '') }, parent: under ? under.id : '', who, ai: true, summary: 'Made the page', pro: isPro() }));
+          return text('Added the page “' + made.title + '” to ' + d.name + '. Its id is ' + made.id + '.');
+        } catch (e) { return fail(e.message); }
+      }
+      const gps = guidePages(d), wanted = String(a.inside || '').trim(), under = !wanted ? null : gps.find(x => x.id === wanted) || gps.find(x => x.title.toLowerCase() === wanted.toLowerCase());
       if (wanted && !under) return fail('There is no page called ' + a.inside + ' in ' + d.name + ' to put it inside.');
       const r = apply({ type: 'guide.page.add', deckId: d.id, title: a.title, parent: under ? under.id : '' }, who);
       if (a.text) apply({ type: 'guide.save', deckId: d.id, page: r.id, text: String(a.text) }, who);
@@ -303,9 +343,10 @@ const TOOLS = [
   // Pages (pages.mjs): what a deck or a folder holds beside its cards, each of a kind, versioned, written by the learner and by AI apps.
   { name: 'list_pages', perm: 'read', description: 'List the pages beside a deck’s (or a folder’s) cards: notes, and soon presentations, mind maps, diagrams, canvases and docs. Each comes with its id, kind, title, version, who changed it last and when, and the id of the page it sits inside (pages nest). With no deck or folder it lists every page the learner has. Read one with get_page.',
     inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, folder: { type: 'string', description: 'Folder name or id (instead of a deck).' } } },
-    run: async a => {
+    run: async (a, who, ctx) => {
       let sc = null;
-      try { if (a.deck || a.folder) sc = pageScope(a.folder ? 'folder' : 'deck', a.folder || a.deck); } catch (e) { return fail(e.message); }
+      try { if (a.deck || a.folder) sc = pageScope(a.folder ? 'folder' : 'deck', a.folder || a.deck, { read: true }); } catch (e) { return fail(e.message); }
+      if (sc && sc.scope === 'deck') await moveGuide(deckBy(sc.id), ctx.once);
       const names = scopeNames(), list = await pages.list(uidOf(), sc && sc.scope, sc && sc.id);
       return text({ pages: list.map(p => pageLine(p, names)), kinds_you_can_make: [...pages.READY] });
     } },
@@ -324,6 +365,7 @@ const TOOLS = [
       let sc; try { sc = pageScope(a.folder ? 'folder' : 'deck', a.folder || a.deck); } catch (e) { return fail(a.deck || a.folder ? e.message : 'Say which deck (or folder) the page goes in.'); }
       try {
         const p = await ctx.once('create_page', () => pages.create(uidOf(), { scope: sc.scope, scopeId: sc.id, kind: a.kind, title: a.title, data: noteIn(a), parent: a.inside || '', who, ai: true, pro: isPro() }));
+        if (p.scope === 'deck') touchDeck(p.scopeId, who);
         return text({ made: pageLine(p, scopeNames()), note: 'The learner sees it in ' + sc.name + ' › Pages now. Change it with update_page and baseVersion ' + p.version + '.' });
       } catch (e) { return fail(e.message); }
     } },
@@ -334,6 +376,7 @@ const TOOLS = [
       if (state().ai.perms.check) return fail(CHECK_PAGE);
       try {
         const p = await ctx.once('update_page', () => pages.update(uidOf(), a.page, { baseVersion: a.baseVersion, title: a.title, data: a.blocks || a.markdown != null ? noteIn(a) : undefined, who, ai: true, summary: a.summary, pro: isPro() }));
+        if (p.scope === 'deck') touchDeck(p.scopeId, who);
         return text({ saved: pageLine(p, scopeNames()), note: 'Saved as version ' + p.version + '.' });
       } catch (e) {
         if (e.code === 'conflict') return { content: [{ type: 'text', text: e.message }, { type: 'text', text: JSON.stringify(pageOut(e.current), null, 2) }], isError: true };
@@ -343,7 +386,7 @@ const TOOLS = [
   { name: 'delete_page', perm: 'del', description: 'Delete a page. Pages inside it move up to where it was. Ask the learner first.',
     inputSchema: { type: 'object', properties: { page: { type: 'string', description: 'The page’s id.' } }, required: ['page'] },
     run: async (a, who, ctx) => {
-      try { await ctx.once('delete_page', () => pages.remove(uidOf(), a.page)); return text('Deleted the page.'); } catch (e) { return fail(e.message); }
+      try { const m = await ctx.once('delete_page', () => pages.remove(uidOf(), a.page)); if (m && m.scope === 'deck') touchDeck(m.scopeId, who); return text('Deleted the page.'); } catch (e) { return fail(e.message); }
     } },
   // The study network (social.mjs): decks other people share. The learner can study one as it is, or copy it; on a deck
   // from someone else, an AI can only suggest changes, which the owner takes or skips.

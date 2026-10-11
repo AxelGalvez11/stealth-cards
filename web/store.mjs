@@ -478,15 +478,17 @@ export function guideVersions(deckId, page) {
 const readOnly = d => !!(d && d.link && d.link.mode === 'study' && !d.link.gone);
 const LOCAL_DECK_KEYS = ['paused', 'grading', 'fsrs', 'goal', 'gapIdx', 'steps', 'perDay', 'piles', 'folder', 'bg'];
 // Where a page may go (pages.mjs): a deck that is the person's own (or their copy), or one of their folders. By id or name.
-export function pageScope(scope, x) {
+export function pageScope(scope, x, { read = false } = {}) {
   if (scope === 'folder') { const f = state().folders.find(y => y.id === x) || state().folders.find(y => y.name.toLowerCase() === String(x || '').toLowerCase()); if (!f) throw new Error('No folder called ' + x); return { scope, id: f.id, name: f.name }; }
   const d = findDeck(x); if (!d) throw new Error('No deck called ' + x);
-  if (readOnly(d)) throw notYours(d);
+  if (readOnly(d) && !read) throw notYours(d);
   return { scope: 'deck', id: d.id, name: d.name };
 }
 const notYours = d => new Error('This deck is ' + ((d.link.owner && d.link.owner.name) || 'someone else') + '’s. Suggest a change instead.');
 // What a request changed, deck by deck, and who to credit (an AI app, or the person whose suggestion the owner took),
 // for sharing the new cards after the save (onSaved).
+// (pages.mjs's changes count too: a shared deck's pages are shared with it)
+export const touchDeck = (deckId, who) => touch(deckId, who);
 function touch(deckId, who) {
   const L = lib();
   if (!deckId || L.touched.has(deckId)) return;
@@ -776,6 +778,12 @@ function run(a, who) {
       Object.assign(S.settings, p); return {};
     }
     // The Guide and its pages (see "A deck's Guide" above). Only the deck's owner writes them; a deck you study as it is has its owner's.
+    // The deck's Guide moved into its Pages (guidemove.mjs): where it went. Once: a deck whose Guide moved keeps the first answer.
+    case 'guide.moved': {
+      const d = findDeck(a.deckId); if (!d) throw new Error('No such deck');
+      if (!d.guideMoved) d.guideMoved = { at: Date.now(), main: String(a.main || ''), map: a.map && typeof a.map === 'object' ? { ...a.map } : {} };
+      return d.guideMoved;
+    }
     case 'guide.save': {
       const d = findDeck(a.deckId); if (!d) throw new Error('No such deck');
       if (readOnly(d)) throw notYours(d);

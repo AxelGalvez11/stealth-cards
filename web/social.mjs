@@ -14,6 +14,8 @@
 // through supa.mjs rest(); on this computer the same calls go
 // to data/social.json (localrest.mjs). A person's own decks and cards stay in their library (store.mjs); a shared deck
 // is a copy of the deck's cards in shared_cards, refreshed each time the owner's changes are saved.
+import * as pagesStore from './pages.mjs';
+import { noteToMarkdown } from './pageblocks.js';
 import { rest, val, qval, inList, like, publicMedia, cloud } from './supa.mjs';
 import { state, saved, onSave, onReviewed, afterSaving, withLibrary, withCredit, apply, uidOf, makeDeck, newId, isDev, isPro, cleanBoxes } from './store.mjs';
 import { deckCards } from './order.js';
@@ -179,7 +181,8 @@ async function mediaFor(uid, sh, c) {
 // the files and their names stay private, since they may be someone else's work). Null while the deck has neither.
 async function guideFor(uid, sh, d) {
   const g = d.guide || {}, n = (d.sources || []).length, made = (d.diagrams || []).map(sharedDiagram).filter(Boolean);
-  const pages = [{ id: 'main', title: 'Guide', text: g.text || '' }, ...(g.pages || []).map(p => ({ id: p.id, title: p.title, text: p.text || '' }))];
+  // A deck whose Guide moved into its Pages (guidemove.mjs) shares its Note pages: the Guide's first, then the rest, as Markdown.
+  const pages = d.guideMoved ? await notePagesOf(uid, d) : [{ id: 'main', title: 'Guide', text: g.text || '' }, ...(g.pages || []).map(p => ({ id: p.id, title: p.title, text: p.text || '' }))];
   if (!pages.some(p => p.text.trim()) && !n && !made.length) return null;
   for (const p of pages) {
     const names = [...p.text.matchAll(/\]\(\/media\/([\w-]+\.\w+)(?=[\s)"'])/g)].map(m => m[1]);
@@ -191,6 +194,15 @@ async function guideFor(uid, sh, d) {
   }
   // The tables and mind maps made from the deck's cards go with it (diagrams.mjs sharedDiagram); the pictures of its lectures and the ones uploaded never do.
   return { pages, sources: n, ...(made.length ? { diagrams: made } : {}) };
+}
+async function notePagesOf(uid, d) {
+  const list = (await pagesStore.list(uid, 'deck', d.id)).filter(p => p.kind === 'note').slice(0, 20), main = d.guideMoved.main, out = [];
+  for (const p of [...list.filter(x => x.id === main), ...list.filter(x => x.id !== main)]) {
+    const full = await pagesStore.get(uid, p.id);
+    if (full) out.push({ id: p.id === main ? 'main' : p.id, title: p.id === main ? 'Guide' : p.title || 'Untitled', text: noteToMarkdown(full.data) });
+  }
+  if (!out.some(p => p.id === 'main')) out.unshift({ id: 'main', title: 'Guide', text: '' });
+  return out;
 }
 // A shared deck's Guide as the guide of a deck in someone's library (studying it, or a copy of it).
 const guideCopy = g => {

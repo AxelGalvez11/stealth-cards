@@ -496,12 +496,13 @@ export const DECK_MATERIALS_JS = String.raw`
       canEdit: G.can, moreHref: mock ? '@P@DeckMake.dc.html' : '/make?from=' + encodeURIComponent(vs.id) + '&deck=' + encodeURIComponent(dk.id) + '&on=deck', remove: () => { if (mock) return; db.act.deleteSource(dk.id, vs.id).then(() => this.setState({ viewing: '' })); } }
       : { open: false, name: '', line: '', close: () => {}, hasAudio: false, player: null, hasPhotos: false, photos: [], hasTopic: false, topic: '', hasParts: false, parts: [], loading: false, noText: false, noTextLine: '', hasOpen: false, openHref: '', openLabel: '', canEdit: false, moreHref: '', remove: () => {} };
     // The section on show (Cards unless the address or a tap says another, and only a section that is there): ?tab= in the address, a source opened from a card, or the canvas's setting.
-    const cardsN = db.cards(dk.id).length, notesTab = hasAny || G.can, sourcesTab = !!G.can, dgTab = !!G.can || dgRows.length > 0;
+    // (a deck whose Guide moved into its Pages has no Notes tab: web/guidemove.mjs)
+    const cardsN = db.cards(dk.id).length, notesTab = !G.moved && (hasAny || G.can), sourcesTab = !!G.can, dgTab = !!G.can || dgRows.length > 0;
     // Pages (design/pages.mjs, web/pagesclient.js): the deck's own, for its owner, or when it has some.
     const PGL = mock ? @PAGES_SAMPLE@ : db.pages ? db.pages.list('deck', dk.id) : [], pagesTab = !!G.can || PGL.length > 0;
     const dgState = mock && new RegExp(${JSON.stringify(DIAGRAM_STATE_RE)}).test(p.guide || '');
     const wanted = st.tab !== undefined ? st.tab : p.sourceOpen ? 'sources' : p.diagram ? 'diagrams' : mock ? (p.guide === 'A source open' ? 'sources' : dgState ? 'diagrams' : { Notes: 'notes', Pages: 'pages', Diagrams: 'diagrams', Sources: 'sources' }[p.section] || 'cards') : { notes: 'notes', pages: 'pages', diagrams: 'diagrams', sources: 'sources' }[p.tab] || 'cards';
-    const tab = wanted === 'pages' && pagesTab ? 'pages' : wanted === 'notes' && notesTab ? 'notes' : wanted === 'diagrams' && dgTab ? 'diagrams' : wanted === 'sources' && sourcesTab ? 'sources' : 'cards';
+    const tab = (wanted === 'pages' || (wanted === 'notes' && G.moved)) && pagesTab ? 'pages' : wanted === 'notes' && notesTab ? 'notes' : wanted === 'diagrams' && dgTab ? 'diagrams' : wanted === 'sources' && sourcesTab ? 'sources' : 'cards';
     // Sources first (the owner, 2026-10-02: "sources should be the first tab, so sources, cards, notes, diagrams"); the page still opens on Cards.
     const tabList = [...(sourcesTab ? [{ id: 'sources', label: 'Sources', count: sourceRows.length ? String(sourceRows.length) : '' }] : []), { id: 'cards', label: 'Cards', count: String(cardsN) }, ...(notesTab ? [{ id: 'notes', label: 'Notes', count: '' }] : []), ...(pagesTab ? [{ id: 'pages', label: 'Pages', count: PGL.length ? String(PGL.length) : '' }] : []), ...(dgTab ? [{ id: 'diagrams', label: 'Diagrams', count: dgRows.length ? String(dgRows.length) : '' }] : [])]
       .map(x => ({ ...x, selected: x.id === tab ? 'true' : 'false', fg: x.id === tab ? t.text : t.muted, bar: x.id === tab ? t.text : 'transparent', pick: () => this.setState({ tab: x.id }) }));

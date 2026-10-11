@@ -1199,7 +1199,7 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
     make, diagrams, pages,
     guide: id => { const d = deckById(id); if (!d) return { deckId: '', text: '', at: 0, pages: [], can: false, studying: false };
       const g = guideOf(d), ro = shareOf(d).readOnly;
-      return { deckId: d.id, text: g.text || '', at: g.at || 0, pages: (g.pages || []).map(p => ({ id: p.id, parent: p.parent || '', title: p.title, text: p.text || '', at: p.at || 0 })), can: !ro, studying: ro }; },
+      return { deckId: d.id, text: g.text || '', at: g.at || 0, pages: (g.pages || []).map(p => ({ id: p.id, parent: p.parent || '', title: p.title, text: p.text || '', at: p.at || 0 })), can: !ro, studying: ro, moved: d.guideMoved || null }; },
     guideHistory: async (id, page) => { try { const r = await fetch('/api/guide/history?deck=' + encodeURIComponent(id) + '&page=' + encodeURIComponent(page || 'main'), { cache: 'no-store' }); return r.ok ? (await r.json()).versions || [] : []; } catch { return []; } },
     sources: id => { const d = deckById(id); return d ? (d.sources || []).slice().reverse().map(sourceRow) : []; },
     sourceText: name => { if (!name) return ''; if (sourceTexts[name] === undefined) { sourceTexts[name] = null; fetch('/media/' + encodeURIComponent(name), { cache: 'no-store' }).then(r => (r.ok ? r.text() : '')).then(t => { sourceTexts[name] = t; changed(); }).catch(() => { sourceTexts[name] = ''; }); } return sourceTexts[name]; },

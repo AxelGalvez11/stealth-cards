@@ -140,6 +140,8 @@ function resolve(path, q) {
     // A deck's Notes (its Guide and pages), written here: ?page= one of its pages, ?at=<line>:<place> where a press on the Notes tab put the caret, or ?at=end (the deck page's
     // + › Notes: ready to type at the end of what is written). A deck you study as it is shows its owner's, which is theirs to change.
     // A deck you study (someone else's, as it is) opens its notes to read: the Notes tab lists them since V176 (no ⋯, no Add a page inside, no New note).
+    // A Guide that moved into the deck's Pages (web/guidemove.mjs): its page, or the page an old page became.
+    if (deck[2] === '/guide') { const mv = db.guide(id).moved; if (mv) { const to = q.get('page') ? (mv.map || {})[q.get('page')] : mv.main; return { redirect: to ? '/page/' + to : '/deck/' + id + '?tab=pages' }; } }
     if (deck[2] === '/guide') return { name: P + 'Guide', props: { deckId: id, page: q.get('page') || '', newPage: q.get('new') === '1', newParent: q.get('parent') || '', at: /^(\d{1,5}:\d{1,6}|end)$/.test(q.get('at') || '') ? q.get('at') : '' } };
     // Playing a deck live needs a big screen, so it starts from a computer.
     if (deck[2] === '/live') return narrow.matches ? { redirect: '/deck/' + id } : { name: 'LiveSetup', props: { deckId: id } };

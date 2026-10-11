@@ -26,8 +26,9 @@ import { deleteAccount } from './account.mjs';
 import * as social from './social.mjs';
 import * as classes from './classes.mjs';
 import { cookies } from './auth.mjs';
-import { isDev, afterSaving, pageScope } from './store.mjs';
+import { isDev, afterSaving, pageScope, touchDeck } from './store.mjs';
 import * as pages from './pages.mjs';
+import { moveGuide } from './guidemove.mjs';
 import { reserve, lookup, release, rtOf, listen, pass } from './rooms.mjs';
 import { publicLd } from './jsonld.mjs';
 
@@ -141,7 +142,12 @@ async function pagesApi(req, res, path, body, uid) {
     if (req.method === 'GET') {
       const q = new URL(req.url, 'http://x').searchParams, m = /^\/api\/pages(?:\/([a-z0-9]+)(?:\/versions(?:\/(\d+))?)?)?$/.exec(path);
       if (!m) return send(res, 404, { error: 'Not found' });
-      if (!m[1]) { const sc = q.get('scope') ? pageScope(q.get('scope'), q.get('id') || '') : null; return send(res, 200, { pages: await pages.list(uid, sc && sc.scope, sc && sc.id), rev: await pages.rev(uid) }); }
+      if (!m[1]) {
+        const sc = q.get('scope') ? pageScope(q.get('scope'), q.get('id') || '', { read: true }) : null;
+        // a deck's Guide moves into its Pages the first time they're asked for (guidemove.mjs)
+        if (sc && sc.scope === 'deck') await moveGuide(state().decks.find(d => d.id === sc.id), pages.onceFor(req));
+        return send(res, 200, { pages: await pages.list(uid, sc && sc.scope, sc && sc.id), rev: await pages.rev(uid) });
+      }
       if (m[2]) return send(res, 200, await pages.version(uid, m[1], +m[2]));
       if (path.endsWith('/versions')) return send(res, 200, { versions: await pages.versions(uid, m[1]) });
       const pg = await pages.get(uid, m[1]);
@@ -159,6 +165,8 @@ async function pagesApi(req, res, path, body, uid) {
         default: throw new pages.PageError('Unknown op ' + a.op);
       }
     });
+    // a shared deck shares its pages too (social.mjs, when the library is saved)
+    if (out && out.scope === 'deck' && a.op !== 'move') touchDeck(out.scopeId, who);
     return send(res, 200, out);
   } catch (e) { return fail(e); }
 }
