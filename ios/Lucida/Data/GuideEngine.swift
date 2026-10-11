@@ -28,8 +28,14 @@ indirect enum GuideBlock: Decodable, Equatable {
   case table(align: [String], head: [[GuideInline]], rows: [[[GuideInline]]])
   /// A toggle: its title, and what opens under it (":::toggle Its title" ... ":::").
   case toggle(inline: [GuideInline], blocks: [GuideBlock])
+  /// A Note's callout (":::trap" / pearl / mnemonic / note ... ":::"): its kind, its title (often empty), and what is in it.
+  case callout(style: String, inline: [GuideInline], blocks: [GuideBlock])
+  /// A Note's chain (":::chain", a step a line, ":::"): each step's words.
+  case chain(steps: [[GuideInline]])
+  /// A card of the deck or another page shown in a Note ("::card <id>", "::page <id>"): only its id.
+  case card(id: String), page(id: String)
 
-  private enum K: String, CodingKey { case t, level, inline, id, lang, text, blocks, tight, items, start, align, head, rows }
+  private enum K: String, CodingKey { case t, level, inline, id, lang, text, blocks, tight, items, start, align, head, rows, style, steps }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: K.self)
     switch try c.decode(String.self, forKey: .t) {
@@ -42,6 +48,10 @@ indirect enum GuideBlock: Decodable, Equatable {
     case "hr": self = .hr
     case "table": self = .table(align: c.opt(.align, []), head: try c.decode([[GuideInline]].self, forKey: .head), rows: try c.decode([[[GuideInline]]].self, forKey: .rows))
     case "toggle": self = .toggle(inline: try c.decode([GuideInline].self, forKey: .inline), blocks: try c.decode([GuideBlock].self, forKey: .blocks))
+    case "callout": self = .callout(style: c.opt(.style, "note"), inline: c.opt(.inline, []), blocks: try c.decode([GuideBlock].self, forKey: .blocks))
+    case "chain": self = .chain(steps: c.opt(.steps, []))
+    case "card": self = .card(id: c.opt(.id, ""))
+    case "page": self = .page(id: c.opt(.id, ""))
     default: throw DecodingError.dataCorruptedError(forKey: .t, in: c, debugDescription: "Unknown block")
     }
   }

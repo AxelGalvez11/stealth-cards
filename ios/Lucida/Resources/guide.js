@@ -20,6 +20,8 @@
 //   - A toggle (":::toggle Its title" ... ":::") is made only of this file's own tags: its title is read like a heading's words
 //     (escaped, marks and links checked like any other), it nests like a list, and one that is never closed ends where the page does.
 //     A copy of this file from before toggles shows those two lines as words.
+//   - Note blocks are made the same way: a callout (":::trap" ... ":::") is a toggle with a color, a chain's steps are read like a heading's words,
+//     and a card or a page in it is only its id (letters, digits, - and _, at most 40, checked by a pattern), which the page around it fills in.
 //   - Nothing throws. null and undefined are "", anything else is turned into a string. A lone half of an emoji becomes U+FFFD.
 //
 // WHAT IT READS. CommonMark plus the usual GitHub extras: # headings (and === / --- under a line), paragraphs (a single
@@ -32,6 +34,13 @@
 // And Lucida's one addition, a toggle: a line ":::toggle Its title" (up to three spaces in, three or more colons, the word toggle,
 // then the title), anything as Markdown under it (paragraphs, lists, more toggles...), and a line ":::" that closes the innermost
 // toggle still open (not one inside a fenced code block). It can start anywhere a block can, in a list item or a quote too.
+// And the Note blocks (the deck's Pages, 2026-10-11), made the same way:
+//   - a callout: ":::trap", ":::pearl", ":::mnemonic" or ":::note", an optional title after a space, Markdown under it, closed by ":::" exactly like a
+//     toggle (it nests, it can be in a list item or a quote, one that is never closed ends where the page does). A trap is a mistake to avoid, a pearl a
+//     thing worth remembering, a mnemonic a way to remember it, a note anything else.
+//   - a chain: ":::chain" on a line of its own, then one step per line (words with marks, at most 12 steps, empty lines left out), closed by ":::".
+//   - a card or a page shown in the note: a line "::card <id>" or "::page <id>" (two colons; the id is 1 to 40 letters, digits, - or _). Anything
+//     else on the line, or another id, and it is words.
 // Not supported, and shown as text: raw HTML, HTML blocks and comments, footnotes, math, emoji :shortcodes:, bare www.
 // and email addresses, named entities outside the safe list.
 //
@@ -58,6 +67,9 @@
 //     { t:'hr' }
 //     { t:'table', align:['left'|'right'|'center'|''], head:[[inline]], rows:[[[inline]]] }   a cell is an array of inline
 //     { t:'toggle', inline:[...], blocks:[...] }                   a toggle: its title, and what opens under it
+//     { t:'callout', style:'trap'|'pearl'|'mnemonic'|'note', inline:[...], blocks:[...] }   a callout: its title (often empty) and what is in it
+//     { t:'chain', steps:[[inline], ...] }                         a chain: at most 12 steps (none while it is being written), each one's words
+//     { t:'card', id }   { t:'page', id }                          a card of the deck, another page: id matches [A-Za-z0-9_-]{1,40}
 //   checked is null for an ordinary item and true/false for a task item ("- [x] done"). In a tight list the paragraphs of an
 //   item are drawn without paragraph spacing.
 //   Inline nodes (what is inside a heading, paragraph or table cell) are
@@ -82,6 +94,10 @@ export function makeGuide() {
   const MAX_MARKS = 20;      // bold, italic, strike and links inside each other; a deeper one loses its marks
   const MAX_URL_CHARS = 200000; // all link and picture addresses of one document together (a [ref] used again counts again)
   const MAX_IMAGES = 100;    // pictures shown in one document
+  const MAX_STEPS = 12;      // steps of one chain
+  // The callouts, and the word each one's label says.
+  const CALLOUTS = { trap: 'Trap', pearl: 'Pearl', mnemonic: 'Mnemonic', note: 'Note' };
+  const REF_ID = /^[A-Za-z0-9_-]{1,40}$/;
   let errors = 0;            // unexpected errors caught (a bug if it is ever not 0)
   let lastScan = 0;          // how many characters the last link scan read, for the inline work budget
 
@@ -630,7 +646,7 @@ export function makeGuide() {
     const doc = mk('doc', 0);
     let tip = doc, oldtip = doc, lastMatched = doc, allClosed = true;
     let ln = '', lineNo = 0, offset = 0, column = 0, nextNonspace = 0, nextCol = 0, indent = 0, indented = false, blank = false, partialTab = false;
-    const canContain = (p, t) => (p === 'doc' || p === 'quote' || p === 'item' || p === 'toggle' ? t !== 'item' : p === 'list' ? t === 'item' : false);
+    const canContain = (p, t) => (p === 'doc' || p === 'quote' || p === 'item' || p === 'toggle' || p === 'callout' ? t !== 'item' : p === 'list' ? t === 'item' : false);
 
     function findNextNonspace() {
       let i = offset, cols = column;
@@ -660,7 +676,7 @@ export function makeGuide() {
     }
     function addChild(type) {
       while (!canContain(tip.type, type)) finalize(tip);
-      const n = mk(type, tip.depth + (type === 'quote' || type === 'item' || type === 'toggle' ? 1 : 0));
+      const n = mk(type, tip.depth + (type === 'quote' || type === 'item' || type === 'toggle' || type === 'callout' ? 1 : 0));
       n.parent = tip; n.line = lineNo;
       tip.kids.push(n);
       tip = n;
@@ -755,17 +771,17 @@ export function makeGuide() {
           else if (indent >= c.ld.markerOffset + c.ld.padding) advanceOffset(c.ld.markerOffset + c.ld.padding, true);
           else return 1;
           return 0;
-        case 'toggle': {
-          // ":::" on a line of its own closes the innermost toggle still open: a toggle further in, or a fenced code block, takes the line first.
-          if (indented || ln.charCodeAt(nextNonspace) !== 58) return 0;
-          let j = nextNonspace; while (ln.charCodeAt(j) === 58) j++;
-          if (j - nextNonspace < 3 || !blankFrom(ln, j)) return 0;
-          for (let b = c.kids[c.kids.length - 1]; b && b.open; b = b.kids[b.kids.length - 1]) if (b.type === 'toggle' || (b.type === 'code' && b.fenced)) return 0;
+        case 'toggle': case 'callout': {
+          // ":::" on a line of its own closes the innermost toggle or callout still open: one further in, a chain, or a fenced code block, takes the line first.
+          if (!closer()) return 0;
+          for (let b = c.kids[c.kids.length - 1]; b && b.open; b = b.kids[b.kids.length - 1]) if (b.type === 'toggle' || b.type === 'callout' || b.type === 'chain' || (b.type === 'code' && b.fenced)) return 0;
           while (tip !== c) finalize(tip);
           finalize(c);
           return 2;
         }
-        case 'heading': case 'hr': return 1;
+        // a chain takes every line as a step until its ":::"
+        case 'chain': if (closer()) { finalize(c); return 2; } return 0;
+        case 'heading': case 'hr': case 'ref': return 1;
         case 'para': case 'table': return blank ? 1 : 0;
         case 'code':
           if (c.fenced) {
@@ -780,6 +796,13 @@ export function makeGuide() {
           return 0;
         default: return 0;
       }
+    }
+
+    // ":::" (three colons or more) on a line of its own, up to three spaces in.
+    function closer() {
+      if (indented || ln.charCodeAt(nextNonspace) !== 58) return false;
+      let j = nextNonspace; while (ln.charCodeAt(j) === 58) j++;
+      return j - nextNonspace >= 3 && blankFrom(ln, j);
     }
 
     // --- the starts of new blocks: 0 no, 1 a container was opened (keep looking), 2 a leaf was opened ---
@@ -823,15 +846,37 @@ export function makeGuide() {
       advanceNextNonspace(); advanceOffset(n, false);
       return 2;
     }
-    // ":::toggle Its title": a toggle, whose title is the rest of the line. (Like a list, it nests at most MAX_NEST deep.)
+    // ":::toggle Its title": a toggle, whose title is the rest of the line. (Like a list, it nests at most MAX_NEST deep.) ":::trap Its title" (or pearl,
+    // mnemonic, note): a callout, the same with a color. ":::chain" alone on its line: a chain, whose steps are the lines up to its ":::".
     function toggleStart(container) {
       if (indented || ln.charCodeAt(nextNonspace) !== 58 || container.depth >= MAX_NEST) return 0;
       let j = nextNonspace; while (ln.charCodeAt(j) === 58) j++;
       if (j - nextNonspace < 3) return 0;
       while (isSp(ln.charCodeAt(j))) j++;
-      if (ln.slice(j, j + 6).toLowerCase() !== 'toggle' || !(j + 6 >= ln.length || isSp(ln.charCodeAt(j + 6)))) return 0;
+      let e = j; while (isAlpha(ln.charCodeAt(e))) e++;
+      const word = ln.slice(j, e).toLowerCase();
+      if (!(e >= ln.length || isSp(ln.charCodeAt(e)))) return 0;
+      if (word === 'chain') {
+        if (!blankFrom(ln, e)) return 0;
+        closeUnmatched();
+        addChild('chain');
+      } else if (word === 'toggle' || CALLOUTS[word]) {
+        closeUnmatched();
+        const b = addChild(word === 'toggle' ? 'toggle' : 'callout');
+        b.title = trimWS(ln.slice(e));
+        if (word !== 'toggle') b.style = word;
+      } else return 0;
+      advanceOffset(ln.length - offset, false);
+      return 2;
+    }
+    // "::card <id>" or "::page <id>": a card of the deck or another page, shown here (the id is all there is on the line).
+    function refStart() {
+      if (indented || ln.charCodeAt(nextNonspace) !== 58 || ln.charCodeAt(nextNonspace + 1) !== 58) return 0;
+      const m = /^::(card|page)[ \t]+([A-Za-z0-9_-]{1,40})[ \t]*$/.exec(ln.slice(nextNonspace));
+      if (!m) return 0;
       closeUnmatched();
-      addChild('toggle').title = trimWS(ln.slice(j + 6));
+      const b = addChild('ref');
+      b.kind = m[1]; b.ref = m[2];
       advanceOffset(ln.length - offset, false);
       return 2;
     }
@@ -926,7 +971,7 @@ export function makeGuide() {
       addChild('code').fenced = false;
       return 2;
     }
-    const STARTS = [quoteStart, atxStart, fenceStart, toggleStart, setextStart, hrStart, itemStart, tableStart, codeStart];
+    const STARTS = [quoteStart, atxStart, fenceStart, toggleStart, refStart, setextStart, hrStart, itemStart, tableStart, codeStart];
     const special = c => (c >= 48 && c <= 58) || c === 35 || c === 96 || c === 126 || c === 42 || c === 43 || c === 95 || c === 61 || c === 62 || c === 45 || c === 124;
 
     function incorporateLine(line) {
@@ -942,7 +987,7 @@ export function makeGuide() {
       }
       allClosed = container === oldtip;
       lastMatched = container;
-      let leaf = container.type === 'code';
+      let leaf = container.type === 'code' || container.type === 'chain';
       while (!leaf) {
         findNextNonspace();
         if (!indented && !special(ln.charCodeAt(nextNonspace))) { advanceNextNonspace(); break; }
@@ -958,9 +1003,9 @@ export function makeGuide() {
       closeUnmatched();
       if (blank && container.kids.length) container.kids[container.kids.length - 1].blankEnd = true;
       const t = container.type;
-      const lastBlank = blank && !(t === 'quote' || t === 'toggle' || (t === 'code' && container.fenced) || (t === 'item' && !container.kids.length && container.line === lineNo));
+      const lastBlank = blank && !(t === 'quote' || t === 'toggle' || t === 'callout' || t === 'chain' || (t === 'code' && container.fenced) || (t === 'item' && !container.kids.length && container.line === lineNo));
       for (let c = container; c; c = c.parent) c.blankEnd = lastBlank;
-      if (t === 'code' || t === 'para') addLine();
+      if (t === 'code' || t === 'para' || t === 'chain') addLine();
       else if (offset < ln.length && !blank) {
         if (t === 'table') {
           const cells = splitCells(ln.slice(offset)), n = container.align.length;
@@ -999,6 +1044,14 @@ export function makeGuide() {
           out.push({ t: 'code', lang: k.fenced ? k.info.split(/[ \t]/, 1)[0] : '', text: lit.endsWith('\n') ? lit.slice(0, -1) : lit }); break; }
         case 'quote': out.push({ t: 'quote', blocks: build(k, refs, ctx) }); break;
         case 'toggle': out.push({ t: 'toggle', inline: inlineOf(k.title || '', refs, ctx), blocks: build(k, refs, ctx) }); break;
+        case 'callout': out.push({ t: 'callout', style: k.style, inline: inlineOf(k.title || '', refs, ctx), blocks: build(k, refs, ctx) }); break;
+        case 'chain': {                                           // one step a line; empty lines and steps past the 12th are left out
+          const steps = [];
+          for (const l of k.content.split('\n')) { if (steps.length >= MAX_STEPS) break; if (!blankFrom(l, 0)) { const st = inlineOf(l, refs, ctx); if (st.length) steps.push(st); } }
+          out.push({ t: 'chain', steps });
+          break;
+        }
+        case 'ref': out.push({ t: k.kind, id: k.ref }); break;
         case 'list': {
           const items = k.kids.map(it => {
             let checked = null;
@@ -1062,9 +1115,11 @@ export function makeGuide() {
 
   // ---------- showing: the tree -> HTML ----------
   // Only these tags are ever written: div h1-h6 p br strong em del code pre blockquote ul ol li span hr table thead
-  // tbody tr th td a img details summary. And only these attributes: class (gd, gd-task, gd-box, gd-on, gd-tg, language-x), id (on headings), href data-tip rel
+  // tbody tr th td a img details summary aside. And only these attributes: class (gd, gd-task, gd-box, gd-on, gd-tg, gd-co, gd-co-trap|pearl|mnemonic|note,
+  // gd-co-l, gd-co-t, gd-ch, gd-ch-a, gd-ref, language-x), id (on headings), href data-tip rel
   // target (a), src alt data-tip loading decoding (img), start (ol), role="img" and aria-label (a task's box, a span: Lucida's own
-  // check, drawn by CSS, never a browser's checkbox), style="text-align:x" (th, td).
+  // check, drawn by CSS, never a browser's checkbox), aria-hidden (a chain's arrows), style="text-align:x" (th, td), data-card and data-page (a card or a page
+  // shown in the note: an empty div the page around it fills in; the id is only letters, digits, - and _).
   // No line breaks between tags (only inside pre), so the same text always gives the same HTML.
   // opts.image(src) says whether a picture may show: it returns the address to use or '' to refuse.
   const LANG = /^[A-Za-z0-9_+#-]{1,20}$/;
@@ -1127,6 +1182,13 @@ export function makeGuide() {
         case 'quote': return '<blockquote>' + b.blocks.map(block).join('') + '</blockquote>';
         // A toggle opens and closes with no script (it starts closed; a page that remembers what was open opens it again).
         case 'toggle': return '<details class="gd-tg"><summary>' + inline(b.inline) + '</summary>' + b.blocks.map(block).join('') + '</details>';
+        // A callout: its kind's word as a small label, its title (when it has one), and what is in it.
+        case 'callout': {
+          const k = CALLOUTS[b.style] ? b.style : 'note', t = inline(b.inline);
+          return '<aside class="gd-co gd-co-' + k + '"><span class="gd-co-l">' + CALLOUTS[k] + '</span>' + (t ? '<p class="gd-co-t">' + t + '</p>' : '') + b.blocks.map(block).join('') + '</aside>';
+        }
+        case 'chain': return '<div class="gd-ch">' + b.steps.map(st => '<span>' + inline(st) + '</span>').join('<span class="gd-ch-a" aria-hidden="true">→</span>') + '</div>';
+        case 'card': case 'page': return REF_ID.test(b.id) ? '<div class="gd-ref" data-' + b.t + '="' + escA(b.id) + '"></div>' : '';
         case 'hr': return '<hr>';
         case 'ul': return '<ul>' + b.items.map(it => item(it, b.tight)).join('') + '</ul>';
         case 'ol': return (b.start !== 1 ? '<ol start="' + (b.start | 0) + '">' : '<ol>') + b.items.map(it => item(it, b.tight)).join('') + '</ol>';
@@ -1158,7 +1220,8 @@ export function makeGuide() {
         case 'h': case 'p': { const t = textOf(b.inline); if (t) out.push(t); break; }
         case 'code': for (const l of b.text.split('\n')) if (l) out.push(l); break;
         case 'quote': plainLines(b.blocks, out); break;
-        case 'toggle': { const t = textOf(b.inline); if (t) out.push(t); plainLines(b.blocks, out); break; }
+        case 'toggle': case 'callout': { const t = textOf(b.inline); if (t) out.push(t); plainLines(b.blocks, out); break; }
+        case 'chain': { const t = b.steps.map(textOf).filter(Boolean).join(' → '); if (t) out.push(t); break; }
         case 'ul': case 'ol': for (const it of b.items) plainLines(it.blocks, out); break;
         case 'table': for (const r of [b.head, ...b.rows]) { const t = r.map(textOf).filter(Boolean).join(' '); if (t) out.push(t); } break;
         default: break;
@@ -1183,7 +1246,7 @@ export function makeGuide() {
     const walk = blocks => {
       for (const b of blocks) {
         if (b.t === 'h') out.push({ level: b.level, text: textOf(b.inline), id: b.id });
-        else if (b.t === 'quote' || b.t === 'toggle') walk(b.blocks);
+        else if (b.t === 'quote' || b.t === 'toggle' || b.t === 'callout') walk(b.blocks);
         else if (b.t === 'ul' || b.t === 'ol') b.items.forEach(it => walk(it.blocks));
       }
     };
@@ -1200,17 +1263,21 @@ export function makeGuide() {
   //   { k:'quote', d, r }            quote             { k:'code', d, lang, text } code
   //   { k:'hr', d }                  divider           { k:'img', d, src, alt, title } picture
   //   { k:'table', d, align, rows }  table: rows[0] is the header, a cell is runs
+  //   { k:'callout', d, style, r }   callout (style: trap, pearl, mnemonic or note; r is its title, often empty; what is in it follows one level in)
+  //   { k:'chain', d, r }            chain: one line, its steps between " → " (Markdown has a step a line; an empty step is left out)
+  //   { k:'card', d, ref }           a card of the deck   { k:'page', d, ref }  another page (ref: its id; the editor's own ids are `id`, so this is ref)
   // r is the line's words as runs: [{ t, b, i, s, c, a, lt }], t the words and the rest what they are: bold, italic, strikethrough, code (true or
   // left out), and a link's address (a, always one guide.js allows) and title (lt). t may hold a line break (\n), except in a heading, a toggle's
-  // line and a table cell. ul, ol, todo, toggle and quote hold what follows them one level in; nothing else holds anything.
+  // or a callout's line, a chain and a table cell. ul, ol, todo, toggle, callout and quote hold what follows them one level in; nothing else holds anything.
   //   blocks(md)      reads any Markdown into blocks. What a line can't hold goes onto a line of its own and no words are lost: a picture between words
   //                   (or in a heading) is a picture block after them, a list item's or a quote's second paragraph is a block inside it, a picture in a
   //                   table cell is its description.
   //   markdown(list)  writes blocks as Markdown: blocks(markdown(list)) is the same list again (once the list is as blocks() would read it: runs merged,
   //                   no space at the edges of a line or of a mark). Marks Markdown can't say (bold that ends in a comma right before a letter) are
   //                   left off, never words. An empty text line is written as &nbsp; so it stays.
-  const BK_TEXT = { p: 1, h: 1, ul: 1, ol: 1, todo: 1, toggle: 1, quote: 1 }, BK_HOLDS = { ul: 1, ol: 1, todo: 1, toggle: 1, quote: 1 };
-  const BK_KINDS = { ...BK_TEXT, code: 1, hr: 1, img: 1, table: 1 }, BK_DEPTH = 16, BK_MAX = 20000;
+  const BK_TEXT = { p: 1, h: 1, ul: 1, ol: 1, todo: 1, toggle: 1, quote: 1, callout: 1, chain: 1 }, BK_HOLDS = { ul: 1, ol: 1, todo: 1, toggle: 1, quote: 1, callout: 1 };
+  const BK_KINDS = { ...BK_TEXT, code: 1, hr: 1, img: 1, table: 1, card: 1, page: 1 }, BK_DEPTH = 16, BK_MAX = 20000;
+  const BK_ONE = { h: 1, toggle: 1, callout: 1, chain: 1 };      // one line: a line break in them is a space
   const RUN_MARKS = ['b', 'i', 's', 'c'];
   const sameRun = (x, y) => !!x.b === !!y.b && !!x.i === !!y.i && !!x.s === !!y.s && !!x.c === !!y.c && (x.a || '') === (y.a || '') && (x.lt || '') === (y.lt || '');
   // A run with only the marks it has (an address only when it is one a link may have).
@@ -1291,7 +1358,7 @@ export function makeGuide() {
         words.forEach((w, i) => { const r = canonRuns(w); if (r.length) out.push({ ...blk, r }); if (i < pics.length) pic(pics[i], blk.d); });
         return;
       }
-      let r = canonRuns(words.flat(), blk.k === 'h' || blk.k === 'toggle');
+      let r = canonRuns(words.flat(), !!BK_ONE[blk.k]);
       if (NBSP_ONLY(r)) r = [];
       out.push({ ...blk, r });
       for (const p of pics) pic(p, inner ? blk.d + 1 : blk.d);
@@ -1316,6 +1383,9 @@ export function makeGuide() {
         }
         case 'quote': holder({ k: 'quote', d }, b.blocks); break;
         case 'toggle': line({ k: 'toggle', d }, b.inline, false, true); flatten(b.blocks, d + 1, out); break;
+        case 'callout': line({ k: 'callout', d, style: CALLOUTS[b.style] ? b.style : 'note' }, b.inline, false, true); flatten(b.blocks, d + 1, out); break;
+        case 'chain': out.push({ k: 'chain', d, r: joinSteps(b.steps.map(st => canonRuns(bkPieces(st).map(p => (p.img ? { t: p.img.alt } : p)), true))) }); break;
+        case 'card': case 'page': if (REF_ID.test(b.id)) out.push({ k: b.t, d, ref: b.id }); break;
         case 'ul': case 'ol':
           b.items.forEach((it, n) => {
             const blk = { k: it.checked === true || it.checked === false ? 'todo' : b.t, d };
@@ -1332,6 +1402,24 @@ export function makeGuide() {
       }
     }
     return out;
+  }
+  // A chain's steps as its one line (" → " between them, empty ones left out), and its line as steps again.
+  function joinSteps(steps) {
+    const out = [];
+    for (const st of steps) { if (!st.length) continue; if (out.length) out.push({ t: ' → ' }); out.push(...st); }
+    return canonRuns(out, true);
+  }
+  function cutRuns(rs, a, b) {
+    const out = []; let at = 0;
+    for (const x of rs) { const s0 = at, e0 = at + x.t.length; at = e0; const f = Math.max(a, s0), t = Math.min(b, e0); if (f < t) out.push({ ...x, t: x.t.slice(f - s0, t - s0) }); }
+    return out;
+  }
+  function splitSteps(rs) {
+    const t = runsText(rs), out = [], re = /\s*→\s*/g;
+    let from = 0, m;
+    while ((m = re.exec(t))) { out.push(canonRuns(cutRuns(rs, from, m.index), true)); from = m.index + m[0].length; }
+    out.push(canonRuns(cutRuns(rs, from, t.length), true));
+    return out.filter(st => st.length).slice(0, MAX_STEPS);
   }
   function blocksOf(md) {
     try { return flatten(parse(md, true), 0, []).slice(0, BK_MAX); } catch (e) { errors++; const t = clean(md).trim(); return t ? [{ k: 'p', d: 0, r: [{ t: t.slice(0, 5000) }] }] : []; }
@@ -1467,7 +1555,10 @@ export function makeGuide() {
   function bkClean(x) {
     if (!x || typeof x !== 'object' || !BK_KINDS[x.k]) return null;
     const d = Math.max(0, Math.min(BK_DEPTH, Math.floor(+x.d) || 0)), b = { k: x.k, d };
-    if (BK_TEXT[x.k]) b.r = canonRuns(x.r, x.k === 'h' || x.k === 'toggle');
+    if (BK_TEXT[x.k]) b.r = canonRuns(x.r, !!BK_ONE[x.k]);
+    if (x.k === 'chain') b.r = joinSteps(splitSteps(b.r));
+    if (x.k === 'callout') b.style = CALLOUTS[x.style] ? x.style : 'note';
+    if (x.k === 'card' || x.k === 'page') { const ref = str(x.ref); if (!REF_ID.test(ref)) return null; b.ref = ref; }
     if (x.k === 'h') b.level = Math.max(1, Math.min(6, Math.floor(+x.level) || 1));
     if (x.k === 'todo') b.on = !!x.on;
     if (x.k === 'ol' && x.start != null) { const n = Math.floor(+x.start); if (isFinite(n) && n >= 0 && n !== 1) b.start = Math.min(n, 999999999); }
@@ -1506,6 +1597,9 @@ export function makeGuide() {
       // (a # at the very end would be read as closing the heading, unless it is escaped)
       case 'h': { let t = lineMd(b.r, {}); const m = /(\\*)#$/.exec(t); if (m && m[1].length % 2 === 0) t = t.slice(0, -1) + '\\#'; return ['#'.repeat(b.level) + (t ? ' ' + t : '')]; }
       case 'toggle': { const t = lineMd(b.r, {}); return [':::toggle' + (t ? ' ' + t : ''), ...nodesMd(kids), ':::']; }
+      case 'callout': { const t = lineMd(b.r, {}); return [':::' + b.style + (t ? ' ' + t : ''), ...nodesMd(kids), ':::']; }
+      case 'chain': return [':::chain', ...splitSteps(b.r).map(st => lineMd(st, {})), ':::'];
+      case 'card': case 'page': return ['::' + b.k + ' ' + b.ref];
       case 'quote': {
         const own = (b.r.length || !kids.length ? (b.r.length ? text(0) : '') : '&nbsp;').split('\n');
         const all = kids.length ? [...own, '', ...nodesMd(kids)] : own;

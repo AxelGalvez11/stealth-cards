@@ -26,7 +26,7 @@ enum GuideCSS {
     case .hr: return rule
     case .ul, .ol: return item                            // (the first item's margin comes through)
     case .quote(let bs): return bs.first.map(top) ?? 0
-    case .p, .code, .table, .toggle: return 0
+    case .p, .code, .table, .toggle, .callout, .chain, .card, .page: return 0
     }
   }
   static func bottom(_ b: GuideBlock, nested: Bool = false, tight: Bool = false) -> CGFloat {
@@ -34,7 +34,8 @@ enum GuideCSS {
     case .h(let level, _, _): return 0.5 * headSize(level)
     case .hr: return rule
     case .p: return tight ? 0 : para
-    case .code, .table, .quote, .toggle: return para
+    case .code, .table, .quote, .toggle, .callout, .chain: return para
+    case .card, .page: return 0
     case .ul(let t, let items): return listBottom(items, tight: t, nested: nested)
     case .ol(_, let t, let items): return listBottom(items, tight: t, nested: nested)
     }
@@ -358,6 +359,24 @@ struct GuideBlockView: View {
         GuideInlineView(inline: inline, weight: .semibold, width: width, image: image)
         GuideBlocks(blocks: bs, width: width - GuideCSS.indent, image: image, tight: false, nested: false).padding(.leading, GuideCSS.indent)
       }
+    // A Note's callout: its kind's small label in its color (a trap the again red, a pearl the good green, a mnemonic the hard amber), its title, and
+    // what is in it, on the kind's tint (design/materials.mjs NOTES_CSS .nb-co-*).
+    case .callout(let style, let inline, let bs):
+      let fg = style == "trap" ? t.again : style == "pearl" ? t.good : style == "mnemonic" ? t.hard : t.muted
+      let bg = style == "trap" ? t.againTint : style == "pearl" ? t.goodTint : style == "mnemonic" ? t.hardTint : t.surf
+      VStack(alignment: .leading, spacing: 4) {
+        Text(style == "trap" ? "TRAP" : style == "pearl" ? "PEARL" : style == "mnemonic" ? "MNEMONIC" : "NOTE").font(.system(size: 12, weight: .bold)).tracking(0.5).foregroundStyle(fg)
+        if !inline.isEmpty { GuideInlineView(inline: inline, weight: .semibold, width: width - 32, image: image) }
+        GuideBlocks(blocks: bs, width: width - 32, image: image, tight: false, nested: true)
+      }
+      .padding(.horizontal, 16).padding(.vertical, 12)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .background(bg, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    // A Note's chain: its steps one after the other with → between them.
+    case .chain(let steps):
+      GuideInlineView(inline: Array(steps.enumerated().map { i, s in i == 0 ? s : [GuideInline.text(" → ")] + s }.joined()), weight: .semibold, width: width, image: image)
+    // A card or a page shown in a Note: the app's Pages screens draw them (nothing here yet).
+    case .card, .page: EmptyView()
     }
   }
 }

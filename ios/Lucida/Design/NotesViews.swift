@@ -566,6 +566,7 @@ struct NoteRow: View, Equatable {
       else {
         switch b.k {
         case "hr": NoteRule(e: e, page: page, setup: setup, picked: picked)
+        case "card", "page": NoteRef(e: e, page: page, setup: setup, picked: picked)
         case "img": NotePicture(e: e, page: page, setup: setup, picked: picked)
         case "table": NoteTable(e: e, page: page, setup: setup, focus: focus, editingHere: editingHere)
         case "code": NoteCode(e: e, page: page, setup: setup, focus: focus)
@@ -710,6 +711,26 @@ struct NoteRule: View {
       .onTapGesture { if setup.editable { page.pick(e.block.id) } else if setup.owner { setup.hooks.open?(e.index, 0) } }
       .overlay(alignment: .topTrailing) { if picked { NoteRemove(page: page).offset(y: -40) } }
       .accessibilityElement().accessibilityLabel("Divider")
+  }
+}
+
+/// A card or a page shown in a Note ("::card <id>", "::page <id>", put there by an AI app): a quiet box that says which (the Pages screens will draw it
+/// in full); a tap picks it, and Delete takes it away. Its id stays as it was, so the page is saved as it came.
+struct NoteRef: View {
+  let e: NotesEntry
+  let page: NotesPage
+  let setup: NotesSetup
+  let picked: Bool
+  var body: some View {
+    let card = e.block.k == "card"
+    Text(card ? "A card from the deck" : "A page").font(.system(size: 14, weight: .semibold)).foregroundStyle(Color(setup.colors.muted))
+      .padding(.horizontal, 16).padding(.vertical, 12).frame(maxWidth: .infinity, alignment: .leading)
+      .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Color(setup.colors.line), lineWidth: 1))
+      .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Color(setup.colors.text), lineWidth: 2).opacity(picked ? 1 : 0))
+      .contentShape(Rectangle())
+      .onTapGesture { if setup.editable { page.pick(e.block.id) } else if setup.owner { setup.hooks.open?(e.index, 0) } }
+      .overlay(alignment: .topTrailing) { if picked { NoteRemove(page: page).offset(y: -40) } }
+      .accessibilityElement().accessibilityLabel(card ? "Card" : "Page")
   }
 }
 
