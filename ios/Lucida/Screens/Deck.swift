@@ -291,13 +291,15 @@ struct DeckScreen: View {
     // (the diagrams of its lectures and the tables and mind maps made from it: its owner's, or a deck that has some made ones).
     // Pages (design/pages.mjs deckPagesBlock), after Notes: its owner's, or a deck that has some.
     let pagesList = store.pages.list("deck", d.id)
-    let notesTab = g.hasAny || g.can, diagramsTab = g.can || !dgs.isEmpty, sourcesTab = g.can, pagesTab = g.can || !pagesList.isEmpty
+    // (a deck whose Guide moved into its Pages has no Notes tab: web/guidemove.mjs)
+    let moved = store.lib.decks.first(where: { $0.id == d.id })?.guideMoved
+    let notesTab = moved == nil && (g.hasAny || g.can), diagramsTab = g.can || !dgs.isEmpty, sourcesTab = g.can, pagesTab = g.can || !pagesList.isEmpty
     let items = (sourcesTab ? [DeckTabs.Item(id: "sources", label: "Sources")] : [])
       + [DeckTabs.Item(id: "cards", label: "Cards")]
       + (notesTab ? [DeckTabs.Item(id: "notes", label: "Notes")] : [])
       + (pagesTab ? [DeckTabs.Item(id: "pages", label: "Pages")] : [])
       + (diagramsTab ? [DeckTabs.Item(id: "diagrams", label: "Diagrams")] : [])
-    let want = tab ?? "cards"
+    let want = tab == "notes" && moved != nil ? "pages" : tab ?? "cards"
     let section = want == "notes" && notesTab ? "notes" : want == "pages" && pagesTab ? "pages" : want == "diagrams" && diagramsTab ? "diagrams" : want == "sources" && sourcesTab ? "sources" : "cards"
     return ScrollViewReader { proxy in ScrollView(showsIndicators: false) {
       VStack(spacing: 16) {
@@ -398,7 +400,11 @@ struct DeckScreen: View {
     return [AddMenuRow(icon: "plus", title: "New card", line: "") { nav.newCard(deckId: d.id) },
             AddMenuRow(icon: "sparkle", title: "Make cards", line: "") { nav.make(deckId: d.id) },
             AddMenuRow(icon: "file", title: "Source", line: "") { nav.make(kind: "file", deckId: d.id) },
-            AddMenuRow(icon: "pencil", title: "Notes", line: "") { nav.guide(deckId: d.id, at: empty ? "" : "end") },
+            AddMenuRow(icon: "pencil", title: "Notes", line: "") {
+              // a Guide that moved into the Pages opens its page (or the Pages tab when it had none)
+              if let mv = store.lib.decks.first(where: { $0.id == d.id })?.guideMoved { if mv.main.isEmpty { tab = "pages" } else { nav.page(mv.main) } }
+              else { nav.guide(deckId: d.id, at: empty ? "" : "end") }
+            },
             AddMenuRow(icon: "image", title: "Upload diagram", line: "") { tab = "diagrams"; store.diagrams.askUpload = d.id },
             AddMenuRow(icon: "mindmap", title: "Make diagram", line: "") {
               tab = "diagrams"; store.diagrams.openSheet()

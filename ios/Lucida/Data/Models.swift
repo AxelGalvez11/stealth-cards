@@ -268,7 +268,9 @@ struct Deck: Decodable, Identifiable {
   var cardOrder: [String]?
   /// Sharing: how a deck of yours is shared, or whose deck this is (the study network).
   var share: DeckShare?, link: DeckLink?
-  enum CodingKeys: String, CodingKey { case id, name, tags, created, cover, paused, grading, fsrs, goal, gapIdx, steps, perDay, piles, folder, bg, cardOrder, share, link }
+  /// Where its Guide went once it moved into its Pages (web/guidemove.mjs): the Guide's page, and the page each old page became.
+  var guideMoved: GuideMoved?
+  enum CodingKeys: String, CodingKey { case id, name, tags, created, cover, paused, grading, fsrs, goal, gapIdx, steps, perDay, piles, folder, bg, cardOrder, share, link, guideMoved }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     id = c.v(.id, UUID().uuidString); name = c.v(.name, "Untitled deck"); tags = c.v(.tags, []); created = c.v(.created, 0)
@@ -276,8 +278,13 @@ struct Deck: Decodable, Identifiable {
     goal = c.v(.goal, 90); gapIdx = c.v(.gapIdx, 3); steps = c.v(.steps, ["1m", "10m"]); perDay = c.v(.perDay, 20); piles = c.v(.piles, [])
     let pro = try d.container(keyedBy: ProKeys.self)
     exam = pro.v(.exam, nil); leechAt = pro.v(.leechAt, 8); leechAct = pro.v(.leechAct, "tag")
-    folder = c.v(.folder, nil); bg = c.v(.bg, DeckBg()); cardOrder = c.v(.cardOrder, nil); share = c.v(.share, nil); link = c.v(.link, nil)
+    folder = c.v(.folder, nil); bg = c.v(.bg, DeckBg()); cardOrder = c.v(.cardOrder, nil); share = c.v(.share, nil); link = c.v(.link, nil); guideMoved = c.v(.guideMoved, nil)
   }
+}
+struct GuideMoved: Decodable, Equatable {
+  var main = "", map: [String: String] = [:]
+  enum CodingKeys: String, CodingKey { case main, map }
+  init(from d: Decoder) throws { let c = try d.container(keyedBy: CodingKeys.self); main = c.v(.main, ""); map = c.v(.map, [:]) }
 }
 
 /// The deck settings Pro added (kept apart from the deck's other keys).
