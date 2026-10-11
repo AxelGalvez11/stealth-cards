@@ -181,6 +181,30 @@ export default [
   "h": 1733
  },
  {
+  "name": "NotePhone",
+  "title": "iPhone · Note page (design)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "NoteWeb",
+  "title": "Web · Note page (design)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "PagesPhone",
+  "title": "iPhone · Deck › Pages (design)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PagesWeb",
+  "title": "Web · Deck › Pages (design)",
+  "w": 1440,
+  "h": 900
+ },
+ {
   "name": "PhoneActivity",
   "title": "iPhone · Notifications",
   "w": 390,

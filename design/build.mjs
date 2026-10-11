@@ -7,6 +7,7 @@ import { GEN_METHOD } from './generator.mjs';
 import { MOCK_METHOD, SAMPLE, SAMPLE_WAVE } from './mock.mjs';
 import { DRAG_METHOD } from './drag.mjs';
 import { MOTION, EASE, MOTION_CSS, TILE_HOVER } from './motion.mjs';
+import { pagesBoards, PAGES_VIEWS, NOTE_VIEWS } from './pages.mjs';
 import { WALL_CARDS } from './wall.mjs';
 import { SHARE_METHOD } from './share.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
@@ -9242,6 +9243,8 @@ Object.assign(files, {
   'WebTheme': ['Web · Settings › Theme › Lucida (a theme’s page)', webTheme, { props: { ...DARK, grain: MESH('Iris').grain, plan: PLAN_PROP, sheet: { editor: 'string', default: '' } }, logic: themePageLogic(false), w: W, h: H }],
   'PhoneTheme': ['iPhone · Settings › Theme › a theme’s page', phoneTheme, { props: { ...DARK, grain: MESH('Iris').grain, plan: PLAN_PROP, sheet: { editor: 'string', default: 'aero' } }, logic: withThemes(['aero'], themePageLogic(true)), css: themeCss(['aero']), fonts: themeFonts(['aero']), w: PW, h: PHONE_THEME_H }],
 });
+// Pages (design/pages.mjs): the deck's Pages and a Note page, the design for the owner to approve first.
+Object.assign(files, pagesBoards({ svg, I, FONT, T, DB_JS, DARK, W, HH: H, PW, PH, sidebar }));
 for (const T of THEMES.filter(x => x.key !== 'lucida')) {
   const k = T.key, B = 'Theme' + T.board, one = { css: themeCss([k]), fonts: themeFonts([k]) }, logic = withThemes([k], darkLogic), at = attrs => `skin="${k}" ${attrs}`.trim();
   Object.assign(files, {
