@@ -3827,7 +3827,8 @@ notes() { return Component._nb || (Component._nb = (function makeNotes(G) {
       const was = o; o = { ...(next || {}) };
       const key = String(o.key || ''), md = String(o.md == null ? '' : o.md);
       if (key !== st.key || (md !== st.sent && md !== st.md) || JSON.stringify(was.demo || null) !== JSON.stringify(o.demo || null)) load(md, key);
-      else if (!!was.editable !== !!o.editable || !!was.phone !== !!o.phone) { st.rows.forEach(r => { r.sig = ''; }); render(); }
+      // (`refs`: what the host knows about the cards and pages the page shows changed, like a page that was still loading: those rows draw again)
+      else if (!!was.editable !== !!o.editable || !!was.phone !== !!o.phone || (was.refs || '') !== (o.refs || '')) { st.rows.forEach(r => { r.sig = ''; }); render(); }
       else if (!!was.outline !== !!o.outline) drawOutline();
       if (o.focusAt != null && !st.focusedOnce && o.editable) { st.focusedOnce = true; setTimeout(() => api.focus(o.focusAt), 0); }
     }
@@ -3863,7 +3864,9 @@ renderVals() {
   const make = st.make || (mock && view === 'Make a card' ? { front: '', back: 'Glycolysis happens in the cytoplasm, not the mitochondrion, and needs no oxygen.' } : null);
   const plain = s => String(s || '').split('\n').filter(l => !/^:::|^::(card|page) /.test(l)).map(l => l.replace(/^#+\s*|^\s*[-*+]\s+|^\s*\d+\.\s+/, '').replace(/\*\*|__|`/g, '')).join(' ').replace(/\s+/g, ' ').trim();
   const cardInfo = cid => { const c = mock ? { front: 'Where does the Krebs cycle happen?', back: 'The mitochondrial matrix', srs: { lapses: 2 } } : db.card(cid); return c ? { front: plain(c.front || c.text), back: plain(c.back), weak: !!c.srs && ((c.srs.lapses || 0) > 0 || c.srs.state === 'relearning') } : null; };
-  const pageInfo = pid => { if (mock) return { title: 'The cell at a glance', kind: 'mindmap' }; const x = db.pages.page(pid); return x ? { title: x.title, kind: x.kind } : null; };
+  const pageInfo = pid => { if (mock) return { title: 'The cell at a glance', kind: 'mindmap' }; const x = db.pages.page(pid); return x ? { title: x.title || 'Untitled', kind: ({ note: 'Note', slides: 'Presentation', mindmap: 'Mind map', diagram: 'Diagram', canvas: 'Canvas', doc: 'Doc' })[x.kind] || 'Page' } : x === undefined ? { title: 'One moment…', kind: '' } : null; };
+  // (the pages and cards the Note shows, as far as they're known: when one arrives or changes, those rows draw again)
+  const refs = mock || !ok ? '' : (md.match(/^::(?:page|card) [A-Za-z0-9_-]+$/gm) || []).map(l => { const [k, rid] = l.slice(2).split(' '); const x = k === 'page' ? db.pages.page(rid) : db.card(rid); return rid + ':' + (x === undefined ? 'u' : x ? (x.title || x.front || '') + (x.srs ? x.srs.lapses : '') : 'n'); }).join('|');
   const image = s => (/^\/media\/[\w-]+\.(png|jpe?g|gif|webp)$/i.test(s) ? s : '');
   return { t, ...chrome, dark: !!p.dark, dim: !!p.dim, canEdit, scopeName, backHref, title: ok ? pg.title : '', readOnly: ok && !canEdit, version: ok ? pg.version : '',
     versionLine: ok ? 'v' + pg.version + ' · ' + who(pg.by) + ', ' + ago(pg.updated) : '',
@@ -3882,7 +3885,7 @@ renderVals() {
     frontRef: el => { if (el && this._focusFront) { this._focusFront = false; el.focus(); } },
     closeMake: () => this.setState({ make: null }),
     addCard: async () => { if (mock || !deck) return this.setState({ make: null }); const front = (this._front ?? make.front).trim(), back = (this._back ?? make.back).trim(); if (!front || !back) return db.say('A card needs a front and a back.'); await db.act.addCard(deck.id, { kind: 'basic', front, back }); this.setState({ make: null }); db.say('Added to ' + deck.name + '.'); },
-    nbRef: el => { if (!el || !ok) return; this._nbc = this.notes().mount(el, { md, titled: true, key: (mock ? 'canvas|' + view + '|' : 'page|') + id, editable: canEdit, phone: false, outline: true, image,
+    nbRef: el => { if (!el || !ok) return; this._nbc = this.notes().mount(el, { md, refs, titled: true, key: (mock ? 'canvas|' + view + '|' : 'page|') + id, editable: canEdit, phone: false, outline: true, image,
       card: cardInfo, page: pageInfo, onOpenPage: pid => { if (!mock) db.act.go(db.href('page', pid)); }, onOpenCard: cid => { if (!mock && deck) db.act.go('/deck/' + deck.id + '/card/' + cid); },
       onMakeCard: canEdit && deck ? b => { this._front = undefined; this._back = undefined; this._focusFront = true; this.setState({ make: { front: '', back: plain(b && b.markdown) } }); } : undefined,
       onChange: canEdit && !mock ? v => db.pages.editMarkdown(id, v) : undefined }); }

@@ -4346,7 +4346,8 @@ notes() { return Component._nb || (Component._nb = (function makeNotes(G) {
       const was = o; o = { ...(next || {}) };
       const key = String(o.key || ''), md = String(o.md == null ? '' : o.md);
       if (key !== st.key || (md !== st.sent && md !== st.md) || JSON.stringify(was.demo || null) !== JSON.stringify(o.demo || null)) load(md, key);
-      else if (!!was.editable !== !!o.editable || !!was.phone !== !!o.phone) { st.rows.forEach(r => { r.sig = ''; }); render(); }
+      // (`refs`: what the host knows about the cards and pages the page shows changed, like a page that was still loading: those rows draw again)
+      else if (!!was.editable !== !!o.editable || !!was.phone !== !!o.phone || (was.refs || '') !== (o.refs || '')) { st.rows.forEach(r => { r.sig = ''; }); render(); }
       else if (!!was.outline !== !!o.outline) drawOutline();
       if (o.focusAt != null && !st.focusedOnce && o.editable) { st.focusedOnce = true; setTimeout(() => api.focus(o.focusAt), 0); }
     }
