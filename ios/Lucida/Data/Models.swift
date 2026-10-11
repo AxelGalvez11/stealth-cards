@@ -172,7 +172,9 @@ struct UserSettings: Decodable {
   var welcomed = true
   /// Tune to you (Pro): the FSRS parameters fitted to your own reviews, and whether they're in use (nil: never tuned).
   var tune: TuneFit? = nil
-  enum CodingKeys: String, CodingKey { case name, color, look, darkMode, grads, prog, perDay, goal, grading, fsrs, reminder, flip, photo, yourPhoto, welcomed, tune, theme, themeProfile }
+  /// Settings › Plan › View as Free (a Pro account seen as Free, set on the web): the app treats the account as Free.
+  var viewFree = false
+  enum CodingKeys: String, CodingKey { case name, color, look, darkMode, grads, prog, perDay, goal, grading, fsrs, reminder, flip, photo, yourPhoto, welcomed, tune, theme, themeProfile, viewFree }
   init() {}
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
@@ -181,7 +183,7 @@ struct UserSettings: Decodable {
     perDay = c.v(.perDay, 20); goal = c.v(.goal, 90); grading = c.v(.grading, "four"); fsrs = c.v(.fsrs, true); reminder = c.v(.reminder, "9:00 AM"); flip = c.v(.flip, true)
     photo = c.v(.photo, ""); yourPhoto = c.v(.yourPhoto, nil); welcomed = c.v(.welcomed, true)
     theme = c.v(.theme, "lucida"); themeProfile = c.v(.themeProfile, true)
-    tune = c.v(.tune, nil)
+    tune = c.v(.tune, nil); viewFree = c.v(.viewFree, false)
   }
 }
 

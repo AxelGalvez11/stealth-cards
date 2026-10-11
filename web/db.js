@@ -156,7 +156,8 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
   // for Lucida's own look. Its code loads the first time a screen needs it (web/themes/load.js), and the screens draw
   // again once it's here; a theme you already use loads before the first page, so it doesn't flash in.
   // Pro: the server says (S.pro, false on Free or LUCIDA_PLAN=free), and online the person's plan.
-  const isPro = () => S.pro !== false && (!S.me || !!(S.me.plan && S.me.plan.pro));
+  // (View as Free, Settings › Plan: a Pro account shown as Free; db.plan() stays the real plan, for that switch)
+  const isPro = () => S.pro !== false && (!S.me || !!(S.me.plan && S.me.plan.pro)) && !S.settings.viewFree;
   const theme = () => (isPro() && S.settings.theme && S.settings.theme !== 'lucida' ? S.settings.theme : '');
   const skinNow = () => { const k = theme(), T = k && globalThis.LucidaThemes && globalThis.LucidaThemes[k]; if (k && !T) loadTheme(k, changed); return T || null; };
   if (theme()) await Promise.race([loadTheme(theme(), () => {}), new Promise(r => setTimeout(r, 600))]);

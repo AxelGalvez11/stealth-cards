@@ -106,7 +106,9 @@ renderVals() {
   const planDay = plan && plan.until ? new Date(plan.until).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
   const planVals = { planFree: !!plan && !plan.pro, planPro: !!plan && !!plan.pro && !plan.webOnly, planWebOnly: !!plan && !!plan.pro && !!plan.webOnly, planRenews: !!plan && !plan.ending, planEnding: !!plan && !!plan.ending,
     planSub: plan ? [({ month: 'Monthly', year: 'Yearly' })[plan.every] || '', planDay ? (plan.ending ? 'ends ' : 'renews ') + planDay : '', plan.by === 'apple' ? 'Billed by Apple' : plan.webOnly ? 'Billed on the web' : ''].filter(Boolean).join(' · ') : '',
-    manageHref: plan && plan.manage || 'https://lucida.cards/pricing', proHref: db.mock ? 'PricingPhone.dc.html' : 'https://lucida.cards/pricing' };
+    manageHref: plan && plan.manage || 'https://lucida.cards/pricing', proHref: db.mock ? 'PricingPhone.dc.html' : 'https://lucida.cards/pricing',
+    // View as Free: the switch (its own look, so this works on every board that shows the plan)
+    viewFree: (() => { const on = !db.mock && !!(db.settings().viewFree); return { checked: on ? 'true' : 'false', track: on ? t.inv : t.surf2, knob: on ? 'translateX(20px)' : 'translateX(0)', knobColor: on ? t.invText : t.bg, op: '1', disabled: 'false', toggle: () => { if (!db.mock) db.act.setSettings({ viewFree: !on }); } }; })() };
   const colors = [['Periwinkle', 'linear-gradient(135deg, #8C9AFC 0%, #4F60E6 100%)'], ['Orange', 'linear-gradient(135deg, #FFC857 0%, #EE5A36 100%)'], ['Green', 'linear-gradient(135deg, #7EE0B0 0%, #1F8F5F 100%)'], ['Pink', 'linear-gradient(135deg, #F9A8D4 0%, #D6336C 100%)'], ['Teal', 'linear-gradient(135deg, #7DE3F0 0%, #0E8A9E 100%)'], ['Violet', 'linear-gradient(135deg, #C4A7FF 0%, #7C3AED 100%)']];
   // Settings › Look › Theme: your theme's name (Lucida on Free, where the others are locked).
   // With a theme on, deck covers are the theme's, so the gradient choice only shows again with Lucida's own look.

@@ -4272,6 +4272,7 @@ const planGroups = group => `<sc-if value="{{planFree}}" hint-placeholder-val="{
       <sc-if value="{{planPro}}" hint-placeholder-val="{{ true }}">${group([
         sRow(`<span style="display: inline-flex; align-items: center; gap: 8px;">Lucida ${PRO_BADGE}</span>`, '', { sub: '{{planSub}}' }),
         sRow('Manage plan', sVal(''), { href: '{{manageHref}}' }),
+        sRow('View as Free', SWITCH('viewFree', 'viewFree.toggle', 'View as Free'), { sub: 'See Lucida the way a Free account does' }),
         `<sc-if value="{{planRenews}}" hint-placeholder-val="{{ true }}">${sRow('<span style="color: {{t.again}};">Cancel Pro</span>', '', { href: '{{manageHref}}' })}</sc-if><sc-if value="{{planEnding}}" hint-placeholder-val="{{ false }}">${sRow('Keep Pro', sVal(''), { href: '{{manageHref}}' })}</sc-if>`
       ])}</sc-if>`;
 // Settings → Studying → Tune to you (Pro): fits the schedule to your own reviews once there are enough, and switches
@@ -4292,7 +4293,9 @@ const PLAN_JS = pricingBoard => `const planOf = { Free: { pro: false }, Pro: { p
   const planDay = plan && plan.until ? new Date(plan.until).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
   const planVals = { planFree: !!plan && !plan.pro, planPro: !!plan && !!plan.pro && !plan.webOnly, planWebOnly: !!plan && !!plan.pro && !!plan.webOnly, planRenews: !!plan && !plan.ending, planEnding: !!plan && !!plan.ending,
     planSub: plan ? [({ month: 'Monthly', year: 'Yearly' })[plan.every] || '', planDay ? (plan.ending ? 'ends ' : 'renews ') + planDay : '', plan.by === 'apple' ? 'Billed by Apple' : plan.webOnly ? 'Billed on the web' : ''].filter(Boolean).join(' · ') : '',
-    manageHref: plan && plan.manage || 'https://lucida.cards/pricing', proHref: db.mock ? '${pricingBoard}.dc.html' : 'https://lucida.cards/pricing' };`;
+    manageHref: plan && plan.manage || 'https://lucida.cards/pricing', proHref: db.mock ? '${pricingBoard}.dc.html' : 'https://lucida.cards/pricing',
+    // View as Free: the switch (its own look, so this works on every board that shows the plan)
+    viewFree: (() => { const on = !db.mock && !!(db.settings().viewFree); return { checked: on ? 'true' : 'false', track: on ? t.inv : t.surf2, knob: on ? 'translateX(20px)' : 'translateX(0)', knobColor: on ? t.invText : t.bg, op: '1', disabled: 'false', toggle: () => { if (!db.mock) db.act.setSettings({ viewFree: !on }); } }; })() };`;
 // Settings → Profile picture (web and iPhone): the Google photo (for people signed in with Google), a photo you upload,
 // or your initial on a color. `full`: the choices span the row (iPhone).
 const photoPanel = full => `${full ? SEG('photoOpts', 'Profile picture', 3, true) : `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><span style="font-size: 14px; font-weight: 600;">Profile picture</span>${SEG('photoOpts', 'Profile picture')}</div>`}

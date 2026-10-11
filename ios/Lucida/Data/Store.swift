@@ -223,7 +223,7 @@ final class Store: ObservableObject {
   }
   /// Pro's tools (an exam date, tuning, deep stats): on for Pro. A copy of the server on your own computer has nobody
   /// signed in, and everything is on there unless it runs as the Free app (like db.js isPro()).
-  var isPro: Bool { demo ? !props.free && props.plan != "Free" : lib.pro && (lib.me == nil || plan.pro) }
+  var isPro: Bool { demo ? !props.free && props.plan != "Free" : lib.pro && (lib.me == nil || plan.pro) && !lib.settings.viewFree }
 
   // ---------- loading and saving ----------
   func load() async {

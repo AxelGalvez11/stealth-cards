@@ -27,6 +27,9 @@ const fresh = () => ({
   settings: { name: '', color: 0, look: 'system', darkMode: 'black', grads: 'mix', prog: 'bar', perDay: 20, goal: 90, grading: 'four', fsrs: true, reminder: '9:00 AM', photo: '', yourPhoto: null, welcomed: false, tune: null,
     // Settings › Studying › Flip animation: a flashcard turns over (on), or the other side just appears (off). Web and iPhone follow it.
     flip: true,
+    // Settings › Plan › View as Free (Pro accounts): the app, the AI apps and the iPhone treat the account as Free, to see what Free gets
+    // (the owner, 2026-10-11). It only ever takes Pro away, so it needs no check; off gives it back.
+    viewFree: false,
     // Settings › Theme (Pro): a theme from web/themes/index.js ('lucida' is the app's own look), and whether your
     // public profile and decks show it to visitors.
     theme: 'lucida', themeProfile: true },
@@ -167,7 +170,7 @@ export const mediaLink = (name, uid) => (cloud() ? files.link(uid, name) : Promi
 export const state = () => lib().S;
 // Pro's scheduling tools (an exam date, tuning, the rule for cards you keep forgetting) and deep stats: on for Pro and on
 // this computer, off on Free.
-export const isPro = () => lib().pro !== false;
+export const isPro = () => lib().pro !== false && !lib().S.settings.viewFree;
 const PRO_ONLY = ' part of Lucida Pro: lucida.cards/pricing';
 const needPro = what => { if (!isPro()) throw new Error(what + PRO_ONLY); };
 // On Free, up to FREE_MEDIA cards can have a picture or a sound (Pro has no limit, and neither does this computer).
