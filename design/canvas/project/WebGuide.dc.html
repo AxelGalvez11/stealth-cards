@@ -2324,7 +2324,8 @@ notes() { return Component._nb || (Component._nb = (function makeNotes(G) {
     function load(md, key) {
       st.key = key; st.md = md; st.sent = md;
       let list = G.blocks(md).map(withId);
-      if (!list.length && (o.editable || o.blank)) list = [withId({ k: 'h', d: 0, level: 1, r: [] }), withId({ k: 'p', d: 0, r: [] })];
+      // (a page with a title of its own, a Page's Note, starts with just a line to write in)
+      if (!list.length && (o.editable || o.blank)) list = o.titled ? [withId({ k: 'p', d: 0, r: [] })] : [withId({ k: 'h', d: 0, level: 1, r: [] }), withId({ k: 'p', d: 0, r: [] })];
       if (o.demo && o.demo.emptyAt != null) list.splice(Math.min(o.demo.emptyAt, list.length), 0, withId({ k: 'p', d: 0, r: [] }));
       st.blocks = settle(list); reindex();
       // (what the page writes before anything is changed: while it still writes that, the words stay exactly as they came)
@@ -2387,6 +2388,7 @@ notes() { return Component._nb || (Component._nb = (function makeNotes(G) {
       if (!TEXT[b.k] || !isEmpty(b)) return '';
       const blank = list.length <= 2 && list.every(x => TEXT[x.k] && isEmpty(x));
       if (blank && v.i === 0 && b.k === 'h') return 'Title';
+      if (blank && o.titled && v.i === 0 && b.k === 'p' && list.length === 1) return 'Start writing';
       if (blank && v.i === 1 && b.k === 'p' && list[0].k === 'h') return 'Start writing';
       if (!o.editable || (caretBlock() !== b.id && !(o.demo && o.demo.caret === v.i))) return '';
       return b.k === 'h' ? PH['h' + Math.min(b.level, 3)] : PH[b.k] || '';

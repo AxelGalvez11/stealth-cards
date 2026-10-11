@@ -29,7 +29,8 @@ const owner = uid => String(uid || 'local');
 const newId = () => 'p' + Date.now().toString(36).slice(-6) + Math.random().toString(36).slice(2, 8);
 const now = () => new Date().toISOString();
 const limits = pro => (pro === false ? PAGES.free : PAGES.pro);
-const cleanTitle = (t, kind) => String(t ?? '').replace(/[\u0000-\u001f]+/g, ' ').trim().slice(0, 200) || KIND_NAMES[kind] || 'Page';
+// (an empty title stays empty: the apps show Untitled, and the title box waits for one)
+const cleanTitle = t => String(t ?? '').replace(/[\u0000-\u001f]+/g, ' ').trim().slice(0, 200);
 
 // A page's data, made safe and the right shape for its kind; too big is refused.
 export function cleanData(kind, data, prev) {

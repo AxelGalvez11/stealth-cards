@@ -523,6 +523,12 @@ export default [
   "h": 844
  },
  {
+  "name": "PhonePage",
+  "title": "iPhone · A page (a Note)",
+  "w": 390,
+  "h": 844
+ },
+ {
   "name": "PhoneProfile",
   "title": "iPhone · Profile (yours)",
   "w": 390,
@@ -2253,6 +2259,12 @@ export default [
  {
   "name": "WebNewDeck",
   "title": "Web · New deck",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebPage",
+  "title": "Web · A page (a Note)",
   "w": 1440,
   "h": 900
  },

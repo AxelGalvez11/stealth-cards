@@ -101,6 +101,9 @@ function resolve(path, q) {
     return { name: { question: 'LiveQuestion', reveal: 'LiveReveal', board: 'LiveLeaderboard', end: 'LivePodium' }[L.phase] || 'LiveLobby', props: { deckId: L.deckId } };
   }
   const deck = /^\/deck\/([^/]+)(\/card(?:\/([^/]+))?|\/import|\/learn|\/suggestions|\/live|\/guide)?$/.exec(path);
+  // A page beside a deck's or a folder's cards (a Note now; design/pages.mjs WebPage, web/pagesclient.js).
+  const pageM = /^\/page\/(p[a-z0-9]{6,24})$/.exec(path);
+  if (pageM) return { name: P + 'Page', props: { pageId: pageM[1], fresh: q.get('new') === '1' } };
   // Your first time in: the welcome (connect your AI, bring your cards) comes before the Library.
   if (path === '/' && !db.settings().welcomed && !db.decks().length) return { redirect: '/welcome' };
   if (path === '/welcome') return { name: P + 'Welcome' };

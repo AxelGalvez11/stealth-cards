@@ -5,6 +5,7 @@
 // This file holds them so design/build.mjs stays small; build.mjs hands it the helpers its boards are made with (H).
 // The app draws these boards (design/to-web.mjs), so what you see on the canvas is what runs.
 
+import { PAGES_SAMPLE_JSON } from './pages.mjs';
 import { diagramBlocks, publicDiagramBlocks, DIAGRAMS_JS, DIAGRAMS_MOCK, DIAGRAM_STATES, DIAGRAM_STATE_RE } from './diagrams.mjs';
 
 // What the Make boards' "step" picker offers on the canvas (the app's own flow follows web/make.js).
@@ -465,11 +466,13 @@ export const DECK_MATERIALS_JS = String.raw`
       : { open: false, name: '', line: '', close: () => {}, hasAudio: false, player: null, hasPhotos: false, photos: [], hasTopic: false, topic: '', hasParts: false, parts: [], loading: false, noText: false, noTextLine: '', hasOpen: false, openHref: '', openLabel: '', canEdit: false, moreHref: '', remove: () => {} };
     // The section on show (Cards unless the address or a tap says another, and only a section that is there): ?tab= in the address, a source opened from a card, or the canvas's setting.
     const cardsN = db.cards(dk.id).length, notesTab = hasAny || G.can, sourcesTab = !!G.can, dgTab = !!G.can || dgRows.length > 0;
+    // Pages (design/pages.mjs, web/pagesclient.js): the deck's own, for its owner, or when it has some.
+    const PGL = mock ? @PAGES_SAMPLE@ : db.pages ? db.pages.list('deck', dk.id) : [], pagesTab = !!G.can || PGL.length > 0;
     const dgState = mock && new RegExp(${JSON.stringify(DIAGRAM_STATE_RE)}).test(p.guide || '');
-    const wanted = st.tab !== undefined ? st.tab : p.sourceOpen ? 'sources' : p.diagram ? 'diagrams' : mock ? (p.guide === 'A source open' ? 'sources' : dgState ? 'diagrams' : { Notes: 'notes', Diagrams: 'diagrams', Sources: 'sources' }[p.section] || 'cards') : { notes: 'notes', diagrams: 'diagrams', sources: 'sources' }[p.tab] || 'cards';
-    const tab = wanted === 'notes' && notesTab ? 'notes' : wanted === 'diagrams' && dgTab ? 'diagrams' : wanted === 'sources' && sourcesTab ? 'sources' : 'cards';
+    const wanted = st.tab !== undefined ? st.tab : p.sourceOpen ? 'sources' : p.diagram ? 'diagrams' : mock ? (p.guide === 'A source open' ? 'sources' : dgState ? 'diagrams' : { Notes: 'notes', Pages: 'pages', Diagrams: 'diagrams', Sources: 'sources' }[p.section] || 'cards') : { notes: 'notes', pages: 'pages', diagrams: 'diagrams', sources: 'sources' }[p.tab] || 'cards';
+    const tab = wanted === 'pages' && pagesTab ? 'pages' : wanted === 'notes' && notesTab ? 'notes' : wanted === 'diagrams' && dgTab ? 'diagrams' : wanted === 'sources' && sourcesTab ? 'sources' : 'cards';
     // Sources first (the owner, 2026-10-02: "sources should be the first tab, so sources, cards, notes, diagrams"); the page still opens on Cards.
-    const tabList = [...(sourcesTab ? [{ id: 'sources', label: 'Sources', count: sourceRows.length ? String(sourceRows.length) : '' }] : []), { id: 'cards', label: 'Cards', count: String(cardsN) }, ...(notesTab ? [{ id: 'notes', label: 'Notes', count: '' }] : []), ...(dgTab ? [{ id: 'diagrams', label: 'Diagrams', count: dgRows.length ? String(dgRows.length) : '' }] : [])]
+    const tabList = [...(sourcesTab ? [{ id: 'sources', label: 'Sources', count: sourceRows.length ? String(sourceRows.length) : '' }] : []), { id: 'cards', label: 'Cards', count: String(cardsN) }, ...(notesTab ? [{ id: 'notes', label: 'Notes', count: '' }] : []), ...(pagesTab ? [{ id: 'pages', label: 'Pages', count: PGL.length ? String(PGL.length) : '' }] : []), ...(dgTab ? [{ id: 'diagrams', label: 'Diagrams', count: dgRows.length ? String(dgRows.length) : '' }] : [])]
       .map(x => ({ ...x, selected: x.id === tab ? 'true' : 'false', fg: x.id === tab ? t.text : t.muted, bar: x.id === tab ? t.text : 'transparent', pick: () => this.setState({ tab: x.id }) }));
     const nbPlain = s => String(s || '').split('\n').map(l => l.replace(/^:::toggle\s*/, '').replace(/^:::\s*$/, '').replace(/^#+\s*/, '').replace(/^\s*(?:[-*+]|\d+\.)\s+(?:\[[ xX]\]\s+)?/, '').replace(/\*\*|__|${'`'}/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').trim()).filter(Boolean);
     const nbHead = s => { const m = /^#\s+(.+)$/m.exec(String(s || '')); return m ? m[1].replace(/\*\*|${'`'}/g, '').trim() : ''; };
@@ -500,10 +503,11 @@ export const DECK_MATERIALS_JS = String.raw`
           onOpen: G.can ? at => { if (mock) return; db.act.go(href + '?' + [q, 'at=' + at.i + ':' + at.off].filter(Boolean).join('&')); } : undefined }); },
       sourcesShow: tab === 'sources', sourceCount: String(sourceRows.length), sources: sourceRows };
     ${DIAGRAMS_JS}
+    gs.pagesShow = tab === 'pages'; gs.pagesList = PGL; gs.pagesCan = !!G.can;
     return { gs, vw, dg };
   })(), gs = GS.gs, vw = GS.vw, dg = GS.dg;`;
 // The deck page's logic for the computer's board or the phone's: a note in the Notes list opens that board on the canvas.
-export const deckMaterialsJs = phone => DECK_MATERIALS_JS.replaceAll('@NOTES_BOARD@', phone ? 'PhoneGuide.dc.html' : 'WebGuide.dc.html').replaceAll('@P@', phone ? 'Phone' : 'Web').replaceAll('@NOTE_STEP@', phone ? '20' : '28');
+export const deckMaterialsJs = phone => DECK_MATERIALS_JS.replaceAll('@PAGES_SAMPLE@', PAGES_SAMPLE_JSON).replaceAll('@NOTES_BOARD@', phone ? 'PhoneGuide.dc.html' : 'WebGuide.dc.html').replaceAll('@P@', phone ? 'Phone' : 'Web').replaceAll('@NOTE_STEP@', phone ? '20' : '28');
 
 // ---------- the canvas's sample for these boards ----------
 // Only the boards that draw them carry it (their logic calls this.mockMaterials()), so no other board changes. It answers like web/db.js:

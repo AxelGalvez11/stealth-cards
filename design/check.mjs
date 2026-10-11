@@ -5,7 +5,7 @@ import { readBoard } from './slim.mjs';
 import { MAKE_STEPS, GUIDE_STATES, GUIDE_VIEWS, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
 import { ASK_SAMPLES } from './ui.mjs';
 import { webProblems } from './check-own-ui.mjs';
-import { PAGES_VIEWS, NOTE_VIEWS } from './pages.mjs';
+import { PAGES_VIEWS, NOTE_VIEWS, PAGE_VIEWS } from './pages.mjs';
 
 const DIR = new URL('./canvas/project/', import.meta.url);
 const get = (o, p) => p.trim().split('.').reduce((a, k) => (a == null ? undefined : a[k]), o);
@@ -122,6 +122,7 @@ for (const guide of GUIDE_STATES) PROP_SETS.push({ guide }, { guide, dark: true 
 // The Guide's editor: writing, previewing, older versions, a new page, nothing written yet (and dark).
 for (const view of PAGES_VIEWS) PROP_SETS.push({ view }, { view, dark: true });
 for (const view of NOTE_VIEWS) PROP_SETS.push({ view }, { view, dark: true });
+for (const view of PAGE_VIEWS) PROP_SETS.push({ view }, { view, dark: true });
 for (const view of GUIDE_VIEWS) PROP_SETS.push({ view }, { view, dark: true });
 for (const liveFrom of LIVE_FROM) PROP_SETS.push({ liveFrom }, { liveFrom, dark: true });
 for (const topicState of LIVE_TOPIC_STATES) PROP_SETS.push({ topicState });

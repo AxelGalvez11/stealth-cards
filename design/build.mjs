@@ -7,7 +7,7 @@ import { GEN_METHOD } from './generator.mjs';
 import { MOCK_METHOD, SAMPLE, SAMPLE_WAVE } from './mock.mjs';
 import { DRAG_METHOD } from './drag.mjs';
 import { MOTION, EASE, MOTION_CSS, TILE_HOVER } from './motion.mjs';
-import { pagesBoards, PAGES_VIEWS, NOTE_VIEWS } from './pages.mjs';
+import { pagesBoards, pageBoards, deckPagesBlock, deckPagesJs, PAGES_VIEWS, NOTE_VIEWS, PAGE_VIEWS } from './pages.mjs';
 import { WALL_CARDS } from './wall.mjs';
 import { SHARE_METHOD } from './share.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
@@ -20,7 +20,7 @@ import { SCREENS, KINDS, shotFile, visualsOf, CONNECT_FIGS } from './visuals.mjs
 import { THEMES } from '../web/themes/index.js';
 import { THEME_KEYS, themeCss, themeFonts, themeStatic } from './themes.mjs';
 import { LEVELS, YEARS, SUBJECTS } from '../web/school.js';
-import { makeBoards, deckBlocks, publicGuideBlocks, PUBLIC_GUIDE_JS, deckMaterialsJs, NOTE_TREE_CSS, MAKE_STEPS, GUIDE_CSS, GUIDE_STATES, MATERIALS_MOCK, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
+import { NOTES_VARS, makeBoards, deckBlocks, publicGuideBlocks, PUBLIC_GUIDE_JS, deckMaterialsJs, NOTE_TREE_CSS, MAKE_STEPS, GUIDE_CSS, GUIDE_STATES, MATERIALS_MOCK, LIVE_FROM, LIVE_TOPIC_STATES } from './materials.mjs';
 import { DIAGRAM_METHOD, DIAGRAM_CSS, PUBLIC_DIAGRAMS_JS, publicDiagramBlocks } from './diagrams.mjs';
 import { CHAT_SAMPLE, chatMarkup, CHAT_CSS, CHAT_JS, CHAT_METHOD } from './chat.mjs';
 import { askMarkup, toastMarkup, ASK_SAMPLES, ASK_JS, askProp, dateMarkup, DATE_JS, dropMarkup, dropSheet, dropPill, DROP_JS, PLAYER_JS } from './ui.mjs';
@@ -1355,7 +1355,7 @@ const webDeck = webRoot(`${sidebar('Library')}
     </div>
   </div>
   <sc-if value="{{hasUpdates}}" hint-placeholder-val="{{ false }}"><div style="flex-shrink: 0; height: 56px; box-sizing: border-box; padding: 0 10px 0 16px; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; gap: 12px;">${PERSON_AV('fromWho', 28)}<span style="flex-grow: 1; font-size: 14px; font-weight: 600;">{{updLine}}</span>${pill('See changes', { inv: true, onClick: '{{openUpdates}}' })}</div></sc-if>
-  ${DB.tabs}${DB.guide}${DB.diagrams}${DB.sources}
+  ${DB.tabs}${DB.guide}${deckPagesBlock({ svg, I }, false)}${DB.diagrams}${DB.sources}
   <sc-if value="{{gs.showCards}}" hint-placeholder-val="{{ true }}">
   <div style="display: flex; align-items: center; gap: 8px;">
     <sc-for list="{{filters}}" as="f" hint-placeholder-count="6">
@@ -1402,7 +1402,7 @@ const CARD_DRAG_JS = phone => `const others = db.decks().filter(d => d.id !== dk
 const deckLogic = `
 constructor(props) { super(props); this.state = { filter: 'All', tagMenuOpen: false, tagQ: '', q: '' }; }
 renderVals() {
-  ${T}${DECK_DB_JS}${COVER_LOGIC}${deckMaterialsJs(false)}
+  ${T}${DECK_DB_JS}${COVER_LOGIC}${deckMaterialsJs(false)}${deckPagesJs(false)}
   ${LIFT_JS}
   ${CARD_DRAG_JS(false)}
   ${DECK_MENUS_JS(false)}
@@ -4064,7 +4064,7 @@ const phoneDeck = phone(`<div style="height: 100%; overflow-y: auto; scrollbar-w
     <sc-if value="{{isLinked}}" hint-placeholder-val="{{ false }}"><a href="{{fromHref}}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px; font-weight: 600;">${PERSON_AV('fromWho', 28)}<span style="flex-grow: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{fromChip}}</span><span style="display: flex; color: {{t.muted}};">${svg(I.chev, 16, 2)}</span></a></sc-if>
     <sc-if value="{{hasUpdates}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{openUpdates}}" style="height: 56px; box-sizing: border-box; padding: 0 16px; border: 0; border-radius: 18px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; gap: 10px; font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer;"><span style="flex-grow: 1;">{{updLine}}</span><span style="font-size: 14px; color: {{t.muted}};">See changes</span></button></sc-if>
     <sc-if value="{{canStudy}}" hint-placeholder-val="{{ true }}">${STUDY_BTN(true)}</sc-if>
-    ${DBP.tabs}${DBP.guide}${DBP.diagrams}${DBP.sources}
+    ${DBP.tabs}${DBP.guide}${deckPagesBlock({ svg, I }, true)}${DBP.diagrams}${DBP.sources}
     <sc-if value="{{gs.showCards}}" hint-placeholder-val="{{ true }}">
     <div data-sc-list="cards" ref="{{dragList}}" onPointerDown="{{grab}}" style="display: flex; flex-direction: column;">
       <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
@@ -4091,7 +4091,7 @@ ${pickSheet('lbLevel')}${pickSheet('lbSubject', true)}${pickSheet('lbSchool', tr
 ${DBP.viewer}${DBP.dgViewer}${DBP.dgSheet}`);
 const phoneDeckLogic = `
 constructor(props) { super(props); this.state = {}; }
-renderVals() { ${T}${DECK_DB_JS}${COVER_LOGIC}${deckMaterialsJs(true)}
+renderVals() { ${T}${DECK_DB_JS}${COVER_LOGIC}${deckMaterialsJs(true)}${deckPagesJs(true)}
   ${LIFT_JS}
   ${CARD_DRAG_JS(true)}
   ${DECK_MENUS_JS(true)}
@@ -8761,7 +8761,7 @@ const PROFILE_PROPS = { ...DARK, grain: MESH('Iris').grain, tab: { editor: 'enum
 const FREE_PROP = { editor: 'boolean', default: false };
 const PRO_DECK_PROPS = { free: FREE_PROP };
 // The deck page's Guide and Sources: with both, with the Guide's extra pages, a long Guide, a source opened, nothing yet, or a deck you only study.
-const GUIDE_STATE = { section: { editor: 'enum', default: 'Cards', options: ['Cards', 'Notes', 'Diagrams', 'Sources'] }, guide: { editor: 'enum', default: 'Guide and sources', options: GUIDE_STATES }, sourceOpen: { editor: 'string', default: '' }, sourceAt: { editor: 'string', default: '' } };
+const GUIDE_STATE = { section: { editor: 'enum', default: 'Cards', options: ['Cards', 'Notes', 'Pages', 'Diagrams', 'Sources'] }, guide: { editor: 'enum', default: 'Guide and sources', options: GUIDE_STATES }, sourceOpen: { editor: 'string', default: '' }, sourceAt: { editor: 'string', default: '' } };
 const STATS_PROPS = { tab: { editor: 'enum', default: 'Overview', options: ['Overview', 'Memory', 'Weak spots', 'Pace'] }, free: FREE_PROP };
 const TUNE_PROP = { editor: 'enum', default: 'On', options: ['On', 'Off', 'Not enough reviews', 'Tuning'] };
 const EDITOR_CSS = RICH_CSS + OCC_EDIT_CSS;
@@ -9245,6 +9245,7 @@ Object.assign(files, {
 });
 // Pages (design/pages.mjs): the deck's Pages and a Note page, the design for the owner to approve first.
 Object.assign(files, pagesBoards({ svg, I, FONT, T, DB_JS, DARK, W, HH: H, PW, PH, sidebar }));
+Object.assign(files, pageBoards({ svg, I, FONT, T, DB_JS, DARK, W, HH: H, PW, PH, sidebar, NOTES_VARS, GUIDE_CSS }));
 for (const T of THEMES.filter(x => x.key !== 'lucida')) {
   const k = T.key, B = 'Theme' + T.board, one = { css: themeCss([k]), fonts: themeFonts([k]) }, logic = withThemes([k], darkLogic), at = attrs => `skin="${k}" ${attrs}`.trim();
   Object.assign(files, {

@@ -15,6 +15,7 @@ import { createConnect } from './connect.js';
 import { createLive } from './live.js';
 import { createMake } from './make.js';
 import { createDiagrams } from './diagrams.js';
+import { createPages } from './pagesclient.js';
 import { loadTheme } from './themes/load.js';
 import { schoolSearch } from './school.js';
 import { sideView, readSide, writeSide, SIDE_KEY } from './side.js';
@@ -191,6 +192,8 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
   };
   // The study network (web/net.js): shared decks, profiles, Discover, suggestions, History, news.
   const net = createNet({ accept, changed, go });
+  // Pages beside a deck's cards (web/pagesclient.js).
+  const pages = createPages({ changed, say });
   const schools = createSchools(changed);
   // AI apps (web/connect.js): the apps that signed in to Lucida, the page where an app asks to connect, and the password.
   const connect = createConnect({ changed, go, question: ask, say });
@@ -201,7 +204,7 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
   // Cards your AI adds over MCP show up without a reload.
   setInterval(async () => {
     if (document.hidden) return;
-    try { const { rev } = await get('/api/rev'); if (rev > S.rev) accept(await get('/api/state')); } catch { /* the server is restarting */ }
+    try { const r = await get('/api/rev'); if (r.rev > S.rev) accept(await get('/api/state')); pages.onRev(r.pages); } catch { /* the server is restarting */ }
   }, 2000);
   // Back after ten minutes or more away: decks you study from other people get their owners' newest changes.
   let away = 0;
@@ -1193,7 +1196,7 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
         clients: { claude: has('Claude'), openai: has('ChatGPT'), cursor: has('Cursor'), mcp: names.some(n => !['Claude', 'ChatGPT', 'Cursor'].includes(n)) } };
     },
     // Making cards (web/make.js), a deck's Guide, its Sources, and its Diagrams (web/diagrams.js).
-    make, diagrams,
+    make, diagrams, pages,
     guide: id => { const d = deckById(id); if (!d) return { deckId: '', text: '', at: 0, pages: [], can: false, studying: false };
       const g = guideOf(d), ro = shareOf(d).readOnly;
       return { deckId: d.id, text: g.text || '', at: g.at || 0, pages: (g.pages || []).map(p => ({ id: p.id, parent: p.parent || '', title: p.title, text: p.text || '', at: p.at || 0 })), can: !ro, studying: ro }; },
@@ -1202,7 +1205,7 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
     sourceText: name => { if (!name) return ''; if (sourceTexts[name] === undefined) { sourceTexts[name] = null; fetch('/media/' + encodeURIComponent(name), { cache: 'no-store' }).then(r => (r.ok ? r.text() : '')).then(t => { sourceTexts[name] = t; changed(); }).catch(() => { sourceTexts[name] = ''; }); } return sourceTexts[name]; },
     // The page where an AI app asks to connect (/oauth/authorize).
     consent: connect.consent,
-    href: (kind, id) => ({ decks: '/library', library: '/library', cards: '/library/cards', newDeck: '/decks/new', import: id ? '/deck/' + id + '/import' : '/decks/import', make: '/make' + (id ? '?deck=' + id : ''), guide: '/deck/' + id + '/guide', connect: '/connect', today: '/library', done: '/review/done', stats: '/stats',
+    href: (kind, id) => ({ decks: '/library', library: '/library', cards: '/library/cards', newDeck: '/decks/new', import: id ? '/deck/' + id + '/import' : '/decks/import', make: '/make' + (id ? '?deck=' + id : ''), guide: '/deck/' + id + '/guide', page: '/page/' + id, connect: '/connect', today: '/library', done: '/review/done', stats: '/stats',
       review: id ? '/review/' + id : '/review', deck: '/deck/' + id })[kind] || '/'
   };
 }
