@@ -150,6 +150,12 @@ final class Store: ObservableObject {
   let sourceTexts = SourceTexts()
   /// A deck's Diagrams: what Make diagram, Upload and Make cards are doing (Data/DiagramsData.swift).
   let diagrams = DiagramsFlow()
+  /// A deck's Pages: lists, pages, versions and saving them (Data/Pages.swift, like web/pagesclient.js).
+  lazy var pages: PagesStore = {
+    let p = PagesStore(api: api, demo: demo)
+    p.say = { [weak self] e in self?.error = e }
+    return p
+  }()
   /// What you changed on a profile, shown before the server's answer has it (Profile.swift), by handle.
   @Published var profileOver: [String: ProfileOver] = [:]
   /// When the app went to the background (coming back after ten minutes brings shared decks up to date).
@@ -254,7 +260,10 @@ final class Store: ObservableObject {
       while !Task.isCancelled {
         try? await Task.sleep(nanoseconds: 3_000_000_000)
         guard let self, self.phase == .ready else { continue }
-        if let rev = try? await self.api.rev(), rev > self.lib.rev, let next = try? await self.api.state() { self.accept(next) }
+        guard let r = try? await self.api.revs() else { continue }
+        // (a page an AI app or another device changed is fetched again: Data/Pages.swift)
+        self.pages.onRev(r.pages)
+        if r.rev > self.lib.rev, let next = try? await self.api.state() { self.accept(next) }
       }
     }
   }

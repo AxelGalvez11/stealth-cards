@@ -199,11 +199,14 @@ struct DeckScreen: View {
   /// Study's menu (Flashcards, Learn) or +'s (New card, Make cards, Source, Notes, Upload diagram, Make diagram) is open: Lucida's own menu (AddMenu.swift).
   @State private var studyOpen = false
   @State private var addOpen = false
+  /// The Pages tab's New page menu (its kinds) is open.
+  @State private var newPageOpen = false
   var body: some View {
     let d = store.deck(id), g = store.guide(id), srcs = store.sources(id), dgs = store.diagramRows(id)
     // A new deck is this same page, its tabs there from the start with nothing in them yet (the owner, 2026-10-02: "creating new deck should already
     // have the tabs"); its Cards say "No cards yet", with New card and Make cards.
-    Group { page(d, g, srcs, dgs) }
+    // (the page draws again when its Pages arrive or change: Data/Pages.swift)
+    Observing(store.pages) { page(d, g, srcs, dgs) }
     .toolbar(.hidden, for: .navigationBar)
     .onAppear { if store.demo { demoOpen() } }
     // Something asked for a section (the Guide editor's Done: Notes; a card's "Made from" line: Sources, with that source open).
@@ -225,7 +228,9 @@ struct DeckScreen: View {
     else if p.guideState == "A source open" { tab = "sources"; nav.sheet = .source(deckId: id, id: "x2", at: "1:00") }
     else if !p.sourceOpen.isEmpty { tab = "sources"; nav.sheet = .source(deckId: id, id: p.sourceOpen, at: p.sourceAt) }
     else if DiagramSample.isState(p.guideState) { tab = "diagrams"; DiagramSample.open(p.guideState, deckId: id, flow: store.diagrams, nav: nav) }
-    else if let want = ["Notes": "notes", "Diagrams": "diagrams", "Sources": "sources"][p.section] { tab = want }
+    else if let want = ["Notes": "notes", "Diagrams": "diagrams", "Sources": "sources", "Pages": "pages"][p.section] { tab = want }
+    // (`-menu NewPage`: the Pages tab with New page's menu open, as design/pages.mjs's New page menu)
+    if menu == "NewPage" { tab = "pages"; newPageOpen = true }
   }
 
   // The header: the deck's gradient (or its photo), with round buttons and its name. With a theme on (Pro), the theme's
@@ -284,12 +289,16 @@ struct DeckScreen: View {
     // The sections, Sources first (the owner, 2026-10-02: "sources should be the first tab, so sources, cards, notes, diagrams"; the page still opens on
     // Cards): Sources (what the cards were made from: only its owner's), Cards (the cards), Notes (the Guide: its owner's, or one that has words), Diagrams
     // (the diagrams of its lectures and the tables and mind maps made from it: its owner's, or a deck that has some made ones).
-    let notesTab = g.hasAny || g.can, diagramsTab = g.can || !dgs.isEmpty, sourcesTab = g.can
+    // Pages (design/pages.mjs deckPagesBlock), after Notes: its owner's, or a deck that has some.
+    let pagesList = store.pages.list("deck", d.id)
+    let notesTab = g.hasAny || g.can, diagramsTab = g.can || !dgs.isEmpty, sourcesTab = g.can, pagesTab = g.can || !pagesList.isEmpty
     let items = (sourcesTab ? [DeckTabs.Item(id: "sources", label: "Sources")] : [])
       + [DeckTabs.Item(id: "cards", label: "Cards")]
       + (notesTab ? [DeckTabs.Item(id: "notes", label: "Notes")] : [])
+      + (pagesTab ? [DeckTabs.Item(id: "pages", label: "Pages")] : [])
       + (diagramsTab ? [DeckTabs.Item(id: "diagrams", label: "Diagrams")] : [])
-    let want = tab ?? "cards", section = want == "notes" && notesTab ? "notes" : want == "diagrams" && diagramsTab ? "diagrams" : want == "sources" && sourcesTab ? "sources" : "cards"
+    let want = tab ?? "cards"
+    let section = want == "notes" && notesTab ? "notes" : want == "pages" && pagesTab ? "pages" : want == "diagrams" && diagramsTab ? "diagrams" : want == "sources" && sourcesTab ? "sources" : "cards"
     return ScrollViewReader { proxy in ScrollView(showsIndicators: false) {
       VStack(spacing: 16) {
         header(d, sub: d.lineShort)
@@ -311,6 +320,10 @@ struct DeckScreen: View {
           if !d.rows.isEmpty { studyButton }
           if items.count > 1 { DeckTabs(items: items, selected: section) { tab = $0 }.id("deck-tabs") }
           if section == "notes" { notes(d, g) }
+          if section == "pages" {
+            DeckPagesList(rows: pagesList, can: g.can, none: pagesList.isEmpty && store.pages.loaded("deck", d.id), menuOpen: newPageOpen,
+                          toggleMenu: { studyOpen = false; addOpen = false; newPageOpen.toggle() }) { nav.page($0.id) }
+          }
           if section == "diagrams" { DiagramsCard(flow: store.diagrams, deckId: d.id, rows: dgs, can: g.can) }
           if section == "sources" { SourcesCard(deckId: d.id, rows: srcs, can: g.can) { s in withAnimation(Motion.sheet) { nav.sheet = .source(deckId: d.id, id: s.id, at: "") } } }
           let list = board + "/cards", ids = d.rows.map(\.id)
@@ -340,6 +353,21 @@ struct DeckScreen: View {
     .onAppear { boardScroll(proxy) }
     .addMenu(open: $studyOpen, rows: studyRows(d), id: "deck-study", fill: true, label: "Study")
     .addMenu(open: $addOpen, rows: addRows(d, g), id: "deck-add", width: 260, label: "Add")
+    .addMenu(open: $newPageOpen, rows: newPageRows(d), id: "deck-newpage", width: 300, label: "New page",
+             footer: "Your AI can make pages too: ask it in Claude or ChatGPT once Lucida is connected.")
+    }
+  }
+
+  /// New page's kinds (design/pages.mjs PAGE_KINDS): a Note is made with an empty title and opens with the caret in its title; the rest say Soon.
+  private func newPageRows(_ d: DeckVM) -> [AddMenuRow] {
+    PageKind.all.map { k in
+      AddMenuRow(icon: k.icon, title: k.name, line: k.line, soon: !PageKind.ready.contains(k.kind), square: true) {
+        guard !store.demo else { return }
+        Task {
+          do { let p = try await store.pages.create("deck", d.id, kind: k.kind); nav.page(p.id, fresh: true) }
+          catch { store.error = (error as? LocalizedError)?.errorDescription ?? "Couldn’t make the page." }
+        }
+      }
     }
   }
 

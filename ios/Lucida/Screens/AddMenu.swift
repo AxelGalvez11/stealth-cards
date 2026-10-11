@@ -10,6 +10,10 @@ struct AddMenuRow: Identifiable {
   let icon: String, title: String, line: String
   /// What the row says at its right (Flashcards: "28 due"), on a row with no line.
   var note = ""
+  /// Not there yet (New page's kinds the app can't make yet): quiet, "Soon" at its right, and a tap does nothing.
+  var soon = false
+  /// Its icon on a rounded square instead of a circle (New page's kinds, design/pages.mjs).
+  var square = false
   let action: () -> Void
 }
 
@@ -22,8 +26,9 @@ extension View {
   /// The button the menu `id` opens from.
   func addMenuAnchor(_ id: String = "add") -> some View { anchorPreference(key: AddMenuAnchor.self, value: .bounds) { [id: $0] } }
   /// The menu, while `open`: its right edge on its button's, 8 points under it (`fill`: its button's width).
-  func addMenu(open: Binding<Bool>, rows: [AddMenuRow], id: String = "add", width: CGFloat = 300, fill: Bool = false, label: String = "Add cards") -> some View {
-    overlayPreferenceValue(AddMenuAnchor.self) { anchors in AddMenuPopup(open: open, rows: rows, anchor: anchors[id], width: width, fill: fill, label: label) }
+  /// `footer`: a quiet line under the rows, after a hairline, with a sparkle (New page's "Your AI can make pages too…").
+  func addMenu(open: Binding<Bool>, rows: [AddMenuRow], id: String = "add", width: CGFloat = 300, fill: Bool = false, label: String = "Add cards", footer: String = "") -> some View {
+    overlayPreferenceValue(AddMenuAnchor.self) { anchors in AddMenuPopup(open: open, rows: rows, anchor: anchors[id], width: width, fill: fill, label: label, footer: footer) }
       #if DEBUG
       // `-menu open`: the + menu is open when the screen is (to set it beside its board).
       .onAppear { if id == "add" && Board.arg("-menu") == "open" { open.wrappedValue = true } }
@@ -39,6 +44,7 @@ private struct AddMenuPopup: View {
   let width: CGFloat
   let fill: Bool
   let label: String
+  var footer = ""
   var body: some View {
     GeometryReader { g in
       if open, let anchor {
@@ -47,11 +53,22 @@ private struct AddMenuPopup: View {
           Color.black.opacity(0.001).contentShape(Rectangle()).onTapGesture { open = false }.accessibilityHidden(true)
           VStack(spacing: 2) {
             ForEach(rows) { row in
-              Button { open = false; row.action() } label: { rowView(row) }
+              Button { if !row.soon { open = false; row.action() } } label: { rowView(row) }
                 .buttonStyle(.press)
+                .disabled(row.soon)
                 .accessibilityLabel(row.title)
-                .accessibilityValue(row.note)
+                .accessibilityValue(row.soon ? "Soon" : row.note)
                 .accessibilityHint(row.line)
+            }
+            if !footer.isEmpty {
+              HStack(alignment: .top, spacing: 8) {
+                Icon("sparkle", 13, 2).padding(.top, 2)
+                Text(footer).css(12, lh: 1.45).fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
+              }
+              .foregroundStyle(t.muted)
+              .padding(.top, 10).padding(.horizontal, 4).padding(.bottom, 4)
+              .overlay(alignment: .top) { t.line.frame(height: 1) }
+              .padding(.horizontal, 6).padding(.top, 4)
             }
           }
           .padding(8).frame(width: w)
@@ -76,12 +93,14 @@ private struct AddMenuPopup: View {
       .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     } else {
       HStack(spacing: 12) {
-        Icon(row.icon, 15, 2).foregroundStyle(t.text).frame(width: 32, height: 32).background(Circle().fill(t.surf))
+        Icon(row.icon, row.square ? 16 : 15, 2).foregroundStyle(row.soon ? t.muted : t.text).frame(width: 32, height: 32)
+          .background { if row.square { RoundedRectangle(cornerRadius: 10, style: .continuous).fill(t.surf) } else { Circle().fill(t.surf) } }
         VStack(alignment: .leading, spacing: 1) {
-          Text(row.title).css(14, .semibold, lh: 1.25).foregroundStyle(t.text)
+          Text(row.title).css(14, .semibold, lh: 1.25).foregroundStyle(row.soon ? t.muted : t.text)
           Text(row.line).css(12).foregroundStyle(t.muted)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        if row.soon { Text("Soon").css(11, .semibold).foregroundStyle(t.muted).fixedSize() }
       }
       .padding(.horizontal, 12).padding(.vertical, 8).frame(minHeight: 52)
       .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))

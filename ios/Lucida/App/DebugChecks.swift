@@ -40,11 +40,42 @@ enum DebugChecks {
     case "learn": await learn(s)
     case "tune": await tune(s)
     case "free": await free(s)
+    case "pages": await pagesCheck(s)
     case "all": for n in ["pause", "exam", "grade", "learn", "tune"] { await run(n, s) }
     default: say(false, "unknown check " + name)
     }
     if name != "all" { print("CHECKS DONE \(lines.filter { $0.contains("PASS") }.count) passed, \(lines.filter { $0.contains("FAIL") }.count) failed") }
     if name != "all" { try? await Task.sleep(nanoseconds: 300_000_000); exit(0) }
+  }
+
+  /// Pages (Data/Pages.swift): a Note made on the first deck, typed in (saved a moment later, as blocks), changed meanwhile by another app (the save merges
+  /// block by block and says so), a version restored, and deleted.
+  static func pagesCheck(_ s: Store) async {
+    guard let deck = s.lib.decks.first?.id else { say(false, "pages: a deck"); return }
+    let P = s.pages
+    guard let p = try? await P.create("deck", deck) else { say(false, "pages: a new page"); return }
+    say(p.version == 1 && P.list("deck", deck).contains { $0.id == p.id }, "pages: a new Note is made and listed")
+    P.edit(p.id, title: "Check page")
+    P.editMarkdown(p.id, "First line.\n\n:::trap\nA trap.\n:::\n\nSecond line.\n")
+    say(P.saving(p.id).busy, "pages: Saving… while it waits")
+    try? await Task.sleep(nanoseconds: 2_000_000_000)
+    var srv = try? await s.api.pages("api/pages/" + p.id)
+    let v2 = PageInfo(json: srv?.json ?? [:])
+    say(v2.title == "Check page" && v2.version == 2 && PageJSON.blocks(v2.data).count == 3, "pages: what was typed is saved once, as blocks", "v\(v2.version) \(v2.title) \(PageJSON.blocks(v2.data).count)")
+    // another app changes the last block meanwhile; this phone changes the first one from v2
+    var theirs = PageJSON.blocks(v2.data); theirs[2]["text"] = "Second line, by Claude."
+    _ = try? await s.api.pages("", body: ["op": "update", "page": p.id, "baseVersion": 2, "data": ["blocks": theirs]])
+    P.editMarkdown(p.id, "First line, mine.\n\n:::trap\nA trap.\n:::\n\nSecond line.\n")
+    try? await Task.sleep(nanoseconds: 2_500_000_000)
+    srv = try? await s.api.pages("api/pages/" + p.id)
+    let v4 = PageInfo(json: srv?.json ?? [:]), texts = PageJSON.blocks(v4.data).map { $0["text"] as? String ?? "" }
+    say(v4.version == 4 && texts.first == "First line, mine." && texts.last == "Second line, by Claude.", "pages: a 409 merges both changes on top", "v\(v4.version) \(texts)")
+    let cf = P.conflict(p.id)
+    say(cf?.theirs == 3 && cf?.mine == 4, "pages: the conflict line knows the versions", "\(String(describing: cf))")
+    say(P.markdown(p.id).contains("Second line, by Claude."), "pages: the editor shows the merged page")
+    let got = await P.restore(p.id, 2)
+    say(got?.version == 5 && P.markdown(p.id).contains("Second line.") && !P.markdown(p.id).contains("mine"), "pages: Restore brings v2 back as v5")
+    do { try await P.remove(p.id); say(!P.list("deck", deck).contains { $0.id == p.id }, "pages: Delete takes it off the list") } catch { say(false, "pages: delete", error.localizedDescription) }
   }
 
   /// Pausing a card: it leaves the queue and the due counts; unpausing brings it back.

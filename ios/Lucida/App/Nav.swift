@@ -6,7 +6,7 @@ import SwiftUI
 /// page: see `profile`), News, a shared deck's page, its suggestions (`suggestions("")`: every deck of yours), its History,
 /// Settings › Theme with a theme's page (its key), Settings › Connect AI, and a deck's Guide editor (its deck, and the page it
 /// opens on: "" for the Guide itself).
-enum Route: Hashable { case settings, deck(String), folder(String), inbox, profile(String), news, publicDeck(DeckAddress), suggestions(String), history(DeckAddress), themes, theme(String), connect, guide(String, String) }
+enum Route: Hashable { case settings, deck(String), folder(String), inbox, profile(String), news, publicDeck(DeckAddress), suggestions(String), history(DeckAddress), themes, theme(String), connect, guide(String, String), page(String) }
 enum SheetKind: Identifiable, Equatable {
   case newDeck, newCard(deckId: String?, cardId: String?), deckSettings(String), learnStart(String)
   /// The New folder popup (maybe for a deck that goes in it), or Rename on a folder's page; `name`: what's typed to start.
@@ -183,6 +183,14 @@ final class Nav: ObservableObject {
   }
   /// A deck's Notes page, on a page of it ("" for the Guide itself), with the caret at a place in it (`at`, "block:offset": where its words were tapped).
   func guide(deckId: String, page: String = "", at: String = "") { guideAt = at; push(.guide(deckId, page)) }
+  /// A deck's page (Pages: a Note), pushed on the page you're on; `fresh`: just made, its title takes the caret.
+  var pageFresh = ""
+  func page(_ id: String, fresh: Bool = false) { if fresh { pageFresh = id }; push(.page(id)) }
+  /// Back from a page to its deck's Pages tab (the deck under it, or the deck put in its place).
+  func backToPages(deckId: String) {
+    deckWants = DeckWant(deckId: deckId, tab: "pages")
+    if path.dropLast().last == .deck(deckId) { back() } else { tab = .library; path = [.deck(deckId)] }
+  }
   /// A page on another site (Help, the Terms, lucida.cards/connect), in Safari.
   func open(_ url: URL?) { if let url { UIApplication.shared.open(url) } }
 }

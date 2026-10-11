@@ -124,8 +124,12 @@ struct NotesEntry: Identifiable, Equatable {
   var open = false
   var folded = false
   var virtualFor: String? = nil
+  /// The callout box the row is drawn in (the innermost callout it's in, or its own: a callout's row is its box's top), and whether it's the box's last row showing.
+  var co: NotesBox? = nil
   var id: String { virtualFor.map { "v" + $0 } ?? block.id }
 }
+/// A callout's box (web/notes.js view(): cos): its block, its kind, how far in it is, whether this row is its top (the callout's own line) and its end.
+struct NotesBox: Equatable { var id: String, style: String, d: Int, top = false, end = false }
 
 /// Where the caret is asked to go: a block (and a table cell), and a place in its words.
 struct NotesFocus: Equatable { var id: String; var at: Int; var cell: [Int]? = nil; var length = 0 }
@@ -143,7 +147,12 @@ final class NotesPage: ObservableObject {
   /// Where the caret should go next (a field that sees its id takes it).
   @Published var focus: NotesFocus? = nil
   /// The block whose words are being edited, and what is selected in them.
-  @Published var editing: String? = nil
+  @Published var editing: String? = nil { didSet { if let e = editing, e != oldValue { setMakeAt(e) } } }
+  /// The block "+ Card" shows on (web/notes.js MKC): the block at the page's left that holds the line last written in or picked (a phone has no pointer to
+  /// hover with). It shows only while the keyboard is down.
+  @Published private(set) var makeAt: String? = nil
+  /// The page has its title in a field above it (web/notes.js `titled`): a blank one is one empty line, "Start writing".
+  private(set) var titled = false
   @Published var selection = NSRange(location: 0, length: 0)
   @Published var editingCell: [Int]? = nil
   /// A picture, divider or table that is picked (a ring shows it; Delete takes it away).
@@ -164,10 +173,13 @@ final class NotesPage: ObservableObject {
 
   // ---------- reading Markdown ----------
   /// The page's Markdown (`md`) for `key` (deck|page). A blank note (nothing written) is a heading and an empty line. `demo`: the canvas's state for toggles and folds.
-  func load(_ md: String, key: String, editable: Bool, blank: Bool, demo: NotesDemo? = nil) {
+  func load(_ md: String, key: String, editable: Bool, blank: Bool, demo: NotesDemo? = nil, titled: Bool? = nil) {
     self.key = key; self.editable = editable; markdown = md; sent = md; original = md
+    if let titled { self.titled = titled }
     var list = GuideEngine.shared.blocks(md)
-    if list.isEmpty && (editable || blank) { list = [NoteBlock("h", level: 1), NoteBlock("p")] }
+    // (a page with its title in a field above it, web/notes.js `titled`, starts blank as one empty line)
+    if list.isEmpty && (editable || blank) { list = self.titled ? [NoteBlock("p")] : [NoteBlock("h", level: 1), NoteBlock("p")] }
+    makeAt = nil
     blocks = Self.settle(list)
     base = Self.saved(blocks)
     picked = nil; focus = nil; editing = nil
@@ -204,8 +216,13 @@ final class NotesPage: ObservableObject {
 
   // ---------- what shows ----------
   var entries: [NotesEntry] {
-    var out: [NotesEntry] = [], cnt: [Int?] = [], hide: (toggle: Bool, d: Int, level: Int)? = nil
+    var out: [NotesEntry] = [], cnt: [Int?] = [], hide: (toggle: Bool, d: Int, level: Int)? = nil, cos: [NotesBox] = []
     for (i, b) in blocks.enumerated() {
+      // (the callouts the line is in: the innermost one gives it its box)
+      while let c = cos.last, c.d >= b.d { cos.removeLast() }
+      let inCo = cos.last
+      if b.k == "callout" { cos.append(NotesBox(id: b.id, style: ["trap", "pearl", "mnemonic", "note"].contains(b.style) ? b.style : "note", d: b.d)) }
+      let co: NotesBox? = b.k == "callout" ? { var c = cos[cos.count - 1]; c.top = true; return c }() : inCo
       if cnt.count > b.d + 1 { cnt.removeLast(cnt.count - b.d - 1) }
       while cnt.count < b.d + 1 { cnt.append(nil) }
       if b.k == "ol" { cnt[b.d] = cnt[b.d].map { $0 + 1 } ?? (b.start ?? 1) } else { cnt[b.d] = nil }
@@ -218,11 +235,13 @@ final class NotesPage: ObservableObject {
       let next = i + 1 < blocks.count ? blocks[i + 1] : nil, kids = next.map { $0.d > b.d } ?? false
       let section = b.k == "h" && next.map { !($0.d < b.d || ($0.d == b.d && $0.k == "h" && $0.level <= b.level)) } ?? false
       let isOpen = b.k == "toggle" && (open[b.id] ?? false), folded = section && (fold[b.id] ?? false)
-      out.append(NotesEntry(block: b, index: i, number: n, kids: kids, section: section, open: isOpen, folded: folded))
+      out.append(NotesEntry(block: b, index: i, number: n, kids: kids, section: section, open: isOpen, folded: folded, co: co))
       if b.k == "toggle" && !isOpen && kids { hide = (true, b.d, 0) }
       else if folded { hide = (false, b.d, b.level) }
-      if b.k == "toggle" && isOpen && !kids && editable { var vb = NoteBlock("p", d: b.d + 1); vb.id = "v" + b.id; var v = NotesEntry(block: vb, index: i); v.virtualFor = b.id; out.append(v) }
+      if b.k == "toggle" && isOpen && !kids && editable { var vb = NoteBlock("p", d: b.d + 1); vb.id = "v" + b.id; var v = NotesEntry(block: vb, index: i); v.virtualFor = b.id; v.co = inCo; out.append(v) }
     }
+    // (a callout's box ends at the last line showing in it)
+    for k in out.indices { if let c = out[k].co { let nx = k + 1 < out.count ? out[k + 1].co : nil; out[k].co?.end = nx?.id != c.id } }
     return out
   }
   /// The outline: every heading with words, in page order (one in a folded section or a closed toggle too: going to it opens what it is in).
@@ -253,9 +272,10 @@ final class NotesPage: ObservableObject {
     guard Notes.text.contains(b.k), b.isEmpty, e.virtualFor == nil else { return e.virtualFor != nil ? "Empty" : "" }
     let blank = blocks.count <= 2 && blocks.allSatisfy { Notes.text.contains($0.k) && $0.isEmpty }
     if blank && e.index == 0 && b.k == "h" { return "Title" }
+    if blank && titled && e.index == 0 && b.k == "p" && blocks.count == 1 { return "Start writing" }
     if blank && e.index == 1 && b.k == "p" && blocks.first?.k == "h" { return "Start writing" }
     guard editable, editing == b.id else { return "" }
-    switch b.k { case "h": return b.level == 1 ? "Heading" : b.level == 2 ? "Subheading" : "Heading"; case "ul", "ol": return "List"; case "todo": return "To-do"; case "toggle": return "Toggle"; case "quote": return "Quote"; default: return "" }
+    switch b.k { case "h": return b.level == 1 ? "Heading" : b.level == 2 ? "Subheading" : "Heading"; case "ul", "ol": return "List"; case "todo": return "To-do"; case "toggle": return "Toggle"; case "quote": return "Quote"; case "callout": return "Title (optional)"; case "chain": return "A step → the next → the next"; default: return "" }
   }
 
   // ---------- changes ----------
@@ -637,7 +657,19 @@ final class NotesPage: ObservableObject {
     return true
   }
   /// A picture, divider or table is picked (Delete takes it away).
-  func pick(_ id: String?) { picked = id; if id != nil { focus = nil } }
+  func pick(_ id: String?) { picked = id; if let id { focus = nil; setMakeAt(id) } }
+  /// "+ Card" goes to the block at the page's left that holds `id` (a line in a list, a toggle or a callout is part of the block it is in).
+  func setMakeAt(_ id: String) {
+    guard var i = index(id) else { return }
+    while i > 0 && blocks[i].d > 0 { i -= 1 }
+    if makeAt != blocks[i].id { makeAt = blocks[i].id }
+  }
+  /// A block's Markdown, with all it holds (web/notes.js blockMd: what "+ Card" hands on).
+  func blockMarkdown(_ id: String) -> String {
+    guard let i = index(id) else { return "" }
+    let part = blocks[i..<end(of: i)], base = part.first?.d ?? 0
+    return GuideEngine.shared.markdown(part.map { var b = $0; b.d -= base; return b })
+  }
 
   // ---------- toggles and sections ----------
   func flipOpen(_ id: String) { open[id] = !(open[id] ?? false); rememberSoon() }
