@@ -31,13 +31,20 @@ enum NotesCSS {
 /// The colors a page is drawn in (NOTES_VARS): its words, quiet words, lines, what code sits on, the page's own color and a gray.
 struct NotesColors: Equatable {
   var text, muted, line, code, bg, surf: UIColor
+  /// A Note's callouts (NOTES_VARS --nb-trap and the rest): a trap the again red, a pearl the good green, a mnemonic the hard amber, each on its tint.
+  var trap, trapBg, pearl, pearlBg, mnem, mnemBg: UIColor
   init(_ t: Theme, code: Color) {
     text = UIColor(t.text); muted = UIColor(t.muted); line = UIColor(t.line); self.code = UIColor(code); bg = UIColor(t.bg); surf = UIColor(t.surf)
+    trap = UIColor(t.again); trapBg = UIColor(t.againTint); pearl = UIColor(t.good); pearlBg = UIColor(t.goodTint); mnem = UIColor(t.hard); mnemBg = UIColor(t.hardTint)
+  }
+  /// A callout's label color and box color (a note's is the page's gray and quiet words).
+  func callout(_ style: String) -> (fg: UIColor, bg: UIColor) {
+    switch style { case "trap": return (trap, trapBg); case "pearl": return (pearl, pearlBg); case "mnemonic": return (mnem, mnemBg); default: return (muted, surf) }
   }
   /// The same colors (by what they are, not which object holds them: the page's rows are drawn again only when something they show changed).
   static func == (a: NotesColors, b: NotesColors) -> Bool { a.parts == b.parts }
   private var parts: [CGFloat] {
-    [text, muted, line, code, bg, surf].flatMap { c -> [CGFloat] in var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, al: CGFloat = 0; c.getRed(&r, green: &g, blue: &b, alpha: &al); return [r, g, b, al] }
+    [text, muted, line, code, bg, surf, trap, trapBg, pearl, pearlBg, mnem, mnemBg].flatMap { c -> [CGFloat] in var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, al: CGFloat = 0; c.getRed(&r, green: &g, blue: &b, alpha: &al); return [r, g, b, al] }
   }
 }
 
@@ -61,6 +68,9 @@ struct NotesLook: Equatable {
     case "h": let h = NotesCSS.head(b.level); l.size = h.size; l.lh = h.lh; l.weight = .semibold; l.ls = -0.02
     case "code": l.size = NotesCSS.code; l.mono = true
     case "todo": l.done = b.on
+    // (a callout's title, and a chain's steps: semibold, a chain's at 14 points)
+    case "callout": l.weight = .semibold
+    case "chain": l.size = 14; l.lh = 2.3; l.weight = .semibold
     default: break
     }
     return l
@@ -459,6 +469,13 @@ struct NotesLine: UIViewRepresentable {
       return true
     }
     func textViewDidChange(_ v: UITextView) {
+      // ("->" typed in a chain is an arrow, as web/notes.js makes it)
+      if line.kind == "chain", v.markedTextRange == nil, v.textStorage.string.contains("->") {
+        let sel = v.selectedRange, ns = v.textStorage
+        var shift = 0, r = (ns.string as NSString).range(of: "->")
+        while r.location != NSNotFound { ns.replaceCharacters(in: r, with: "→"); if r.location < sel.location { shift += 1 }; r = (ns.string as NSString).range(of: "->") }
+        v.selectedRange = NSRange(location: max(0, sel.location - shift), length: 0)
+      }
       sync(v)
       (v as? NotesField)?.showHint()
       if v.markedTextRange == nil && line.cell == nil && line.kind == "p" && page.shortcut(line.id, caret: v.selectedRange.location) { refresh(v) }
@@ -509,12 +526,24 @@ struct NotesSetup: Equatable {
   var hooks: NotesHooks
   /// How wide the page is (a picture is no wider; a table shares it out).
   var width: CGFloat = 0
-  static func == (a: NotesSetup, b: NotesSetup) -> Bool { a.colors == b.colors && a.editable == b.editable && a.owner == b.owner && a.hooks === b.hooks && a.width == b.width }
+  /// What the cards and pages the note shows are, as far as they're known (web's `refs`): when one arrives or changes, this changes, and their rows draw again.
+  var refs = ""
+  static func == (a: NotesSetup, b: NotesSetup) -> Bool { a.colors == b.colors && a.editable == b.editable && a.owner == b.owner && a.hooks === b.hooks && a.width == b.width && a.refs == b.refs }
 }
+/// A card a Note shows (web/notes.js o.card): its front, its back, and whether the learner keeps missing it.
+struct NoteCardInfo: Equatable { var front: String, back: String, weak: Bool }
+/// A page a Note shows (o.page): not known yet, not there, or its title and kind.
+enum NotePageRef: Equatable { case loading, missing, page(title: String, kind: String) }
 /// What the rows ask of the screen around them.
 final class NotesHooks {
   var image: (String) -> URL? = GuideImages.own
   var open: ((Int, Int) -> Void)? = nil
+  /// A Note's cards and pages (nil: the page shows none), what a press on one opens, and "+ Card" on a block (its id and its Markdown, with what it holds).
+  var card: ((String) -> NoteCardInfo?)? = nil
+  var pageRef: ((String) -> NotePageRef)? = nil
+  var openCard: ((String) -> Void)? = nil
+  var openPage: ((String) -> Void)? = nil
+  var makeCard: ((String, String) -> Void)? = nil
   init(image: @escaping (String) -> URL? = GuideImages.own, open: ((Int, Int) -> Void)? = nil) { self.image = image; self.open = open }
 }
 
@@ -529,11 +558,14 @@ struct NotesView: View {
   var below: CGFloat = 0
   var body: some View {
     let list = page.entries, f = page.focus, pk = page.picked, ed = page.editing
+    // ("+ Card" on the block last written in or picked, once the keyboard is down: web/notes.js hides it while a phone's keyboard is up)
+    let mk = setup.hooks.makeCard != nil && ed == nil ? page.makeAt : nil
     var set = setup; set.width = width
     return VStack(alignment: .leading, spacing: 0) {
       ForEach(Array(list.enumerated()), id: \.element.id) { n, e in
         NoteRow(e: e, page: page, setup: set, focus: f?.id == e.block.id ? f : nil, placeholder: page.placeholder(e), picked: pk == e.block.id, first: n == 0,
-                hl: hl.flatMap { $0.i == e.index && e.virtualFor == nil ? NSRange(location: $0.a, length: $0.b - $0.a) : nil }, editingHere: ed == e.block.id)
+                hl: hl.flatMap { $0.i == e.index && e.virtualFor == nil ? NSRange(location: $0.a, length: $0.b - $0.a) : nil }, editingHere: ed == e.block.id,
+                make: mk != nil && mk == e.block.id && e.virtualFor == nil)
           .equatable()
           .transition(Motion.still ? .identity : .opacity.combined(with: .offset(y: -4)))
       }
@@ -556,28 +588,107 @@ struct NoteRow: View, Equatable {
   let first: Bool
   let hl: NSRange?
   let editingHere: Bool
+  /// "+ Card" shows at this block's top right.
+  var make = false
   static func == (a: NoteRow, b: NoteRow) -> Bool {
     a.e == b.e && a.setup == b.setup && a.focus == b.focus && a.placeholder == b.placeholder && a.picked == b.picked && a.first == b.first && a.hl == b.hl && a.editingHere == b.editingHere
+      && a.make == b.make
   }
   var body: some View {
     let b = e.block
-    Group {
-      if let t = e.virtualFor { NoteEmptyLine(toggle: t, page: page) }
-      else {
-        switch b.k {
-        case "hr": NoteRule(e: e, page: page, setup: setup, picked: picked)
-        case "card", "page": NoteRef(e: e, page: page, setup: setup, picked: picked)
-        case "img": NotePicture(e: e, page: page, setup: setup, picked: picked)
-        case "table": NoteTable(e: e, page: page, setup: setup, focus: focus, editingHere: editingHere)
-        case "code": NoteCode(e: e, page: page, setup: setup, focus: focus)
-        default: NoteWords(e: e, page: page, setup: setup, focus: focus, placeholder: placeholder, hl: hl)
-        }
+    if let co = e.co {
+      // In a callout's box (design/materials.mjs .nb-inco): the box's color behind the whole row, 16 points of room inside it, its top and end rounded off.
+      let c = setup.colors.callout(co.style)
+      let inside = co.top ? 0 : CGFloat(max(0, b.d - co.d - 1)) * NotesCSS.ind
+      let corners = RectangleCornerRadii(topLeading: co.top ? 16 : 0, bottomLeading: co.end ? 16 : 0, bottomTrailing: co.end ? 16 : 0, topTrailing: co.top ? 16 : 0)
+      content(b)
+        .padding(.leading, inside)
+        .padding(.vertical, 2)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.top, co.top ? 10 : 0).padding(.bottom, co.end ? 10 : 0)
+        .background(UnevenRoundedRectangle(cornerRadii: corners, style: .continuous).fill(Color(c.bg)))
+        .overlay(alignment: .topTrailing) { if make { NoteMakeCard(id: b.id, page: page, setup: setup).padding(.top, 8).padding(.trailing, 10) } }
+        .padding(.leading, CGFloat(co.d) * NotesCSS.ind)
+        .padding(.top, co.top ? 6 : 0).padding(.bottom, co.end ? 6 : 0)
+    } else {
+      content(b)
+        .padding(.leading, CGFloat(b.d) * NotesCSS.ind)
+        .padding(.vertical, 2)
+        .padding(.top, b.k == "h" && !first ? NotesCSS.head(b.level).top : 0)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(alignment: .topTrailing) { if make { NoteMakeCard(id: b.id, page: page, setup: setup).padding(.top, b.k == "h" && !first ? NotesCSS.head(b.level).top : 2) } }
+    }
+  }
+  @ViewBuilder private func content(_ b: NoteBlock) -> some View {
+    if let t = e.virtualFor { NoteEmptyLine(toggle: t, page: page) }
+    else {
+      switch b.k {
+      case "hr": NoteRule(e: e, page: page, setup: setup, picked: picked)
+      case "card", "page": NoteRef(e: e, page: page, setup: setup, picked: picked)
+      case "img": NotePicture(e: e, page: page, setup: setup, picked: picked)
+      case "table": NoteTable(e: e, page: page, setup: setup, focus: focus, editingHere: editingHere)
+      case "code": NoteCode(e: e, page: page, setup: setup, focus: focus)
+      default: NoteWords(e: e, page: page, setup: setup, focus: focus, placeholder: placeholder, hl: hl, editingHere: editingHere)
       }
     }
-    .padding(.leading, CGFloat(b.d) * NotesCSS.ind)
-    .padding(.vertical, 2)
-    .padding(.top, b.k == "h" && !first ? NotesCSS.head(b.level).top : 0)
-    .frame(maxWidth: .infinity, alignment: .leading)
+  }
+}
+
+/// "+ Card" at a block's top right (web/notes.js .nb-mkc: 28 points tall, the page's words color with the page's color on it): a press hands the block's
+/// Markdown, with all it holds, to the screen, which opens New card from this block.
+struct NoteMakeCard: View {
+  let id: String
+  let page: NotesPage
+  let setup: NotesSetup
+  var body: some View {
+    Button { setup.hooks.makeCard?(id, page.blockMarkdown(id)) } label: {
+      HStack(spacing: 4) { NotesIcon("plus", 12, 2.4); Text("Card").font(.geist(12, .semibold)) }
+        .foregroundStyle(Color(setup.colors.bg)).padding(.leading, 9).padding(.trailing, 11).frame(height: 28)
+        .background(Capsule().fill(Color(setup.colors.text)))
+    }
+    .buttonStyle(.press)
+    .transition(Motion.still ? .identity : .opacity)
+    .accessibilityLabel("Make a card from this block").accessibilityIdentifier("page.makeCard")
+  }
+}
+
+/// A chain's steps (design/materials.mjs .nb-chain): each a pill on the page's gray, the → between them quiet, wrapping onto more lines like words.
+struct NoteChainPills: View {
+  let runs: [NoteRun]
+  let colors: NotesColors
+  var body: some View {
+    let steps = Notes.plain(runs).components(separatedBy: "→").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+    NotesFlow(spacing: 6, lineSpacing: 6) {
+      ForEach(Array(steps.enumerated()), id: \.offset) { i, s in
+        if i > 0 { Text("→").font(.geist(14, .medium)).foregroundStyle(Color(colors.muted)).frame(height: 30) }
+        Text(s).font(.geist(14, .semibold)).foregroundStyle(Color(colors.text)).padding(.horizontal, 12).frame(height: 30).background(Capsule().fill(Color(colors.surf)))
+      }
+    }
+    .padding(.vertical, 4)
+    .accessibilityElement(children: .ignore).accessibilityLabel("Chain: " + steps.joined(separator: ", then "))
+  }
+}
+
+/// Views side by side, onto the next line when the line is full (a chain's pills).
+struct NotesFlow: Layout {
+  var spacing: CGFloat = 6, lineSpacing: CGFloat = 6
+  func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+    let rows = place(proposal.width ?? .infinity, subviews)
+    return CGSize(width: proposal.width ?? rows.map(\.w).max() ?? 0, height: rows.last.map { $0.y + $0.h } ?? 0)
+  }
+  func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    for r in place(bounds.width, subviews) { for (i, x) in r.items { subviews[i].place(at: CGPoint(x: bounds.minX + x, y: bounds.minY + r.y), proposal: .unspecified) } }
+  }
+  private func place(_ width: CGFloat, _ subviews: Subviews) -> [(y: CGFloat, h: CGFloat, w: CGFloat, items: [(Int, CGFloat)])] {
+    var rows: [(y: CGFloat, h: CGFloat, w: CGFloat, items: [(Int, CGFloat)])] = [], x: CGFloat = 0, y: CGFloat = 0, h: CGFloat = 0, items: [(Int, CGFloat)] = []
+    for (i, v) in subviews.enumerated() {
+      let s = v.sizeThatFits(.unspecified)
+      if x > 0 && x + s.width > width { rows.append((y, h, x - spacing, items)); y += h + lineSpacing; x = 0; h = 0; items = [] }
+      items.append((i, x)); x += s.width + spacing; h = max(h, s.height)
+    }
+    if !items.isEmpty { rows.append((y, h, x - spacing, items)) }
+    return rows
   }
 }
 
@@ -589,12 +700,35 @@ struct NoteWords: View {
   let focus: NotesFocus?
   let placeholder: String
   let hl: NSRange?
-  private static let names = ["p": "Text", "h": "Heading", "ul": "List", "ol": "List", "todo": "To-do", "toggle": "Toggle", "quote": "Quote"]
+  var editingHere = false
+  /// A chain shown as its pills was tapped: its words go into a field to write in.
+  @State private var writing = false
+  private static let names = ["p": "Text", "h": "Heading", "ul": "List", "ol": "List", "todo": "To-do", "toggle": "Toggle", "quote": "Quote", "callout": "Callout title", "chain": "Chain"]
+  private static let labels = ["trap": "TRAP", "pearl": "PEARL", "mnemonic": "MNEMONIC", "note": "NOTE"]
   var body: some View {
-    let b = e.block, look = NotesLook.of(b, setup.colors, hl: hl)
+    let b = e.block
+    if b.k == "callout" {
+      // A callout's line: its kind's small label in its color, then its title (often empty).
+      HStack(alignment: .firstTextBaseline, spacing: 10) {
+        Text(Self.labels[b.style] ?? "NOTE").font(.geist(12, .bold)).tracking(0.48).foregroundStyle(Color(setup.colors.callout(b.style).fg)).fixedSize()
+        line(b)
+      }
+    } else if b.k == "chain" && !editingHere && !writing && (!b.isEmpty || !setup.editable) && focus == nil {
+      NoteChainPills(runs: b.r, colors: setup.colors)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .onTapGesture {
+          if setup.editable { writing = true; page.focus = NotesFocus(id: b.id, at: b.length) } else if setup.owner { setup.hooks.open?(e.index, 0) }
+        }
+    } else {
+      line(b).onChange(of: editingHere) { _, on in if !on { writing = false } }
+    }
+  }
+  private func line(_ b: NoteBlock) -> some View {
+    let look = NotesLook.of(b, setup.colors, hl: hl)
     let lead: CGFloat = ["ul", "ol", "todo", "toggle"].contains(b.k) ? NotesCSS.ind : b.k == "quote" ? 15 : 0
     let open = setup.hooks.open, i = e.index
-    NotesLine(id: b.id, kind: b.k, runs: b.r, look: look, editable: setup.editable, focus: focus, page: page,
+    return NotesLine(id: b.id, kind: b.k, runs: b.r, look: look, editable: setup.editable, focus: focus, page: page,
               label: b.k == "h" ? (b.level == 1 ? "Heading" : b.level == 2 ? "Subheading" : "Heading \(b.level)") : Self.names[b.k] ?? "Text", placeholder: placeholder,
               tap: setup.owner ? { off in open?(i, off) } : nil, anchor: b.k == "h" ? page.anchors[b.id] : nil)
       .padding(.leading, lead)
@@ -722,15 +856,59 @@ struct NoteRef: View {
   let setup: NotesSetup
   let picked: Bool
   var body: some View {
-    let card = e.block.k == "card"
-    Text(card ? "A card from the deck" : "A page").font(.system(size: 14, weight: .semibold)).foregroundStyle(Color(setup.colors.muted))
-      .padding(.horizontal, 16).padding(.vertical, 12).frame(maxWidth: .infinity, alignment: .leading)
-      .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Color(setup.colors.line), lineWidth: 1))
-      .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Color(setup.colors.text), lineWidth: 2).opacity(picked ? 1 : 0))
+    let b = e.block, card = b.k == "card", c = setup.colors
+    // (design/materials.mjs .nb-ref, a phone's: a card's front over its back, a weak one marked; a page's title and kind, a press opens it)
+    box(b, card, c)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color(c.line), lineWidth: 1))
+      .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color(c.text), lineWidth: 2).opacity(picked ? 1 : 0))
+      .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
       .contentShape(Rectangle())
-      .onTapGesture { if setup.editable { page.pick(e.block.id) } else if setup.owner { setup.hooks.open?(e.index, 0) } }
+      .padding(.vertical, 4)
+      .onTapGesture {
+        // (being written in: the first press picks it, the next opens it; reading, a press opens it)
+        if setup.editable && !picked { page.pick(b.id) }
+        else if card, let go = setup.hooks.openCard { go(b.ref) } else if !card, let go = setup.hooks.openPage { go(b.ref) }
+        else if setup.owner { setup.hooks.open?(e.index, 0) }
+      }
       .overlay(alignment: .topTrailing) { if picked { NoteRemove(page: page).offset(y: -40) } }
-      .accessibilityElement().accessibilityLabel(card ? "Card" : "Page")
+      .accessibilityElement(children: .combine).accessibilityAddTraits(.isButton).accessibilityIdentifier(card ? "page.cardRef" : "page.pageRef")
+  }
+  @ViewBuilder private func box(_ b: NoteBlock, _ card: Bool, _ c: NotesColors) -> some View {
+    let pageV = card ? nil : setup.hooks.pageRef?(b.ref), cardV = card ? setup.hooks.card?(b.ref) : nil
+    if card, let v = cardV {
+      VStack(alignment: .leading, spacing: 0) {
+        side("Card · front", v.front, bold: true, c)
+        Rectangle().fill(Color(c.line)).frame(height: 1)
+        side("Back", v.back, bold: false, c)
+        if v.weak {
+          Text("Weak spot").font(.geist(12, .semibold)).foregroundStyle(Color(c.trap)).padding(.horizontal, 10).frame(height: 24)
+            .background(Capsule().fill(Color(c.trapBg))).padding(.horizontal, 16).padding(.bottom, 12)
+        }
+      }
+    } else if !card, case .page(let title, let kind) = pageV {
+      HStack(spacing: 10) {
+        Icon("file", 16, 2).foregroundStyle(Color(c.muted))
+        Text(title.isEmpty ? "Untitled" : title).font(.geist(15, .semibold)).foregroundStyle(Color(c.text)).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
+        Text((kind.isEmpty ? "Page" : kind) + " · open").font(.geist(13)).foregroundStyle(Color(c.muted)).fixedSize()
+      }
+      .padding(.horizontal, 16).padding(.vertical, 12)
+    } else {
+      // (not known, or not there: a deck's card only on the person's own page; another page while it's fetched)
+      let label = card ? (setup.hooks.card == nil ? "A card from the deck" : "Card not found") : pageV == .loading || pageV == nil ? (setup.hooks.pageRef == nil ? "A page" : "One moment…") : "Page not found"
+      HStack(spacing: 10) {
+        Icon(card ? "decks" : "file", 16, 2)
+        Text(label).font(.geist(14))
+      }
+      .foregroundStyle(Color(c.muted)).padding(.horizontal, 16).padding(.vertical, 12)
+    }
+  }
+  private func side(_ label: String, _ words: String, bold: Bool, _ c: NotesColors) -> some View {
+    VStack(alignment: .leading, spacing: 4) {
+      Text(label).font(.geist(12, .semibold)).foregroundStyle(Color(c.muted))
+      Text(words.isEmpty ? " " : words).font(.geist(15, bold ? .semibold : .regular)).lineSpacing(15 * 0.45 - 4).foregroundStyle(Color(c.text)).fixedSize(horizontal: false, vertical: true)
+    }
+    .padding(.horizontal, 16).padding(.vertical, 12).frame(maxWidth: .infinity, alignment: .leading)
   }
 }
 

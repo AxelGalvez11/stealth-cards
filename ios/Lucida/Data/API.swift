@@ -108,7 +108,32 @@ final class API {
     return (j?["result"] as? [String: Any] ?? [:], (try? JSONDecoder().decode(Reply.self, from: data))?.state)
   }
   static let unreachable = "Couldn’t reach Lucida. Check your connection."
-  func rev() async throws -> Int { ((try JSONSerialization.jsonObject(with: try await request("api/rev").0) as? [String: Any])?["rev"] as? Int) ?? 0 }
+  func rev() async throws -> Int { try await revs().rev }
+  /// /api/rev: the library's revision, and when the person's pages last changed (ms; 0 before any).
+  func revs() async throws -> (rev: Int, pages: Double) {
+    let j = (try JSONSerialization.jsonObject(with: try await request("api/rev").0) as? [String: Any]) ?? [:]
+    return ((j["rev"] as? NSNumber)?.intValue ?? 0, (j["pages"] as? NSNumber)?.doubleValue ?? 0)
+  }
+
+  // ---------- Pages (web/pages.mjs; web/pagesclient.js on the web) ----------
+  /// A GET under /api/pages, or a POST to it (`body`): the status and the JSON answer, whatever the status (a lost connection throws, in plain words).
+  func pages(_ path: String, body: [String: Any]? = nil) async throws -> (status: Int, json: [String: Any]) {
+    let data: Data, http: HTTPURLResponse
+    do {
+      if let body { (data, http) = try await raw("api/pages", method: "POST", json: body) }
+      else {
+        var r = URLRequest(url: URL(string: path, relativeTo: API.base)!.absoluteURL)
+        r.setValue("application/json", forHTTPHeaderField: "accept")
+        let (d, resp) = try await session.data(for: r)
+        guard let h = resp as? HTTPURLResponse else { throw APIError.server(API.unreachable) }
+        if h.statusCode == 401 { throw APIError.signedOut }
+        (data, http) = (d, h)
+      }
+    }
+    catch let e as APIError { throw e }
+    catch { throw APIError.server(API.unreachable) }
+    return (http.statusCode, (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:])
+  }
 
   /// One change (web/store.mjs apply): returns what it made and the library after it.
   func action(_ type: String, _ payload: [String: Any]) async throws -> (result: [String: Any], state: Library) {

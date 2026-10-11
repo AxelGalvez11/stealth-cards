@@ -97,7 +97,7 @@ struct RootView: View {
     // Signed out (or the account deleted): nothing of the last person's is left open for the next.
     .onChange(of: store.phase) { _, p in if p == .signedOut && !store.demo { nav.reset() } }
     // Back after a while away: decks you study from other people get their owners' newest changes.
-    .onChange(of: scenePhase) { _, p in if p == .background { store.away = Date() } else if p == .active { store.cameBack() } }
+    .onChange(of: scenePhase) { _, p in if p == .background { store.away = Date(); store.pages.flushAll() } else if p == .active { store.cameBack() } }
     // What went wrong saving a change or uploading a photo, in a quiet message (the web app's too), never the system's alert.
     .overlay { if let e = store.error, store.phase == .ready { ToastHost(text: e) { withAnimation(Motion.leave) { store.error = nil } }.id(e) } }
     .animation(Motion.pop, value: store.error)
@@ -131,6 +131,11 @@ struct RootView: View {
               if !rv.empty { store.grade(rv.card.id, rating) }
             }
           case "deck": nav.tab = .library; nav.path = [.deck(first)]
+          // The first deck on its Pages tab, and a page (`page:<page id>`, over its deck).
+          case "pages": nav.tab = .library; nav.path = [.deck(first)]; nav.deckWants = DeckWant(deckId: first, tab: "pages")
+          case let o where o.hasPrefix("page:"):
+            let pid = String(o.dropFirst(5))
+            nav.tab = .library; nav.path = [.deck(store.pages.page(pid)?.scopeId ?? first), .page(pid)]
           // A deck's Guide editor: the first deck's, or `guide:<deck name>` (and `guide:<deck name>:<page id>`).
           case "guide": nav.tab = .library; nav.path = [.deck(first), .guide(first, "")]
           case let o where o.hasPrefix("guide:"):
@@ -243,6 +248,9 @@ extension Board {
     // The deck page on its Notes tab (the tree of notes, with the sample's pages inside pages: V176, V185) and on its Sources tab, as the canvas's boards.
     case "PhoneDeckNotes": store.props.section = "Notes"; store.props.guideState = "Guide pages"; nav.tab = .library; nav.path = [.deck("cell")]
     case "PhoneDeckSources": store.props.section = "Sources"; nav.tab = .library; nav.path = [.deck("cell")]
+    // The deck page on its Pages tab (design/pages.mjs deckPagesBlock), and a Note page (PhonePage: -state Writing, Versions, "Changed by your AI", "Make a card").
+    case "PhoneDeckPages": store.props.section = "Pages"; nav.tab = .library; nav.path = [.deck("cell")]
+    case "PhonePage": nav.tab = .library; nav.path = [.deck("cell"), .page(NotePagesSample.note)]
     // A deck's Notes page (its view: -state Writing, "Block menu", "Format bar", "Toggle open", "Toggle closed", "Section folded", "Blank note",
     // "Reading on a shared deck", "Older versions", "A new page" or "Outline open"); PhoneGuideOutline is the last.
     case "PhoneGuide", "PhoneGuideOutline": nav.tab = .library; nav.path = [.guide(Board.sampleDeckId, "")]
@@ -505,6 +513,7 @@ struct MainView: View {
               case .theme(let key): ThemePageScreen(key: key)
               case .connect: ConnectScreen()
               case .guide(let id, let page): GuideScreen(deckId: id, page: page)
+              case .page(let id): PageScreen(id: id)
               }
             }
             .toolbar(.hidden, for: .navigationBar)

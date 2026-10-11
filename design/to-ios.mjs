@@ -155,4 +155,7 @@ writeFileSync(OUT, out);
 // The Guide's engine, web/guide.js, goes into the app as it is: the iPhone runs the same file in JavaScriptCore (ios/Lucida/Data/GuideEngine.swift),
 // so what a Guide says is read the same everywhere. (ios/tests/guide-check.sh fails when the two files differ.)
 copyFileSync(new URL('../web/guide.js', import.meta.url), new URL('../ios/Lucida/Resources/guide.js', import.meta.url));
+// A Page's blocks (web/pageblocks.js: a Note's JSON <-> the Markdown the Notes editor writes) go in the same way, and run in the same JavaScriptCore as guide.js
+// (GuideEngine's pageblocks calls), so a page the iPhone saves is the JSON the web and the AI link would save. (ios/tests/pages-check.sh fails when they differ.)
+copyFileSync(new URL('../web/pageblocks.js', import.meta.url), new URL('../ios/Lucida/Resources/pageblocks.js', import.meta.url));
 console.log('wrote', OUT.pathname.split('/stealth-cards/')[1], Object.keys(I).length, 'icons,', PALETTE_NAMES.length, 'palettes');

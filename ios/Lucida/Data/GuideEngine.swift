@@ -122,16 +122,17 @@ final class GuideEngine {
   private let cache = NSCache<NSString, TreeBox>()
   private final class TreeBox { let tree: [GuideBlock]; init(_ t: [GuideBlock]) { tree = t } }
 
-  /// guide.js as the app ships it (Resources/guide.js), loaded once.
+  /// guide.js as the app ships it (Resources/guide.js), loaded once, with web/pageblocks.js beside it (Resources/pageblocks.js: a Page's blocks).
   static let shared: GuideEngine = {
-    let url = Bundle.main.url(forResource: "guide", withExtension: "js")
-    let src = url.flatMap { try? String(contentsOf: $0, encoding: .utf8) } ?? ""
-    return GuideEngine(source: src)
+    func res(_ name: String) -> String { Bundle.main.url(forResource: name, withExtension: "js").flatMap { try? String(contentsOf: $0, encoding: .utf8) } ?? "" }
+    return GuideEngine(source: res("guide"), pageBlocks: res("pageblocks"))
   }()
+  /// pageblocks.js is loaded (a Page's Note can be read and written).
+  private(set) var hasPageBlocks = false
 
   /// `source` is web/guide.js's text: one function (`makeGuide`) and an `export default` after it, which is left off here the way
   /// design/build.mjs leaves it off when it pastes the file into the boards.
-  init(source: String) {
+  init(source: String, pageBlocks: String = "") {
     ctx = JSContext()
     cache.countLimit = 40
     var failed = ""
@@ -144,6 +145,12 @@ final class GuideEngine {
     ctx.evaluateScript("var __guide = (" + body + ")();")
     // One entry for everything: the function's name and its arguments as JSON text in, its answer as JSON text out.
     ctx.evaluateScript("function __call(fn, args) { var r = __guide[fn].apply(__guide, JSON.parse(args)); return JSON.stringify(r === undefined ? null : r); }")
+    // web/pageblocks.js: its one function (makePageBlocks, from its first line to the line before "const PB ="), called with this guide.js (its header says how).
+    if let from = pageBlocks.range(of: "function makePageBlocks"), let to = pageBlocks.range(of: "const PB =", options: .backwards), from.lowerBound < to.lowerBound {
+      ctx.evaluateScript("var __pb = (" + pageBlocks[from.lowerBound..<to.lowerBound].trimmingCharacters(in: .whitespacesAndNewlines) + ")(__guide);")
+      ctx.evaluateScript("function __pbcall(fn, args) { var r = __pb[fn].apply(__pb, JSON.parse(args)); return JSON.stringify(r === undefined ? null : r); }")
+      hasPageBlocks = ctx.objectForKeyedSubscript("__pb").map { !$0.isUndefined && !$0.isNull } ?? false
+    }
     if !failed.isEmpty { failure = failed }
     ctx.exceptionHandler = { [weak self] _, e in self?.failure = e?.toString() ?? "error" }
   }
@@ -190,6 +197,24 @@ final class GuideEngine {
   }
   /// An address typed for a link, as a link may have it (https:// added to a bare domain), or "" when it can't be one.
   func href(_ u: String) -> String { decode(String.self, "href", [u]) ?? "" }
+  // ---------- a Page's Note (web/pageblocks.js) ----------
+  /// Calls pageblocks.js's `fn` with the arguments as JSON text (an array); the answer as JSON text. nil when it threw or isn't loaded.
+  func pageBlocksJSON(_ fn: String, _ argsJSON: String) -> String? {
+    lock.lock(); defer { lock.unlock() }
+    guard hasPageBlocks, let f = ctx.objectForKeyedSubscript("__pbcall"), let r = f.call(withArguments: [fn, argsJSON]), !r.isUndefined else { return nil }
+    return r.toString()
+  }
+  /// A Note's data ({ blocks }, as JSON text) as the Markdown the Notes editor reads.
+  func noteToMarkdown(_ dataJSON: String) -> String {
+    pageBlocksJSON("noteToMarkdown", "[" + (dataJSON.isEmpty ? "null" : dataJSON) + "]").flatMap { try? JSONDecoder().decode(String.self, from: Data($0.utf8)) } ?? ""
+  }
+  /// Markdown back as a Note's data (JSON text): a block whose content didn't change keeps its id from `previousJSON` (the note it was written from).
+  func markdownToNote(_ md: String, previous previousJSON: String?) -> String {
+    guard let enc = try? JSONEncoder().encode(md), let m = String(data: enc, encoding: .utf8) else { return #"{"blocks":[]}"# }
+    let prev = previousJSON.flatMap { $0.isEmpty ? nil : $0 } ?? "null"
+    return pageBlocksJSON("markdownToNote", "[" + m + "," + prev + "]") ?? #"{"blocks":[]}"#
+  }
+
   /// How many unexpected errors guide.js caught and hid (0 unless there is a bug).
   var errors: Int {
     lock.lock(); defer { lock.unlock() }
