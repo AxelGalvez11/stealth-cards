@@ -1,7 +1,9 @@
 // The MCP link: Claude, Cursor, or any app that speaks MCP can read and add cards. On this computer it's
 // http://localhost:3000/mcp; online each person has their own link (see handler.mjs), so an AI only sees their cards.
 // What an AI may do is set on the Connect AI page; tools it isn't allowed to use aren't offered.
-import { apply, state, blanks, mediaLeft, MEDIA_FULL, BG_KINDS, isPro, tunedW } from './store.mjs';
+import { apply, state, blanks, mediaLeft, MEDIA_FULL, BG_KINDS, isPro, tunedW, pageScope, uidOf } from './store.mjs';
+import * as pages from './pages.mjs';
+import { noteToMarkdown } from './pageblocks.js';
 import * as social from './social.mjs';
 import { LEVELS, SUBJECTS, levelWords, subjectWords } from './school.js';
 import { dayAt } from './fsrs.js';
@@ -78,6 +80,34 @@ async function speakFile(words, lang, notes, room) {
   catch (e) { if (e.full) throw e; notes.add(e.message + ' Those cards use the device’s voice for now.'); return null; }
 }
 
+// Pages (pages.mjs).
+const CHECK_PAGE = 'The learner asked to check AI changes first, and a page can’t wait for that check. Show them what you would write in the chat instead.';
+const notReady = kind => (pages.KINDS.includes(kind) ? 'Lucida can’t show ' + pages.KIND_NAMES[kind] + ' pages yet; make a note for now.' : 'A page is a note (the others are coming).');
+// What the AI app reads about Note blocks (create_page and update_page).
+const NOTE_HELP = 'A Note’s blocks, each an object with a type (keep an existing block’s id when you change it; new ones get one): ' +
+  '{type:"heading", level:1|2|3, text} · {type:"text", text} · {type:"list", style:"bullet"|"number"|"todo", items:[{text, checked?, items?}]} · ' +
+  '{type:"callout", style:"trap"|"pearl"|"mnemonic"|"note", title?, text} (a trap: a mistake students make; a pearl: a high-yield fact; a mnemonic: a memory aid) · ' +
+  '{type:"chain", steps:["Glycolysis","Pyruvate","Krebs cycle"]} (a → b → c sequence) · {type:"toggle", title, blocks:[...]} (folds; put answers and details inside) · ' +
+  '{type:"table", header:["Stage","Where"], rows:[["Glycolysis","Cytoplasm"]]} · {type:"quote", text} · {type:"code", lang, text} · {type:"image", src, alt} · {type:"divider"} · ' +
+  '{type:"card", cardId} (shows one of the deck’s cards; list_cards gives ids) · {type:"embed", pageId} (shows another page inside). ' +
+  'text, title, steps and cells are Markdown inside a line (**bold**, *italic*, `code`, [links](https://…)). In Markdown instead: ":::trap", ":::pearl", ":::mnemonic", ":::note" or ":::toggle Title" then lines then ":::", ":::chain" then one step a line then ":::", and "::card <id>" or "::page <id>" on a line. ' +
+  'Example: [{"type":"heading","level":1,"text":"Cellular respiration"},{"type":"chain","steps":["Glycolysis","Krebs cycle","Electron transport"]},{"type":"callout","style":"trap","text":"Glycolysis needs no oxygen."}]';
+const noteIn = a => (Array.isArray(a.blocks) ? { blocks: a.blocks } : a.markdown != null ? { markdown: String(a.markdown) } : { blocks: [] });
+const scopeNames = () => { const S = state(); return { deck: new Map(S.decks.map(d => [d.id, d.name])), folder: new Map(S.folders.map(f => [f.id, f.name])) }; };
+const pageLine = (p, names) => ({ id: p.id, kind: p.kind, title: p.title, version: p.version, [p.scope]: (names[p.scope] && names[p.scope].get(p.scopeId)) || p.scopeId, inside: p.parent || undefined, changed_by: p.by, changed: new Date(p.updated).toISOString() });
+// A page for the AI app: a Note's blocks (or Markdown), and how the learner is doing on the cards it links to.
+function pageOut(p, format) {
+  const out = { ...pageLine(p, scopeNames()) };
+  if (p.kind !== 'note') return { ...out, data: p.data };
+  const blocks = (p.data && p.data.blocks) || [], ids = new Set(), walk = list => { for (const b of list || []) { if (b.type === 'card' && b.cardId) ids.add(b.cardId); if (b.blocks) walk(b.blocks); } };
+  walk(blocks);
+  const cards = {};
+  for (const id of ids) {
+    const c = state().cards.find(x => x.id === id);
+    cards[id] = c ? { front: String(c.front || c.text || '').slice(0, 300), back: String(c.back || '').slice(0, 300), reviews: c.srs.reps || 0, lapses: c.srs.lapses || 0, weak: (c.srs.lapses || 0) > 0 || c.srs.state === 'relearning' } : { missing: true };
+  }
+  return { ...out, ...(format === 'markdown' ? { markdown: noteToMarkdown(p.data) } : { blocks }), ...(ids.size ? { cards } : {}) };
+}
 const CHECK_GUIDE = 'The learner asked to check AI changes first, and a Guide can’t wait for that check. Show them the text in the chat so they can paste it into the Guide themselves.';
 // A deck's Guide as a list of pages: the Guide itself ("main") first, then its extra pages.
 const guidePages = d => { const g = d.guide || { text: '', pages: [] }; return [{ id: 'main', title: 'Guide', characters: (g.text || '').length }, ...(g.pages || []).map(p => ({ id: p.id, title: p.title, inside: p.parent || undefined, characters: (p.text || '').length }))]; };
@@ -270,6 +300,51 @@ const TOOLS = [
       if (a.text) apply({ type: 'guide.save', deckId: d.id, page: r.id, text: String(a.text) }, who);
       return text('Added the page “' + String(a.title).trim().slice(0, 80) + '” to ' + d.name + '. Its id is ' + r.id + '.');
     } },
+  // Pages (pages.mjs): what a deck or a folder holds beside its cards, each of a kind, versioned, written by the learner and by AI apps.
+  { name: 'list_pages', perm: 'read', description: 'List the pages beside a deck’s (or a folder’s) cards: notes, and soon presentations, mind maps, diagrams, canvases and docs. Each comes with its id, kind, title, version, who changed it last and when, and the id of the page it sits inside (pages nest). With no deck or folder it lists every page the learner has. Read one with get_page.',
+    inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, folder: { type: 'string', description: 'Folder name or id (instead of a deck).' } } },
+    run: async a => {
+      let sc = null;
+      try { if (a.deck || a.folder) sc = pageScope(a.folder ? 'folder' : 'deck', a.folder || a.deck); } catch (e) { return fail(e.message); }
+      const names = scopeNames(), list = await pages.list(uidOf(), sc && sc.scope, sc && sc.id);
+      return text({ pages: list.map(p => pageLine(p, names)), kinds_you_can_make: [...pages.READY] });
+    } },
+  { name: 'get_page', perm: 'read', description: 'Read one page: its kind, title, version (send it back as baseVersion when you change the page) and its content. A Note comes as blocks (see create_page for their shapes), or as Markdown with format "markdown". The cards a Note links to come with how the learner is doing on them (weak: they keep forgetting it), so you can tutor from the page: explain what they miss, add a trap or a pearl, or link the weak cards in.',
+    inputSchema: { type: 'object', properties: { page: { type: 'string', description: 'The page’s id (from list_pages).' }, format: { type: 'string', enum: ['blocks', 'markdown'], description: 'How a Note comes back. blocks (the default) keeps each block’s id.' } }, required: ['page'] },
+    run: async a => {
+      const p = await pages.get(uidOf(), a.page); if (!p) return fail('No page ' + a.page + '. list_pages gives the ids.');
+      return text(pageOut(p, a.format));
+    } },
+  { name: 'create_page', perm: 'text', description: 'Make a page beside a deck’s (or a folder’s) cards, like an artifact the learner keeps and studies from. kind is "note" for now (presentations, mind maps, diagrams, canvases and docs are coming). Give the Note as `blocks` or as `markdown` (one of them). ' + NOTE_HELP + ' A deck holds up to 25 pages on Free, 500 on Pro. Put it inside another page with `inside` (its id).',
+    inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, folder: { type: 'string', description: 'Folder name or id (instead of a deck).' }, kind: { type: 'string', enum: pages.KINDS }, title: { type: 'string' },
+      blocks: { type: 'array', items: { type: 'object' }, description: 'The Note’s blocks, in order.' }, markdown: { type: 'string', description: 'The Note as Markdown instead of blocks.' }, inside: { type: 'string', description: 'The id of the page it goes inside. Leave out for the top.' } }, required: ['kind', 'title'] },
+    run: async (a, who, ctx) => {
+      if (state().ai.perms.check) return fail(CHECK_PAGE);
+      if (!pages.READY.has(a.kind)) return fail(notReady(a.kind));
+      let sc; try { sc = pageScope(a.folder ? 'folder' : 'deck', a.folder || a.deck); } catch (e) { return fail(a.deck || a.folder ? e.message : 'Say which deck (or folder) the page goes in.'); }
+      try {
+        const p = await ctx.once('create_page', () => pages.create(uidOf(), { scope: sc.scope, scopeId: sc.id, kind: a.kind, title: a.title, data: noteIn(a), parent: a.inside || '', who, ai: true, pro: isPro() }));
+        return text({ made: pageLine(p, scopeNames()), note: 'The learner sees it in ' + sc.name + ' › Pages now. Change it with update_page and baseVersion ' + p.version + '.' });
+      } catch (e) { return fail(e.message); }
+    } },
+  { name: 'update_page', perm: 'edit', description: 'Change a page: its title and/or its content (a Note’s `blocks` or `markdown`, the whole page as it should be now). Send baseVersion, the version you read with get_page: if the page changed since (the learner wrote in it, or another app did), nothing is saved and you get the page as it is now; merge your change into that and send it again with its version. Every save is a new version, and the learner can restore any older one. Keep the ids of blocks you didn’t change. ' + NOTE_HELP,
+    inputSchema: { type: 'object', properties: { page: { type: 'string', description: 'The page’s id.' }, baseVersion: { type: 'integer', description: 'The version you read (get_page’s version).' }, title: { type: 'string' },
+      blocks: { type: 'array', items: { type: 'object' } }, markdown: { type: 'string' }, summary: { type: 'string', description: 'What you changed, in a few words (the learner sees it beside the version).' } }, required: ['page', 'baseVersion'] },
+    run: async (a, who, ctx) => {
+      if (state().ai.perms.check) return fail(CHECK_PAGE);
+      try {
+        const p = await ctx.once('update_page', () => pages.update(uidOf(), a.page, { baseVersion: a.baseVersion, title: a.title, data: a.blocks || a.markdown != null ? noteIn(a) : undefined, who, ai: true, summary: a.summary, pro: isPro() }));
+        return text({ saved: pageLine(p, scopeNames()), note: 'Saved as version ' + p.version + '.' });
+      } catch (e) {
+        if (e.code === 'conflict') return { content: [{ type: 'text', text: e.message }, { type: 'text', text: JSON.stringify(pageOut(e.current), null, 2) }], isError: true };
+        return fail(e.message);
+      }
+    } },
+  { name: 'delete_page', perm: 'del', description: 'Delete a page. Pages inside it move up to where it was. Ask the learner first.',
+    inputSchema: { type: 'object', properties: { page: { type: 'string', description: 'The page’s id.' } }, required: ['page'] },
+    run: async (a, who, ctx) => {
+      try { await ctx.once('delete_page', () => pages.remove(uidOf(), a.page)); return text('Deleted the page.'); } catch (e) { return fail(e.message); }
+    } },
   // The study network (social.mjs): decks other people share. The learner can study one as it is, or copy it; on a deck
   // from someone else, an AI can only suggest changes, which the owner takes or skips.
   { name: 'search_shared_decks', perm: 'read', description: 'Find decks other people share publicly on Lucida, by words, by topic (a tag), or narrowed by level, subject and school. With none of these it lists popular ones. Each deck comes with its id, name, author, card count, labels and link. Use study_shared_deck to add one to the learner’s library.',
@@ -337,6 +412,11 @@ const META = {
   get_guide: { title: 'Read a deck’s Guide', scope: 'cards:read', ro: true, destructive: false, open: false, idem: true },
   update_guide: { title: 'Write a deck’s Guide', scope: 'cards:write', ro: false, destructive: true, open: false, idem: true },
   add_guide_page: { title: 'Add a Guide page', scope: 'cards:write', ro: false, destructive: false, open: false, idem: false },
+  list_pages: { title: 'List pages', scope: 'cards:read', ro: true, destructive: false, open: false, idem: true },
+  get_page: { title: 'Read a page', scope: 'cards:read', ro: true, destructive: false, open: false, idem: true },
+  create_page: { title: 'Make a page', scope: 'cards:write', ro: false, destructive: false, open: false, idem: false },
+  update_page: { title: 'Change a page', scope: 'cards:write', ro: false, destructive: true, open: false, idem: false },
+  delete_page: { title: 'Delete a page', scope: 'cards:write', ro: false, destructive: true, open: false, idem: true },
   search_shared_decks: { title: 'Search shared decks', scope: 'cards:read', ro: true, destructive: false, open: true, idem: true },
   get_shared_deck: { title: 'Read a shared deck', scope: 'cards:read', ro: true, destructive: false, open: true, idem: true },
   study_shared_deck: { title: 'Add a shared deck to the library', scope: 'cards:write', ro: false, destructive: false, open: true, idem: false },
@@ -370,7 +450,8 @@ async function handle(m, sid, ctx) {
             ' Image cards show a picture: a link, a file the learner uploaded in the chat, or a file on this computer. Audio cards read words aloud (put them in "speak" and the language in "lang"); use them for languages and pronunciation.' +
             ' Learn mode quizzes the learner on a deck: add_quiz gives cards better questions (multiple choice with plausible wrong answers, or true or false) and an explanation. Decks can sit in folders and have a cover picture and a background (update_deck).' +
             ' A deck can have a Guide, its notes page in Markdown with toggles (":::toggle Its title" ... ":::"; get_guide, update_guide, and extra pages with list_guide_pages and add_guide_page); a shared deck shows it on its public page.' +
-            ' To help with what the learner finds hard, get_weak_spots lists their weakest tags and hardest cards (with ids to quiz them or fix the cards), and get_review_history sums up their recent reviews.' });
+            ' To help with what the learner finds hard, get_weak_spots lists their weakest tags and hardest cards (with ids to quiz them or fix the cards), and get_review_history sums up their recent reviews.' +
+            ' Beside a deck’s cards, the learner keeps pages you can make and change, like artifacts for studying: notes with traps, pearls, mnemonics, chains, tables, toggles and the deck’s own cards (list_pages, get_page, create_page, update_page with the baseVersion you read, delete_page). Every save is a version the learner can restore. When you tutor, read the page and the weak spots, then improve the page.' });
       }
       case 'ping': return ok({});
       case 'tools/list': return ok({ tools: allowed().map(t => listed(t, ctx.oauth)) });
@@ -405,7 +486,7 @@ export async function mcp(req, res, body, uid, auth = null) {
   }
   // Files on this computer are only for AI apps running here: not through a tunnel or proxy, which adds these headers.
   const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress) && !['x-forwarded-for', 'forwarded', 'x-real-ip', 'cf-connecting-ip'].some(h => req.headers[h]);
-  const out = (await Promise.all(list.map(x => handle(x || {}, sid, { local, uid, oauth: !!auth })))).filter(Boolean);
+  const once = pages.onceFor(req), out = (await Promise.all(list.map(x => handle(x || {}, sid, { local, uid, oauth: !!auth, once: (k, fn) => once((x && x.id) + ':' + k, fn) })))).filter(Boolean);
   const head = { 'content-type': 'application/json', ...(sid ? { 'mcp-session-id': sid } : {}) };
   if (!out.length) { res.writeHead(202, head).end(); return; }
   res.writeHead(200, head).end(JSON.stringify(Array.isArray(msg) ? out : out[0]));

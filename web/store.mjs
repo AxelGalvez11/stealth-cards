@@ -2,6 +2,7 @@
 // Online (on Vercel) each person's library lives in Supabase instead (see supa.mjs): withLibrary() runs one request
 // against the signed-in person's newest copy and saves it once at the end. The web app and connected AI apps (over
 // MCP) both change data through apply(), so every change is saved the same way.
+import * as pages from './pages.mjs';
 import { readFileSync, writeFileSync, renameSync, mkdirSync, existsSync, rmSync } from 'node:fs';
 import { readFile, writeFile, access } from 'node:fs/promises';
 import { AsyncLocalStorage } from 'node:async_hooks';
@@ -476,6 +477,13 @@ export function guideVersions(deckId, page) {
 // (link.mode 'copy') is yours to change, and so is a deck its owner stopped sharing (link.gone).
 const readOnly = d => !!(d && d.link && d.link.mode === 'study' && !d.link.gone);
 const LOCAL_DECK_KEYS = ['paused', 'grading', 'fsrs', 'goal', 'gapIdx', 'steps', 'perDay', 'piles', 'folder', 'bg'];
+// Where a page may go (pages.mjs): a deck that is the person's own (or their copy), or one of their folders. By id or name.
+export function pageScope(scope, x) {
+  if (scope === 'folder') { const f = state().folders.find(y => y.id === x) || state().folders.find(y => y.name.toLowerCase() === String(x || '').toLowerCase()); if (!f) throw new Error('No folder called ' + x); return { scope, id: f.id, name: f.name }; }
+  const d = findDeck(x); if (!d) throw new Error('No deck called ' + x);
+  if (readOnly(d)) throw notYours(d);
+  return { scope: 'deck', id: d.id, name: d.name };
+}
 const notYours = d => new Error('This deck is ' + ((d.link.owner && d.link.owner.name) || 'someone else') + '’s. Suggest a change instead.');
 // What a request changed, deck by deck, and who to credit (an AI app, or the person whose suggestion the owner took),
 // for sharing the new cards after the save (onSaved).
@@ -554,6 +562,8 @@ function run(a, who) {
       const f = S.folders.find(x => x.id === a.id); if (!f) throw new Error('No such folder');
       S.folders = S.folders.filter(x => x !== f);
       S.decks.forEach(d => { if (d.folder === f.id) d.folder = null; });
+      // Its pages go with it (pages.mjs), once the library is saved.
+      { const uid = L.uid; afterSaving(() => pages.removeScope(uid, 'folder', f.id).catch(e => console.error('folder pages', e.message))); }
       if (S.tests) S.tests = S.tests.filter(t => t.folderId !== f.id);
       return { id: f.id };
     }
@@ -564,6 +574,7 @@ function run(a, who) {
       for (const src of d.sources || []) dropSourceFiles(src);
       for (const g of d.diagrams || []) dropDiagramFile(g);
       if (S.guideHistory) delete S.guideHistory[d.id];
+      { const uid = L.uid; afterSaving(() => pages.removeScope(uid, 'deck', d.id).catch(e => console.error('deck pages', e.message))); }
       // A shared deck stops being shared when it goes (people who copied it keep their copies), and one you studied or
       // copied from someone stops counting you.
       if (d.share) L.touched.set(d.id, { gone: d.share.id });

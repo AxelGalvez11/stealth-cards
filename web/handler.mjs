@@ -26,7 +26,8 @@ import { deleteAccount } from './account.mjs';
 import * as social from './social.mjs';
 import * as classes from './classes.mjs';
 import { cookies } from './auth.mjs';
-import { isDev, afterSaving } from './store.mjs';
+import { isDev, afterSaving, pageScope } from './store.mjs';
+import * as pages from './pages.mjs';
 import { reserve, lookup, release, rtOf, listen, pass } from './rooms.mjs';
 import { publicLd } from './jsonld.mjs';
 
@@ -128,6 +129,40 @@ async function publicPage(req, res, path) {
   res.end(html);
 }
 
+// /api/pages (in the library's request, which they only read: whether the deck or folder is yours to write in, and your plan).
+//   GET  /api/pages?scope=deck&id=<deck>     the pages, without their data
+//   GET  /api/pages/<id>                      one page with its data;  /api/pages/<id>/versions  its versions;  …/versions/<n>  one of them
+//   POST /api/pages {op:'create', scope, id, kind, title, data, parent} | {op:'update', page, baseVersion, title?, data?}
+//                   | {op:'move', page, parent?, pos?} | {op:'delete', page} | {op:'restore', page, version, baseVersion}
+// A save made from an older version answers 409 with the page as it is now (`current`).
+async function pagesApi(req, res, path, body, uid) {
+  const fail = e => { if (!(e instanceof pages.PageError) && !/^[A-Z]/.test(e.message)) console.error(e); return send(res, e.status && e.status < 500 ? e.status : 400, { error: e.message, ...(e.code ? { code: e.code, current: e.current } : {}) }); };
+  try {
+    if (req.method === 'GET') {
+      const q = new URL(req.url, 'http://x').searchParams, m = /^\/api\/pages(?:\/([a-z0-9]+)(?:\/versions(?:\/(\d+))?)?)?$/.exec(path);
+      if (!m) return send(res, 404, { error: 'Not found' });
+      if (!m[1]) { const sc = q.get('scope') ? pageScope(q.get('scope'), q.get('id') || '') : null; return send(res, 200, { pages: await pages.list(uid, sc && sc.scope, sc && sc.id), rev: await pages.rev(uid) }); }
+      if (m[2]) return send(res, 200, await pages.version(uid, m[1], +m[2]));
+      if (path.endsWith('/versions')) return send(res, 200, { versions: await pages.versions(uid, m[1]) });
+      const pg = await pages.get(uid, m[1]);
+      return pg ? send(res, 200, pg) : send(res, 404, { error: 'No such page' });
+    }
+    if (req.method !== 'POST' || path !== '/api/pages') return send(res, 405, { error: 'Not allowed' });
+    const a = jsonOf(body), pro = isPro(), once = pages.onceFor(req), who = 'you';
+    const out = await once('app', async () => {
+      switch (a.op) {
+        case 'create': { const sc = pageScope(a.scope, a.id); return pages.create(uid, { scope: sc.scope, scopeId: sc.id, kind: a.kind, title: a.title, data: a.data, parent: a.parent || '', who, pro }); }
+        case 'update': return pages.update(uid, a.page, { baseVersion: a.baseVersion, title: a.title, data: a.data, who, summary: a.summary, pro });
+        case 'move': return pages.move(uid, a.page, { parent: a.parent, pos: a.pos });
+        case 'delete': return pages.remove(uid, a.page);
+        case 'restore': return pages.restore(uid, a.page, a.version, { baseVersion: a.baseVersion, who, pro });
+        default: throw new pages.PageError('Unknown op ' + a.op);
+      }
+    });
+    return send(res, 200, out);
+  } catch (e) { return fail(e); }
+}
+
 async function api(req, res, path, body, me, uid) {
   if (path === '/api/state' && req.method === 'GET') {
     // Decks you study from someone else take the owner's newest changes when the app opens (and comes back to the front).
@@ -175,6 +210,8 @@ async function api(req, res, path, body, me, uid) {
     }
     catch (e) { return send(res, 400, { error: e.message }); }
   }
+  // Pages beside a deck's or folder's cards (pages.mjs): the list, one page, its versions, and every change to them.
+  if (path === '/api/pages' || path.startsWith('/api/pages/')) return pagesApi(req, res, path, body, uid);
   // A deck's Guide: the older versions of one page, newest first (the library itself only carries the current text).
   if (path === '/api/guide/history' && req.method === 'GET') {
     const q = new URL(req.url, 'http://x').searchParams;
@@ -674,7 +711,7 @@ export async function handle(req, res) {
       } else if (devOf(req)) { uid = devOf(req); me = await devPerson(uid); }
       if (path.startsWith('/media/')) return await media(req, res, path.slice(7), uid);
       if (live) return await liveApi(req, res, live, uid);
-      if (path === '/api/rev' && req.method === 'GET') return send(res, 200, { rev: await revOf(uid) });
+      if (path === '/api/rev' && req.method === 'GET') return send(res, 200, { rev: await revOf(uid), pages: await pages.rev(uid).catch(() => 0) });
       // The app's first load asks Stripe's news afresh, so Pro shows right after paying.
       if (user) me = await meOf(user, path === '/api/state');
       // Making cards from files and topics (make.mjs). A file the person uploads comes by PUT: this server takes only a small one online

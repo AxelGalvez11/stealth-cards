@@ -42,6 +42,9 @@ export const TABLES = {
   oauth_codes: { key: ['code_hash'], defaults: () => ({ client_name: '', client_host: '', scope: '', resource: '', used: false, created_at: now() }) },
   oauth_grants: { key: ['id'], defaults: () => ({ client_name: '', client_host: '', scope: '', resource: '', created_at: now(), last_used_at: now() }) },
   oauth_tokens: { key: ['token_hash'], defaults: () => ({ scope: '', resource: '', created_at: now() }) },
+  // Pages beside a deck's or a folder's cards, and every version of each (web/pages.mjs, supabase/pages.sql).
+  pages: { key: ['id'], defaults: () => ({ parent: '', pos: 0, title: '', data: {}, size: 0, version: 1, updated_by: '', updated_ai: false, deleted: false, created_at: now(), updated_at: now() }) },
+  page_versions: { key: ['page_id', 'version'], defaults: () => ({ title: '', data: {}, author: '', ai: false, summary: '', created_at: now() }) },
   // A view (supabase/hardening.sql deck_people), read only: how many different people study or copy each shared deck. A person
   // who copies a deck 25 times is one person.
   deck_people: { key: ['shared_id'], view: db => {
