@@ -495,11 +495,11 @@ struct PileDialog: View {
   }
 }
 
-/// The card: two faces on a turning card (a 3D flip over half a second). A fill-in-the-blank card doesn't turn; its
+/// The card: two faces on a turning card (a quick 3D flip, Generated.motion's `flip`). A fill-in-the-blank card doesn't turn; its
 /// blank fills in with a pop and the note fades in below.
 struct FlipCard: View {
   @Environment(\.theme) private var t
-  /// Settings › Studying › Flip animation: off, and the other side just appears (Reduce Motion changes nothing here).
+  /// Settings › Studying › Flip animation: off, and the other side just appears (Reduce Motion too).
   @Environment(\.flipsOn) private var flips
   @Environment(\.studySkin) private var skin
   @EnvironmentObject private var store: Store
@@ -528,7 +528,7 @@ struct FlipCard: View {
       // (a theme's card is a picture behind the words, which a finger goes through: the whole card is the button)
       .contentShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
       .modifier(Turn(angle: turned ? 180 : 0))
-      .animation(moved || !flips ? nil : .std(0.5), value: turned)
+      .animation(moved || !flips ? nil : Motion.flip, value: turned)
       .id(moved ? card.id : "")
       .transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: 14)).combined(with: .scale(scale: 0.98)), removal: .identity))
     }

@@ -507,7 +507,7 @@ export function apply(a, who = 'you') {
 function run(a, who) {
   const L = lib(), S = L.S;
   switch (a.type) {
-    case 'deck.add': if (a.image) needPro('Photo covers are'); return { id: makeDeck(a).id };
+    case 'deck.add': return { id: makeDeck(a).id };
     case 'deck.update': {
       const d = findDeck(a.id); if (!d) throw new Error('No such deck');
       const p = pick(a.patch, readOnly(d) ? LOCAL_DECK_KEYS : DECK_KEYS);
@@ -517,8 +517,8 @@ function run(a, who) {
       if ('goal' in p) p.goal = Math.min(97, Math.max(70, +p.goal || 90));
       if ('perDay' in p) p.perDay = Math.min(999, Math.max(0, Math.round(+p.perDay) || 0));
       if ('gapIdx' in p) p.gapIdx = Math.min(GAPS.length - 1, Math.max(0, +p.gapIdx || 0));
-      // Photo covers are Pro: a cover picture already there can stay (or come off), but another can't be set.
-      if ('cover' in p) { const img = pick(p.cover, ['image']).image; if (img && img !== d.cover.image) needPro('Photo covers are'); p.cover = { ...d.cover, ...pick(p.cover, ['style', 'round', 'image']) }; }
+      // Photo covers are free on every plan.
+      if ('cover' in p) { p.cover = { ...d.cover, ...pick(p.cover, ['style', 'round', 'image']) }; }
       if ('folder' in p) { const f = p.folder ? folderOf(p.folder) : null; if (p.folder && !f) throw new Error('No such folder'); p.folder = f; }
       if ('bg' in p) p.bg = cleanBg(d.bg, p.bg);
       // Pro: an exam date, and what happens to cards you keep forgetting. Taking an exam date off works on any plan.

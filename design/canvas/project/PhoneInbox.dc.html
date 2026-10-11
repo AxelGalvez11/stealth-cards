@@ -34,8 +34,8 @@
   <sc-if value="{{hasItem}}" hint-placeholder-val="{{ true }}">
     <div style="flex-grow: 1; position: relative; display: flex; flex-direction: column;">
       <div style="position: absolute; inset: 0; transform: translateY(16px) scale(.94); border-radius: 36px; background: {{t.surf}};"></div>
-      <button type="button" onClick="{{reveal}}" aria-label="{{flipLabel}}" data-key="Space" class="{{cardIn}}" style="width: 100%; height: auto; padding: 0; border: 0; background: transparent; perspective: 1600px; font: inherit; color: inherit; cursor: pointer; flex-grow: 1;">
-  <div style="position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: {{flipTrans}}; transform: {{flipTransform}};">
+      <button type="button" onClick="{{reveal}}" aria-label="{{flipLabel}}" data-key="Space" class="sc-flipb {{cardIn}}" style="width: 100%; height: auto; padding: 0; border: 0; background: transparent; perspective: 1600px; font: inherit; color: inherit; cursor: pointer; flex-grow: 1;">
+  <div class="sc-flip" style="position: relative; width: 100%; height: 100%; transform-style: preserve-3d; will-change: transform; transition: {{flipTrans}}; transform: {{flipTransform}};">
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 28px 24px; display: flex; flex-direction: column; text-align: left; background: {{cp.card}}; border: 1px solid {{cp.line}}; border-radius: {{radius}}; box-shadow: {{cp.shadow}}; backface-visibility: hidden; -webkit-backface-visibility: hidden; --sk-fs: {{sk.fs}}; {{sk.front.css}}">
   <sc-if value="{{sk.on}}" hint-placeholder-val="{{ false }}"><div ref="{{sk.front.deco}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0; border-radius: inherit; pointer-events: none;"></div></sc-if>
   <div style="position: relative; min-height: 21px;"></div>
@@ -192,7 +192,7 @@ renderVals() { const t = this.theme(!!this.props.dark, !!this.props.dim);
     t, card, sk, cp, radius: '36px', snd: soundView(src, 48, 'front'), sndBack: soundView(src, 36, 'back'),
     reveal: () => this.setState({ revealed: !rev, moved: false }),
     flipTransform: rev && !card.isCloze ? 'rotateY(180deg)' : 'rotateY(0deg)',
-    flipTrans: this.state.moved || !flipOn ? 'none' : 'transform .5s cubic-bezier(.4,0,.2,1)', fadeCls: flipOn ? 'sc-fade-a' : '', cardIn: this.state.moved ? (Object.keys(done).length % 2 ? 'sc-in-a' : 'sc-in-b') : '',
+    flipTrans: this.state.moved || !flipOn ? 'none' : 'transform 0.18s cubic-bezier(0.2,0.8,0.2,1)', fadeCls: flipOn ? 'sc-fade-a' : '', cardIn: this.state.moved ? (Object.keys(done).length % 2 ? 'sc-in-a' : 'sc-in-b') : '',
     flipLabel: card.isCloze ? (rev ? 'Hide the answer' : 'Show the blank') : (rev ? 'Flip back' : 'Flip card'),
     clozeShown: rev && card.isCloze,
     blank: rev ? { text: c.back, bg: t.inv, fg: t.invText, cls: flipOn ? 'sc-blank' : '' } : { text: '\u2003\u2003\u2003\u2003', bg: t.surf2, fg: 'transparent', cls: '' },

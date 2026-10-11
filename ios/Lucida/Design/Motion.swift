@@ -9,7 +9,7 @@ struct MotionTimings {
   /// cubic-bezier(x1, y1, x2, y2): starts fast, settles gently, and never overshoots.
   let ease: (Double, Double, Double, Double)
   /// How far a menu, pop-up or toast slides in (points), and how long each kind of motion takes (seconds).
-  let slide, pop, sheet, leave, knob, fade: Double
+  let slide, pop, sheet, leave, knob, fade, reveal, flip: Double
 }
 
 enum Motion {
@@ -38,6 +38,10 @@ enum Motion {
   static var knob: Animation? { still ? nil : ease(timings.knob) }
   /// A backdrop fades.
   static var fade: Animation? { still ? nil : .easeOut(duration: timings.fade) }
+  /// What a toggle in a Guide holds eases in, and its arrow turns.
+  static var reveal: Animation? { still ? nil : ease(timings.reveal) }
+  /// A flashcard turns over (`nil` with Reduce Motion: the other side just shows).
+  static var flip: Animation? { still ? nil : ease(timings.flip) }
   /// How far a menu slides.
   static var slide: CGFloat { CGFloat(timings.slide) }
 }

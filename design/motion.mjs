@@ -20,7 +20,11 @@ export const MOTION = {
   // ... a switch's knob and a segmented control's selected pill slide
   knob: 0.2,
   // ... a dimmed backdrop fades
-  fade: 0.18
+  fade: 0.18,
+  // ... what a toggle (or a folded section) in a Guide holds eases in, and its arrow turns
+  reveal: 0.16,
+  // ... a flashcard turns over (it used to take .5 s and felt slow to answer a tap)
+  flip: 0.18
 };
 
 // The web app only (a phone has no pointer, so this isn't in MOTION and the iPhone app never sees it): deck, folder and class tiles

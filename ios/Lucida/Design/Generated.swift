@@ -94,7 +94,7 @@ enum Generated {
 
   /// The motion timings the web app shares (design/motion.mjs): how far a menu or pop-up slides, how long each kind of
   /// motion takes (seconds), and the one curve they ease out on. Design/Motion.swift turns them into animations.
-  static let motion = MotionTimings(ease: (0.2, 0.8, 0.2, 1), slide: 10, pop: 0.22, sheet: 0.25, leave: 0.18, knob: 0.2, fade: 0.18)
+  static let motion = MotionTimings(ease: (0.2, 0.8, 0.2, 1), slide: 10, pop: 0.22, sheet: 0.25, leave: 0.18, knob: 0.2, fade: 0.18, reveal: 0.16, flip: 0.18)
 
   static let paletteNames: [String] = ["Iris","Apricot","Lilac","Mint","Aqua","Rose","Lemon","Dusk","Grove","Forest","Ember","Meadow","Ocean","Sun"]
   static let palettes: [String: Palette] = [
@@ -211,7 +211,7 @@ enum Generated {
   ]
 
   /// What Pro adds on iPhone (the pricing page's list less what only the web has, design/site.mjs PLAN_PRO_PHONE), for the paywall.
-  static let proPlan: [String] = ["Make cards from bigger sources: 30 a day, up to 300 pages or 2 hours","Exam dates: ready in time for the test","Stats: your streak, memory and weak spots","Unlimited pictures and sounds","Themes for cards, covers and your profile","The hardest cards on decks you share","Photo covers and your own colors","More AI explanations"]
+  static let proPlan: [String] = ["Make cards from bigger sources: 30 a day, up to 300 pages or 2 hours","Exam dates: ready in time for the test","Stats: your streak, memory and weak spots","Unlimited pictures and sounds","Themes for cards, covers and your profile","The hardest cards on decks you share","Your own colors","More AI explanations"]
   /// What people say about where they study (web/school.js): levels, years, and the thirty subjects, each as its id and its words.
   static let levels: [(id: String, words: String)] = [("highschool", "High school"), ("college", "College"), ("graduate", "Graduate"), ("medical", "Medical or professional"), ("other", "Other")]
   static let years: [(id: String, words: String)] = [("1", "1st year"), ("2", "2nd year"), ("3", "3rd year"), ("4", "4th year"), ("5", "5th year or more")]

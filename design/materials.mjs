@@ -298,7 +298,7 @@ export const NOTES_CSS = [
   '.nb-box{left:1px;width:16px;height:16px;top:calc(2px + .8em - 8px);box-sizing:border-box;border:1.5px solid var(--gd-muted);border-radius:4.5px;justify-content:center;color:var(--nb-bg)}.nb-box svg{opacity:0}',
   '.nb-on>.nb-box{border-color:var(--gd-text);background:var(--gd-text)}.nb-on>.nb-box svg{opacity:1}.nb-todo.nb-on>.nb-tx{color:var(--gd-muted);text-decoration:line-through;text-decoration-color:var(--gd-muted)}',
   '.nb-read .nb-box{cursor:default}',
-  `.nb-tg{left:2px;width:20px;justify-content:center;color:var(--gd-text);border-radius:6px}.nb-tg svg{transition:transform ${s3(MOTION.knob)} ${EASE}}.nb-open>.nb-tg svg{transform:rotate(90deg)}.nb-tg:hover{background:var(--nb-surf)}`,
+  `.nb-tg{left:2px;width:20px;justify-content:center;color:var(--gd-text);border-radius:6px}.nb-tg svg{transition:transform ${s3(MOTION.reveal)} ${EASE}}.nb-open>.nb-tg svg{transform:rotate(90deg)}.nb-tg:hover{background:var(--nb-surf)}`,
   // a heading's ▸, in the margin: on hover on a computer, always on a phone and while its section is folded
   `.nb-fold{position:absolute;left:-26px;top:calc(2px + .62em - 10px);width:20px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--gd-muted);cursor:pointer;opacity:0;transition:opacity ${s3(MOTION.fade)} ease;-webkit-user-select:none;user-select:none}`,
   `.nb-fold svg{transform:rotate(90deg);transition:transform ${s3(MOTION.knob)} ${EASE}}.nb-folded>.nb-fold svg{transform:none}.nb-row:hover>.nb-fold,.nb-folded>.nb-fold,.nb-phone .nb-fold{opacity:1}.nb-fold:hover{background:var(--nb-surf);color:var(--gd-text)}`,
@@ -314,7 +314,9 @@ export const NOTES_CSS = [
   '.nb-tbtn{border:0;padding:0;background:none;color:var(--gd-muted);font:inherit;font-size:13px;font-weight:500;cursor:pointer}.nb-tbtn:hover{color:var(--gd-text)}',
   '.nb-picked{box-shadow:0 0 0 2px var(--gd-text);border-radius:12px}.nb-virtual>.nb-tx{color:var(--gd-muted);opacity:.6;cursor:text}',
   '.nb-hl{background:rgba(0,122,255,.22);border-radius:2px}.nb-owner .nb-doc{cursor:text}',
-  `@keyframes nbIn{from{opacity:0;transform:translateY(-4px)}}.nb-in{animation:nbIn ${s3(MOTION.pop)} ${EASE} both}`,
+  // A long page (over 120 lines showing) skips the layout of lines out of sight; each keeps its last height while skipped.
+  '.nb-long .nb-row{content-visibility:auto;contain-intrinsic-size:auto 1.6em}',
+  `@keyframes nbIn{from{opacity:0;transform:translateY(-4px)}}.nb-in{animation:nbIn ${s3(MOTION.reveal)} ${EASE} both}`,
   // the + on an empty line, the block menu, the format bar
   '.nb-plus{position:absolute;display:none;z-index:2;width:24px;height:24px;padding:0;border:0;border-radius:7px;background:transparent;color:var(--gd-muted);align-items:center;justify-content:center;cursor:pointer}.nb-plus.nb-show{display:flex}.nb-plus:hover{background:var(--nb-surf);color:var(--gd-text)}',
   `.nb-menu{position:absolute;display:none;z-index:30;width:248px;max-height:388px;overflow-y:auto;scrollbar-width:none;box-sizing:border-box;padding:6px;border-radius:18px;background:var(--nb-bg);box-shadow:0 0 0 1px var(--gd-line),0 18px 44px rgba(0,0,0,.22);flex-direction:column;gap:2px;text-shadow:none}`,

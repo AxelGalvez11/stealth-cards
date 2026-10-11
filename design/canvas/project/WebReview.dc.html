@@ -48,8 +48,8 @@
   </header>
   <main style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; justify-content: safe center; padding: 0 16px; container-type: inline-size;">
     <div class="sc-xg {{ex.side}}">
-    <div class="sc-xc" style="position: relative; height: 480px;"><button type="button" onClick="{{reveal}}" aria-label="{{flipLabel}}" data-key="Space" class="{{cardIn}}" style="width: 100%; height: 480px; padding: 0; border: 0; background: transparent; perspective: 1600px; font: inherit; color: inherit; cursor: pointer; flex-grow: 0;">
-  <div style="position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: {{flipTrans}}; transform: {{flipTransform}};">
+    <div class="sc-xc" style="position: relative; height: 480px;"><button type="button" onClick="{{reveal}}" aria-label="{{flipLabel}}" data-key="Space" class="sc-flipb {{cardIn}}" style="width: 100%; height: 480px; padding: 0; border: 0; background: transparent; perspective: 1600px; font: inherit; color: inherit; cursor: pointer; flex-grow: 0;">
+  <div class="sc-flip" style="position: relative; width: 100%; height: 100%; transform-style: preserve-3d; will-change: transform; transition: {{flipTrans}}; transform: {{flipTransform}};">
     <div style="position: absolute; inset: 0; box-sizing: border-box; padding: 44px 56px; display: flex; flex-direction: column; text-align: left; background: {{cp.card}}; border: 1px solid {{cp.line}}; border-radius: {{radius}}; box-shadow: {{cp.shadow}}; backface-visibility: hidden; -webkit-backface-visibility: hidden; --sk-fs: {{sk.fs}}; {{sk.front.css}}">
   <sc-if value="{{sk.on}}" hint-placeholder-val="{{ false }}"><div ref="{{sk.front.deco}}" data-sc-own aria-hidden="true" style="position: absolute; inset: 0; border-radius: inherit; pointer-events: none;"></div></sc-if>
   <div style="position: relative; min-height: 21px;"></div>
@@ -472,7 +472,7 @@ renderVals() {
     // outline, instead of the card flipping.
     flipTransform: rev && !card.isCloze && !card.isOcc ? 'rotateY(180deg)' : 'rotateY(0deg)',
     // After a grade the next card shows up fresh with a small lift, instead of spinning back to its front.
-    flipTrans: this.state.moved || !flipOn ? 'none' : 'transform .5s cubic-bezier(.4,0,.2,1)', fadeCls: flipOn ? 'sc-fade-a' : '', cardIn: this.state.moved ? (done % 2 ? 'sc-in-a' : 'sc-in-b') : '',
+    flipTrans: this.state.moved || !flipOn ? 'none' : 'transform 0.18s cubic-bezier(0.2,0.8,0.2,1)', fadeCls: flipOn ? 'sc-fade-a' : '', cardIn: this.state.moved ? (done % 2 ? 'sc-in-a' : 'sc-in-b') : '',
     flipLabel: card.isCloze ? (rev ? 'Hide the answer' : 'Show the blank') : card.isOcc ? (rev ? 'Hide the answer' : 'Show what’s under the box') : (rev ? 'Flip back' : 'Flip card'),
     // The note under a card that stays put (clozeShown: fill in the blank, or a picture with boxes) shows with the answer.
     clozeShown: rev && (card.isCloze || card.isOcc),

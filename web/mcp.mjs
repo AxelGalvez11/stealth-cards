@@ -58,9 +58,8 @@ const folderName = d => (state().folders.find(f => f.id === d.folder) || {}).nam
 // The id of the folder with this name, made if needed.
 const folderFor = (name, who) => (state().folders.find(f => f.name.toLowerCase() === String(name).trim().toLowerCase()) || { id: apply({ type: 'folder.add', name }, who).id }).id;
 const DEVICE_VOICE = 'No voice key is set up, so the app reads audio cards aloud with the device’s voice.';
-// Natural voices for sound cards are Pro; on Free the app reads the words aloud with the device's voice. Photo covers are Pro too.
+// Natural voices for sound cards are Pro; on Free the app reads the words aloud with the device's voice. Photo covers are free.
 const FREE_VOICE = 'Natural voices are part of Lucida Pro, so the app reads these aloud with the device’s voice.';
-const FREE_COVER = 'Photo covers are part of Lucida Pro. The learner can go Pro at lucida.cards/pricing to get them.';
 // Free's limit on pictures and sound is counted before each one is fetched or spoken (`room.left`), so nothing is fetched, or
 // paid for, past it. Pro has no limit (Infinity).
 const take = room => { if (room.left < 1) throw Object.assign(new Error(MEDIA_FULL), { full: true }); room.left--; };
@@ -129,17 +128,16 @@ const TOOLS = [
       const d = a.deck ? deckBy(a.deck) : null; if (a.deck && !d) return fail('No deck called ' + a.deck);
       const h = history(state(), { days: a.days || 30, deckId: d && d.id }), name = id => (deckBy(id) || {}).name || 'A deleted deck';
       return text({ total: h.total, by_day: h.days.map(x => ({ date: day(x.day), ...x, day: undefined })), by_deck: h.decks.map(x => ({ deck: name(x.deckId), ...x, deckId: undefined })) }); } },
-  { name: 'create_deck', perm: 'text', description: 'Make a new deck, optionally in a folder and with a cover picture (a picture cover is part of Lucida Pro). It fails if a deck with that name already exists. Use add_cards to fill it.', inputSchema: { type: 'object', properties: { name: { type: 'string' }, tags: { type: 'array', items: { type: 'string' } }, folder: FOLDER, cover_image: COVER, files: FILES }, required: ['name'] },
+  { name: 'create_deck', perm: 'text', description: 'Make a new deck, optionally in a folder and with a cover picture (free on every plan). It fails if a deck with that name already exists. Use add_cards to fill it.', inputSchema: { type: 'object', properties: { name: { type: 'string' }, tags: { type: 'array', items: { type: 'string' } }, folder: FOLDER, cover_image: COVER, files: FILES }, required: ['name'] },
     meta: { 'openai/fileParams': ['files'] },
     run: async (a, who, ctx) => {
       if (deckBy(a.name)) return fail('There is already a deck called ' + a.name);
       if (a.cover_image && !state().ai.perms.media) return fail(NO_MEDIA);
-      if (a.cover_image && !isPro()) return fail(FREE_COVER);
       let image = null;
       try { if (a.cover_image) image = await fetchMedia(a.cover_image, 'image', { files: a.files, local: ctx.local }); } catch (e) { return fail(e.message); }
       return text(apply({ type: 'deck.add', name: a.name, tags: a.tags, folder: a.folder ? folderFor(a.folder, who) : null, image }, who));
     } },
-  { name: 'update_deck', perm: 'edit', description: 'Change a deck: rename it, retag it, move it into or out of a folder, give it a cover picture (part of Lucida Pro), or change the background it shows in Learn mode, flashcards, and Live. The values you give replace the old ones.',
+  { name: 'update_deck', perm: 'edit', description: 'Change a deck: rename it, retag it, move it into or out of a folder, give it a cover picture (free on every plan), or change the background it shows in Learn mode, flashcards, and Live. The values you give replace the old ones.',
     inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, name: { type: 'string' }, tags: { type: 'array', items: { type: 'string' } },
       folder: { type: 'string', description: 'A folder name, made if there isn’t one yet. An empty string takes the deck out of its folder.' },
       cover_image: { type: 'string', description: 'The deck’s cover picture. ' + SOURCE + ' An empty string goes back to the deck’s own gradient.' },
@@ -149,7 +147,6 @@ const TOOLS = [
     run: async (a, who, ctx) => {
       const d = deckBy(a.deck); if (!d) return fail('No deck called ' + a.deck);
       if ((a.cover_image || a.background_image) && !state().ai.perms.media) return fail(NO_MEDIA);
-      if (a.cover_image && !isPro()) return fail(FREE_COVER);
       const patch = {};
       if (a.name !== undefined) { const other = deckBy(a.name); if (other && other !== d) return fail('There is already a deck called ' + a.name); patch.name = a.name; }
       if (a.tags !== undefined) patch.tags = a.tags;

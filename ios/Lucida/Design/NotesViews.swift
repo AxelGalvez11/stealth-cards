@@ -620,8 +620,8 @@ struct NoteMarker: View {
         .frame(width: NotesCSS.ind - 7, alignment: .trailing).allowsHitTesting(false).accessibilityHidden(true)
     case "todo": NoteBox(on: b.on, colors: c, editable: setup.editable) { page.check(b.id) }.offset(x: 1, y: mid - 8)
     case "toggle":
-      Button { withAnimation(Motion.pop) { page.flipOpen(b.id) } } label: {
-        NotesIcon("toggle", 14, 2).rotationEffect(.degrees(e.open ? 90 : 0)).animation(Motion.knob, value: e.open)
+      Button { withAnimation(Motion.reveal) { page.flipOpen(b.id) } } label: {
+        NotesIcon("toggle", 14, 2).rotationEffect(.degrees(e.open ? 90 : 0)).animation(Motion.reveal, value: e.open)
           .foregroundStyle(Color(c.text)).frame(width: 20, height: NotesCSS.line).contentShape(Rectangle().inset(by: -6))
       }
       .buttonStyle(.flat).offset(x: 2)

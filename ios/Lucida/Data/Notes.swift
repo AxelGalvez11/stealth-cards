@@ -634,12 +634,12 @@ final class NotesPage: ObservableObject {
   func pick(_ id: String?) { picked = id; if id != nil { focus = nil } }
 
   // ---------- toggles and sections ----------
-  func flipOpen(_ id: String) { open[id] = !(open[id] ?? false); remember() }
+  func flipOpen(_ id: String) { open[id] = !(open[id] ?? false); rememberSoon() }
   func flipFold(_ id: String) {
     let was = fold[id] ?? false
     fold[id] = !was
     if !was, let e = editing, let i = index(e), isInside(i, id) { editing = nil; focus = nil }
-    remember()
+    rememberSoon()
   }
 
   // ---------- what this phone remembers ----------

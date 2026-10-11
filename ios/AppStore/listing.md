@@ -45,7 +45,7 @@ SHARE DECKS
 Share a deck with a link or with everyone. Find decks other people made, follow them, study them or copy them. Suggest a change to a deck you study, and take or skip the changes people suggest to yours.
 
 LUCIDA PRO
-Lucida is free: unlimited decks and cards, Learn mode and sharing. Pro adds exam dates, stats on what you're weak at, the hardest cards on decks you share, themes for your cards, covers and profile, photo covers and your own colors, unlimited pictures and sounds, and more AI explanations.
+Lucida is free: unlimited decks and cards, photo covers, Learn mode and sharing. Pro adds exam dates, stats on what you're weak at, the hardest cards on decks you share, themes for your cards, covers and profile, your own colors, unlimited pictures and sounds, and more AI explanations.
 
 Pro is a subscription, monthly or yearly. Payment is charged to your Apple Account when you confirm the purchase. The subscription renews automatically unless you cancel it at least 24 hours before the end of the current period, and your account is charged for renewal within 24 hours before the period ends. Manage or cancel it in Settings on your iPhone: tap your name, then Subscriptions.
 

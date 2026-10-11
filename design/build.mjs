@@ -112,6 +112,8 @@ const APP_MOTION_CSS = [
   '@keyframes scRise{from{opacity:0;transform:translateY(14px)}}main>*{animation:scRise .5s cubic-bezier(.2,.8,.2,1) backwards}',
   [2, 3, 4, 5].map(n => `main>*:nth-child(${n}){animation-delay:${((n - 1) * 0.06).toFixed(2)}s}`).join('') + 'main>*:nth-child(n+6){animation-delay:.3s}',
   'button,.sc-press{transition:transform .1s ease}button:active,.sc-press:active{transform:scale(.96)}',
+  // A flashcard doesn't shrink under a press: the flip starts at once, not on top of a shrink easing back. Reduce Motion turns it instantly.
+  'button.sc-flipb,button.sc-flipb:active{transition:none;transform:none}@media (prefers-reduced-motion:reduce){.sc-flip{transition:none!important}}',
   MOTION_CSS,
   // Deck, folder and class tiles lift 4 px under the pointer, with a bigger shadow, in 0.2 s and easing off, both ways (the owner,
   // 2026-10-01: "yes hover 0.2 seconds"; it was 1 s before, and was taken off for a day). A pointer only: the iPhone has none.
@@ -3030,7 +3032,7 @@ renderVals() {
     // outline, instead of the card flipping.
     flipTransform: rev && !card.isCloze && !card.isOcc ? 'rotateY(180deg)' : 'rotateY(0deg)',
     // After a grade the next card shows up fresh with a small lift, instead of spinning back to its front.
-    flipTrans: this.state.moved || !flipOn ? 'none' : 'transform .5s cubic-bezier(.4,0,.2,1)', fadeCls: flipOn ? 'sc-fade-a' : '', cardIn: this.state.moved ? (done % 2 ? 'sc-in-a' : 'sc-in-b') : '',
+    flipTrans: this.state.moved || !flipOn ? 'none' : 'transform ${MOTION.flip}s ${EASE}', fadeCls: flipOn ? 'sc-fade-a' : '', cardIn: this.state.moved ? (done % 2 ? 'sc-in-a' : 'sc-in-b') : '',
     flipLabel: card.isCloze ? (rev ? 'Hide the answer' : 'Show the blank') : card.isOcc ? (rev ? 'Hide the answer' : 'Show what’s under the box') : (rev ? 'Flip back' : 'Flip card'),
     // The note under a card that stays put (clozeShown: fill in the blank, or a picture with boxes) shows with the answer.
     clozeShown: rev && (card.isCloze || card.isOcc),
@@ -3147,8 +3149,8 @@ const EXPLAIN_JS = `${CHAT_JS}
       pageEnd: el => { if (!el || !db.mock) return; const at = show && open ? 'end' : 'top'; if (this.pageAt === at) return; this.pageAt = at; el.scrollTop = at === 'end' ? el.scrollHeight : 0; },
       ask, close, toggle: () => (show && open ? close() : ask()) };
   };`;
-const flipCard = (w, h, pad, big) => `<button type="button" onClick="{{reveal}}" aria-label="{{flipLabel}}" data-key="Space" class="{{cardIn}}" style="width: ${w}; height: ${h}; padding: 0; border: 0; background: transparent; perspective: 1600px; font: inherit; color: inherit; cursor: pointer; flex-grow: ${h === 'auto' ? 1 : 0};">
-  <div style="position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: {{flipTrans}}; transform: {{flipTransform}};">
+const flipCard = (w, h, pad, big) => `<button type="button" onClick="{{reveal}}" aria-label="{{flipLabel}}" data-key="Space" class="sc-flipb {{cardIn}}" style="width: ${w}; height: ${h}; padding: 0; border: 0; background: transparent; perspective: 1600px; font: inherit; color: inherit; cursor: pointer; flex-grow: ${h === 'auto' ? 1 : 0};">
+  <div class="sc-flip" style="position: relative; width: 100%; height: 100%; transform-style: preserve-3d; will-change: transform; transition: {{flipTrans}}; transform: {{flipTransform}};">
     ${FACE(pad, big, false)}
     ${FACE(pad, big, true)}
   </div>
@@ -3803,7 +3805,7 @@ const MOTION_H = 1733;
 const motion = () => `<div style="width: 1440px; height: ${MOTION_H}px; box-sizing: border-box; padding: 56px 64px; display: flex; flex-direction: column; gap: 28px; font-family: ${FONT}; background: #FFFFFF; color: #000000;">
   <div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 44px; font-weight: 600; letter-spacing: -.035em;">Motion</h1><p style="margin: 0; font-size: 16px; color: #666666;">Every animation loops here so you can watch it. In the app most play once; empty states keep moving, slowly. All of them turn off when Reduce Motion is on.</p></div>
   <div style="flex-grow: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 16px;">
-    ${tile('Card flip', '500 ms · 3D turn · ease in-out', `<div style="perspective: 900px;"><div class="m-flip" style="position: relative; width: 180px; height: 120px; transform-style: preserve-3d;">${mcard('Question', 'position: absolute; inset: 0; backface-visibility: hidden;')}${mcard('Answer', 'position: absolute; inset: 0; backface-visibility: hidden; transform: rotateY(180deg); background: #000000; color: #FFFFFF; border-color: #000000;')}</div></div>`)}
+    ${tile('Card flip', '180 ms · 3D turn · ease out', `<div style="perspective: 900px;"><div class="m-flip" style="position: relative; width: 180px; height: 120px; transform-style: preserve-3d;">${mcard('Question', 'position: absolute; inset: 0; backface-visibility: hidden;')}${mcard('Answer', 'position: absolute; inset: 0; backface-visibility: hidden; transform: rotateY(180deg); background: #000000; color: #FFFFFF; border-color: #000000;')}</div></div>`)}
     ${tile('Grade → next card', 'out 220 ms · in 320 ms · slight lift', `<div style="position: relative; width: 180px; height: 120px;">${mcard('Next card', 'position: absolute; inset: 0;', 'm-in')}${mcard('Graded card', 'position: absolute; inset: 0;', 'm-out')}</div>`)}
     ${tile('Button press', '100 ms · shrinks to 96%', `<div class="m-press" style="height: 56px; padding: 0 36px; border-radius: 999px; background: #000000; color: #FFFFFF; display: flex; align-items: center; font-size: 15px; font-weight: 600;">Save card</div>`)}
     ${tile('AI card arrives', 'spring · 400 ms · soft pulse', `<div style="display: flex; flex-direction: column; gap: 8px; width: 220px;"><div class="m-arrive" style="height: 52px; border-radius: 18px; background: #000000; color: #FFFFFF; display: flex; align-items: center; gap: 10px; padding: 0 16px; font-size: 13px; font-weight: 600;"><span class="m-pulse" style="width: 8px; height: 8px; border-radius: 4px; background: #FFFFFF;"></span>Claude added 12 cards</div><div style="height: 52px; border-radius: 18px; background: #F4F4F4;"></div><div style="height: 52px; border-radius: 18px; background: #F4F4F4;"></div></div>`)}
@@ -4038,7 +4040,7 @@ renderVals() { ${T}
     t, card, sk, cp, radius: '36px', snd: soundView(src, 48, 'front'), sndBack: soundView(src, 36, 'back'),
     reveal: () => this.setState({ revealed: !rev, moved: false }),
     flipTransform: rev && !card.isCloze ? 'rotateY(180deg)' : 'rotateY(0deg)',
-    flipTrans: this.state.moved || !flipOn ? 'none' : 'transform .5s cubic-bezier(.4,0,.2,1)', fadeCls: flipOn ? 'sc-fade-a' : '', cardIn: this.state.moved ? (Object.keys(done).length % 2 ? 'sc-in-a' : 'sc-in-b') : '',
+    flipTrans: this.state.moved || !flipOn ? 'none' : 'transform ${MOTION.flip}s ${EASE}', fadeCls: flipOn ? 'sc-fade-a' : '', cardIn: this.state.moved ? (Object.keys(done).length % 2 ? 'sc-in-a' : 'sc-in-b') : '',
     flipLabel: card.isCloze ? (rev ? 'Hide the answer' : 'Show the blank') : (rev ? 'Flip back' : 'Flip card'),
     clozeShown: rev && card.isCloze,
     blank: ${BLANK_JS},

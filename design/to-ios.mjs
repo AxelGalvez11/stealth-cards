@@ -97,7 +97,7 @@ ${['light', 'dark'].map(m => { const a = OB_AURA[m]; return `  static let aura${
 
   /// The motion timings the web app shares (design/motion.mjs): how far a menu or pop-up slides, how long each kind of
   /// motion takes (seconds), and the one curve they ease out on. Design/Motion.swift turns them into animations.
-  static let motion = MotionTimings(ease: (${MOTION.ease.join(', ')}), slide: ${MOTION.slide}, pop: ${MOTION.pop}, sheet: ${MOTION.sheet}, leave: ${MOTION.leave}, knob: ${MOTION.knob}, fade: ${MOTION.fade})
+  static let motion = MotionTimings(ease: (${MOTION.ease.join(', ')}), slide: ${MOTION.slide}, pop: ${MOTION.pop}, sheet: ${MOTION.sheet}, leave: ${MOTION.leave}, knob: ${MOTION.knob}, fade: ${MOTION.fade}, reveal: ${MOTION.reveal}, flip: ${MOTION.flip})
 
   static let paletteNames: [String] = ${str(PALETTE_NAMES)}
   static let palettes: [String: Palette] = [

@@ -185,6 +185,8 @@ export function makeNotes(G) {
       if (names.length > 80) names.sort((a, b) => (m.pages[a].t || 0) - (m.pages[b].t || 0)).slice(0, names.length - 80).forEach(n => delete m.pages[n]);
       memWrite(m);
     }
+    const LONG_ROWS = 120;
+    const still = () => !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
     let rememberT = 0;
     // (a page that has gone, like the Notes page left for the deck, writes nothing late over what the deck's Notes since opened and folded)
     const rememberSoon = () => { clearTimeout(rememberT); rememberT = setTimeout(() => { if (root.isConnected) remember(); }, 800); };
@@ -309,23 +311,38 @@ export function makeNotes(G) {
       root.classList.toggle('nb-phone', !!o.phone);
       root.classList.toggle('nb-owner', !o.editable && !!o.onOpen);
       const vis = view(), keep = new Set();
+      // A long page lets the browser skip laying out the rows out of sight (content-visibility, in NOTES_CSS).
+      root.classList.toggle('nb-long', vis.length > LONG_ROWS);
       let prev = null;
       const easing = st.easing; st.easing = '';
+      // What a toggle or a section opens eases in: its rows are found once (not each row's own walk), and the animation restarts
+      // with one layout for all of them, not one per row (that was the lag when a long toggle opened).
+      const ease = easing && !still() ? easeRange(easing) : null, eased = [];
       for (const v of vis) {
         const id = v.virtual ? 'v' + v.virtual : v.b.id, sig = sigOf(v);
         let r = st.rows.get(id), fresh = false;
         if (!r || r.sig !== sig) { const e = rowEl(v); if (r && r.el.parentNode === docEl) docEl.replaceChild(e, r.el); r = { el: e, sig }; st.rows.set(id, r); fresh = true; }
         const want = prev ? prev.nextSibling : docEl.firstChild;
         if (r.el !== want) { docEl.insertBefore(r.el, want); fresh = true; }
-        // (what a toggle or a section opens eases in)
-        if (fresh && easing && v.b && isInside(v.i, easing)) { r.el.classList.remove('nb-in'); void r.el.offsetWidth; r.el.classList.add('nb-in'); }
+        if (fresh && ease && v.b && v.i > ease[0] && v.i < ease[1]) eased.push(r.el);
         prev = r.el; keep.add(id);
       }
       for (const [id, r] of st.rows) if (!keep.has(id)) { r.el.remove(); st.rows.delete(id); }
       while (prev ? prev.nextSibling : docEl.firstChild) (prev ? prev.nextSibling : docEl.firstChild).remove();
+      if (eased.some(e => e.classList.contains('nb-in'))) { eased.forEach(e => e.classList.remove('nb-in')); void docEl.offsetWidth; }
+      eased.forEach(e => e.classList.add('nb-in'));
       if (st.restore) { st.restore = false; putSel(st.sel); }
       placeUi();
       drawOutline();
+    }
+    // The blocks a toggle or a section holds: [its index, the index after its last block].
+    function easeRange(id) {
+      const j = by(id); if (j == null) return null;
+      const b = st.blocks[j];
+      if (b.k === 'toggle') return [j, endOf(st.blocks, j)];
+      let k = j + 1;
+      for (; k < st.blocks.length; k++) { const x = st.blocks[k]; if (x.d < b.d || (x.d === b.d && x.k === 'h' && x.level <= b.level)) break; }
+      return [j, k];
     }
     // Is block i inside block id (a toggle) or in its section (a heading)?
     function isInside(i, id) {
@@ -1056,14 +1073,14 @@ export function makeNotes(G) {
     function flipOpen(id) {
       const was = !!st.open.get(id); st.open.set(id, !was);
       if (!was) st.easing = id;
-      render(); remember();
+      render(); rememberSoon();
     }
     function flipFold(id) {
       const was = !!st.fold.get(id); st.fold.set(id, !was);
       if (was) st.easing = id;
       // the caret was in what folds away: it goes to the heading
       if (!was && st.sel) { const i = by(st.sel.b.id); if (i != null && isInside(i, id)) { const b = st.blocks[by(id)]; st.sel = caret(id, rlen(b.r)); st.restore = true; } }
-      render(); remember();
+      render(); rememberSoon();
     }
 
     // ---------- typing in another script (Japanese, Chinese, accents): the browser writes, then the page reads what it wrote ----------

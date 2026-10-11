@@ -69,7 +69,7 @@ export const CONNECT = {
     { h: 'Limits', body: [
       ['list',
         'An AI can add up to 500 cards in one request.',
-        'Free includes up to 100 pictures and sounds. Pro has no limit. Natural voices for sound cards and photo covers are part of Pro.',
+        'Free includes up to 100 pictures and sounds. Pro has no limit. Photo covers are free. Natural voices for sound cards are part of Pro.',
         'A picture or sound can be up to 20 MB. It can come from a web link or from a file you upload in the chat.',
         'An AI sees up to 500 cards when it lists a deck, and the first 100 cards of a shared deck.']
     ] },
