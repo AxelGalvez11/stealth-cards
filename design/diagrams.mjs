@@ -3,6 +3,7 @@
 // WebDeck and PhoneDeck (design/materials.mjs deckBlocks puts them in), and the shared deck page draws the made ones read-only (publicDiagramBlocks).
 // The app draws these boards (design/to-web.mjs), so what you see on the canvas is what runs. Every state shows on the deck boards' Tweaks (`guide` and `section`).
 import { readFileSync } from 'node:fs';
+import { MAP_SAMPLE } from './maps.mjs';
 
 // What the deck page's Guide Tweak offers for Diagrams.
 export const DIAGRAM_STATES = ['Diagrams', 'Diagrams (none yet)', 'A picture open', 'An uploaded picture open', 'A table open', 'A mind map open', 'Renaming a diagram', 'Delete asked', 'Uploading a picture', 'Upload didn’t work',
@@ -17,6 +18,8 @@ export const DIAGRAM_METHOD = SRC ? `dg() { return Component._dg || (Component._
 export const DIAGRAM_CSS = [
   // a screen reader's copy of a picture of ideas (an outline), and the tables and maps' scrolling boxes
   '.dg-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}',
+  // the Make sheet's kinds: the theme's own ring for the keyboard (a press shows none)
+  '.dg-seg:focus{outline:none}.dg-seg:focus-visible{outline:2px solid var(--dg-text,currentColor);outline-offset:2px}',
   '.dgt-wrap,.dgm-wrap{max-width:100%;overflow:auto;scrollbar-width:thin;border-radius:16px;outline-offset:2px}.dgt-wrap:focus-visible,.dgm-wrap:focus-visible{outline:2px solid var(--dg-text,currentColor)}',
   '.dgt-wrap{max-height:100%;background:var(--dg-surf);color:var(--dg-text)}',
   '.dgt{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;line-height:1.45;color:var(--dg-text)}',
@@ -44,8 +47,8 @@ export function diagramBlocks(H, phone) {
       <span style="display: flex; flex-direction: column; gap: 2px; padding: 10px 12px 12px;"><span style="font-size: 14px; font-weight: 600; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">{{x.name}}</span><span style="font-size: 12px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{x.line}}</span></span>
     </button>`;
   const diagrams = `<sc-if value="{{dg.show}}" hint-placeholder-val="{{ true }}">
-    <section aria-label="Diagrams" style="min-width: 0; box-sizing: border-box; padding: 0; display: flex; flex-direction: column; gap: 14px;">
-      <div style="display: flex; align-items: center; gap: 10px; min-height: 34px; flex-wrap: wrap;"><span style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">Diagrams</span><span style="font-family: ${MONO}; font-size: 12px; color: {{t.muted}};">{{dg.count}}</span><span style="flex-grow: 1;"></span>
+    <section aria-label="Figures" style="min-width: 0; box-sizing: border-box; padding: 0; display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; align-items: center; gap: 10px; min-height: 34px; flex-wrap: wrap;"><span style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">Figures</span><span style="font-family: ${MONO}; font-size: 12px; color: {{t.muted}};">{{dg.count}}</span><span style="flex-grow: 1;"></span>
         <sc-if value="{{dg.canEdit}}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 6px;">${small('Make diagram', 'dg.openSheet', 'sparkle')}${small('Upload', 'dg.upload', 'upload', 'aria-disabled="{{dg.uploadDisabled}}"')}</div></sc-if></div>
       <sc-if value="{{dg.uploading}}" hint-placeholder-val="{{ false }}"><div role="status" style="display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: 16px; background: {{t.surf}};"><span style="font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Sending {{dg.upName}}…</span><div class="dg-bar" aria-hidden="true" style="background: {{t.surf2}};"><i style="background: {{t.inv}};"></i></div></div></sc-if>
       <sc-if value="{{dg.hasUpErr}}" hint-placeholder-val="{{ false }}"><div style="display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 16px; background: {{t.surf}};"><span role="alert" style="flex-grow: 1; min-width: 0; font-size: 14px; line-height: 1.4; color: {{t.again}};">{{dg.upErr}}</span><button type="button" onClick="{{dg.dismissUpErr}}" aria-label="Dismiss" style="width: 28px; height: 28px; flex-shrink: 0; border: 0; border-radius: 14px; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${icon('close', 13, 2)}</button></div></sc-if>
@@ -92,11 +95,11 @@ export function diagramBlocks(H, phone) {
   </sc-if>`;
 
   // ----- the Make diagram sheet: Table or Mind map, from what, and then it is made (one AI step, with a calm bar and a way out)
-  const seg = `<div role="group" aria-label="Kind of diagram" style="display: flex; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{dg.sheet.types}}" as="o" hint-placeholder-count="2"><button type="button" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}" style="flex: 1 1 0; min-width: 0; height: 40px; padding: 0 6px; border: 0; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;"><span style="display: flex;"><sc-if value="{{o.isTable}}" hint-placeholder-val="{{ true }}">${icon('table', 16, 1.8)}</sc-if><sc-if value="{{o.isMap}}" hint-placeholder-val="{{ false }}">${icon('mindmap', 16, 1.8)}</sc-if></span>{{o.label}}</button></sc-for></div>`;
+  const seg = `<div role="listbox" aria-label="Kind of diagram" aria-orientation="horizontal" style="display: flex; padding: 4px; border-radius: 999px; background: {{t.surf}}; --dg-text: {{t.text}};"><sc-for list="{{dg.sheet.types}}" as="o" hint-placeholder-count="2"><button type="button" role="option" onClick="{{o.pick}}" aria-selected="{{o.pressed}}" class="dg-seg" style="flex: 1 1 0; min-width: 0; height: 40px; padding: 0 6px; border: 0; border-radius: 999px; background: {{o.bg}}; color: {{o.fg}}; box-shadow: {{o.sh}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;"><span style="display: flex;"><sc-if value="{{o.isTable}}" hint-placeholder-val="{{ true }}">${icon('table', 16, 1.8)}</sc-if><sc-if value="{{o.isMap}}" hint-placeholder-val="{{ false }}">${icon('mindmap', 16, 1.8)}</sc-if></span>{{o.label}}</button></sc-for></div>`;
   const chips = `<div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{dg.sheet.scopes}}" as="s" hint-placeholder-count="4"><button type="button" onClick="{{s.pick}}" aria-pressed="{{s.pressed}}" class="sc-press" style="height: 34px; max-width: 100%; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: {{s.bg}}; color: {{s.fg}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;"><sc-if value="{{s.isSource}}" hint-placeholder-val="{{ false }}"><span style="display: flex; flex-shrink: 0;">${icon('file', 13, 2)}</span></sc-if><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis;">{{s.label}}</span></button></sc-for></div>`;
   const sheetBody = `<div style="display: flex; align-items: center; gap: 10px; min-height: 40px;"><span style="flex-grow: 1; min-width: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em;">Make diagram</span><button type="button" onClick="{{dg.sheet.close}}" aria-label="Close" class="sc-press" style="width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 20px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">${icon('close', 16, 2)}</button></div>
       <sc-if value="{{dg.sheet.setUp}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 18px; min-height: 0; overflow-y: auto; scrollbar-width: none;">
-        <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Make a</span>${seg}</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Make a</span>${seg}<span style="font-size: 13px; line-height: 1.45; color: {{t.muted}};">{{dg.sheet.typeLine}}</span></div>
         <div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">From</span>${chips}<span style="font-size: 12px; line-height: 1.45; color: {{t.muted}};">{{dg.sheet.fromLine}}</span></div>
         ${alertLine('dg.sheet.hasNote', 'dg.sheet.note')}
       </div>
@@ -125,8 +128,12 @@ export function diagramBlocks(H, phone) {
 export function publicDiagramBlocks(H, phone) {
   const { svg, I, MONO } = H;
   const icon = (name, size = 16, w = 2) => svg(I[name], size, w);
-  const card = `<sc-if value="{{pdg.show}}" hint-placeholder-val="{{ true }}"><section aria-label="Diagrams" style="min-width: 0; box-sizing: border-box; padding: ${phone ? '18px 18px 16px' : '20px 24px 20px'}; border-radius: ${phone ? 22 : 24}px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 12px;">
-      <div style="display: flex; align-items: center; gap: 10px;"><span style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">Diagrams</span><span style="font-family: ${MONO}; font-size: 12px; color: {{t.muted}};">{{pdg.count}}</span></div>
+  const maps = `<sc-for list="{{pdg.maps}}" as="m" hint-placeholder-count="1"><section aria-label="{{m.title}}" style="min-width: 0; box-sizing: border-box; padding: ${phone ? '18px 18px 16px' : '20px 24px 20px'}; border-radius: ${phone ? 22 : 24}px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 10px;"><span style="display: flex; color: {{t.muted}};">${icon('mindmap', 16, 1.8)}</span><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;"><span style="font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{m.title}}</span><span style="font-size: 12px; color: {{t.muted}};">{{m.line}}</span></span></div>
+      <div ref="{{m.ref}}" data-sc-own style="height: ${phone ? 300 : 380}px; border-radius: 16px; background: {{t.bg}}; overflow: hidden;"></div>
+    </section></sc-for>`;
+  const card = `${maps}<sc-if value="{{pdg.show}}" hint-placeholder-val="{{ true }}"><section aria-label="Figures" style="min-width: 0; box-sizing: border-box; padding: ${phone ? '18px 18px 16px' : '20px 24px 20px'}; border-radius: ${phone ? 22 : 24}px; background: {{t.surf}}; display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 10px;"><span style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: {{t.muted}};">Figures</span><span style="font-family: ${MONO}; font-size: 12px; color: {{t.muted}};">{{pdg.count}}</span></div>
       <div style="display: grid; grid-template-columns: repeat(${phone ? 1 : 'auto-fill'}, ${phone ? 'minmax(0, 1fr)' : 'minmax(240px, 1fr)'}); gap: 8px;"><sc-for list="{{pdg.items}}" as="x" hint-placeholder-count="2">
         <button type="button" onClick="{{x.open}}" aria-label="Open {{x.name}}" class="sc-press" style="min-height: 60px; box-sizing: border-box; padding: 8px 12px 8px 10px; display: flex; align-items: center; gap: 12px; border: 0; border-radius: 16px; background: {{t.bg}}; color: {{t.text}}; font: inherit; text-align: left; cursor: pointer;"><span style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 18px; background: {{t.surf}}; display: flex; align-items: center; justify-content: center;"><sc-if value="{{x.isTable}}" hint-placeholder-val="{{ true }}">${icon('table', 17, 1.8)}</sc-if><sc-if value="{{x.isMap}}" hint-placeholder-val="{{ false }}">${icon('mindmap', 17, 1.8)}</sc-if></span><span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;"><span style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{x.name}}</span><span style="font-size: 12px; color: {{t.muted}};">{{x.line}}</span></span><span style="display: flex; color: {{t.muted}};">${icon('chev', 15, 2)}</span></button></sc-for></div>
     </section></sc-if>`;
@@ -149,9 +156,14 @@ export function publicDiagramBlocks(H, phone) {
 export const DIAGRAMS_JS = String.raw`
     const dgGroupsOf = rows => ['Made', 'From your lectures', 'Uploaded'].map(title => ({ title, items: rows.filter(r => r.group === title) })).filter(g => g.items.length);
     const dgCount = tree => this.dg().count(tree);
-    const dgLine = r => r.kind === 'table' ? 'Table · ' + plural(r.table ? r.table.rows.length : 0, 'row') : r.kind === 'mindmap' ? 'Mind map · ' + plural(r.tree ? dgCount(r.tree) : 0, 'idea')
+    // (a mind map made from the cards moved into the deck's Pages once, step 4 §7.1: its row says so and opens the page)
+    const dgLine = r => r.kind === 'table' ? 'Table · ' + plural(r.table ? r.table.rows.length : 0, 'row') : r.kind === 'mindmap' ? 'Mind map · ' + plural(r.tree ? dgCount(r.tree) : 0, 'idea') + (r.pageId ? ' · in Pages' : '')
       : r.kind === 'lecture' ? [r.src && r.src.at, r.src && r.src.name].filter(Boolean).join(' · ') || 'From your lecture' : 'Uploaded' + (r.w ? ' · ' + r.w + ' × ' + r.h : '');
-    const dgColors = { text: t.text, muted: t.muted, line: t.line, bg: t.bg, surf: t.surf, surf2: t.surf2, inv: t.inv, invText: t.invText };
+    const dgColors = { text: t.text, muted: t.muted, line: t.line, bg: t.bg, surf: t.surf, surf2: t.surf2, inv: t.inv, invText: t.invText, again: t.again, againTint: t.againTint, hardTint: t.hardTint, goodTint: t.goodTint };
+    // A made mind map drawn by the engine (web/maps.js), as every map is now: one-sided in the viewer, as svgOf gives it.
+    const dgMapHtml = (tree, name) => { const M = this.maps(), data = M.fromLegacy(tree); return M.svgOf('mindmap', M.layoutMind(data, { side: 'right' }), dgColors, { title: name, data }); };
+    // (a moved map is named as its page now is)
+    const dgName = r => (r.pageId && (PGL || []).find(x => x.id === r.pageId) ? (PGL.find(x => x.id === r.pageId).title || r.name) : r.name);
     const dgSum = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
     const dgRef = (kind, id, html) => el => { const k = kind + ':' + id + ':' + html.length + ':' + dgSum(html); if (el.getAttribute('data-k') !== k) { el.innerHTML = html; el.setAttribute('data-k', k); } };
     const dgPct = v => +(v * 100).toFixed(3) + '%';
@@ -167,7 +179,7 @@ export const DIAGRAMS_JS = String.raw`
         hasLabels: dgPic && dgLabels.length > 0, labelsOn: !!dgv.labels, labelsTitle: plural(dgLabels.length, 'label'), labelsToggle: dgv.labels ? 'Hide boxes' : 'Show boxes', toggleLabels: () => DGM.setLabels(!dgv.labels),
         boxes: dgLabels.map(b => ({ x: dgPct(b.x), y: dgPct(b.y), w: dgPct(b.w), h: dgPct(b.h) })), labelList: dgLabels.map(b => ({ text: b.label })),
         hasNote: !!dgNote, note: dgNote, hasWhere: !!dgWhere, where: dgWhere,
-        tableRef: dgCur.kind === 'table' ? dgRef('t', dgCur.id, this.dg().tableHtml(dgCur.table, dgColors, dgCur.name)) : () => {}, mapRef: dgCur.kind === 'mindmap' ? dgRef('m', dgCur.id, this.dg().mapSvg(dgCur.tree, dgColors, dgCur.name)) : () => {},
+        tableRef: dgCur.kind === 'table' ? dgRef('t', dgCur.id, this.dg().tableHtml(dgCur.table, dgColors, dgCur.name)) : () => {}, mapRef: dgCur.kind === 'mindmap' ? dgRef('m', dgCur.id, dgMapHtml(dgCur.tree, dgCur.name)) : () => {},
         renaming: !!dgv.renaming, showName: !dgv.renaming, draft: dgv.draft, setDraft: e => DGM.setDraft(e && e.target ? e.target.value : e), saveRename: () => DGM.rename(dk.id, dgCur.id), cancelRename: DGM.cancelRename, startRename: () => DGM.startRename(dgCur.name),
         confirm: !!dgv.confirm, askDelete: DGM.askDelete, keep: DGM.keep, remove: () => DGM.remove(dk.id, dgCur.id), busy: dgBusy ? 'true' : '', deleteLabel: dgv.busy === 'delete' ? 'Deleting…' : 'Delete',
         confirmTitle: 'Delete “' + dgCur.name + '”?', confirmNote: dgMade ? 'You can make another one any time.' : dgPic ? 'Its picture goes. Cards made from it keep their own picture.' : '',
@@ -184,6 +196,7 @@ export const DIAGRAMS_JS = String.raw`
     const dgSheet = { open: !!dgv.sheet, close: DGM.cancel, backdrop: () => { if (!dgv.making) DGM.cancel(); },
       types: [dgTyp('Table', dgv.type !== 'mindmap', 'table', () => DGM.setType('table')), dgTyp('Mind map', dgv.type === 'mindmap', 'map', () => DGM.setType('mindmap'))],
       scopes: [dgChip('All cards and notes', dgScope.kind === 'all', () => DGM.setScope('all', '')), ...dgTags.map(x => dgChip(x, dgScope.kind === 'tag' && dgScope.value === x, () => DGM.setScope('tag', x))), ...dgSources.map(x => dgChip(x.name, dgScope.kind === 'source' && dgScope.value === x.id, () => DGM.setScope('source', x.id), true))],
+      typeLine: dgv.type === 'mindmap' ? 'Makes a Mind map page you can test yourself on, each idea linked to its cards.' : 'Makes a table in Figures, with a row for each thing it compares.',
       fromLine: dgScope.kind === 'all' ? 'Lucida reads every card and your notes.' : dgScope.kind === 'tag' ? 'Only the cards tagged ' + dgScope.value + '.' : 'Only the cards made from this source.',
       setUp: !!dgv.sheet && !dgv.making && !dgErr, hasNote: dgFew, note: 'Add a few cards first: Lucida needs something to make a ' + dgWord + ' from.', cannotMake: dgFew ? 'true' : '',
       makeLabel: 'Make ' + dgWord, makeBg: dgFew ? t.surf2 : t.inv, makeFg: dgFew ? t.muted : t.invText, make: () => { if (!dgFew) DGM.make(dk.id); },
@@ -201,19 +214,22 @@ export const DIAGRAMS_JS = String.raw`
         rows.forEach((row, j) => { const y = 40 + j * 44; g += '<path d="M0 ' + y + 'H320" stroke="#E4E4E7"/>'; cols.forEach((c, i) => { g += '<text x="' + (i * w + 10) + '" y="' + (y + 27) + '" ' + F + ' fill="#3F3F46">' + dgEsc(dgCut(row[i], 14)) + '</text>'; }); });
         for (let i = 1; i < cols.length; i++) g += '<path d="M' + (i * w) + ' 0V240" stroke="#E4E4E7"/>';
         out = dgSvg(g); }
-      else if (r.kind === 'mindmap' && r.tree) { const kids = (r.tree.children || []).slice(0, 4), pos = [[78, 52], [242, 52], [78, 188], [242, 188]], F = 'font-family="Geist, system-ui, sans-serif" font-size="13" text-anchor="middle"';
-        const pill = (x, y, text, root) => { const s = dgCut(text, root ? 16 : 13), w = Math.min(150, 20 + s.length * 7.4); return '<rect x="' + (x - w / 2) + '" y="' + (y - 15) + '" width="' + w + '" height="30" rx="15" fill="' + (root ? '#18181B' : '#F4F4F5') + '"' + (root ? '' : ' stroke="#D4D4D8"') + '/><text x="' + x + '" y="' + (y + 4.5) + '" ' + F + ' fill="' + (root ? '#FFFFFF' : '#18181B') + '"' + (root ? ' font-weight="600"' : '') + '>' + dgEsc(s) + '</text>'; };
-        let g = ''; kids.forEach((k, i) => { const x = pos[i][0], y = pos[i][1]; g += '<path d="M160 120C' + ((160 + x) / 2) + ' 120 ' + ((160 + x) / 2) + ' ' + y + ' ' + x + ' ' + y + '" fill="none" stroke="#A1A1AA" stroke-width="1.6"/>'; });
-        kids.forEach((k, i) => { g += pill(pos[i][0], pos[i][1], k.text, false); });
-        g += pill(160, 120, r.tree.text, true); out = dgSvg(g); }
+      else if (r.kind === 'mindmap' && r.tree) { const M = this.maps(), data = M.fromLegacy(r.tree), folds = {};
+        for (const c of data.root.children || []) if ((c.children || []).length) folds[c.id] = true;
+        const L = M.layoutMind(data, { side: 'both', folds }), html = M.svgOf('mindmap', L, { text: '#18181B', muted: '#52525B', line: '#D4D4D8', bg: '#FFFFFF', surf: '#F4F4F5', surf2: '#E4E4E7', inv: '#18181B', invText: '#FFFFFF' }, {});
+        const inner = html.slice(html.indexOf('>', html.indexOf('<svg')) + 1, html.indexOf('</svg>'));
+        out = dgSvg('<svg x="12" y="12" width="296" height="216" viewBox="0 0 ' + L.width + ' ' + L.height + '" font-family="Geist, system-ui, sans-serif">' + inner + '</svg>'); }
       return (dgThumbs[r.id] = out); };
     const dg = { show: tab === 'diagrams', canEdit: !!G.can, count: String(dgRows.length), none: !dgRows.length && !!G.can, openSheet: () => DGM.openSheet(dk.id), upload: () => DGM.upload(dk.id), uploadDisabled: dgv.up ? 'true' : '',
       uploading: !!dgv.up, upName: dgv.up ? dgv.up.name : '', hasUpErr: !!dgv.upErr, upErr: dgv.upErr || '', dismissUpErr: DGM.dismissUploadError,
-      groups: dgGroupsOf(dgRows).map(g => ({ title: g.title, items: g.items.map(r => ({ id: r.id, name: r.name, line: dgLine(r), isPicture: !!r.picture, picture: r.picture, thumb: dgThumb(r), hasThumb: !!dgThumb(r), isTable: r.kind === 'table' && !dgThumb(r), isMap: r.kind === 'mindmap' && !dgThumb(r), open: () => DGM.open(dk.id, r.id) })) })),
+      groups: dgGroupsOf(dgRows).map(g => ({ title: g.title, items: g.items.map(r => ({ id: r.id, name: dgName(r), line: dgLine(r), isPicture: !!r.picture, picture: r.picture, thumb: dgThumb(r), hasThumb: !!dgThumb(r), isTable: r.kind === 'table' && !dgThumb(r), isMap: r.kind === 'mindmap' && !dgThumb(r),
+        open: r.pageId ? () => { if (!mock) db.act.go(db.href('page', r.pageId)); } : () => DGM.open(dk.id, r.id) })) })),
       v: dgV, sheet: dgSheet };`;
 
 // ---------- the canvas's sample ----------
 // What the deck boards' "guide" Tweak shows for Diagrams: sample pictures (small drawings made here), a table and a mind map, and the states of the viewer and the sheet. It answers like web/diagrams.js.
+// (its made mind map is the sample's Mind map page, ps2, as the old record kept it: {text, children})
+const legacyOf = n => ({ text: n.label || '', ...(n.children && n.children.length ? { children: n.children.map(legacyOf) } : {}) });
 export const DIAGRAMS_MOCK = String.raw`diagramsMock() {
   const p = this.props, noop = () => {}, G = p.guide || '';
   const svgOf = s => 'data:image/svg+xml;utf8,' + encodeURIComponent(s);
@@ -226,37 +242,42 @@ export const DIAGRAMS_MOCK = String.raw`diagramsMock() {
   const cellLabels = [box('b1', .41, .03, .12, .06, 'Nucleus'), box('b2', .012, .785, .17, .06, 'Mitochondrion'), box('b3', .8, .083, .17, .06, 'Mitochondrion')];
   const flowLabels = [box('b1', .11, .12, .125, .05, 'Acetyl-CoA'), box('b2', .47, .12, .07, .05, 'Citrate'), box('b3', .79, .12, .1, .05, 'Isocitrate')];
   const table = { columns: ['Organelle', 'What it does', 'Found in'], rows: [['Nucleus', 'Holds the cell’s DNA', 'Animal and plant cells'], ['Mitochondrion', 'Makes most of the cell’s ATP', 'Animal and plant cells'], ['Ribosome', 'Builds proteins from amino acids', 'Every cell'], ['Chloroplast', 'Turns light into sugar', 'Plant cells'], ['Golgi apparatus', 'Packs proteins to send out', 'Animal and plant cells']] };
-  const tree = { text: 'The cell', children: [{ text: 'Organelles', children: [{ text: 'Nucleus' }, { text: 'Ribosome' }, { text: 'Golgi apparatus' }] }, { text: 'Energy', children: [{ text: 'ATP' }, { text: 'Glycolysis' }, { text: 'Krebs cycle' }, { text: 'Electron transport chain' }] }, { text: 'Membrane', children: [{ text: 'Phospholipids' }, { text: 'Channel proteins' }] }] };
+  const tree = @LEGACY_TREE@;
   const lecture = (id, name, src, at, picture, w, h, labels, figure) => ({ id, kind: 'lecture', name, group: 'From your lectures', at: day(8, 18), src: { id: 'x1', name: src, at }, picture, w, h, labels, figure, table: null, tree: null, from: null, cards: 0, size: 0 });
   const rows = [
     { id: 'g1', kind: 'table', name: 'Organelles at a glance', group: 'Made', at: day(8, 22), src: null, picture: '', w: 0, h: 0, labels: null, figure: '', table, tree: null, from: { kind: 'all', value: '', label: 'All cards and notes' }, cards: 24, size: 0 },
-    { id: 'g2', kind: 'mindmap', name: 'The cell', group: 'Made', at: day(8, 22), src: null, picture: '', w: 0, h: 0, labels: null, figure: '', table: null, tree, from: { kind: 'tag', value: 'cell', label: 'cell' }, cards: 12, size: 0 },
+    { id: 'g2', kind: 'mindmap', name: @MAP_TITLE@, group: 'Made', at: day(8, 22), src: null, picture: '', w: 0, h: 0, labels: null, figure: '', table: null, tree, from: { kind: 'tag', value: 'cell', label: 'cell' }, cards: 12, size: 0 },
     lecture('g3', 'Animal cell', 'Lecture 3 slides', 'Slide 4', CELL, 640, 420, cellLabels, 'labelled figure'),
     lecture('g4', 'The Krebs cycle', 'Lecture 3 slides', 'Slide 9', FLOW, 720, 480, flowLabels, 'flow diagram'),
     lecture('g5', 'Enzyme reaction rates', 'Lecture 3 slides', 'Slide 14', CHART, 600, 400, [], 'chart'),
     { id: 'g6', kind: 'upload', name: 'Whiteboard, Sep 22', group: 'Uploaded', at: day(8, 22), src: null, picture: FLOW, w: 720, h: 480, labels: null, figure: '', table: null, tree: null, from: null, cards: 0, size: 0 }
   ];
   const none = G === 'Diagrams (none yet)' || !!p.empty, study = G === 'Diagrams (studying)';
-  const list = none ? [] : study ? rows.filter(r => r.group === 'Made') : rows;
+  const list = none ? [] : study ? rows.filter(r => r.group === 'Made') : rows.map(r => (r.id === 'g2' ? { ...r, pageId: 'ps2' } : r));
   const open = { 'A picture open': 'g3', 'An uploaded picture open': 'g6', 'A table open': 'g1', 'A mind map open': 'g2', 'Renaming a diagram': 'g3', 'Delete asked': 'g3' }[G] || '';
-  const view = { open, sheet: /^Make diagram|^Making a diagram/.test(G), type: 'table', scope: { kind: 'all', value: '' }, making: G === 'Making a diagram', error: G === 'Make diagram (it didn’t work)' ? { message: 'That’s today’s 3 free diagrams. Go Pro for 30 a day.', pro: true, code: 'day', again: false } : null,
+  const view = { open, sheet: /^Make diagram|^Making a diagram/.test(G), type: G === 'Make diagram' ? 'mindmap' : 'table', scope: { kind: 'all', value: '' }, making: G === 'Making a diagram', error: G === 'Make diagram (it didn’t work)' ? { message: 'That’s today’s 3 free diagrams. Go Pro for 30 a day.', pro: true, code: 'day', again: false } : null,
     busy: '', msg: '', renaming: G === 'Renaming a diagram', draft: G === 'Renaming a diagram' ? 'Animal cell' : '', confirm: G === 'Delete asked', up: G === 'Uploading a picture' ? { name: 'IMG_2058.jpg' } : null, upErr: G === 'Upload didn’t work' ? 'That file is over 20 MB. Go Pro for up to 40 MB.' : '', labels: G === 'A picture open' };
   return { rows: () => list, view: () => view, open: noop, close: noop, openSheet: noop, closeSheet: noop, cancel: noop, setType: noop, setScope: noop, make: noop, redo: noop, startRename: noop, setDraft: noop, cancelRename: noop, rename: noop,
     askDelete: noop, keep: noop, remove: noop, upload: noop, dismissUploadError: noop, cards: noop, setLabels: noop, takeDraft: () => null, peekDraft: () => null };
-}`;
+}`.replace('@LEGACY_TREE@', JSON.stringify(legacyOf(MAP_SAMPLE.data.root))).replace('@MAP_TITLE@', JSON.stringify(MAP_SAMPLE.title));
 
 // The shared deck page's `pdg`: the made diagrams (g.diagrams of the deck's public Guide record), a card listing them and a read-only viewer. Runs inside the public deck page's logic
 // (PUBLIC_GUIDE_JS's neighbour), where `d` is the deck, `t` the theme and `db` the database (or the canvas's sample).
 export const PUBLIC_DIAGRAMS_JS = String.raw`
   const PDG = (() => {
-    const st = this.state, p = this.props, mock = !!db.mock, g = mock ? this.mockMaterials().publicGuide() : d.guide, list = g && Array.isArray(g.diagrams) ? g.diagrams.filter(x => x && (x.table || x.tree)) : [];
+    const st = this.state, p = this.props, mock = !!db.mock, g = mock ? this.mockMaterials().publicGuide() : d.guide;
+    // (the deck's Mind map pages, shared with it: §7.4; a figure one of them was moved from shows once, as the page)
+    const pages = g && Array.isArray(g.maps) ? g.maps.filter(x => x && x.kind === 'mindmap' && x.data && x.data.root).slice(0, 20) : [], from = new Set(pages.map(x => x.from).filter(Boolean));
+    const list = g && Array.isArray(g.diagrams) ? g.diagrams.filter(x => x && (x.table || x.tree) && !from.has(x.id)) : [];
     const D = this.dg(), plural2 = (n, w) => n + ' ' + w + (n === 1 ? '' : 's'), sum2 = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
     const want = st.dgOpen !== undefined ? st.dgOpen : mock ? ({ 'A table open': 'g1', 'A mind map open': 'g2' })[p.guide] || '' : '', cur = list.find(x => x.id === want) || null;
     const line = x => x.kind === 'table' ? 'Table · ' + plural2(((x.table || {}).rows || []).length, 'row') : 'Mind map · ' + plural2(D.count(x.tree || {}), 'idea');
-    const colors = { text: t.text, muted: t.muted, line: t.line, bg: t.bg, surf: t.surf, surf2: t.surf2, inv: t.inv, invText: t.invText };
+    const colors = { text: t.text, muted: t.muted, line: t.line, bg: t.bg, surf: t.surf, surf2: t.surf2, inv: t.inv, invText: t.invText, again: t.again, againTint: t.againTint, hardTint: t.hardTint, goodTint: t.goodTint };
+    const M = this.maps(), mapHtml = (data, name, side) => M.svgOf('mindmap', M.layoutMind(data, { side }), colors, { title: name, data });
     const ref = (kind, x, html) => el => { const k = kind + ':' + x.id + ':' + html.length + ':' + sum2(html); if (el.getAttribute('data-k') !== k) { el.innerHTML = html; el.setAttribute('data-k', k); } };
-    return { show: list.length > 0, count: String(list.length), items: list.map(x => ({ id: x.id, name: x.name, line: line(x), isTable: x.kind === 'table', isMap: x.kind === 'mindmap', open: () => this.setState({ dgOpen: x.id }) })),
+    return { maps: pages.map(x => ({ title: x.title || 'Mind map', line: 'Mind map · ' + plural2(M.countOf('mindmap', x.data), 'idea') + ' · scroll to look around', ref: el => { if (!el) return; ref('p', x, mapHtml(x.data, x.title || 'Mind map', 'both'))(el); const w = el.firstElementChild; if (w && w.__at !== x.id) { w.__at = x.id; w.style.height = '100%'; w.scrollLeft = (w.scrollWidth - w.clientWidth) / 2; w.scrollTop = (w.scrollHeight - w.clientHeight) / 2; } } })),
+      show: list.length > 0, count: String(list.length), items: list.map(x => ({ id: x.id, name: x.name, line: line(x), isTable: x.kind === 'table', isMap: x.kind === 'mindmap', open: () => this.setState({ dgOpen: x.id }) })),
       v: cur ? { open: true, name: cur.name, line: line(cur), close: () => this.setState({ dgOpen: '' }), isTable: cur.kind === 'table', isMap: cur.kind === 'mindmap',
-          tableRef: cur.kind === 'table' ? ref('t', cur, D.tableHtml(cur.table, colors, cur.name)) : () => {}, mapRef: cur.kind === 'mindmap' ? ref('m', cur, D.mapSvg(cur.tree, colors, cur.name)) : () => {} }
+          tableRef: cur.kind === 'table' ? ref('t', cur, D.tableHtml(cur.table, colors, cur.name)) : () => {}, mapRef: cur.kind === 'mindmap' ? ref('m', cur, mapHtml(M.fromLegacy(cur.tree), cur.name, 'right')) : () => {} }
         : { open: false, name: '', line: '', close: () => {}, isTable: false, isMap: false, tableRef: () => {}, mapRef: () => {} } };
   })();`;

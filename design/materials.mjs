@@ -6,6 +6,7 @@
 // The app draws these boards (design/to-web.mjs), so what you see on the canvas is what runs.
 
 import { PAGES_SAMPLE_JSON } from './pages.mjs';
+import { MAP_SAMPLE } from './maps.mjs';
 import { diagramBlocks, publicDiagramBlocks, DIAGRAMS_JS, DIAGRAMS_MOCK, DIAGRAM_STATES, DIAGRAM_STATE_RE } from './diagrams.mjs';
 
 // What the Make boards' "step" picker offers on the canvas (the app's own flow follows web/make.js).
@@ -250,7 +251,7 @@ renderVals() {
     // Image (picture cards from the diagrams found in the material): offered where there may be some; it starts off.
     canImage: !!v.canImage, imageOn: !!v.canImage && !!o.image, imagePressed: o.image ? 'true' : 'false', imageBg: o.image ? t.inv : t.surf, imageFg: o.image ? t.invText : t.text, toggleImage: () => M.setOpt('image', !o.image),
     imageLine: v.from ? 'A card for each label of this source’s diagrams, with the label hidden.' : 'A card for each label of the diagrams in it, with the label hidden.',
-    hasFigs: step === 'review' && v.figures > 0, figLine: plural(v.figures, 'diagram') + ' found. ' + (v.figures === 1 ? 'It is' : 'They are') + ' kept in the deck’s Diagrams tab.',
+    hasFigs: step === 'review' && v.figures > 0, figLine: plural(v.figures, 'diagram') + ' found. ' + (v.figures === 1 ? 'It is' : 'They are') + ' kept in the deck’s Figures tab.',
     basicPressed: o.basic ? 'true' : 'false', basicBg: o.basic ? t.inv : t.surf, basicFg: o.basic ? t.invText : t.text, toggleBasic: () => M.setOpt('basic', !o.basic),
     clozePressed: o.cloze ? 'true' : 'false', clozeBg: o.cloze ? t.inv : t.surf, clozeFg: o.cloze ? t.invText : t.text, toggleCloze: () => M.setOpt('cloze', !o.cloze),
     // The language of the cards: Lucida's own dropdown (a list under its button, a sheet on a phone), never the browser's select.
@@ -504,7 +505,7 @@ export const DECK_MATERIALS_JS = String.raw`
     const wanted = st.tab !== undefined ? st.tab : p.sourceOpen ? 'sources' : p.diagram ? 'diagrams' : mock ? (p.guide === 'A source open' ? 'sources' : dgState ? 'diagrams' : { Notes: 'notes', Pages: 'pages', Diagrams: 'diagrams', Sources: 'sources' }[p.section] || 'cards') : { notes: 'notes', pages: 'pages', diagrams: 'diagrams', sources: 'sources' }[p.tab] || 'cards';
     const tab = (wanted === 'pages' || (wanted === 'notes' && G.moved)) && pagesTab ? 'pages' : wanted === 'notes' && notesTab ? 'notes' : wanted === 'diagrams' && dgTab ? 'diagrams' : wanted === 'sources' && sourcesTab ? 'sources' : 'cards';
     // Sources first (the owner, 2026-10-02: "sources should be the first tab, so sources, cards, notes, diagrams"); the page still opens on Cards.
-    const tabList = [...(sourcesTab ? [{ id: 'sources', label: 'Sources', count: sourceRows.length ? String(sourceRows.length) : '' }] : []), { id: 'cards', label: 'Cards', count: String(cardsN) }, ...(notesTab ? [{ id: 'notes', label: 'Notes', count: '' }] : []), ...(pagesTab ? [{ id: 'pages', label: 'Pages', count: PGL.length ? String(PGL.length) : '' }] : []), ...(dgTab ? [{ id: 'diagrams', label: 'Diagrams', count: dgRows.length ? String(dgRows.length) : '' }] : [])]
+    const tabList = [...(sourcesTab ? [{ id: 'sources', label: 'Sources', count: sourceRows.length ? String(sourceRows.length) : '' }] : []), { id: 'cards', label: 'Cards', count: String(cardsN) }, ...(notesTab ? [{ id: 'notes', label: 'Notes', count: '' }] : []), ...(pagesTab ? [{ id: 'pages', label: 'Pages', count: PGL.length ? String(PGL.length) : '' }] : []), ...(dgTab ? [{ id: 'diagrams', label: 'Figures', count: dgRows.length ? String(dgRows.length) : '' }] : [])]
       .map(x => ({ ...x, selected: x.id === tab ? 'true' : 'false', fg: x.id === tab ? t.text : t.muted, bar: x.id === tab ? t.text : 'transparent', pick: () => this.setState({ tab: x.id }) }));
     const nbPlain = s => String(s || '').split('\n').map(l => l.replace(/^:::(?:toggle|trap|pearl|mnemonic|note|chain)\s*/, '').replace(/^::(?:card|page)\s+\S+\s*$/, '').replace(/^:::\s*$/, '').replace(/^#+\s*/, '').replace(/^\s*(?:[-*+]|\d+\.)\s+(?:\[[ xX]\]\s+)?/, '').replace(/\*\*|__|${'`'}/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').trim()).filter(Boolean);
     const nbHead = s => { const m = /^#\s+(.+)$/m.exec(String(s || '')); return m ? m[1].replace(/\*\*|${'`'}/g, '').trim() : ''; };
@@ -626,14 +627,16 @@ const MATERIALS_MOCK_BASE = String.raw`mockMaterials() {
   })();
   const GMODE = p.guide || 'Guide and sources', RO = GMODE === 'Studying (read only)' || GMODE === 'Diagrams (studying)';
   return { make: MK, diagrams: this.diagramsMock(),
-    publicGuide: () => (GMODE === 'No guide yet' ? { pages: [], sources: 0 } : { pages: [{ id: 'main', title: 'Guide', text: GD.text }, ...(GMODE === 'Guide pages' ? GD.pages : [])], sources: 5, diagrams: this.diagramsMock().rows().filter(r => r.group === 'Made').map(r => ({ id: r.id, kind: r.kind, name: r.name, at: r.at, ...(r.table ? { table: r.table } : { tree: r.tree }) })) }),
+    publicGuide: () => (GMODE === 'No guide yet' ? { pages: [], sources: 0 } : { pages: [{ id: 'main', title: 'Guide', text: GD.text }, ...(GMODE === 'Guide pages' ? GD.pages : [])], sources: 5, diagrams: this.diagramsMock().rows().filter(r => r.group === 'Made').map(r => ({ id: r.id, kind: r.kind, name: r.name, at: r.at, ...(r.table ? { table: r.table } : { tree: r.tree }) })),
+      // (the deck's Mind map pages shared with it, §7.4: ps2 was moved from the made map g2, which then shows once, as the page)
+      maps: GMODE === 'With map pages' ? [{ id: 'ps2', kind: 'mindmap', title: @MAP_TITLE@, from: 'g2', data: @MAP_DATA@ }] : [] }),
     guide: () => ({ deckId: 'cell', text: p.empty || GMODE === 'No guide yet' ? '' : GMODE === 'Long guide' ? GD.text + '\n\n' + GD.text.replace('# Cell Biology: Exam 1', '## More for the exam') : GD.text, at: 0, pages: GMODE === 'Guide pages' && !p.empty ? GD.pages : [], can: !RO, studying: RO }),
     sources: () => (GMODE === 'No guide yet' || RO || p.empty ? [] : GD.sources),
     sourceText: name => (/^sx2/.test(name) || /^sx3/.test(name) ? GD.talk : ''),
     guideHistory: () => Promise.resolve([{ at: day(8, 21), saved: 0, text: GD.text.replace('- [x] The electron transport chain', '- [ ] The electron transport chain') }, { at: day(8, 18), saved: 0, text: '# Cell Biology: Exam 1\n\nEverything for the first exam.\n' }]),
     saveGuide: () => Promise.resolve({}), addGuidePage: () => Promise.resolve('g9'), renameGuidePage: () => Promise.resolve({}), deleteGuidePage: () => Promise.resolve({}), restoreGuide: () => Promise.resolve({}), deleteSource: () => Promise.resolve({}) };
 }`;
-export const MATERIALS_MOCK = MATERIALS_MOCK_BASE + '\n' + DIAGRAMS_MOCK;
+export const MATERIALS_MOCK = MATERIALS_MOCK_BASE.replace('@MAP_TITLE@', JSON.stringify(MAP_SAMPLE.title)).replace('@MAP_DATA@', JSON.stringify(MAP_SAMPLE.data)) + '\n' + DIAGRAMS_MOCK;
 
 // ---------- the Notes page (WebGuide, PhoneGuide) ----------
 // A deck's Guide and its extra pages as one page that is always formatted (web/notes.js): click and type, no marks to see, nothing to switch between. At the

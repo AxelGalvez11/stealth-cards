@@ -8,6 +8,7 @@ import { MOCK_METHOD, SAMPLE, SAMPLE_WAVE } from './mock.mjs';
 import { DRAG_METHOD } from './drag.mjs';
 import { MOTION, EASE, MOTION_CSS, TILE_HOVER } from './motion.mjs';
 import { pagesBoards, pageBoards, deckPagesBlock, deckPagesJs, PAGES_VIEWS, NOTE_VIEWS, PAGE_VIEWS } from './pages.mjs';
+import { MINDMAP_VIEWS, MAPS_METHOD, MAP_ART_METHOD, MAP_CSS, mapLayoutsBoard, mapMotion } from './maps.mjs';
 import { WALL_CARDS } from './wall.mjs';
 import { SHARE_METHOD } from './share.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
@@ -94,7 +95,7 @@ skinFor(k) {
 }
 ${GEN_METHOD}
 ${MOCK_METHOD}
-${logic.includes('this.rich(') ? RICH_METHOD : ''}${logic.includes('this.drag(') ? '\n' + DRAG_METHOD : ''}${logic.includes('this.shareOrCopy(') ? '\n' + SHARE_METHOD : ''}${logic.includes('this.md(') || logic.includes('this.notes(') ? '\n' + GUIDE_METHOD : ''}${logic.includes('this.notes(') ? '\n' + NOTES_METHOD : ''}${logic.includes('this.mockMaterials(') ? '\n' + (logic.includes('this.newDeckDb(') ? NEW_DECK_METHOD : '') + MATERIALS_MOCK : ''}${logic.includes('this.dg(') ? '\n' + DIAGRAM_METHOD : ''}
+${logic.includes('this.rich(') ? RICH_METHOD : ''}${logic.includes('this.drag(') ? '\n' + DRAG_METHOD : ''}${logic.includes('this.shareOrCopy(') ? '\n' + SHARE_METHOD : ''}${logic.includes('this.md(') || logic.includes('this.notes(') ? '\n' + GUIDE_METHOD : ''}${logic.includes('this.notes(') ? '\n' + NOTES_METHOD : ''}${logic.includes('this.mockMaterials(') ? '\n' + (logic.includes('this.newDeckDb(') ? NEW_DECK_METHOD : '') + MATERIALS_MOCK : ''}${logic.includes('this.dg(') ? '\n' + DIAGRAM_METHOD : ''}${logic.includes('this.maps(') ? '\n' + MAPS_METHOD : ''}${logic.includes('this.mapArt(') ? '\n' + MAP_ART_METHOD : ''}
 ${logic}
 }
 </script>
@@ -3801,11 +3802,13 @@ const tile = (title, spec, stage) => `<div style="background: #F4F4F4; border-ra
   <div style="display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 16px; font-weight: 600;">${title}</span><span style="font-family: ${MONO}; font-size: 12px; color: #666666;">${spec}</span></div>
 </div>`;
 const mcard = (txt, extra = '', cls = '') => `<div class="${cls}" style="width: 180px; height: 120px; box-sizing: border-box; padding: 16px; border-radius: 22px; background: #FFFFFF; border: 1px solid #EBEBEB; box-shadow: 0 12px 28px -12px rgba(0,0,0,.22); display: flex; align-items: flex-end; font-size: 15px; font-weight: 600; ${extra}">${txt}</div>`;
-const MOTION_H = 1733;
+// (and a fifth row: the Mind map's motion, design/maps.mjs, each beside its Reduce Motion version)
+const MAP_MOTION = mapMotion();
+const MOTION_H = 2133;
 // Drawn when the boards are made, since its tiles use parts defined further down (EMPTY_ART).
 const motion = () => `<div style="width: 1440px; height: ${MOTION_H}px; box-sizing: border-box; padding: 56px 64px; display: flex; flex-direction: column; gap: 28px; font-family: ${FONT}; background: #FFFFFF; color: #000000;">
   <div style="display: flex; flex-direction: column; gap: 8px;"><h1 style="margin: 0; font-size: 44px; font-weight: 600; letter-spacing: -.035em;">Motion</h1><p style="margin: 0; font-size: 16px; color: #666666;">Every animation loops here so you can watch it. In the app most play once; empty states keep moving, slowly. All of them turn off when Reduce Motion is on.</p></div>
-  <div style="flex-grow: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 16px;">
+  <div style="flex-grow: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(5, minmax(0, 1fr)); gap: 16px;">
     ${tile('Card flip', '180 ms · 3D turn · ease out', `<div style="perspective: 900px;"><div class="m-flip" style="position: relative; width: 180px; height: 120px; transform-style: preserve-3d;">${mcard('Question', 'position: absolute; inset: 0; backface-visibility: hidden;')}${mcard('Answer', 'position: absolute; inset: 0; backface-visibility: hidden; transform: rotateY(180deg); background: #000000; color: #FFFFFF; border-color: #000000;')}</div></div>`)}
     ${tile('Grade → next card', 'out 220 ms · in 320 ms · slight lift', `<div style="position: relative; width: 180px; height: 120px;">${mcard('Next card', 'position: absolute; inset: 0;', 'm-in')}${mcard('Graded card', 'position: absolute; inset: 0;', 'm-out')}</div>`)}
     ${tile('Button press', '100 ms · shrinks to 96%', `<div class="m-press" style="height: 56px; padding: 0 36px; border-radius: 999px; background: #000000; color: #FFFFFF; display: flex; align-items: center; font-size: 15px; font-weight: 600;">Save card</div>`)}
@@ -3822,6 +3825,7 @@ const motion = () => `<div style="width: 1440px; height: ${MOTION_H}px; box-sizi
     ${tile('Sheet', `slides up from the bottom · ${Math.round(MOTION.sheet * 1000)} ms · leaves in ${Math.round(MOTION.leave * 1000)} ms`, `<div style="position: relative; width: 150px; height: 230px; border-radius: 28px; background: #F4F4F4; overflow: hidden;"><div class="m-sheet" style="position: absolute; left: 0; right: 0; bottom: 0; top: 58px; box-sizing: border-box; padding: 16px; border-radius: 24px 24px 0 0; background: #FFFFFF; box-shadow: 0 -12px 32px -12px rgba(0,0,0,.25); display: flex; flex-direction: column; gap: 10px;"><span style="width: 70px; height: 12px; border-radius: 6px; background: #000000;"></span><span style="height: 36px; border-radius: 12px; background: #F4F4F4;"></span><span style="height: 36px; border-radius: 12px; background: #F4F4F4;"></span></div></div>`)}
     ${tile('Deck cover parallax', 'the cover moves at half speed as you scroll', `<div style="position: relative; width: 210px; height: 230px; border-radius: 22px; overflow: hidden; background: #FFFFFF; border: 1px solid #EBEBEB;"><div class="m-par-front" style="position: absolute; inset: 0;"><div style="position: relative; height: 120px; overflow: hidden;"><div class="m-par-cover" style="position: absolute; inset: 0;">${meshCard('art', 'position: absolute; inset: 0;', 'height: 100%;', '', 'div')}</div><span style="position: absolute; left: 16px; bottom: 14px; color: #FFFFFF; font-size: 17px; font-weight: 700; letter-spacing: -.02em; text-shadow: 0 1px 8px rgba(0,0,0,.3);">Cell Biology</span></div><div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;"><span style="height: 12px; width: 150px; border-radius: 6px; background: #EBEBEB;"></span><span style="height: 12px; width: 120px; border-radius: 6px; background: #EBEBEB;"></span><span style="height: 12px; width: 160px; border-radius: 6px; background: #EBEBEB;"></span><span style="height: 12px; width: 100px; border-radius: 6px; background: #EBEBEB;"></span></div></div></div>`)}
     ${tile('Deck card hover', `lifts 4 px · ${TILE_HOVER} s · eases out · shadow grows`, meshCard('hero', 'width: 200px; height: 132px; border-radius: 20px;', 'height: 100%; box-sizing: border-box; padding: 16px; display: flex; align-items: flex-end; font-size: 15px; font-weight: 600;', 'Cell Biology', 'div', ' class="m-lift"'))}
+    ${MAP_MOTION.tiles.map(([a, b, c]) => tile(a, b, c)).join('\n    ')}
   </div>
 </div>`;
 // The new tiles loop every L seconds: it comes in at `at`, stays, and goes at `out`; a percent of the loop is a time in it.
@@ -3843,7 +3847,7 @@ const mLoopCss = `.m-pop{animation:mpop 3.2s ${EASE} infinite}
 .m-par-cover{animation:mparc 4.4s ease-in-out infinite}
 @keyframes mparc{0%,12%{transform:none}48%,62%{transform:translateY(45px)}98%,100%{transform:none}}
 `;
-const motionCss = `.m-flip{animation:flip 3.2s cubic-bezier(.4,0,.2,1) infinite}
+const motionCss = MAP_MOTION.css + `.m-flip{animation:flip 3.2s cubic-bezier(.4,0,.2,1) infinite}
 @keyframes flip{0%,25%{transform:rotateY(0)}40%,75%{transform:rotateY(180deg)}90%,100%{transform:rotateY(360deg)}}
 .m-out{animation:out 2.8s infinite}
 @keyframes out{0%,35%{transform:none;opacity:1}48%{transform:translateX(-150px) rotate(-8deg);opacity:0}100%{transform:translateX(-150px);opacity:0}}
@@ -8683,7 +8687,7 @@ const phoneHistory = phone(`<div style="padding: 64px 20px 120px; display: flex;
 const bool = (d = false) => ({ editor: 'boolean', default: d });
 // Your verification, for the boards that show it (a verified teacher sees Check this deck; Settings says Verified teacher).
 const VERIFIED_PROP = { editor: 'enum', default: '', options: ['', 'Waiting for review', 'Teacher', 'School'] };
-const PD_PROPS = { ...DARK, grain: MESH('Iris').grain, guide: { editor: 'enum', default: 'Guide and sources', options: ['Guide and sources', 'Guide pages', 'No guide yet', 'Diagrams', 'A table open', 'A mind map open'] }, loading: bool(), signedOut: bool(), owner: bool(), studying: bool(), copyOpen: bool(), missing: bool(), report: bool(), verified: VERIFIED_PROP, deckTab: { editor: 'enum', default: 'Cards', options: ['Cards', 'History', 'People'] } };
+const PD_PROPS = { ...DARK, grain: MESH('Iris').grain, guide: { editor: 'enum', default: 'Guide and sources', options: ['Guide and sources', 'Guide pages', 'No guide yet', 'Diagrams', 'A table open', 'A mind map open', 'With map pages'] }, loading: bool(), signedOut: bool(), owner: bool(), studying: bool(), copyOpen: bool(), missing: bool(), report: bool(), verified: VERIFIED_PROP, deckTab: { editor: 'enum', default: 'Cards', options: ['Cards', 'History', 'People'] } };
 const SG_PROPS = { ...DARK, loading: bool(), aiWaiting: bool(true), noSuggestions: bool(), report: bool(), block: bool() };
 const HI_PROPS = { ...DARK, loading: bool(), missing: bool(), signedOut: bool(), someoneElse: bool() };
 // ---------- Admin ----------
@@ -8967,7 +8971,7 @@ const files = {
   'WebGuidePages': ['Web · Notes page · a note with pages inside', attrOf('WebGuide', W, H, 'guide="Guide pages" page="g1"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebGuideNested': ['Web · Notes page · a page inside another note', attrOf('WebGuide', W, H, 'guide="Guide pages" page="g2"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckSources': ['Web · Deck page · Sources tab', attrOf('WebDeck', W, H, 'section="Sources"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
-  'WebDeckDiagrams': ['Web · Deck page · Diagrams tab', attrOf('WebDeck', W, H, 'section="Diagrams" guide="Diagrams"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
+  'WebDeckDiagrams': ['Web · Deck page · Figures tab', attrOf('WebDeck', W, H, 'section="Diagrams" guide="Diagrams"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   'WebDeckAddMenu': ['Web · Deck page · + menu open', attrOf('WebDeck', W, H, 'menu="Add"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: W, h: H }],
   // Make cards opened from the deck sits over it (V186: "pressing '+' should not take user back to the library page")
   'WebDeckMake': ['Web · Deck page · Make cards, opened from the deck (it stays behind)', attrOf('WebMake', W, H, 'on-deck="{{yes}}" step="{{step}}"'), { props: { step: { editor: 'enum', default: 'Pick', options: MAKE_STEPS } }, logic: `renderVals() { return { yes: true, step: this.props.step || 'Pick' }; }`, w: W, h: H }],
@@ -9020,7 +9024,7 @@ const files = {
   'PhoneGuidePages': ['iPhone · Notes page · a note with pages inside', attrOf('PhoneGuide', PW, PH, 'guide="Guide pages" page="g1"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneGuideNested': ['iPhone · Notes page · a page inside another note', attrOf('PhoneGuide', PW, PH, 'guide="Guide pages" page="g2"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckSources': ['iPhone · Deck page · Sources tab', attrOf('PhoneDeck', PW, PH, 'section="Sources"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
-  'PhoneDeckDiagrams': ['iPhone · Deck page · Diagrams tab', attrOf('PhoneDeck', PW, PH, 'section="Diagrams" guide="Diagrams"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
+  'PhoneDeckDiagrams': ['iPhone · Deck page · Figures tab', attrOf('PhoneDeck', PW, PH, 'section="Diagrams" guide="Diagrams"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckAddMenu': ['iPhone · Deck page · + menu open', attrOf('PhoneDeck', PW, PH, 'menu="Add"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckMake': ['iPhone · Deck page · Make cards, opened from the deck (it stays behind)', attrOf('PhoneMake', PW, PH, 'on-deck="{{yes}}" step="{{step}}"'), { props: { step: { editor: 'enum', default: 'Pick', options: MAKE_STEPS } }, logic: `renderVals() { return { yes: true, step: this.props.step || 'Pick' }; }`, w: PW, h: PH }],
   'PhoneDeckStudied': ['iPhone · Deck page · a deck you study from someone else', attrOf('PhoneDeck', PW, PH, 'linked="study"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
@@ -9248,7 +9252,17 @@ Object.assign(files, {
 });
 // Pages (design/pages.mjs): the deck's Pages and a Note page, the design for the owner to approve first.
 Object.assign(files, pagesBoards({ svg, I, FONT, T, DB_JS, DARK, W, HH: H, PW, PH, sidebar }));
-Object.assign(files, pageBoards({ svg, I, FONT, T, DB_JS, DARK, W, HH: H, PW, PH, sidebar, NOTES_VARS, GUIDE_CSS }));
+Object.assign(files, pageBoards({ svg, I, FONT, T, DB_JS, DARK, W, HH: H, PW, PH, sidebar, NOTES_VARS, GUIDE_CSS, MAP_CSS }));
+// The Mind map page (design/maps.mjs): its states on a computer and an iPhone, light and dark, and the gallery of real layouts.
+const mindOf = (name, w, h, dark) => `<div style="width: ${w}px; height: ${h}px; overflow: hidden;${dark ? ' background: #000000;' : ''}"><dc-import name="${name}" view="{{view}}"${dark ? ' dark="{{yes}}"' : ''} hint-size="${w}px,${h}px"></dc-import></div>`;
+const MIND_PROPS = { view: { editor: 'enum', default: 'Mind map', options: MINDMAP_VIEWS } }, mindLogic = `renderVals() { return { yes: true, view: this.props.view || 'Mind map' }; }`;
+Object.assign(files, {
+  'WebPageMindmap': ['Web · A Mind map page', mindOf('WebPage', W, H), { props: MIND_PROPS, logic: mindLogic, css: GUIDE_CSS + MAP_CSS, w: W, h: H }],
+  'WebPageMindmapDark': ['Web · A Mind map page (dark)', mindOf('WebPage', W, H, true), { props: MIND_PROPS, logic: mindLogic, css: GUIDE_CSS + MAP_CSS, w: W, h: H }],
+  'PhonePageMindmap': ['iPhone · A Mind map page', mindOf('PhonePage', PW, PH), { props: MIND_PROPS, logic: mindLogic, css: GUIDE_CSS + MAP_CSS, w: PW, h: PH }],
+  'PhonePageMindmapDark': ['iPhone · A Mind map page (dark)', mindOf('PhonePage', PW, PH, true), { props: MIND_PROPS, logic: mindLogic, css: GUIDE_CSS + MAP_CSS, w: PW, h: PH }],
+  ...mapLayoutsBoard({ FONT, MONO, T, DARK, W })
+});
 for (const T of THEMES.filter(x => x.key !== 'lucida')) {
   const k = T.key, B = 'Theme' + T.board, one = { css: themeCss([k]), fonts: themeFonts([k]) }, logic = withThemes([k], darkLogic), at = attrs => `skin="${k}" ${attrs}`.trim();
   Object.assign(files, {

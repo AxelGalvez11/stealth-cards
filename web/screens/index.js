@@ -175,10 +175,16 @@ export default [
   "h": 844
  },
  {
+  "name": "MapLayouts",
+  "title": "Map layouts (real engine output; approve before app work)",
+  "w": 1440,
+  "h": 2800
+ },
+ {
   "name": "Motion",
   "title": "Motion",
   "w": 1440,
-  "h": 1733
+  "h": 2133
  },
  {
   "name": "NotePhone",
@@ -266,7 +272,7 @@ export default [
  },
  {
   "name": "PhoneDeckDiagrams",
-  "title": "iPhone · Deck page · Diagrams tab",
+  "title": "iPhone · Deck page · Figures tab",
   "w": 390,
   "h": 844
  },
@@ -524,7 +530,19 @@ export default [
  },
  {
   "name": "PhonePage",
-  "title": "iPhone · A page (a Note)",
+  "title": "iPhone · A page (a Note or a Mind map)",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhonePageMindmap",
+  "title": "iPhone · A Mind map page",
+  "w": 390,
+  "h": 844
+ },
+ {
+  "name": "PhonePageMindmapDark",
+  "title": "iPhone · A Mind map page (dark)",
   "w": 390,
   "h": 844
  },
@@ -1922,7 +1940,7 @@ export default [
  },
  {
   "name": "WebDeckDiagrams",
-  "title": "Web · Deck page · Diagrams tab",
+  "title": "Web · Deck page · Figures tab",
   "w": 1440,
   "h": 900
  },
@@ -2264,7 +2282,19 @@ export default [
  },
  {
   "name": "WebPage",
-  "title": "Web · A page (a Note)",
+  "title": "Web · A page (a Note or a Mind map)",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebPageMindmap",
+  "title": "Web · A Mind map page",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "name": "WebPageMindmapDark",
+  "title": "Web · A Mind map page (dark)",
   "w": 1440,
   "h": 900
  },

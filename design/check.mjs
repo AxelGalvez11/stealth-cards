@@ -6,6 +6,8 @@ import { MAKE_STEPS, GUIDE_STATES, GUIDE_VIEWS, LIVE_FROM, LIVE_TOPIC_STATES } f
 import { ASK_SAMPLES } from './ui.mjs';
 import { webProblems } from './check-own-ui.mjs';
 import { PAGES_VIEWS, NOTE_VIEWS, PAGE_VIEWS } from './pages.mjs';
+import { MINDMAP_VIEWS, MAP_LAYOUT_VIEWS, MAP_FIXTURES, MINDMAP_SAMPLE, MAP_SAMPLE, mapArt } from './maps.mjs';
+import maps from '../web/maps.js';
 
 const DIR = new URL('./canvas/project/', import.meta.url);
 const get = (o, p) => p.trim().split('.').reduce((a, k) => (a == null ? undefined : a[k]), o);
@@ -123,6 +125,18 @@ for (const guide of GUIDE_STATES) PROP_SETS.push({ guide }, { guide, dark: true 
 for (const view of PAGES_VIEWS) PROP_SETS.push({ view }, { view, dark: true });
 for (const view of NOTE_VIEWS) PROP_SETS.push({ view }, { view, dark: true });
 for (const view of PAGE_VIEWS) PROP_SETS.push({ view }, { view, dark: true });
+// A page in gray once per kind (a Note, a Mind map, one the app can't show), and the Mind map's toggles pressed on the canvas (the
+// outline, the weak spots, Test me, an idea clicked, nothing selected, Show in one at a time, the sheets closed).
+PROP_SETS.push({ view: 'Writing', dark: true, dim: true }, { view: 'Mind map', dark: true, dim: true }, { view: 'Needs an update', dark: true, dim: true },
+  { view: 'Mind map', $state: { mp: { outline: true } } }, { view: 'Mind map', $state: { mp: { weak: true, outline: false } } }, { view: 'Mind map', $state: { mp: { sheet: true } } },
+  { view: 'Mind map', $state: { mp: { sel: 'krebs' } } }, { view: 'Mind map · an idea selected', $state: { mp: { sel: '' } } }, { view: 'Mind map · one at a time', $state: { mp: { shown: true } } },
+  { view: 'Mind map · cards of an idea', $state: { mp: { cards: false } } }, { view: 'Mind map · test done', $state: { mp: { done: false } } }, { view: 'Mind map · changed by your AI', $state: { mp: { live: false } } },
+  { view: 'Mind map · weak spots', $state: { mp: { folds: { er: false } } } });
+// ... Test me with an idea selected (This branch), its choices pressed, and the idea's ⋯ open; a shared deck with its map pages.
+PROP_SETS.push({ view: 'Mind map · test me', $state: { mp: { sel: 'mito' } } }, { view: 'Mind map · test me', $state: { mp: { sel: 'mito', hide: 'branch', show: 'one' } } },
+  { view: 'Mind map · an idea selected', $state: { mp: { ideaMore: true } } }, { view: 'Mind map · an idea selected', dark: true, $state: { mp: { ideaMore: true } } },
+  { guide: 'With map pages' }, { guide: 'With map pages', dark: true });
+for (const view of MAP_LAYOUT_VIEWS) PROP_SETS.push({ view }, { view, dark: true }, { view, dark: true, dim: true });
 for (const view of GUIDE_VIEWS) PROP_SETS.push({ view }, { view, dark: true });
 for (const liveFrom of LIVE_FROM) PROP_SETS.push({ liveFrom }, { liveFrom, dark: true });
 for (const topicState of LIVE_TOPIC_STATES) PROP_SETS.push({ topicState });
@@ -179,6 +193,23 @@ function balance(body) {
 }
 
 let bad = 0;
+// The maps the boards draw: every sample and gallery fixture lays out (web/maps.js) without throwing, with no two boxes touching and
+// nothing that hangs off a box (its badge, a weak count, '✦ New') touching another box or another such row; and every Mind map
+// state's model is made on a computer and an iPhone, light and dark, with the same true of what it draws.
+{
+  const errs = [], T = { bg: '#FFFFFF', surf: '#F4F4F4', surf2: '#E8E8E8', line: '#EBEBEB', text: '#000000', muted: '#666666', inv: '#000000', invText: '#FFFFFF', again: '#D92D20', good: '#067647', againTint: '#FDECEA', goodTint: '#E6F4EC', hardTint: '#FDF1E3' };
+  const fixtures = [['the sample', MINDMAP_SAMPLE, { side: 'both' }], ['the sample, one side', MINDMAP_SAMPLE, { side: 'right' }], ['what Claude changed', MAP_SAMPLE.changed, { side: 'both' }], ...Object.values(MAP_FIXTURES).flat()];
+  for (const [name, data, opts] of fixtures) {
+    try { const L = maps.layoutMind(data, opts), n = mapArt.overlaps(L), k = mapArt.clashes(L, data, { t: T, units: maps.units }); if (n) errs.push(`${name}: ${n} boxes overlap`); if (k) errs.push(`${name}: ${k} badges or chips touch a box`); mapArt.draw(L, data, { t: T, W: 800, H: 600, z: 1, x: 0, y: 0, units: maps.units }); }
+    catch (e) { errs.push(`${name}: ${e.message}`); }
+  }
+  const D = { ...T, bg: '#000000', surf: '#141414', surf2: '#222222', line: '#262626', text: '#FFFFFF', muted: '#A3A3A3', inv: '#FFFFFF', invText: '#000000', again: '#F97066', good: '#47CD89', againTint: 'rgba(249,112,102,.16)', goodTint: 'rgba(71,205,137,.16)', hardTint: 'rgba(253,176,34,.16)' };
+  for (const view of MINDMAP_VIEWS) for (const phone of [false, true]) for (const t of [T, D]) {
+    const at = `${view}${phone ? ' (iPhone)' : ''}${t === D ? ' (dark)' : ''}`;
+    try { const m = mapArt.model(maps, { view, phone, t, dark: t === D }); if (!m.on || typeof m.mapRef !== 'function') errs.push(`${at}: no map`); if (m.check.overlaps || m.check.clashes) errs.push(`${at}: ${m.check.overlaps} boxes overlap, ${m.check.clashes} badges or chips touch a box`); } catch (e) { errs.push(`${at}: ${e.message}`); }
+  }
+  if (errs.length) { bad++; console.log('maps\n  ' + errs.join('\n  ')); }
+}
 for (const f of readdirSync(DIR).filter(f => f.endsWith('.dc.html')).sort()) {
   const src = readBoard(DIR, f);
   const errs = [];
