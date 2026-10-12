@@ -6023,7 +6023,7 @@ renderVals0() { const t = this.theme(!!this.props.dark, !!this.props.dim);const 
     const by = new Map(list.map(x => [x.id, x])), depthOf = x => { let d = 0; for (let q = x; q && q.parent && by.has(q.parent) && d < 6; q = by.get(q.parent)) d++; return d; };
     const ordered = [], seen = new Set(), walk = x => { if (seen.has(x.id)) return; seen.add(x.id); ordered.push(x); list.filter(y => y.parent === x.id).forEach(walk); };
     list.filter(x => !x.parent || !by.has(x.parent)).forEach(walk);
-    const mock = !!db.mock, READY = mock ? ["note","mindmap"] : ["note"], step = this.state.newPage === 'mindmap', open = !!this.state.newPage && !step, canNew = !!gs.pagesCan;
+    const mock = !!db.mock, READY = mock ? ["note","mindmap"] : ["note","mindmap"], step = this.state.newPage === 'mindmap', open = !!this.state.newPage && !step, canNew = !!gs.pagesCan;
     const lift = (c, a) => { const m = /^#([0-9a-f]{6})$/i.exec(String(c)); if (!m) return c; const v = parseInt(m[1], 16); return '#' + [v >> 16 & 255, v >> 8 & 255, v & 255].map(x => Math.round(x + (255 - x) * a).toString(16).padStart(2, '0')).join(''); };
     const popDark = (() => { const m = /^#([0-9a-f]{6})$/i.exec(String(t.bg)); if (!m) return false; const v = parseInt(m[1], 16); return (v >> 16 & 255) * 0.299 + (v >> 8 & 255) * 0.587 + (v & 255) * 0.114 < 128; })();
     const pop = popDark ? { bg: lift(t.bg, 0.1), surf: lift(t.bg, 0.19), line: lift(t.bg, 0.2) } : { bg: t.bg, surf: t.surf, line: t.line };

@@ -22,7 +22,7 @@ export const KINDS = ['note', 'slides', 'mindmap', 'diagram', 'canvas', 'doc'];
 export const KIND_NAMES = { note: 'Note', slides: 'Presentation', mindmap: 'Mind map', diagram: 'Diagram', canvas: 'Canvas', doc: 'Doc' };
 // The kinds the apps can show so far (the rest come in the approved order: mind map and diagram, presentation, canvas, doc).
 // The one list: the server, MCP and the apps' New page all go by it (a test may add a kind to it for a while).
-export const PAGE_READY = new Set(['note']);
+export const PAGE_READY = new Set(['note', 'mindmap']);
 export const READY = PAGE_READY;
 export const SCOPES = ['deck', 'folder'];
 const META = 'id,scope,scope_id,parent,pos,kind,title,size,version,updated_by,updated_ai,created_at,updated_at';

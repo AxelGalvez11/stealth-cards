@@ -10,7 +10,8 @@
 //   - a Note refuses a map's data; an AI update keeps the learner's card links unchecked; a deleted moved map's old Figures record goes;
 //     /api/action refuses the server's own actions and keeps Test me marks under the page's own deck; get_page and /api/state move maps;
 //     Make diagram makes a page only for an app that says it opens one (`pages: true`); mapPagesOf's `from` is always an old record.
-// PAGE_READY is still ['note'] in web/pages.mjs; the tests make 'mindmap' (and for the final help strings 'diagram') ready for a while.
+// PAGE_READY is ['note', 'mindmap'] in web/pages.mjs; the tests make 'diagram' ready for a while (for the final help strings), and set
+// it back to just ['note'] for a while to check what happens before the mind map is ready (then put it back as it was).
 // It runs the worktree's server in this process on port 3610 (127.0.0.1), with its data in a new folder that goes afterwards, and
 // answers for the AI (OpenRouter) itself.
 //   node tests/mcp-pages.mjs            (prints each failure, then "mcp-pages: N passed, M failed"; exits 1 on a failure)
@@ -88,12 +89,14 @@ const tool = async (name, args) => {
 };
 const listed = async () => Object.fromEntries(((await call('tools/list', {})) || { tools: [] }).tools.map(t => [t.name, t]));
 const whileReady = async (kinds, fn) => { const added = kinds.filter(k => !pages.PAGE_READY.has(k)); added.forEach(k => pages.PAGE_READY.add(k)); try { return await fn(); } finally { added.forEach(k => pages.PAGE_READY.delete(k)); } };
+// only these kinds ready for a while (as before the mind map was), then PAGE_READY exactly as it was, in its order
+const whileOnly = async (kinds, fn) => { const was = [...pages.PAGE_READY]; pages.PAGE_READY.clear(); kinds.forEach(k => pages.PAGE_READY.add(k)); try { return await fn(); } finally { pages.PAGE_READY.clear(); was.forEach(k => pages.PAGE_READY.add(k)); } };
 const deckOf = name => S().decks.find(d => d.name === name);
 const cardsOf = name => S().cards.filter(c => c.deckId === deckOf(name).id);
 
 try {
   // ---------- the help strings ----------
-  check('PAGE_READY is still just the note', J([...pages.PAGE_READY]) === J(['note']), [...pages.PAGE_READY]);
+  check('PAGE_READY is the note and the mind map', J([...pages.PAGE_READY]) === J(['note', 'mindmap']), [...pages.PAGE_READY]);
   check('the spec’s helps were read', HELPS.MINDMAP_HELP.startsWith('MIND MAP') && HELPS.DIAGRAM_HELP.startsWith('DIAGRAM') && HELPS.FIX_HELP.startsWith('Lucida fixes'));
   await whileReady(['mindmap', 'diagram'], async () => {
     const T = await listed();
@@ -118,18 +121,19 @@ try {
     const all = J(Object.values(T));
     check('4a: every tool listed stays under 45,000 characters', all.length < 45000, all.length);
   });
-  {
+  await whileOnly(['note'], async () => {
     const T = await listed();
     check('note only: create_page offers no map content', !('text' in T.create_page.inputSchema.properties) && !('data' in T.create_page.inputSchema.properties) && J(T.create_page.inputSchema.properties.kind.enum) === J(['note']), T.create_page.inputSchema);
     check('note only: no map help', !T.create_page.description.includes('MIND MAP') && T.create_page.description.includes('presentations, mind maps, diagrams, canvases and docs are coming'), T.create_page.description.slice(0, 200));
-  }
+  });
+  check('…and PAGE_READY is as it was after', J([...pages.PAGE_READY]) === J(['note', 'mindmap']), [...pages.PAGE_READY]);
 
   // ---------- a deck with cards ----------
   check('a deck', !(await tool('create_deck', { name: 'Cell Biology' })).error);
   const added = await tool('add_cards', { deck: 'Cell Biology', cards: [{ front: 'Where does the Krebs cycle happen?', back: 'The mitochondrial matrix' }, { front: 'Where does electron transport happen?', back: 'The inner mitochondrial membrane' }, { front: 'What makes ribosomes?', back: 'The nucleolus' }] });
   const [c1, c2, c3] = cardsOf('Cell Biology').map(c => c.id);
-  check('add_cards answers with the new ids (§6.1 row 10)', added.text === 'Added 3 cards to Cell Biology. Their ids: ' + [c1, c2, c3].join(', ') + '.', added.text);
-  const one = await tool('add_cards', { deck: 'Cell Biology', cards: [{ front: 'What holds the DNA?', back: 'The nucleus' }] }), c4 = cardsOf('Cell Biology')[3].id;
+  check('add_cards answers with the new ids (§6.1 row 10), and says to link them to ideas (a map kind is ready)', added.text === 'Added 3 cards to Cell Biology. Their ids: ' + [c1, c2, c3].join(', ') + ' (link them to a page’s ideas with update_page).', added.text);
+  const one = await whileOnly(['note'], () => tool('add_cards', { deck: 'Cell Biology', cards: [{ front: 'What holds the DNA?', back: 'The nucleus' }] })), c4 = cardsOf('Cell Biology')[3].id;
   check('…one card: its id (while only Notes are ready, nothing about linking ideas)', one.text === 'Added 1 card to Cell Biology. Its id: ' + c4 + '.', one.text);
   check('another deck', !(await tool('create_deck', { name: 'Other' })).error);
   await tool('add_cards', { deck: 'Other', cards: [{ front: 'Other?', back: 'Yes' }] });
@@ -275,8 +279,10 @@ try {
     store.addDiagram(d.id, { kind: 'mindmap', name: 'The cell', at: Date.parse('2026-10-03T12:00:00'), from: { kind: 'all', value: '', label: 'All cards and notes' }, cards: 42, tree: { text: 'Cell', children: [{ text: 'Nucleus', children: [{ text: 'DNA' }] }, { text: 'Mitochondria' }] } });
     store.addDiagram(d.id, { kind: 'table', name: 'Organelles', table: { columns: ['A', 'B'], rows: [['x', 'y'], ['z', 'w']] } });
     const g0 = d.diagrams[0];
-    await tool('list_pages', { deck: 'Legacy deck' });
-    check('before the mind map is ready nothing moves', !d.diagramsMoved && !(await pages.list(null, 'deck', d.id)).length);
+    await whileOnly(['note'], async () => {
+      await tool('list_pages', { deck: 'Legacy deck' });
+      check('before the mind map is ready nothing moves', !d.diagramsMoved && !(await pages.list(null, 'deck', d.id)).length);
+    });
     await whileReady(['mindmap'], async () => {
       const r = await tool('list_pages', { deck: 'Legacy deck' });
       const list = await pages.list(null, 'deck', d.id);
@@ -367,7 +373,7 @@ try {
     await pages.create(null, { scope: 'deck', scopeId: d.id, kind: 'note', title: 'A note' });
     d.diagrams = [{ id: 'gOld', kind: 'mindmap', name: 'Shared map', at: 1, pageId: p.id, tree: { text: 'Root', children: [{ text: 'A' }, { text: 'B' }] } }];
     d.diagramsMoved = { at: 1, map: { gOld: p.id } };
-    check('a map page isn’t shared before the apps can show it', (await mapPagesOf(null, d)).length === 0);
+    await whileOnly(['note'], async () => check('a map page isn’t shared before the apps can show it', (await mapPagesOf(null, d)).length === 0));
     await whileReady(['mindmap'], async () => {
       const out = await mapPagesOf(null, d);
       check('mapPagesOf: the deck’s map pages, with the old record they came from', out.length === 1 && out[0].id === p.id && out[0].kind === 'mindmap' && out[0].title === 'Shared map' && out[0].from === 'gOld', out);
@@ -401,8 +407,8 @@ try {
     store.apply({ type: 'guide.moved', deckId: d.id, main: note.id, map: {} });
     aiAnswer = { title: 'The cell', root: { text: 'The cell', cards: [], children: [{ text: 'Mitochondria', cards: [1, 2], children: [{ text: 'Krebs cycle', cards: [1, 1, 99] }, { text: 'Electron transport', cards: [2] }] }, { text: 'Nucleus', cards: [3], children: [{ text: 'DNA', cards: [3] }] }] } };
     const usedBefore = (S().ai.dg && S().ai.dg.n) || 0;
-    let r = await api('/api/diagrams/make', { deckId: d.id, type: 'mindmap' });
-    check('before the mind map is ready, a made mind map stays in Figures', r.status === 200 && r.j.kind === 'mindmap' && r.j.id && !r.j.pageId && d.diagrams.length === 1, r);
+    let r = await whileOnly(['note'], () => api('/api/diagrams/make', { deckId: d.id, type: 'mindmap', pages: true }));
+    check('before the mind map is ready, a made mind map stays in Figures (even for an app that opens pages)', r.status === 200 && r.j.kind === 'mindmap' && r.j.id && !r.j.pageId && d.diagrams.length === 1 && !d.diagrams[0].pageId && !(await pages.list(null, 'deck', d.id)).some(x => x.kind === 'mindmap'), r);
     check('…the material’s notes came from the Note pages', aiAsked.length && aiAsked[aiAsked.length - 1].messages[1].content.includes('Mitochondria make ATP on the inner membrane.'), aiAsked.length && aiAsked[aiAsked.length - 1].messages[1].content.slice(-200));
     check('…and the AI was asked for each idea’s card lines', J(aiAsked[aiAsked.length - 1].response_format.json_schema.schema.properties.root.properties.children.items.required) === J(['text', 'cards', 'children']));
     await whileReady(['mindmap'], async () => {

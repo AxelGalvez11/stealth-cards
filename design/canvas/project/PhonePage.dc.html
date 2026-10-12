@@ -6583,7 +6583,7 @@ renderVals() {
     : NU ? { id: 'ps2', kind: 'mindmap', scope: 'deck', scopeId: 'cell', title: 'The cell at a glance', version: 3, by: 'Claude', ai: true, updated: Date.now() - 864e5 }
     : { id: 'ps1', kind: 'note', scope: 'deck', scopeId: 'cell', title: 'Cellular respiration', version: 12, by: 'you', ai: false, updated: Date.now() - 864e5 };
   const loading = pg === undefined, missing = pg === null, ok = !!pg;
-  const ready = ok && (mock ? !NU && ["note","mindmap"].includes(pg.kind) : ["note"].includes(pg.kind));
+  const ready = ok && (mock ? !NU && ["note","mindmap"].includes(pg.kind) : ["note","mindmap"].includes(pg.kind));
   const isNote = ready && pg.kind === 'note', isMap = ready && pg.kind === 'mindmap' && (!!mm || !mock), needsUpdate = ok && !ready;
   const KINDS = {"note":"Note","slides":"Presentation","mindmap":"Mind map","diagram":"Diagram","canvas":"Canvas","doc":"Doc"};
   const deck = ok && pg.scope === 'deck' ? db.deck(pg.scopeId) : null, folder = ok && pg.scope === 'folder' ? (db.folders() || []).find(f => f.id === pg.scopeId) : null;

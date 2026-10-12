@@ -33,8 +33,11 @@ const caught = fn => { try { fn(); return null; } catch (e) { return e; } };
 const caughtA = async fn => { try { await fn(); return null; } catch (e) { return e; } };
 const NOTE = { blocks: [{ id: 'b1', type: 'text', text: 'Glycolysis is in the cytoplasm.' }] };
 const MIND = { root: { id: 'cell', label: 'The cell', children: [{ id: 'nuc', label: 'Nucleus' }] } };
+const DIAGRAM = { direction: 'down', nodes: [{ id: 'gly', label: 'Glycolysis' }, { id: 'pyr', label: 'Pyruvate' }], edges: [{ from: 'gly', to: 'pyr' }] };
 const APP_SHAPE = 'This page is a Mind map. Update Lucida to change it here.';
 const AI_SHAPE = 'This page is a Mind map: send its content as text or data (create_page shows both); blocks are a Note’s. Nothing was saved.';
+const APP_SHAPE_DIAGRAM = 'This page is a Diagram. Update Lucida to change it here.';
+const AI_SHAPE_DIAGRAM = 'This page is a Diagram: send its content as text or data (create_page shows both); blocks are a Note’s. Nothing was saved.';
 
 store.load();
 const server = createServer(handle);
@@ -54,10 +57,10 @@ const whileReady = async (kinds, fn) => { const added = kinds.filter(k => !pages
 
 try {
   // ---------- PAGE_READY, the one list ----------
-  check('PAGE_READY is still just the note', J([...pages.PAGE_READY]) === J(['note']), [...pages.PAGE_READY]);
+  check('PAGE_READY is the note and the mind map', J([...pages.PAGE_READY]) === J(['note', 'mindmap']), [...pages.PAGE_READY]);
   check('READY is the same list', pages.READY === pages.PAGE_READY);
-  check('notReady names the kind and what can be made', pages.notReady('mindmap') === 'Lucida can’t show Mind map pages yet; make a note for now.', pages.notReady('mindmap'));
-  check('notReady for a kind that isn’t one', pages.notReady('timeline') === 'A page is a note (the others are coming).', pages.notReady('timeline'));
+  check('notReady names the kind and what can be made', pages.notReady('diagram') === 'Lucida can’t show Diagram pages yet; make a note or a mind map.', pages.notReady('diagram'));
+  check('notReady for a kind that isn’t one', pages.notReady('timeline') === 'A page is a note or a mind map (the others are coming).', pages.notReady('timeline'));
   await whileReady(['mindmap', 'diagram'], () => {
     check('notReady’s lists follow PAGE_READY', pages.notReady('slides') === 'Lucida can’t show Presentation pages yet; make a note, a mind map or a diagram.', pages.notReady('slides'));
     check('…and for a kind that isn’t one', pages.notReady('x') === 'A page is a note, a mind map or a diagram (the others are coming).', pages.notReady('x'));
@@ -95,32 +98,54 @@ try {
   check('a deck to put pages in', !made.error, made.text);
   const deck = store.state().decks.find(d => d.name === 'Safety');
   const mind = await pages.create(null, { scope: 'deck', scopeId: deck.id, kind: 'mindmap', title: 'The cell', data: MIND, who: 'seed' });
-  check('a mind map row can be seeded (no ready check in-process)', mind.kind === 'mindmap' && mind.version === 1, mind);
+  check('a mind map row can be seeded', mind.kind === 'mindmap' && mind.version === 1, mind);
   const reread = async () => pages.get(null, mind.id);
+  const diag = await pages.create(null, { scope: 'deck', scopeId: deck.id, kind: 'diagram', title: 'Respiration', data: DIAGRAM, who: 'seed' });
+  check('a diagram row can be seeded (no ready check in-process)', diag.kind === 'diagram' && diag.version === 1, diag);
+  const rereadDiag = async () => pages.get(null, diag.id);
+  const diagData = J((await rereadDiag()).data);
 
   // in-process: a Note's blocks on the mind map row
   const e1 = await caughtA(() => pages.update(null, mind.id, { baseVersion: 1, data: NOTE }));
   check('pages.update refuses blocks on the mind map row', e1 && e1.code === 'shape', e1 && e1.message);
   check('…and nothing was saved', (await reread()).version === 1 && !('blocks' in (await reread()).data));
+  const e1d = await caughtA(() => pages.update(null, diag.id, { baseVersion: 1, data: NOTE }));
+  check('pages.update refuses blocks on the diagram row', e1d && e1d.code === 'shape', e1d && e1d.message);
+  check('…and nothing was saved', (await rereadDiag()).version === 1 && !('blocks' in (await rereadDiag()).data));
 
   // ---------- /api/pages ----------
   {
-    let r = await api('/api/pages', { op: 'create', scope: 'deck', id: deck.id, kind: 'mindmap', title: 'No' });
-    check('the app can’t make a mind map yet', r.status === 400 && r.j.code === 'ready' && r.j.error === pages.notReady('mindmap'), r);
+    // a kind that isn't ready yet (a diagram): not made, not written, not even its title, not restored
+    let r = await api('/api/pages', { op: 'create', scope: 'deck', id: deck.id, kind: 'diagram', title: 'No' });
+    check('the app can’t make a diagram yet', r.status === 400 && r.j.code === 'ready' && r.j.error === pages.notReady('diagram'), r);
     r = await api('/api/pages', { op: 'create', scope: 'deck', id: deck.id, kind: 'timeline', title: 'No' });
-    check('…nor a kind that isn’t one', r.status === 400 && r.j.error === 'A page is a note (the others are coming).', r);
-    r = await api('/api/pages', { op: 'update', page: mind.id, baseVersion: 1, data: NOTE });
-    check('the app can’t write the mind map row (not ready)', r.status === 400 && r.j.code === 'ready', r);
-    r = await api('/api/pages', { op: 'update', page: mind.id, baseVersion: 1, title: 'Renamed' });
+    check('…nor a kind that isn’t one', r.status === 400 && r.j.error === 'A page is a note or a mind map (the others are coming).', r);
+    r = await api('/api/pages', { op: 'update', page: diag.id, baseVersion: 1, data: NOTE });
+    check('the app can’t write the diagram row (not ready)', r.status === 400 && r.j.code === 'ready', r);
+    r = await api('/api/pages', { op: 'update', page: diag.id, baseVersion: 1, title: 'Renamed' });
     check('…not even its title', r.status === 400 && r.j.code === 'ready', r);
-    r = await api('/api/pages', { op: 'restore', page: mind.id, version: 1, baseVersion: 1 });
+    r = await api('/api/pages', { op: 'restore', page: diag.id, version: 1, baseVersion: 1 });
     check('…nor restore one of its versions', r.status === 400 && r.j.code === 'ready', r);
-    await whileReady(['mindmap'], async () => {
-      r = await api('/api/pages', { op: 'update', page: mind.id, baseVersion: 1, data: NOTE });
-      check('ready, a Note’s blocks on it give 400 shape', r.status === 400 && r.j.code === 'shape' && r.j.error === APP_SHAPE, r);
+    await whileReady(['diagram'], async () => {
+      r = await api('/api/pages', { op: 'update', page: diag.id, baseVersion: 1, data: NOTE });
+      check('ready, a Note’s blocks on the diagram give 400 shape', r.status === 400 && r.j.code === 'shape' && r.j.error === APP_SHAPE_DIAGRAM, r);
     });
+    const nowDiag = await rereadDiag();
+    check('the diagram row is untouched', nowDiag.version === 1 && nowDiag.title === 'Respiration' && J(nowDiag.data) === diagData, nowDiag);
+
+    // the mind map is ready: a Note's blocks on it are refused (400 shape), before and after a save that legitimately goes through
+    r = await api('/api/pages', { op: 'update', page: mind.id, baseVersion: 1, data: NOTE });
+    check('ready, a Note’s blocks on the mind map give 400 shape', r.status === 400 && r.j.code === 'shape' && r.j.error === APP_SHAPE, r);
+    check('…and nothing was saved', (await reread()).version === 1, await reread());
+    r = await api('/api/pages', { op: 'create', scope: 'deck', id: deck.id, kind: 'mindmap', title: 'Yes' });
+    check('the app can make a mind map now', r.status === 200 && r.j.kind === 'mindmap' && !('blocks' in (r.j.data || {})), r);
+    r = await api('/api/pages', { op: 'update', page: mind.id, baseVersion: 1, title: 'Renamed' });
+    check('the app can rename the mind map now', r.status === 200 && r.j.version === 2 && r.j.title === 'Renamed', r);
+    const mv = (await reread()).version;
+    r = await api('/api/pages', { op: 'update', page: mind.id, baseVersion: mv, data: NOTE });
+    check('…and a Note’s blocks on it (at its new version) still give 400 shape', r.status === 400 && r.j.code === 'shape' && r.j.error === APP_SHAPE, r);
     const now = await reread();
-    check('the mind map row is untouched', now.version === 1 && now.title === 'The cell' && J(now.data) === J(pages.cleanData('mindmap', MIND).data), now);
+    check('the mind map row’s ideas are untouched', now.version === mv && now.title === 'Renamed' && J(now.data) === J(pages.cleanData('mindmap', MIND).data), now);
     r = await api('/api/pages', { op: 'create', scope: 'deck', id: deck.id, kind: 'note', title: 'Notes', data: NOTE });
     check('a Note is still made', r.status === 200 && r.j.kind === 'note', r);
     const nid = r.j.id;
@@ -130,17 +155,24 @@ try {
 
   // ---------- MCP ----------
   {
-    let t = await tool('create_page', { deck: 'Safety', kind: 'mindmap', title: 'No', blocks: NOTE.blocks });
-    check('MCP can’t make a mind map yet', t.error && t.text === pages.notReady('mindmap'), t);
-    t = await tool('update_page', { page: mind.id, baseVersion: 1, blocks: NOTE.blocks });
-    check('MCP can’t write the mind map row', t.error && t.text === pages.notReady('mindmap'), t);
-    await whileReady(['mindmap'], async () => {
-      t = await tool('update_page', { page: mind.id, baseVersion: 1, blocks: NOTE.blocks });
-      check('ready, MCP blocks on it get the AI app’s shape words', t.error && t.text === AI_SHAPE, t);
+    let t = await tool('create_page', { deck: 'Safety', kind: 'diagram', title: 'No', blocks: NOTE.blocks });
+    check('MCP can’t make a diagram yet', t.error && t.text === pages.notReady('diagram'), t);
+    t = await tool('update_page', { page: diag.id, baseVersion: 1, blocks: NOTE.blocks });
+    check('MCP can’t write the diagram row', t.error && t.text === pages.notReady('diagram'), t);
+    await whileReady(['diagram'], async () => {
+      t = await tool('update_page', { page: diag.id, baseVersion: 1, blocks: NOTE.blocks });
+      check('ready, MCP blocks on the diagram get the AI app’s shape words', t.error && t.text === AI_SHAPE_DIAGRAM, t);
     });
+    check('the diagram row is still untouched', (await rereadDiag()).version === 1 && J((await rereadDiag()).data) === diagData);
+    t = await tool('create_page', { deck: 'Safety', kind: 'mindmap', title: 'No', blocks: NOTE.blocks });
+    check('MCP can’t make a mind map out of a Note’s blocks', t.error && t.text === AI_SHAPE, t);
+    check('…and made nothing (nor a diagram)', !(await pages.list(null, 'deck', deck.id)).some(x => x.title === 'No'));
+    const mv = (await reread()).version;
+    t = await tool('update_page', { page: mind.id, baseVersion: mv, blocks: NOTE.blocks });
+    check('ready, MCP blocks on the mind map get the AI app’s shape words', t.error && t.text === AI_SHAPE, t);
     t = await tool('list_pages', { deck: 'Safety' });
-    check('list_pages says what can be made', /"kinds_you_can_make": \[\s*"note"\s*\]/.test(t.text), t.text.slice(-200));
-    check('the mind map row is still untouched', (await reread()).version === 1);
+    check('list_pages says what can be made', /"kinds_you_can_make": \[\s*"note",\s*"mindmap"\s*\]/.test(t.text), t.text.slice(-200));
+    check('the mind map row is still untouched', (await reread()).version === mv && J((await reread()).data) === J(pages.cleanData('mindmap', MIND).data));
   }
 
   // ---------- web/pagesclient.js: the 409 merge by kind ----------
