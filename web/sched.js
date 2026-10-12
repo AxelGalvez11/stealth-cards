@@ -27,6 +27,23 @@ export const isLeech = (c, d) => scheduled(d) && (c.srs.lapses || 0) >= leechAt(
 // How likely you are to remember a card at time `t` (1 right after a review), or null before its first review.
 export const recallAt = (c, t) => (c.srs.state === 'new' || !(c.srs.s > 0) ? null : recall(Math.max(0, (t - (c.srs.last || t)) / DAY), c.srs.s));
 
+// ---------- how well a card is known: one meaning of "weak" everywhere ----------
+// The mind map's weak spots, a Note's card blocks and the weak flag the AI link sends all use this (the owner, 2026-10-11, step 4
+// spec §13 Q2: a card is weak while its recall is low now, not forever after one forget):
+//   'new'      never reviewed
+//   'weak'     relearning, or recall now under 70%, or forgotten twice or more with recall under 85%
+//   'getting'  still learning, or recall under 90% ("getting there")
+//   'solid'    anything else
+export function toneOf(c, now = Date.now()) {
+  const s = c && c.srs;
+  if (!s || s.state === 'new') return 'new';
+  if (s.state === 'relearning') return 'weak';
+  const r = recallAt(c, now);
+  if (r != null && (r < 0.7 || ((s.lapses || 0) >= 2 && r < 0.85))) return 'weak';
+  if (s.state === 'learning' || r == null || r < 0.9) return 'getting';
+  return 'solid';
+}
+
 // ---------- exam date ----------
 // A deck can have an exam day ('2026-10-12'). From EXAM_DAYS before it, cards come up as soon as your memory of them
 // slips under a goal that rises from the deck's own to EXAM_GOAL on the day, so the cards you'd forget by then come up
