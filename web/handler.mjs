@@ -135,7 +135,9 @@ async function publicPage(req, res, path) {
 //   GET  /api/pages/<id>                      one page with its data;  /api/pages/<id>/versions  its versions;  …/versions/<n>  one of them
 //   POST /api/pages {op:'create', scope, id, kind, title, data, parent} | {op:'update', page, baseVersion, title?, data?}
 //                   | {op:'move', page, parent?, pos?} | {op:'delete', page} | {op:'restore', page, version, baseVersion}
-// A save made from an older version answers 409 with the page as it is now (`current`).
+// A save made from an older version answers 409 with the page as it is now (`current`). Making or writing a page of a kind the
+// apps can't show yet (not in pages.PAGE_READY) is refused (code 'ready'), and a Note's blocks sent to a page of another kind too
+// (code 'shape': an older app that opens every page as a Note).
 async function pagesApi(req, res, path, body, uid) {
   const fail = e => { if (!(e instanceof pages.PageError) && !/^[A-Z]/.test(e.message)) console.error(e); return send(res, e.status && e.status < 500 ? e.status : 400, { error: e.message, ...(e.code ? { code: e.code, current: e.current } : {}) }); };
   try {
@@ -157,11 +159,11 @@ async function pagesApi(req, res, path, body, uid) {
     const a = jsonOf(body), pro = isPro(), once = pages.onceFor(req), who = 'you';
     const out = await once('app', async () => {
       switch (a.op) {
-        case 'create': { const sc = pageScope(a.scope, a.id); return pages.create(uid, { scope: sc.scope, scopeId: sc.id, kind: a.kind, title: a.title, data: a.data, parent: a.parent || '', who, pro }); }
-        case 'update': return pages.update(uid, a.page, { baseVersion: a.baseVersion, title: a.title, data: a.data, who, summary: a.summary, pro });
+        case 'create': { const sc = pageScope(a.scope, a.id); return pages.create(uid, { scope: sc.scope, scopeId: sc.id, kind: a.kind, title: a.title, data: a.data, parent: a.parent || '', who, pro, ready: true }); }
+        case 'update': return pages.update(uid, a.page, { baseVersion: a.baseVersion, title: a.title, data: a.data, who, summary: a.summary, pro, ready: true });
         case 'move': return pages.move(uid, a.page, { parent: a.parent, pos: a.pos });
         case 'delete': return pages.remove(uid, a.page);
-        case 'restore': return pages.restore(uid, a.page, a.version, { baseVersion: a.baseVersion, who, pro });
+        case 'restore': return pages.restore(uid, a.page, a.version, { baseVersion: a.baseVersion, who, pro, ready: true });
         default: throw new pages.PageError('Unknown op ' + a.op);
       }
     });

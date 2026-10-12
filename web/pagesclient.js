@@ -5,11 +5,18 @@
 //   - A save goes out a moment after the last change (one at a time per page) from the version the screen showed. When the page
 //     changed meanwhile (409), the two are merged block by block: the blocks this person changed (or added, or took out) since
 //     that version go onto the newer one, everything else is the newer one's, and that is saved on top. `conflict(id)` then says
-//     who changed it and which versions hold what, for the line at the top of the page.
+//     who changed it and which versions hold what, for the line at the top of the page. The merge goes by the page's kind (MERGE):
+//     a Note's block by block, a Mind map's and a Diagram's by web/maps.js (once it's there). A kind with no merge never sends
+//     what was written here over the other's: the page shows theirs, and the saving line says what wasn't saved.
+//   - Only a Note is ever written as Markdown: a page of another kind never gets a Note's blocks from here.
 import { noteToMarkdown, markdownToNote } from './pageblocks.js';
 
+// web/maps.js (the map kinds' merge), loaded if it's there; until it is, a map page has no merge.
+let maps = null;
+import('./maps.js').then(m => { const x = m.default || m; if (x && typeof x.merge === 'function') maps = x; }).catch(() => {});
+
 export function createPages({ changed, say }) {
-  const mds = new Map(), lists = new Map(), pages = new Map(), vers = new Map(), asked = new Set(), conflicts = new Map(), queue = new Map();
+  const mds = new Map(), lists = new Map(), pages = new Map(), vers = new Map(), asked = new Set(), conflicts = new Map(), queue = new Map(), errs = new Map();
   let rev = 0;
   const key = (scope, id) => scope + '|' + id;
   async function call(url, body) {
@@ -54,6 +61,13 @@ export function createPages({ changed, say }) {
     });
     return { blocks: out };
   }
+  // How a 409 is merged, by kind: each gives { data } (mine on top of theirs), or there's none and nothing of mine is sent.
+  const MERGE = {
+    note: (base, mine, theirs) => ({ data: merge(base, mine, theirs) }),
+    mindmap: (base, mine, theirs) => maps.merge('mindmap', base, mine, theirs, { prefer: 'mine' }),
+    diagram: (base, mine, theirs) => maps.merge('diagram', base, mine, theirs, { prefer: 'mine' })
+  };
+  const mergeOf = kind => (kind === 'note' || (maps && (kind === 'mindmap' || kind === 'diagram')) ? MERGE[kind] : null);
 
   async function flush(id) {
     const q = queue.get(id); if (!q || q.busy) return;
@@ -61,24 +75,41 @@ export function createPages({ changed, say }) {
     const { title, data } = q; q.title = undefined; q.data = undefined;
     try {
       let p;
+      let lost = '';
       try { p = await call('/api/pages', { op: 'update', page: id, baseVersion: q.base, title, data }); }
       catch (e) {
         if (e.code !== 'conflict' || !e.current) throw e;
-        const cur = e.current, merged = data !== undefined && cur.kind === 'note' ? merge(q.baseData, data, cur.data) : data;
-        p = await call('/api/pages', { op: 'update', page: id, baseVersion: cur.version, title, data: merged, summary: 'Kept what you wrote, with ' + (cur.by || 'the other') + '’s change' });
-        conflicts.set(id, { by: cur.by, ai: cur.ai, theirs: cur.version, mine: p.version });
-        if (q.data === undefined) mds.delete(id);   // the page shows the merged one
+        const cur = e.current, how = data !== undefined ? mergeOf(cur.kind) : null;
+        let merged;
+        if (data !== undefined && how) { try { merged = how(q.baseData, data, cur.data); } catch { merged = null; } }
+        if (data !== undefined && !(merged && merged.data)) {
+          // no merge for this kind (or it failed): theirs stays, and nothing written here goes over it
+          p = cur; lost = 'Your change wasn’t saved: ' + (cur.by || 'someone') + ' changed this page (v' + cur.version + ').';
+          q.data = undefined; q.title = undefined; mds.delete(id);
+        } else {
+          p = await call('/api/pages', { op: 'update', page: id, baseVersion: cur.version, title, data: merged ? merged.data : undefined, summary: 'Kept what you wrote, with ' + (cur.by || 'the other') + '’s change' });
+          conflicts.set(id, { by: cur.by, ai: cur.ai, theirs: cur.version, mine: p.version });
+          if (q.data === undefined) mds.delete(id);   // the page shows the merged one
+        }
       }
       q.base = p.version; q.baseData = p.data;
       if (q.data === undefined && q.title === undefined) pages.set(id, p);
       else pages.set(id, { ...p, data: q.data !== undefined ? q.data : p.data, title: q.title !== undefined ? q.title : p.title });
-      q.saved = Date.now(); q.err = '';
+      if (!lost) q.saved = Date.now();
+      q.err = lost;
       vers.delete(id);
       for (const [k, l] of lists) if (l.some(x => x.id === id)) lists.set(k, l.map(x => (x.id === id ? { ...x, title: p.title, version: p.version, by: p.by, ai: p.ai, updated: p.updated } : x)));
-    } catch (e) { q.err = e.message || 'Couldn’t save.'; if (data !== undefined && q.data === undefined) q.data = data; if (title !== undefined && q.title === undefined) q.title = title; }
+    } catch (e) {
+      q.err = e.message || 'Couldn’t save.';
+      // a kind this app can't write (code 'ready'), or data that isn't the page's kind (code 'shape'): trying again won't help
+      const final = e.code === 'ready' || e.code === 'shape';
+      if (!final && data !== undefined && q.data === undefined) q.data = data;
+      if (!final && title !== undefined && q.title === undefined) q.title = title;
+    }
     finally { q.busy = false; changed(); }
     if (q.data !== undefined || q.title !== undefined) { if (q.err) q.timer = setTimeout(() => flush(id), 4000); else flush(id); }
     else if (!q.err) queue.delete(id);
+    else if (!q.timer) { queue.delete(id); errs.set(id, q.err); changed(); }   // nothing left to send: the line stays until the next change
   }
 
   const api = {
@@ -88,17 +119,19 @@ export function createPages({ changed, say }) {
     loaded: (scope, id) => lists.has(key(scope, id)),
     // One page with its data (undefined until it arrives, null when there's no such page). What's being saved shows as it is here.
     page(id) { if (!pages.has(id)) fetchPage(id); return pages.get(id); },
-    saving: id => { const q = queue.get(id); return q ? { busy: !!(q.busy || q.timer), err: q.err || '', saved: q.saved || 0 } : { busy: false, err: '', saved: 0 }; },
+    saving: id => { const q = queue.get(id); return q ? { busy: !!(q.busy || q.timer), err: q.err || '', saved: q.saved || 0 } : { busy: false, err: errs.get(id) || '', saved: 0 }; },
     conflict: id => conflicts.get(id) || null,
     clearConflict: id => { conflicts.delete(id); changed(); },
     versions(id) { if (!vers.has(id)) { vers.set(id, null); call('/api/pages/' + id + '/versions').then(j => { vers.set(id, j.versions); changed(); }).catch(() => vers.delete(id)); } return vers.get(id); },
     version: (id, v) => call('/api/pages/' + id + '/versions/' + v),
     // A Note as Markdown, for the editor (web/notes.js): what was typed here while it's being saved, else the saved blocks as Markdown.
     markdown(id) { if (mds.has(id)) return mds.get(id); const p = pages.get(id); return p && p.kind === 'note' ? noteToMarkdown(p.data) : ''; },
-    editMarkdown(id, md) { const p = pages.get(id); if (!p) return; mds.set(id, md); api.edit(id, { data: markdownToNote(md, p.data) }); },
+    editMarkdown(id, md) { const p = pages.get(id); if (!p || p.kind !== 'note') return; mds.set(id, md); api.edit(id, { data: markdownToNote(md, p.data) }); },
     // A change: shown at once, saved a moment after the last one.
     edit(id, { title, data }) {
       const p = pages.get(id); if (!p) return;
+      if (data !== undefined && p.kind !== 'note' && data && Array.isArray(data.blocks)) return;   // a Note's blocks never go on another kind
+      errs.delete(id);
       let q = queue.get(id);
       if (!q) queue.set(id, q = { base: p.version, baseData: p.data });
       if (title !== undefined) q.title = title;

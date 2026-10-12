@@ -9,7 +9,10 @@
 //     it is now (a PageError with code 'conflict' and `current`), so the app or the AI app reads it again and merges: two
 //     writers never overwrite each other unseen. The row is only changed where its version is still the base one, so two
 //     saves at the same moment can't both win.
-//   - A Note's data is blocks (web/pageblocks.js); an AI app may send Markdown instead, which becomes blocks.
+//   - A Note's data is blocks (web/pageblocks.js); an AI app may send Markdown instead, which becomes blocks. A Mind map's and a
+//     Diagram's data is cleaned by web/maps.js (normalize), and a Note's blocks sent to one of them are refused (code 'shape'):
+//     an older app that opens every page as a Note can't turn a map into a Note.
+//   - Only the kinds in PAGE_READY can be made or written from the app and from AI apps (handler.mjs and mcp.mjs pass `ready`).
 //   - Deleting a page marks it deleted (its versions stay until the deck goes), and pages inside it move up to its parent.
 import { rest, val, inList } from './supa.mjs';
 import { PAGES } from './plans.mjs';
@@ -18,7 +21,9 @@ import { normalizeNote, markdownToNote } from './pageblocks.js';
 export const KINDS = ['note', 'slides', 'mindmap', 'diagram', 'canvas', 'doc'];
 export const KIND_NAMES = { note: 'Note', slides: 'Presentation', mindmap: 'Mind map', diagram: 'Diagram', canvas: 'Canvas', doc: 'Doc' };
 // The kinds the apps can show so far (the rest come in the approved order: mind map and diagram, presentation, canvas, doc).
-export const READY = new Set(['note']);
+// The one list: the server, MCP and the apps' New page all go by it (a test may add a kind to it for a while).
+export const PAGE_READY = new Set(['note']);
+export const READY = PAGE_READY;
 export const SCOPES = ['deck', 'folder'];
 const META = 'id,scope,scope_id,parent,pos,kind,title,size,version,updated_by,updated_ai,created_at,updated_at';
 
@@ -32,20 +37,59 @@ const limits = pro => (pro === false ? PAGES.free : PAGES.pro);
 // (an empty title stays empty: the apps show Untitled, and the title box waits for one)
 const cleanTitle = t => String(t ?? '').replace(/[\u0000-\u001f]+/g, ' ').trim().slice(0, 200);
 
-// A page's data, made safe and the right shape for its kind; too big is refused.
-export function cleanData(kind, data, prev) {
-  let out;
+// "a note, a mind map or a diagram": the kinds that are ready, in words.
+const words = list => (list.length < 2 ? list.join('') : list.slice(0, -1).join(', ') + ' or ' + list[list.length - 1]);
+const readyWords = () => words(KINDS.filter(k => PAGE_READY.has(k)).map(k => 'a ' + KIND_NAMES[k].toLowerCase()));
+// What a kind that isn't ready (or isn't a kind at all) answers, the same over MCP and in the app.
+export const notReady = kind => (KINDS.includes(kind)
+  ? 'Lucida can’t show ' + KIND_NAMES[kind] + ' pages yet; make ' + readyWords() + (PAGE_READY.size < 2 ? ' for now' : '') + '.'
+  : 'A page is ' + readyWords() + ' (the others are coming).');
+const refuseUnready = kind => { if (!PAGE_READY.has(kind)) throw new PageError(notReady(kind), 400, { code: 'ready' }); };
+
+// web/maps.js cleans the map kinds' data. It's loaded here if it's there (and works), so this file runs before it is written too.
+let maps = null;
+try { const m = await import('./maps.js'); maps = m.default || m; if (typeof maps.normalize !== 'function') maps = null; } catch { maps = null; }
+const MAP_KINDS = new Set(['mindmap', 'diagram']);
+// A new page's data when none is sent (maps.js's emptyOf when it's there).
+const EMPTY = { note: { blocks: [] }, mindmap: { root: { id: 'root', label: '' } }, diagram: { direction: 'down', nodes: [], edges: [] } };
+export const emptyOf = kind => JSON.parse(JSON.stringify((maps && typeof maps.emptyOf === 'function' && MAP_KINDS.has(kind) && maps.emptyOf(kind)) || EMPTY[kind] || {}));
+// A Note's blocks sent to a page of another kind (what an older app that opens every page as a Note would save).
+const noteShaped = d => !!d && typeof d === 'object' && !Array.isArray(d) && Array.isArray(d.blocks);
+const shapeError = (kind, ai) => new PageError(ai
+  ? 'This page is a ' + KIND_NAMES[kind] + ': send its content as text or data (create_page shows both); blocks are a Note’s. Nothing was saved.'
+  : 'This page is a ' + KIND_NAMES[kind] + '. Update Lucida to change it here.', 400, { code: 'shape' });
+
+// A page's data, made safe and the right shape for its kind; too big is refused. `prev` is the page's data before (a Note keeps
+// its blocks' ids, a map its ideas' ids and what the learner owns), `ai` says an AI app or Lucida's AI wrote it (app saves and
+// Restore are taken as sent), and `title` is the page's. A Note's blocks are never kept on a page of another kind.
+export function cleanData(kind, data, prev, { ai = false, title = '' } = {}) {
+  let out, warnings = [];
   if (kind === 'note') {
     const n = typeof data === 'string' ? markdownToNote(data, prev) : data && typeof data.markdown === 'string' && !Array.isArray(data.blocks) ? markdownToNote(data.markdown, prev) : normalizeNote(data || {});
     out = { blocks: n.blocks };
   } else {
-    if (data == null) data = {};
-    if (typeof data !== 'object' || Array.isArray(data)) throw new PageError('A ' + KIND_NAMES[kind] + ' page’s data is an object.');
-    out = JSON.parse(JSON.stringify(data));
+    if (noteShaped(data)) throw shapeError(kind, ai);
+    if (data == null) data = emptyOf(kind);
+    let r = null;
+    if (maps && MAP_KINDS.has(kind)) {
+      try { r = maps.normalize(kind, data, prev, { ai, title }); }
+      catch (e) {
+        if (e instanceof TypeError || e instanceof RangeError || e instanceof ReferenceError) throw e;
+        // (a kind web/maps.js can't read yet, the diagram until step 4b: its data is kept as an object, below)
+        if (e.code !== 'kind') throw new PageError(e.message, 400, e.code ? { code: e.code } : {});
+      }
+    }
+    if (r) {
+      out = r.data; warnings = r.warnings || [];
+      if (!out || typeof out !== 'object' || noteShaped(out)) throw shapeError(kind, ai);
+    } else {
+      if (typeof data !== 'object' || Array.isArray(data)) throw new PageError('A ' + KIND_NAMES[kind] + ' page’s data is an object.');
+      out = JSON.parse(JSON.stringify(data));
+    }
   }
   const size = JSON.stringify(out).length;
   if (size > PAGES.bytes) throw new PageError('That page is too big: ' + Math.round(size / 1000) + ' KB, and a page holds up to ' + PAGES.bytes / 1000 + ' KB. Split it into pages.');
-  return { data: out, size };
+  return { data: out, size, warnings };
 }
 
 const ask = (path, o) => rest(path, o);
@@ -74,36 +118,43 @@ async function prune(uid, id, version, pro) {
   if (version > keep) await ask('/page_versions?page_id=eq.' + val(id) + '&version=lte.' + (version - keep), { method: 'DELETE' });
 }
 
-// A new page in a deck or a folder (the caller has checked the deck or folder is the person's own and may be written).
-export async function create(uid, { scope, scopeId, kind, title, data, parent = '', who = 'you', ai = false, summary = '', pro }) {
+// A new page in a deck or a folder (the caller has checked the deck or folder is the person's own and may be written). `ready`
+// (the app and AI apps) refuses a kind that isn't in PAGE_READY.
+export async function create(uid, { scope, scopeId, kind, title, data, parent = '', who = 'you', ai = false, summary = '', pro, ready = false }) {
   if (!SCOPES.includes(scope)) throw new PageError('A page belongs to a deck or a folder.');
+  if (ready) refuseUnready(kind);
   if (!KINDS.includes(kind)) throw new PageError('A page is one of: ' + KINDS.join(', ') + '.');
   const have = await list(uid, scope, scopeId);
   if (have.length >= limits(pro).perScope) throw new PageError(pro === false ? 'Free holds ' + PAGES.free.perScope + ' pages in a ' + scope + '. Go Pro for more: lucida.cards/pricing' : 'A ' + scope + ' holds up to ' + PAGES.pro.perScope + ' pages.', 402);
   if (parent && !have.some(p => p.id === parent)) throw new PageError('The page to put it inside isn’t in that ' + scope + '.');
-  const c = cleanData(kind, data);
+  const c = cleanData(kind, data, undefined, { ai, title: cleanTitle(title) });
   const r = { id: newId(), owner: owner(uid), scope, scope_id: String(scopeId), parent: parent || '', pos: have.length ? Math.max(...have.map(p => p.pos || 0)) + 1 : 0, kind, title: cleanTitle(title, kind), data: c.data, size: c.size, version: 1, updated_by: who, updated_ai: !!ai, created_at: now(), updated_at: now() };
   await ask('/pages', { method: 'POST', body: r });
   await keepVersion(uid, r, { who, ai, summary: summary || 'Made the page' });
-  return fullOf(r);
+  return withWarnings(fullOf(r), c.warnings);
 }
+// What cleaning repaired, said beside the page it gave back (not kept).
+const withWarnings = (p, w) => (w && w.length ? { ...p, warnings: w } : p);
 
 // A save: new data and/or title, made from `baseVersion`. Refused with the page as it is now when that isn't its version.
-export async function update(uid, id, { baseVersion, title, data, who = 'you', ai = false, summary = '', pro }) {
+// `ready` (the app and AI apps) refuses a page whose kind isn't in PAGE_READY.
+export async function update(uid, id, { baseVersion, title, data, who = 'you', ai = false, summary = '', pro, ready = false }) {
   const cur = await mustGet(uid, id);
+  if (ready) refuseUnready(cur.kind);
   const base = Number(baseVersion);
   const conflict = c => new PageError('This page changed since version ' + base + ': it is at version ' + c.version + ' now (' + (c.updated_by || 'someone') + '). Read it again, merge your change into it, and save with baseVersion ' + c.version + '.', 409, { code: 'conflict', current: fullOf(c) });
   if (!Number.isInteger(base) || base < 1) throw new PageError('Say which version the change was made from (baseVersion, from get_page).');
   if (base !== cur.version) throw conflict(cur);
   const patch = { version: cur.version + 1, updated_by: who, updated_ai: !!ai, updated_at: now() };
   if (title !== undefined) patch.title = cleanTitle(title, cur.kind);
-  if (data !== undefined) { const c = cleanData(cur.kind, data, cur.kind === 'note' ? cur.data : undefined); patch.data = c.data; patch.size = c.size; }
+  let warnings = [];
+  if (data !== undefined) { const c = cleanData(cur.kind, data, cur.data, { ai, title: patch.title ?? cur.title }); patch.data = c.data; patch.size = c.size; warnings = c.warnings; }
   const got = await ask('/pages?id=eq.' + val(id) + '&owner=eq.' + val(owner(uid)) + '&version=eq.' + base, { method: 'PATCH', body: patch, prefer: 'return=representation' });
   const r = got && got[0];
   if (!r) throw conflict((await row(uid, id)) || cur);
   await keepVersion(uid, r, { who, ai, summary });
   await prune(uid, id, r.version, pro);
-  return fullOf(r);
+  return withWarnings(fullOf(r), warnings);
 }
 
 // Where a page sits: inside another page of the same deck or folder ('' for the top), and its place among its siblings. Not a new version.
@@ -155,9 +206,9 @@ export async function version(uid, id, v) {
   return { version: r.version, title: r.title, data: r.data, by: r.author, ai: !!r.ai, summary: r.summary, at: Date.parse(r.created_at) };
 }
 // Restoring an older version is a new version with its words (what was there stays a version too).
-export async function restore(uid, id, v, { baseVersion, who = 'you', ai = false, pro }) {
+export async function restore(uid, id, v, { baseVersion, who = 'you', ai = false, pro, ready = false }) {
   const old = await version(uid, id, v);
-  return update(uid, id, { baseVersion, title: old.title, data: old.data, who, ai, summary: 'Restored version ' + old.version, pro });
+  return update(uid, id, { baseVersion, title: old.title, data: old.data, who, ai, summary: 'Restored version ' + old.version, pro, ready });
 }
 
 // When the person's pages last changed (the app asks /api/rev every few seconds, and reads the list again when this moves).

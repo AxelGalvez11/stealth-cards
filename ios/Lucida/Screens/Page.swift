@@ -4,6 +4,8 @@
 // itself in the Notes editor (Design/NotesViews.swift, `titled`): its callouts, chains, tables and toggles, the deck's cards it shows (front and back, a weak one
 // marked) and the pages it shows (a tap opens them). "+ Card" on a block makes a card from it (New card from this block). When the person's AI changed the page
 // while it was being written, both are kept and a line says so. The page saves as it's typed (Data/Pages.swift, like web/pagesclient.js).
+// A page of a kind this build can't show (not in PageKind.ready: a Mind map, a Diagram, or a kind that came later) says it needs a newer Lucida, with Back:
+// it is never opened in the Notes editor, and nothing on it is saved from here.
 import SwiftUI
 
 struct PageScreen: View {
@@ -43,6 +45,8 @@ private struct PageBody: View {
     var loading = false, missing = false
     var deckId = "", deckName = "Library", canEdit = false
     var md = ""
+    /// Whether this build can show the page's kind (else "Needs an update").
+    var ready = true
   }
   private func now() -> Now {
     var n = Now(page: pages.page(id))
@@ -50,8 +54,9 @@ private struct PageBody: View {
     if let p = n.page {
       n.deckId = p.scope == "deck" ? (store.demo ? "cell" : p.scopeId) : ""
       n.deckName = n.deckId.isEmpty ? "Library" : store.deck(n.deckId).name
-      n.canEdit = store.demo || (!n.deckId.isEmpty && store.guide(n.deckId).can)
-      n.md = pages.markdown(id)
+      n.ready = PageKind.canShow(p.kind)
+      n.canEdit = n.ready && (store.demo || (!n.deckId.isEmpty && store.guide(n.deckId).can))
+      n.md = n.ready ? pages.markdown(id) : ""
     }
     return n
   }
@@ -64,7 +69,7 @@ private struct PageBody: View {
       ZStack(alignment: .bottom) {
         VStack(spacing: 0) {
           header(n, histOpen)
-          if let p = n.page { pageArea(n, p, keys: keys) }
+          if let p = n.page { if n.ready { pageArea(n, p, keys: keys) } else { needsUpdate(n, p) } }
           else {
             Text(n.loading ? "One moment…" : "This page isn’t here any more.").css(15).foregroundStyle(t.muted)
               .frame(maxWidth: .infinity).padding(.vertical, 60).frame(maxHeight: .infinity, alignment: .top)
@@ -103,7 +108,7 @@ private struct PageBody: View {
       }
       .buttonStyle(.press).accessibilityLabel("Back to " + n.deckName).accessibilityIdentifier("backButton")
       Spacer(minLength: 0)
-      let label = sv.err.isEmpty ? (sv.busy ? "Saving…" : "") : "Not saved: " + sv.err
+      let label = sv.err.isEmpty ? (sv.busy ? "Saving…" : "") : sv.err.hasPrefix("Your change") ? sv.err : "Not saved: " + sv.err
       if !label.isEmpty { Text(label).css(13).foregroundStyle(sv.err.isEmpty ? t.muted : t.again).lineLimit(1).accessibilityIdentifier("saveLabel") }
       if let p = n.page {
         Button { withAnimation(Motion.pop) { hist = !histOpen; more = false } } label: {
@@ -170,6 +175,27 @@ private struct PageBody: View {
     .animation(Motion.fade, value: railOn)
     .scrollDismissesKeyboard(.interactively)
     .frame(maxHeight: .infinity)
+  }
+
+  /// A page this build can't show: "This Mind map needs a newer Lucida. Update to open it." and Back (design/pages.mjs, 'Needs an update'). The Notes
+  /// editor is never mounted for it, so nothing on it can be saved from here.
+  private func needsUpdate(_ n: Now, _ p: PageInfo) -> some View {
+    VStack(spacing: 14) {
+      Icon(PageKind.icon(p.kind), 22, 2).foregroundStyle(t.text).frame(width: 52, height: 52).background(Circle().fill(t.bg))
+      Text("This " + PageKind.name(p.kind) + " needs a newer Lucida. Update to open it.")
+        .css(17, .semibold, lh: 1.35).multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+        .accessibilityIdentifier("page.needsUpdate")
+      Button { back(n) } label: {
+        Text("Back").css(14, .semibold).foregroundStyle(t.invText).padding(.horizontal, 18).frame(height: 40).background(Capsule().fill(t.inv))
+      }
+      .buttonStyle(.press).accessibilityLabel("Back to " + n.deckName).padding(.top, 4)
+    }
+    .frame(maxWidth: .infinity)
+    .padding(.horizontal, 24).padding(.vertical, 40)
+    .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(t.surf))
+    .padding(.horizontal, 16).padding(.top, 24)
+    .frame(maxHeight: .infinity, alignment: .top)
+    .accessibilityElement(children: .contain)
   }
 
   /// The title: a field of its own over the Note (Enter goes on to the Note's first line); reading, the title as a heading.
@@ -286,7 +312,7 @@ private struct PageBody: View {
   }
   /// The page's words go into the editor once they're here (and again when they change from somewhere else: an AI app's change, a version brought back).
   private func load(_ n: Now) {
-    guard let p = n.page else { return }
+    guard let p = n.page, n.ready else { return }
     hooks.makeCard = n.canEdit && !n.deckId.isEmpty ? { _, md in
       Keyboard.hide()
       withAnimation(Motion.sheet) { make = (front: "", back: PageBody.plain(md)) }

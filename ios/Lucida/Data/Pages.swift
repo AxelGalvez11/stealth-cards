@@ -6,6 +6,9 @@
 //   - A save goes out a moment after the last change (one at a time per page) from the version the screen showed. When the page changed meanwhile (409), the
 //     two are merged block by block (PageMerge): the blocks this person changed (or added, or took out) since that version go onto the newer one, everything
 //     else is the newer one's, and that is saved on top. `conflict(id)` then says who changed it and which versions hold what, for the line on the page.
+//     The merge goes by the page's kind (PageMerge.of): a kind with none never sends what was written here over the other's; the page shows theirs, and
+//     the saving line says what wasn't saved.
+//   - Only the kinds this build can show (PageKind.ready) are ever written from here, and only a Note as Markdown.
 //   - A Note is edited as Markdown (the Notes editor's): `markdown(id)` is what was typed here while it's being saved (so the editor's words never jump), else
 //     the saved blocks as Markdown; `editMarkdown` turns it back into blocks (web/pageblocks.js, which keeps the ids of the blocks that didn't change).
 import SwiftUI
@@ -37,6 +40,8 @@ final class PagesStore: ObservableObject {
   private var asked: Set<String> = []
   private var conflicts: [String: Conflict] = [:]
   private var queue: [String: Q] = [:]
+  /// What went wrong with a page's last save when there's nothing left to send (until the next change).
+  private var errs: [String: String] = [:]
   private var rev: Double = 0
   /// How long after the last change a save goes out (pagesclient's 700 ms), and how long after one fails it tries again.
   static var wait: UInt64 = 700_000_000, retry: UInt64 = 4_000_000_000
@@ -98,7 +103,7 @@ final class PagesStore: ObservableObject {
   }
   func isMissing(_ id: String) -> Bool { missing.contains(id) }
   func saving(_ id: String) -> Saving {
-    guard let q = queue[id] else { return Saving() }
+    guard let q = queue[id] else { return Saving(err: errs[id] ?? "") }
     return Saving(busy: q.busy || q.timer != nil, err: q.err, saved: q.saved)
   }
   func conflict(_ id: String) -> Conflict? { conflicts[id] }
@@ -126,14 +131,15 @@ final class PagesStore: ObservableObject {
 
   // ---------- changes ----------
   func editMarkdown(_ id: String, _ md: String) {
-    guard let p = byId[id] else { return }
+    guard let p = byId[id], p.kind == "note" else { return }
     mds[id] = md
     edit(id, data: GuideEngine.shared.markdownToNote(md, previous: p.data))
   }
   /// A change: shown at once, saved a moment after the last one.
   func edit(_ id: String, title: String? = nil, data: String? = nil) {
-    guard var p = byId[id] else { return }
+    guard var p = byId[id], PageKind.canShow(p.kind) else { return }
     if demo { if let title { p.title = title }; byId[id] = p; changed(); return }
+    errs[id] = nil
     let q = queue[id] ?? Q(base: p.version, baseData: p.data)
     queue[id] = q
     if let title { q.title = title; p.title = title }
@@ -153,40 +159,56 @@ final class PagesStore: ObservableObject {
   func flush(_ id: String) async {
     guard let q = queue[id], !q.busy else { return }
     q.timer?.cancel(); q.timer = nil; q.busy = true
-    let title = q.title, data = q.data
+    let title = q.title, data = q.data, kind = byId[id]?.kind ?? "note"
     q.title = nil; q.data = nil
+    var final = false
     do {
       var body: [String: Any] = ["op": "update", "page": id, "baseVersion": q.base]
       if let title { body["title"] = title }
-      if let data { body["data"] = PageJSON.object(data) ?? ["blocks": []] }
+      if let data { body["data"] = PageJSON.object(data) ?? PageEmpty.of(kind) }
       var (st, j) = try await api.pages("", body: body)
+      var lost = ""
       if st == 409, j["code"] as? String == "conflict", let curJ = j["current"] as? [String: Any] {
         let cur = PageInfo(json: curJ)
-        let merged = data.map { cur.kind == "note" ? PageMerge.merge(base: q.baseData, mine: $0, theirs: cur.data) : $0 }
-        var again: [String: Any] = ["op": "update", "page": id, "baseVersion": cur.version, "summary": "Kept what you wrote, with " + (cur.by.isEmpty ? "the other" : cur.by) + "’s change"]
-        if let title { again["title"] = title }
-        if let merged { again["data"] = PageJSON.object(merged) ?? ["blocks": []] }
-        (st, j) = try await api.pages("", body: again)
-        if (200..<300).contains(st) {
-          conflicts[id] = Conflict(by: cur.by, ai: cur.ai, theirs: cur.version, mine: PageInfo.int(j["version"]))
-          if q.data == nil { mds[id] = nil }   // the page shows the merged one
+        let how = PageMerge.of(cur.kind)
+        if data != nil && how == nil {
+          // no merge for this kind: theirs stays, and nothing written here goes over it
+          lost = "Your change wasn’t saved: " + (cur.by.isEmpty ? "someone" : cur.by) + " changed this page (v\(cur.version))."
+          q.data = nil; q.title = nil; mds[id] = nil
+          (st, j) = (200, curJ)
+        } else {
+          let merged = data.flatMap { d in how.map { $0(q.baseData, d, cur.data) } }
+          var again: [String: Any] = ["op": "update", "page": id, "baseVersion": cur.version, "summary": "Kept what you wrote, with " + (cur.by.isEmpty ? "the other" : cur.by) + "’s change"]
+          if let title { again["title"] = title }
+          if let merged { again["data"] = PageJSON.object(merged) ?? PageEmpty.of(cur.kind) }
+          (st, j) = try await api.pages("", body: again)
+          if (200..<300).contains(st) {
+            conflicts[id] = Conflict(by: cur.by, ai: cur.ai, theirs: cur.version, mine: PageInfo.int(j["version"]))
+            if q.data == nil { mds[id] = nil }   // the page shows the merged one
+          }
         }
       }
-      guard (200..<300).contains(st) else { throw APIError.server(j["error"] as? String ?? "Couldn’t save.") }
+      guard (200..<300).contains(st) else {
+        // a kind this build can't write ("ready"), or data that isn't the page's kind ("shape"): trying again won't help
+        let code = j["code"] as? String ?? ""
+        final = code == "ready" || code == "shape"
+        throw APIError.server(j["error"] as? String ?? "Couldn’t save.")
+      }
       var p = PageInfo(json: j)
       q.base = p.version; q.baseData = p.data
       if let d = q.data { p.data = d }
       if let t = q.title { p.title = t }
       byId[id] = p
-      q.saved = Date().timeIntervalSince1970 * 1000; q.err = ""
+      if lost.isEmpty { q.saved = Date().timeIntervalSince1970 * 1000 }
+      q.err = lost
       vers[id] = nil
       for (k, l) in lists where l.contains(where: { $0.id == id }) {
         lists[k] = l.map { x in var y = x; if y.id == id { y.title = p.title; y.version = p.version; y.by = p.by; y.ai = p.ai; y.updated = p.updated }; return y }
       }
     } catch {
       q.err = (error as? LocalizedError)?.errorDescription ?? "Couldn’t save."
-      if data != nil && q.data == nil { q.data = data }
-      if title != nil && q.title == nil { q.title = title }
+      if !final && data != nil && q.data == nil { q.data = data }
+      if !final && title != nil && q.title == nil { q.title = title }
     }
     q.busy = false
     changed()
@@ -195,6 +217,7 @@ final class PagesStore: ObservableObject {
         q.timer = Task { [weak self] in try? await Task.sleep(nanoseconds: PagesStore.retry); guard !Task.isCancelled else { return }; q.timer = nil; await self?.flush(id) }
       } else { await flush(id) }
     } else if q.err.isEmpty { queue[id] = nil; changed() }
+    else if q.timer == nil { errs[id] = q.err; queue[id] = nil; changed() }   // nothing left to send: the line stays until the next change
   }
 
   /// A new page in a deck (or folder): kept here and put at the end of its list.

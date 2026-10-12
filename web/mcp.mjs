@@ -83,7 +83,7 @@ async function speakFile(words, lang, notes, room) {
 
 // Pages (pages.mjs).
 const CHECK_PAGE = 'The learner asked to check AI changes first, and a page can’t wait for that check. Show them what you would write in the chat instead.';
-const notReady = kind => (pages.KINDS.includes(kind) ? 'Lucida can’t show ' + pages.KIND_NAMES[kind] + ' pages yet; make a note for now.' : 'A page is a note (the others are coming).');
+const notReady = pages.notReady;
 // What the AI app reads about Note blocks (create_page and update_page).
 const NOTE_HELP = 'A Note’s blocks, each an object with a type (keep an existing block’s id when you change it; new ones get one): ' +
   '{type:"heading", level:1|2|3, text} · {type:"text", text} · {type:"list", style:"bullet"|"number"|"todo", items:[{text, checked?, items?}]} · ' +
@@ -348,7 +348,7 @@ const TOOLS = [
       try { if (a.deck || a.folder) sc = pageScope(a.folder ? 'folder' : 'deck', a.folder || a.deck, { read: true }); } catch (e) { return fail(e.message); }
       if (sc && sc.scope === 'deck') await moveGuide(deckBy(sc.id), ctx.once);
       const names = scopeNames(), list = await pages.list(uidOf(), sc && sc.scope, sc && sc.id);
-      return text({ pages: list.map(p => pageLine(p, names)), kinds_you_can_make: [...pages.READY] });
+      return text({ pages: list.map(p => pageLine(p, names)), kinds_you_can_make: [...pages.PAGE_READY] });
     } },
   { name: 'get_page', perm: 'read', description: 'Read one page: its kind, title, version (send it back as baseVersion when you change the page) and its content. A Note comes as blocks (see create_page for their shapes), or as Markdown with format "markdown". The cards a Note links to come with how the learner is doing on them (weak: they keep forgetting it), so you can tutor from the page: explain what they miss, add a trap or a pearl, or link the weak cards in.',
     inputSchema: { type: 'object', properties: { page: { type: 'string', description: 'The page’s id (from list_pages).' }, format: { type: 'string', enum: ['blocks', 'markdown'], description: 'How a Note comes back. blocks (the default) keeps each block’s id.' } }, required: ['page'] },
@@ -361,10 +361,10 @@ const TOOLS = [
       blocks: { type: 'array', items: { type: 'object' }, description: 'The Note’s blocks, in order.' }, markdown: { type: 'string', description: 'The Note as Markdown instead of blocks.' }, inside: { type: 'string', description: 'The id of the page it goes inside. Leave out for the top.' } }, required: ['kind', 'title'] },
     run: async (a, who, ctx) => {
       if (state().ai.perms.check) return fail(CHECK_PAGE);
-      if (!pages.READY.has(a.kind)) return fail(notReady(a.kind));
+      if (!pages.PAGE_READY.has(a.kind)) return fail(notReady(a.kind));
       let sc; try { sc = pageScope(a.folder ? 'folder' : 'deck', a.folder || a.deck); } catch (e) { return fail(a.deck || a.folder ? e.message : 'Say which deck (or folder) the page goes in.'); }
       try {
-        const p = await ctx.once('create_page', () => pages.create(uidOf(), { scope: sc.scope, scopeId: sc.id, kind: a.kind, title: a.title, data: noteIn(a), parent: a.inside || '', who, ai: true, pro: isPro() }));
+        const p = await ctx.once('create_page', () => pages.create(uidOf(), { scope: sc.scope, scopeId: sc.id, kind: a.kind, title: a.title, data: noteIn(a), parent: a.inside || '', who, ai: true, pro: isPro(), ready: true }));
         if (p.scope === 'deck') touchDeck(p.scopeId, who);
         return text({ made: pageLine(p, scopeNames()), note: 'The learner sees it in ' + sc.name + ' › Pages now. Change it with update_page and baseVersion ' + p.version + '.' });
       } catch (e) { return fail(e.message); }
@@ -375,7 +375,7 @@ const TOOLS = [
     run: async (a, who, ctx) => {
       if (state().ai.perms.check) return fail(CHECK_PAGE);
       try {
-        const p = await ctx.once('update_page', () => pages.update(uidOf(), a.page, { baseVersion: a.baseVersion, title: a.title, data: a.blocks || a.markdown != null ? noteIn(a) : undefined, who, ai: true, summary: a.summary, pro: isPro() }));
+        const p = await ctx.once('update_page', () => pages.update(uidOf(), a.page, { baseVersion: a.baseVersion, title: a.title, data: a.blocks || a.markdown != null ? noteIn(a) : undefined, who, ai: true, summary: a.summary, pro: isPro(), ready: true }));
         if (p.scope === 'deck') touchDeck(p.scopeId, who);
         return text({ saved: pageLine(p, scopeNames()), note: 'Saved as version ' + p.version + '.' });
       } catch (e) {

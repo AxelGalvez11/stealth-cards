@@ -47,7 +47,10 @@ enum PageKind {
     K(kind: "diagram", name: "Diagram", icon: "share", line: "Boxes and arrows, laid out for you"),
     K(kind: "canvas", name: "Canvas", icon: "grid", line: "A board to pin notes, cards and pictures on"),
     K(kind: "doc", name: "Doc", icon: "file", line: "A PDF to read beside the cards")]
+  /// The kinds this build can show and write (web/pages.mjs PAGE_READY when it was built). A page of any other kind, a kind that came after this build
+  /// too, shows "Needs an update" and is never opened as a Note or saved from here.
   static let ready: Set<String> = ["note"]
+  static func canShow(_ kind: String) -> Bool { ready.contains(kind) }
   static func name(_ kind: String) -> String { all.first { $0.kind == kind }?.name ?? "Page" }
   static func icon(_ kind: String) -> String { all.first { $0.kind == kind }?.icon ?? "file" }
 }
@@ -64,11 +67,28 @@ enum PageJSON {
   static func blocks(_ s: String) -> [[String: Any]] { ((object(s) as? [String: Any])?["blocks"] as? [Any])?.compactMap { $0 as? [String: Any] } ?? [] }
 }
 
+/// A page's data when there's none, by kind (web/maps.js emptyOf): never a Note's blocks on a page of another kind.
+enum PageEmpty {
+  static func of(_ kind: String) -> [String: Any] {
+    switch kind {
+    case "note": return ["blocks": [Any]()]
+    case "mindmap": return ["root": ["id": "root", "label": ""]]
+    case "diagram": return ["direction": "down", "nodes": [Any](), "edges": [Any]()]
+    default: return [:]
+    }
+  }
+}
+
 /// When a save finds the page changed since the version it was written from (409): web/pagesclient.js merge, block by block (top-level blocks, by id).
 /// `base` is the version the screen started from, `mine` what it has now, `theirs` the newer saved one. A block this person changed (or added) since `base`
 /// is theirs no more: theirs is kept everywhere else; a block taken out here and left alone there goes; a block added here goes after the block it follows
 /// here (or first).
 enum PageMerge {
+  /// The merge for a kind (pagesclient's MERGE): a Note's is here; the map kinds' come with MapEngine (web/maps.js). A kind with none never sends what was
+  /// written here over the other's (Data/Pages.swift keeps theirs).
+  static func of(_ kind: String) -> ((String, String, String) -> String)? {
+    kind == "note" ? { merge(base: $0, mine: $1, theirs: $2) } : nil
+  }
   static func merge(base: String, mine: String, theirs: String) -> String {
     let B = Dictionary(PageJSON.blocks(base).map { (id($0), PageJSON.text($0)) }, uniquingKeysWith: { a, _ in a })
     let M = PageJSON.blocks(mine), T = PageJSON.blocks(theirs)
