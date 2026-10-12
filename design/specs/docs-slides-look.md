@@ -48,3 +48,8 @@ code, fonts or marks are taken from Anthropic's apps.
 1. A serif for page titles and headings (Lucida is all-sans today)? Proposed: Newsreader for titles/headings on Pages only.
 2. Note pages open full width (no app sidebar), like Docs?
 3. Presentation (step 5) built in this style, with Lucida's own slide themes?
+
+## The owner's answers (2026-10-12)
+1. Serif titles and headings: yes, on Pages only (Notes, maps, slides); the rest of the app stays Geist.
+2. Note pages open full width, without the app sidebar: yes.
+3. Presentation pages (step 5) in this Slides style: yes.
