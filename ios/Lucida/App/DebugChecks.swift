@@ -41,11 +41,86 @@ enum DebugChecks {
     case "tune": await tune(s)
     case "free": await free(s)
     case "pages": await pagesCheck(s)
+    case "maps": await mapsCheck(s)
     case "all": for n in ["pause", "exam", "grade", "learn", "tune"] { await run(n, s) }
     default: say(false, "unknown check " + name)
     }
     if name != "all" { print("CHECKS DONE \(lines.filter { $0.contains("PASS") }.count) passed, \(lines.filter { $0.contains("FAIL") }.count) failed") }
     if name != "all" { try? await Task.sleep(nanoseconds: 300_000_000); exit(0) }
+  }
+
+  /// Mind map pages (step 4a): web/maps.js loads in its own JavaScriptCore and lays out a map at the caps within the budget (§4.6: 25 ms for 200
+  /// ideas on an iPhone 12-class phone without the JIT); then, against the server (which must have mind maps ready, and the app `-pageReady
+  /// mindmap`), a map is made, edited through maps.edit and saved once, changed meanwhile by another app (the 409 merges both, by kind), tested
+  /// (the marks reach the library, never a version), studied as a branch (the page: review set), and deleted with its marks.
+  static func mapsCheck(_ s: Store) async {
+    let E = MapEngine.shared
+    say(E.ok, "maps: maps.js loads in its own JavaScriptCore", E.failure)
+    // a map at the caps: a topic, 10 main ideas, 4 under each, and facts under those up to 200
+    var mains: [[String: Any]] = [], n = 1
+    for i in 0..<10 {
+      var subs: [[String: Any]] = []
+      n += 1
+      for j in 0..<4 {
+        n += 1
+        var facts: [[String: Any]] = []
+        for k in 0..<4 where n < 200 { n += 1; facts.append(["id": "m\(i)s\(j)f\(k)", "label": "A fact about part \(j) of system \(i), number \(k)"]) }
+        subs.append(["id": "m\(i)s\(j)", "label": "How part \(j) works", "children": facts])
+      }
+      mains.append(["id": "m\(i)", "label": "Body system \(i)", "children": subs])
+    }
+    let big = E.normalize("mindmap", MapEngine.json(["root": ["id": "body", "label": "Human physiology", "children": mains]]))?.data ?? ""
+    say(MapTree(big).order.count == 200, "maps: the cap map has 200 ideas", "\(MapTree(big).order.count)")
+    var best = Double.infinity
+    for side in ["right", "both", "right", "both", "right"] {
+      let t0 = Date(); _ = E.layout("mindmap", big, side: side); best = min(best, Date().timeIntervalSince(t0) * 1000)
+    }
+    say(best <= 25, String(format: "maps: 200 ideas lay out in %.1f ms (budget 25 ms)", best))
+    let t1 = Date(); _ = E.merge("mindmap", base: big, mine: E.edit("mindmap", big, ["op": "set", "id": "m1", "label": "Heart"]).data, theirs: E.edit("mindmap", big, ["op": "remove", "id": "m2"]).data)
+    say(Date().timeIntervalSince(t1) * 1000 <= 60, String(format: "maps: a merge at the caps in %.1f ms", Date().timeIntervalSince(t1) * 1000))
+    guard PageKind.canShow("mindmap") else { say(false, "maps: this build shows mind maps (-pageReady mindmap)"); return }
+    guard let deck = s.lib.decks.first?.id else { say(false, "maps: a deck"); return }
+    let P = s.pages
+    guard let p = try? await P.create("deck", deck, kind: "mindmap", title: "Check map") else { say(false, "maps: a new mind map"); return }
+    say(p.kind == "mindmap" && MapTree(p.data).order.count == 1, "maps: a new mind map starts as its topic", p.data)
+    var d = E.edit("mindmap", p.data, ["op": "set", "id": MapTree(p.data).root, "label": "The cell"]).data
+    d = E.edit("mindmap", d, ["op": "add", "id": "nmito001", "parent": MapTree(d).root, "label": "Mitochondria"]).data
+    d = E.edit("mindmap", d, ["op": "add", "id": "nkrebs01", "parent": "nmito001", "label": "Krebs cycle"]).data
+    P.edit(p.id, data: d)
+    try? await Task.sleep(nanoseconds: 2_000_000_000)
+    var srv = try? await s.api.pages("api/pages/" + p.id)
+    let v2 = PageInfo(json: srv?.json ?? [:])
+    say(v2.version == 2 && MapTree(v2.data)["nkrebs01"]?.parent == "nmito001", "maps: three edits are saved once, as one version", "v\(v2.version)")
+    // another app adds an idea from v2 while this phone renames one
+    let theirs = E.edit("mindmap", v2.data, ["op": "add", "id": "nucleus1", "parent": MapTree(v2.data).root, "label": "Nucleus"]).data
+    _ = try? await s.api.pages("", body: ["op": "update", "page": p.id, "baseVersion": 2, "data": PageJSON.object(theirs) as Any])
+    P.edit(p.id, data: E.edit("mindmap", v2.data, ["op": "set", "id": "nkrebs01", "label": "Krebs cycle in the matrix"]).data)
+    try? await Task.sleep(nanoseconds: 2_500_000_000)
+    srv = try? await s.api.pages("api/pages/" + p.id)
+    let v4 = PageInfo(json: srv?.json ?? [:]), t4 = MapTree(v4.data)
+    say(v4.version == 4 && t4["nucleus1"] != nil && t4["nkrebs01"]?.label == "Krebs cycle in the matrix", "maps: a 409 merges both changes (maps.merge, by kind)", "v\(v4.version) \(t4.order)")
+    say(P.conflict(p.id)?.theirs == 3, "maps: the page knows who changed it meanwhile")
+    // a card linked to an idea, studied as the branch
+    if let card = s.lib.cards.first(where: { $0.deckId == deck }) {
+      P.edit(p.id, data: E.edit("mindmap", v4.data, ["op": "link", "id": "nkrebs01", "cardId": card.id]).data)
+      try? await Task.sleep(nanoseconds: 1_500_000_000)
+      let set = Engine(S: s.lib).setCards("page:" + p.id + ":nmito001")
+      say(set.map(\.id) == [card.id], "maps: Study this branch holds the branch's cards", "\(set.map(\.id))")
+      say(Engine.setName("page:" + p.id + ":nmito001") == "Check map", "maps: the set is named after the page")
+    } else { say(false, "maps: a card in the first deck") }
+    // Test me's marks: the library, never a version
+    let before = PageInfo(json: (try? await s.api.pages("api/pages/" + p.id))?.json ?? [:]).version
+    s.saveNow("mapmarks.save", ["pageId": p.id, "deckId": deck, "results": [["id": "nmito001", "ok": true], ["id": "nkrebs01", "ok": false]], "ids": MapTree(v4.data).order + ["nkrebs01"]]) { _ in }
+    let lib = await until(s) { $0.mapMarks[p.id]?.n["nkrebs01"]?[1] == 1 }
+    say(lib?.mapMarks[p.id]?.n["nmito001"]?[2] == 1 && lib?.mapMarks[p.id]?.n["nkrebs01"]?[2] == 0, "maps: Test me's marks reach the library")
+    let after = PageInfo(json: (try? await s.api.pages("api/pages/" + p.id))?.json ?? [:]).version
+    say(after == before, "maps: marking never makes a version", "v\(before) → v\(after)")
+    do {
+      try await P.remove(p.id)
+      await s.send("mapmarks.drop", ["pageId": p.id])
+      let gone = await until(s) { $0.mapMarks[p.id] == nil }
+      say(gone?.mapMarks[p.id] == nil, "maps: deleting the page drops its marks")
+    } catch { say(false, "maps: delete", error.localizedDescription) }
   }
 
   /// Pages (Data/Pages.swift): a Note made on the first deck, typed in (saved a moment later, as blocks), changed meanwhile by another app (the save merges

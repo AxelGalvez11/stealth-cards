@@ -532,8 +532,12 @@ struct NotesSetup: Equatable {
 }
 /// A card a Note shows (web/notes.js o.card): its front, its back, and whether the learner keeps missing it.
 struct NoteCardInfo: Equatable { var front: String, back: String, weak: Bool }
-/// A page a Note shows (o.page): not known yet, not there, or its title and kind.
-enum NotePageRef: Equatable { case loading, missing, page(title: String, kind: String) }
+/// A page a Note shows (o.page): not known yet, not there, or its title and kind; a Mind map also its picture (§9.1: a static model, drawn by
+/// Design/MapCanvas.swift MapPreviewView), how many ideas it has and how many are weak.
+enum NotePageRef: Equatable {
+  case loading, missing, page(title: String, kind: String)
+  case map(title: String, preview: MapPreview?, ideas: Int, weak: Int)
+}
 /// What the rows ask of the screen around them.
 final class NotesHooks {
   var image: (String) -> URL? = GuideImages.own
@@ -543,6 +547,8 @@ final class NotesHooks {
   var pageRef: ((String) -> NotePageRef)? = nil
   var openCard: ((String) -> Void)? = nil
   var openPage: ((String) -> Void)? = nil
+  /// A Mind map's Test me, under its picture in a Note: the page opens and tests its weak ideas.
+  var testPage: ((String) -> Void)? = nil
   var makeCard: ((String, String) -> Void)? = nil
   init(image: @escaping (String) -> URL? = GuideImages.own, open: ((Int, Int) -> Void)? = nil) { self.image = image; self.open = open }
 }
@@ -885,6 +891,31 @@ struct NoteRef: View {
           Text("Weak spot").font(.geist(12, .semibold)).foregroundStyle(Color(c.trap)).padding(.horizontal, 10).frame(height: 24)
             .background(Capsule().fill(Color(c.trapBg))).padding(.horizontal, 16).padding(.bottom, 12)
         }
+      }
+    } else if !card, case .map(let title, let preview, let ideas, let weak) = pageV {
+      // (a Mind map inside a Note, design/pages.mjs embed: its picture over its name, how many ideas and how many weak, and Test me)
+      VStack(spacing: 0) {
+        ZStack {
+          Color(c.surf)
+          if let preview { MapPreviewView(preview: preview, bg: Color(c.surf)) }
+        }
+        .frame(height: 120).clipped().accessibilityHidden(true)
+        HStack(spacing: 10) {
+          Icon("mindmap", 16, 2).foregroundStyle(Color(c.muted))
+          VStack(alignment: .leading, spacing: 1) {
+            Text(title.isEmpty ? "Untitled" : title).font(.geist(15, .semibold)).foregroundStyle(Color(c.text)).lineLimit(1)
+            (Text("Mind map · " + plural(ideas, "idea") + (weak > 0 ? " · " : "")).foregroundColor(Color(c.muted))
+              + Text(weak > 0 ? "\(weak) weak" : "").foregroundColor(Color(c.trap)).fontWeight(.semibold)).font(.geist(13)).lineLimit(1)
+          }
+          .frame(maxWidth: .infinity, alignment: .leading)
+          if let go = setup.hooks.testPage {
+            Button { go(b.ref) } label: {
+              Text("Test me").font(.geist(13, .semibold)).foregroundStyle(Color(c.bg)).padding(.horizontal, 14).frame(height: 44).background(Capsule().fill(Color(c.text)))
+            }
+            .buttonStyle(.press).accessibilityLabel("Test me on the weak ideas of " + title)
+          }
+        }
+        .padding(.leading, 14).padding(.trailing, 8).padding(.vertical, 8)
       }
     } else if !card, case .page(let title, let kind) = pageV {
       HStack(spacing: 10) {

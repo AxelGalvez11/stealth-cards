@@ -30,7 +30,9 @@ struct Library: Decodable {
   var materials: [String: DeckMaterials] = [:]
   /// What Explain shows in its composer's place once the day's explanations are used up (the server's words), or nil while some are left.
   var explainLimit: ExplainLimit? = nil
-  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn, profile, pro, quizLeft, make, explainLimit }
+  /// Test me's marks on each Mind map page (web/store.mjs S.mapMarks, by page id): the learner's study data, never a page version.
+  var mapMarks: [String: MapMarks] = [:]
+  enum CodingKeys: String, CodingKey { case rev, settings, ai, folders, decks, cards, logs, me, aiOn, profile, pro, quizLeft, make, explainLimit, mapMarks }
   init(from d: Decoder) throws {
     let c = try d.container(keyedBy: CodingKeys.self)
     rev = c.v(.rev, 0); settings = c.v(.settings, UserSettings()); ai = c.v(.ai, AIState()); folders = c.v(.folders, [])
@@ -39,6 +41,7 @@ struct Library: Decodable {
     quizLeft = c.v(.quizLeft, nil)
     make = c.v(.make, MakeInfo())
     explainLimit = c.v(.explainLimit, nil)
+    mapMarks = c.v(.mapMarks, [:])
     // (Each deck's sources and Guide are read from the same list of decks, apart from Deck itself.)
     for row in c.v(.decks, [DeckMaterials]()) where !row.id.isEmpty && (!row.sources.isEmpty || row.guide != nil || !row.diagrams.isEmpty) { materials[row.id] = row }
   }

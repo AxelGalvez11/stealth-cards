@@ -8,7 +8,12 @@
 //     who changed it and which versions hold what, for the line at the top of the page. The merge goes by the page's kind (MERGE):
 //     a Note's block by block, a Mind map's and a Diagram's by web/maps.js (once it's there). A kind with no merge never sends
 //     what was written here over the other's: the page shows theirs, and the saving line says what wasn't saved.
+//   - A change made `hold` (a map's label or note still being typed) waits: nothing is saved, and the page isn't fetched over it, until
+//     a change comes without it (the field closed). A save whose data is just what the page already has (a delete undone, an idea
+//     added and let go of) is never sent, so it makes no version.
 //   - Only a Note is ever written as Markdown: a page of another kind never gets a Note's blocks from here.
+//   - A map's save says what changed (maps.summaryOf of maps.diff from the version it was made from: 'Added 3 ideas under
+//     Mitochondria'), for Versions; a Note's says nothing and the server words it.
 import { noteToMarkdown, markdownToNote } from './pageblocks.js';
 
 // web/maps.js (the map kinds' merge), loaded if it's there; until it is, a map page has no merge.
@@ -19,6 +24,7 @@ export function createPages({ changed, say }) {
   const mds = new Map(), lists = new Map(), pages = new Map(), vers = new Map(), asked = new Set(), conflicts = new Map(), queue = new Map(), errs = new Map();
   let rev = 0;
   const key = (scope, id) => scope + '|' + id;
+  const same = (a, b) => { try { return JSON.stringify(a) === JSON.stringify(b); } catch { return false; } };
   async function call(url, body) {
     const r = await fetch(url, body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) } : {});
     const j = await r.json().catch(() => ({}));
@@ -32,7 +38,7 @@ export function createPages({ changed, say }) {
   };
   const fetchPage = id => {
     if (asked.has('p' + id)) return; asked.add('p' + id);
-    call('/api/pages/' + id).then(p => { const q = queue.get(id); if (!q || (!q.timer && !q.busy)) { pages.set(id, p); mds.delete(id); } changed(); })
+    call('/api/pages/' + id).then(p => { const q = queue.get(id); if (!q || (!q.timer && !q.busy && !q.hold)) { pages.set(id, p); mds.delete(id); } changed(); })
       .catch(e => { if (e.status === 404) { pages.set(id, null); changed(); } }).finally(() => asked.delete('p' + id));
   };
   // Something changed on the server: what's kept is fetched again (a page being written in is left alone; its save merges).
@@ -68,15 +74,27 @@ export function createPages({ changed, say }) {
     diagram: (base, mine, theirs) => maps.merge('diagram', base, mine, theirs, { prefer: 'mine' })
   };
   const mergeOf = kind => (kind === 'note' || (maps && (kind === 'mindmap' || kind === 'diagram')) ? MERGE[kind] : null);
+  // What a map's save changed, in words (nothing for a Note, or when it can't say).
+  const summaryFor = (kind, before, after) => {
+    if (!maps || (kind !== 'mindmap' && kind !== 'diagram') || !before || !after) return undefined;
+    try { const s = maps.summaryOf(maps.diff(kind, before, after)); return s && s !== 'No changes' ? s : undefined; } catch { return undefined; }
+  };
 
   async function flush(id) {
     const q = queue.get(id); if (!q || q.busy) return;
-    clearTimeout(q.timer); q.timer = 0; q.busy = true;
-    const { title, data } = q; q.title = undefined; q.data = undefined;
+    clearTimeout(q.timer); q.timer = 0; q.hold = false;
+    let { title, data } = q;
+    const own = q.summary;
+    // (data that's just what the page already has: nothing to save, and no version)
+    if (data !== undefined && q.baseData !== undefined && same(data, q.baseData)) { data = undefined; q.data = undefined; q.summary = undefined; }
+    if (data === undefined && title === undefined) { queue.delete(id); changed(); return; }
+    q.busy = true;
+    q.title = undefined; q.data = undefined; q.summary = undefined;
     try {
       let p;
       let lost = '';
-      try { p = await call('/api/pages', { op: 'update', page: id, baseVersion: q.base, title, data }); }
+      let sent;   // what a merged save sent: what's written here meanwhile was made from it, and goes on top of the merged page below
+      try { p = await call('/api/pages', { op: 'update', page: id, baseVersion: q.base, title, data, summary: data !== undefined ? own || summaryFor((pages.get(id) || {}).kind, q.baseData, data) : undefined }); }
       catch (e) {
         if (e.code !== 'conflict' || !e.current) throw e;
         const cur = e.current, how = data !== undefined ? mergeOf(cur.kind) : null;
@@ -87,12 +105,21 @@ export function createPages({ changed, say }) {
           p = cur; lost = 'Your change wasn’t saved: ' + (cur.by || 'someone') + ' changed this page (v' + cur.version + ').';
           q.data = undefined; q.title = undefined; mds.delete(id);
         } else {
+          if (merged) sent = data;
           p = await call('/api/pages', { op: 'update', page: id, baseVersion: cur.version, title, data: merged ? merged.data : undefined, summary: 'Kept what you wrote, with ' + (cur.by || 'the other') + '’s change' });
           conflicts.set(id, { by: cur.by, ai: cur.ai, theirs: cur.version, mine: p.version });
           if (q.data === undefined) mds.delete(id);   // the page shows the merged one
         }
       }
       q.base = p.version; q.baseData = p.data;
+      if (sent !== undefined && q.data !== undefined) {
+        // (typed while the merge went out: put on top of the merged page the same way, sent -> waiting onto merged, or the next save, which
+        // meets no conflict, would take the other writer's change back out)
+        const how = mergeOf(p.kind); let r = null;
+        try { r = how ? how(sent, q.data, p.data) : null; } catch { r = null; }
+        if (r && r.data) q.data = r.data; else { q.data = undefined; lost = 'Your last change wasn’t saved: ' + (p.by || 'someone') + ' changed this page.'; }
+        if (p.kind === 'note') mds.delete(id);
+      }
       if (q.data === undefined && q.title === undefined) pages.set(id, p);
       else pages.set(id, { ...p, data: q.data !== undefined ? q.data : p.data, title: q.title !== undefined ? q.title : p.title });
       if (!lost) q.saved = Date.now();
@@ -107,7 +134,7 @@ export function createPages({ changed, say }) {
       if (!final && title !== undefined && q.title === undefined) q.title = title;
     }
     finally { q.busy = false; changed(); }
-    if (q.data !== undefined || q.title !== undefined) { if (q.err) q.timer = setTimeout(() => flush(id), 4000); else flush(id); }
+    if (q.data !== undefined || q.title !== undefined) { if (q.hold) return; if (q.err) q.timer = setTimeout(() => flush(id), 4000); else flush(id); }
     else if (!q.err) queue.delete(id);
     else if (!q.timer) { queue.delete(id); errs.set(id, q.err); changed(); }   // nothing left to send: the line stays until the next change
   }
@@ -120,7 +147,8 @@ export function createPages({ changed, say }) {
     // One page with its data (undefined until it arrives, null when there's no such page). What's being saved shows as it is here.
     page(id) { if (!pages.has(id)) fetchPage(id); return pages.get(id); },
     saving: id => { const q = queue.get(id); return q ? { busy: !!(q.busy || q.timer), err: q.err || '', saved: q.saved || 0 } : { busy: false, err: errs.get(id) || '', saved: 0 }; },
-    conflict: id => conflicts.get(id) || null,
+    // (the line about a merge goes once the page has moved on past the merged version: restored, or changed again elsewhere)
+    conflict: id => { const c = conflicts.get(id), p = pages.get(id); if (c && p && p.version > c.mine) { conflicts.delete(id); return null; } return c || null; },
     clearConflict: id => { conflicts.delete(id); changed(); },
     versions(id) { if (!vers.has(id)) { vers.set(id, null); call('/api/pages/' + id + '/versions').then(j => { vers.set(id, j.versions); changed(); }).catch(() => vers.delete(id)); } return vers.get(id); },
     version: (id, v) => call('/api/pages/' + id + '/versions/' + v),
@@ -128,16 +156,18 @@ export function createPages({ changed, say }) {
     markdown(id) { if (mds.has(id)) return mds.get(id); const p = pages.get(id); return p && p.kind === 'note' ? noteToMarkdown(p.data) : ''; },
     editMarkdown(id, md) { const p = pages.get(id); if (!p || p.kind !== 'note') return; mds.set(id, md); api.edit(id, { data: markdownToNote(md, p.data) }); },
     // A change: shown at once, saved a moment after the last one.
-    edit(id, { title, data }) {
+    edit(id, { title, data, summary, hold }) {
       const p = pages.get(id); if (!p) return;
       if (data !== undefined && p.kind !== 'note' && data && Array.isArray(data.blocks)) return;   // a Note's blocks never go on another kind
       errs.delete(id);
       let q = queue.get(id);
       if (!q) queue.set(id, q = { base: p.version, baseData: p.data });
       if (title !== undefined) q.title = title;
-      if (data !== undefined) q.data = data;
+      // (a change with its own words, like 'Made a card from “Krebs cycle” and linked it', keeps them when it's the only one in the save)
+      if (data !== undefined) { q.summary = q.data === undefined && q.base === p.version ? summary : undefined; q.data = data; }
       pages.set(id, { ...p, ...(title !== undefined ? { title } : {}), ...(data !== undefined ? { data } : {}) });
-      clearTimeout(q.timer); q.timer = setTimeout(() => flush(id), 700);
+      clearTimeout(q.timer); q.timer = 0; q.hold = !!hold;
+      if (!hold) q.timer = setTimeout(() => flush(id), 700);
       changed();
     },
     flush,
@@ -156,7 +186,7 @@ export function createPages({ changed, say }) {
       await flush(pid);
       const p = pages.get(pid); if (!p) return;
       const got = await call('/api/pages', { op: 'restore', page: pid, version: v, baseVersion: p.version }).catch(e => { say(e.message); throw e; });
-      pages.set(pid, got); mds.delete(pid); vers.delete(pid); changed();
+      pages.set(pid, got); mds.delete(pid); vers.delete(pid); conflicts.delete(pid); changed();
       return got;
     },
     async move(pid, { parent, pos }) {

@@ -3,7 +3,8 @@
 // canvas's sample data answers (design/mock.mjs), so the same screens run on both: sample data on the canvas,
 // your data here.
 import { preview, waitLabel, dayAt, W } from './fsrs.js';
-import { scheduled, isDue, dueDay, examStatus, workload, isLeech, leechAt, leechAct, recallAt, GOAL, MAX_DAYS } from './sched.js';
+import { scheduled, isDue, dueDay, examStatus, workload, isLeech, leechAt, leechAct, recallAt, toneOf, GOAL, MAX_DAYS } from './sched.js';
+import maps from './maps.js';
 import { insights, isGrade } from './insights.js';
 import { histories, TUNE_MIN, TUNE_ITEMS } from './tune.js';
 import R from './rich.js';
@@ -339,13 +340,30 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
     return decks.filter(scheduled).flatMap(d => cardsOf(d.id).filter(c => studyable(c) && isLearn(c) && c.srs.due <= t + 20 * MIN).map(c => ({ card: c, deck: d, lane: 'learn' }))).sort(byDue).slice(0, 1);
   }
   // The cards of a set from the Stats page, least remembered first (up to 50 at a time): your hardest cards, the ones you
-  // keep forgetting, or a tag's cards you've studied.
+  // keep forgetting, or a tag's cards you've studied. A map page's set (page:<page>:<idea>[,<idea>…], Study on a Mind map) is the cards
+  // linked anywhere in those ideas' branches (every idea's, with none), the least remembered first and new ones last; while the page
+  // is still on its way it has none, and the review draws again when it comes.
+  const pageSet = set => { const m = /^page:(p[a-z0-9]{6,24})(?::([A-Za-z0-9_,-]{1,2000}))?$/.exec(set || ''); return m ? { pid: m[1], ideas: m[2] ? m[2].split(',').filter(Boolean) : null } : null; };
   function setCards(set) {
-    const t = now(), by = c => recallAt(c, t) ?? 1;
+    const t = now(), by = c => recallAt(c, t) ?? 1, ps = pageSet(set);
+    if (ps) {
+      const p = studied.pages.page(ps.pid); if (!p || !p.data || !p.data.root) return [];
+      const at = c => (c.srs.state === 'new' ? 2 : recallAt(c, t) ?? 1);
+      return maps.reviewIds(p.data, ps.ideas).map(id => cardIndex().get(id)).filter(c => c && studyable(c) && deckById(c.deckId)).sort((a, b) => at(a) - at(b)).slice(0, 100);
+    }
     const pickOf = set === 'hard' ? c => c.srs.state !== 'new' && difficulty(c) === 'hard' : set === 'leech' ? c => isLeech(c, deckById(c.deckId)) : set.startsWith('tag:') ? c => c.srs.state !== 'new' && c.tags.includes(set.slice(4)) : () => false;
     return S.cards.filter(c => studyable(c) && deckById(c.deckId) && pickOf(c)).sort((a, b) => by(a) - by(b)).slice(0, 50);
   }
-  const setName = set => (set === 'hard' ? 'Hardest cards' : set === 'leech' ? 'Cards you keep forgetting' : set && set.startsWith('tag:') ? set.slice(4) : '');
+  const setName = set => {
+    const ps = pageSet(set);
+    if (ps) {
+      const p = studied.pages.page(ps.pid); if (!p) return p === null ? 'A page that isn’t here any more' : 'One moment…';
+      const by = new Map(); (function walk(n) { if (!n) return; by.set(n.id, n.label || p.title || 'Untitled'); (n.children || []).forEach(walk); })(p.data && p.data.root);
+      const names = (ps.ideas || []).map(id => by.get(id)).filter(Boolean);
+      return names.length === 1 ? names[0] : names.length ? (p.title || 'Untitled') + ' · ' + names.length + ' ideas' : p.title || 'Untitled';
+    }
+    return set === 'hard' ? 'Hardest cards' : set === 'leech' ? 'Cards you keep forgetting' : set && set.startsWith('tag:') ? set.slice(4) : '';
+  };
   // A card as review shows it. Text stays as written (see rich.js); the screen draws the formatting.
   // A fill-in-the-blank card asks one blank (cloze is its number) or all of them (-1).
   function face(c) {
@@ -484,6 +502,34 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
       const b = await picture(f, heic ? 'image/heic' : type, 2400);
       return b ? new File([b], f.name || 'picture', { type: b.type }) : null;
     } });
+  // How many tables, mind maps and picture readings Lucida's AI can still make today (the server's day, in UTC: store.mjs useDg),
+  // for 'Lucida AI (2 left today)'; null while it isn't known.
+  diagrams.left = () => {
+    const per = S && S.make && S.make.diagrams, u = S && S.ai && S.ai.dg;
+    if (typeof per !== 'number') return null;
+    return Math.max(0, per - (u && u.day === new Date().toISOString().slice(0, 10) ? u.n || 0 : 0));
+  };
+  // A deck someone studies carries its owner's Mind map pages (d.maps, web/social.mjs §7.4): read-only, they show in its Pages like
+  // its own would (the list, and /page/<id> opens one to pan, fold and test, with no editing), and a figure one of them was moved
+  // from isn't listed again in Figures. They are never fetched: they come with the deck.
+  const studied = (() => {
+    const mapsOf = d => (d && d.link && d.link.mode === 'study' && Array.isArray(d.maps) ? d.maps.filter(x => x && x.kind === 'mindmap' && x.data && x.data.root) : []);
+    const made = new Map();
+    const pageOf = (d, x) => {
+      const k = d.id + '|' + x.id, was = made.get(k);
+      if (was && was.data === x.data && was.title === (x.title || '')) return was;
+      const p = { id: x.id, kind: 'mindmap', scope: 'deck', scopeId: d.id, title: x.title || '', version: 1, by: (d.link.owner && d.link.owner.name) || 'The owner', ai: false, updated: d.link.at || d.at || Date.now(), data: x.data, parent: '', studied: true };
+      made.set(k, p);
+      return p;
+    };
+    const find = pid => { for (const d of S.decks || []) for (const x of mapsOf(d)) if (x.id === pid) return pageOf(d, x); return null; };
+    return {
+      pages: { ...pages,
+        list: (scope, id) => { const own = pages.list(scope, id), d = scope === 'deck' ? deckById(id) : null, extra = d ? mapsOf(d).filter(x => !own.some(y => y.id === x.id)).map(x => pageOf(d, x)) : []; return extra.length ? [...own, ...extra] : own; },
+        page: pid => find(pid) || pages.page(pid) },
+      diagrams: { ...diagrams, rows: deckId => { const from = new Set(mapsOf(deckById(deckId)).map(x => x.from).filter(Boolean)), r = diagrams.rows(deckId); return from.size ? r.filter(g => !from.has(g.id)) : r; } }
+    };
+  })();
   // A deck's Guide (like a README) and its Sources (what its cards were made from). The Guide saves as it is typed (a moment after the last
   // key), one save at a time and in order; what the screen shows meanwhile is the typing, kept by the screen itself.
   const guideOf = d => d.guide || { text: '', at: 0, pages: [] };
@@ -763,6 +809,10 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
       return out;
     },
     addCard: (deckId, o) => send('card.add', { deckId, ...o }),
+    // Test me on a map page (web/mapview.js): what was known and missed, kept as study data (never a page version), and a deleted
+    // page's marks going with it.
+    saveMapMarks: ({ pageId, deckId, results, ids }) => send('mapmarks.save', { pageId, deckId, results, ids }),
+    dropMapMarks: pageId => send('mapmarks.drop', { pageId }),
     removeCards: ids => send('card.delete', { ids }),
     // Cards your AI made that wait for you (Suggestions): keep them (they join the deck) or toss them, a few at once. If it
     // fails, the page says so where you are, not in an alert.
@@ -1088,6 +1138,16 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
       const ans = x => (x ? (x.kind === 'cloze' ? R.blanks(x.text, { math: 'show' }).join(', ') : flat(x.back)) : '');
       return (d.link.pending || []).map(p => ({ card: p.card, op: p.op, kind: p.kind, mine: !!p.mine, before: p.before ? { q: words(p.before), a: ans(p.before) } : null, after: p.after ? { q: words(p.after), a: ans(p.after) } : null })); },
     card: id => { const c = cardIndex().get(id); return c ? { ...c, clozeMode: c.cloze === -1 ? 'one' : 'each' } : null; },
+    // How well a card is known, one meaning everywhere (sched.toneOf): 'new', 'weak', 'getting' or 'solid' ('' when there's no such card).
+    cardTone: id => { const c = cardIndex().get(id); return c ? toneOf(c, now()) : ''; },
+    // A map page's cards to link and test (a deck's, or a folder's decks'), each with its tone; and a page's last Test me marks
+    // ({ deck, at, n: { idea: [knew, missed, last, at] } }, or null).
+    mapCards: (scope, id) => {
+      const ds = scope === 'folder' ? S.decks.filter(d => d.folder === id) : [deckById(id)].filter(Boolean), t = now();
+      const words = c => (c.kind === 'cloze' ? R.plain(c.text || '', { cloze: true, blank: '____', join: ' ', math: 'show' }) : flat(c.front));
+      return ds.flatMap(d => cardsOf(d.id)).filter(c => !c.pending).map(c => ({ id: c.id, front: words(c), back: c.kind === 'cloze' ? R.blanks(c.text || '', { math: 'show' }).join(', ') : flat(c.back), tone: toneOf(c, t) }));
+    },
+    mapMarks: pid => { const all = S.mapMarks; return all && typeof all === 'object' && Object.prototype.hasOwnProperty.call(all, pid) && all[pid] && typeof all[pid] === 'object' ? all[pid] : null; },
     // The cards made together with this one: every blank of one text, or every box of one picture (just it, alone).
     group: id => { const c = cardIndex().get(id); return !c ? [] : c.group ? groupIndex().get(c.group) : [c]; },
     draft: type => ({ kind: { Basic: 'basic', Blank: 'cloze', Image: 'image', Audio: 'audio' }[type] || 'basic', front: '', back: '', text: '', note: '', tags: [], image: null, audio: null, speak: '', auto: true, boxes: [], occ: 'one' }),
@@ -1119,6 +1179,9 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
         iv: pv ? { again: waitLabel(pv[1], t), hard: waitLabel(pv[2], t), good: waitLabel(pv[3], t), easy: waitLabel(pv[4], t) } : { again: '', hard: '', good: '', easy: '' } };
     },
     hasQueue: (id, pile, set) => queue(id, pile, set).length > 0,
+    // A map page's set whose page is still on its way (its cards can't be known yet), and the page a map's set goes back to.
+    setWaiting: set => { const ps = pageSet(set); return !!ps && studied.pages.page(ps.pid) === undefined; },
+    setPage: set => { const ps = pageSet(set); return ps ? ps.pid : ''; },
     learn: learnView,
     learnSets: id => {
       const cs = cardsOf(id).filter(learnable), uses = {};
@@ -1196,8 +1259,9 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
       return { url: location.origin + '/mcp', privateUrl: S.me && S.ai.key ? location.origin + '/mcp/' + S.ai.key : '', perms: S.ai.perms, connected: names.length ? names.join(', ') : 'None yet', apps,
         clients: { claude: has('Claude'), openai: has('ChatGPT'), cursor: has('Cursor'), mcp: names.some(n => !['Claude', 'ChatGPT', 'Cursor'].includes(n)) } };
     },
-    // Making cards (web/make.js), a deck's Guide, its Sources, and its Diagrams (web/diagrams.js).
-    make, diagrams, pages,
+    // Making cards (web/make.js), a deck's Guide, its Sources, and its Diagrams (web/diagrams.js); and Pages (web/pagesclient.js), with
+    // the owner's Mind map pages of a deck this person studies (studied).
+    make, diagrams: studied.diagrams, pages: studied.pages,
     guide: id => { const d = deckById(id); if (!d) return { deckId: '', text: '', at: 0, pages: [], can: false, studying: false };
       const g = guideOf(d), ro = shareOf(d).readOnly;
       return { deckId: d.id, text: g.text || '', at: g.at || 0, pages: (g.pages || []).map(p => ({ id: p.id, parent: p.parent || '', title: p.title, text: p.text || '', at: p.at || 0 })), can: !ro, studying: ro, moved: d.guideMoved || null }; },

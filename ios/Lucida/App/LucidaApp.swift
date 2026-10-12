@@ -251,6 +251,8 @@ extension Board {
     // The deck page on its Pages tab (design/pages.mjs deckPagesBlock), and a Note page (PhonePage: -state Writing, Versions, "Changed by your AI", "Make a card").
     case "PhoneDeckPages": store.props.section = "Pages"; nav.tab = .library; nav.path = [.deck("cell")]
     case "PhonePage": nav.tab = .library; nav.path = [.deck("cell"), .page(NotePagesSample.note)]
+    // The Mind map page "The cell at a glance" (design/maps.mjs, PhonePageMindmap: -state "Mind map", "Mind map · testing", … MINDMAP_VIEWS).
+    case "PhonePageMindmap": nav.tab = .library; nav.path = [.deck("cell"), .page("ps2")]
     // A deck's Notes page (its view: -state Writing, "Block menu", "Format bar", "Toggle open", "Toggle closed", "Section folded", "Blank note",
     // "Reading on a shared deck", "Older versions", "A new page" or "Outline open"); PhoneGuideOutline is the last.
     case "PhoneGuide", "PhoneGuideOutline": nav.tab = .library; nav.path = [.guide(Board.sampleDeckId, "")]

@@ -101,9 +101,10 @@ function resolve(path, q) {
     return { name: { question: 'LiveQuestion', reveal: 'LiveReveal', board: 'LiveLeaderboard', end: 'LivePodium' }[L.phase] || 'LiveLobby', props: { deckId: L.deckId } };
   }
   const deck = /^\/deck\/([^/]+)(\/card(?:\/([^/]+))?|\/import|\/learn|\/suggestions|\/live|\/guide)?$/.exec(path);
-  // A page beside a deck's or a folder's cards (a Note now; design/pages.mjs WebPage, web/pagesclient.js).
+  // A page beside a deck's or a folder's cards (a Note or a Mind map; design/pages.mjs WebPage, web/pagesclient.js). A Mind map opens
+  // centred on one idea with ?idea=<id>, and with Test me open on the weak ones with ?test=weak (a map shown inside a Note links there).
   const pageM = /^\/page\/(p[a-z0-9]{6,24})$/.exec(path);
-  if (pageM) return { name: P + 'Page', props: { pageId: pageM[1], fresh: q.get('new') === '1' } };
+  if (pageM) return { name: P + 'Page', props: { pageId: pageM[1], fresh: q.get('new') === '1', idea: /^[A-Za-z0-9_-]{1,40}$/.test(q.get('idea') || '') ? q.get('idea') : '', test: /^(weak|all)$/.test(q.get('test') || '') ? q.get('test') : '' } };
   // Your first time in: the welcome (connect your AI, bring your cards) comes before the Library.
   if (path === '/' && !db.settings().welcomed && !db.decks().length) return { redirect: '/welcome' };
   if (path === '/welcome') return { name: P + 'Welcome' };
@@ -168,7 +169,9 @@ function resolve(path, q) {
   if (rv && rv[1] !== 'done') {
     const id = rv[1] || '', pile = q.get('pile') || '', set = q.get('set') || '';
     if (id && !db.raw().decks.some(d => d.id === id)) return { redirect: '/library' };
-    if (!db.hasQueue(id, pile, set)) return { redirect: db.session().cards ? '/review/done' : set ? '/stats' : id ? '/deck/' + id : '/' };
+    // (a map page's set waits for its page, on the page itself; with nothing to study it goes back to that page)
+    if (set && db.setWaiting && db.setWaiting(set)) return { name: P + 'Page', props: { pageId: db.setPage(set), fresh: false, idea: '', test: '' } };
+    if (!db.hasQueue(id, pile, set)) return { redirect: db.session().cards ? '/review/done' : set && db.setPage && db.setPage(set) ? '/page/' + db.setPage(set) : set ? '/stats' : id ? '/deck/' + id : '/' };
     return { name: P + 'Review', props: { deckId: id, pile, set } };
   }
   // Sorting into piles doesn't grade, so that session ends on its own page.

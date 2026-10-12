@@ -27,6 +27,23 @@ enum Sched {
     c.srs.state == "new" || !(c.srs.s > 0) ? nil : FSRS.recall(max(0, (t - (c.srs.last != 0 ? c.srs.last : t)) / DAY), c.srs.s)
   }
 
+  // ---------- how well a card is known: one meaning of "weak" everywhere (sched.js toneOf) ----------
+  // The mind map's weak spots, a Note's card blocks and the AI link's weak flag all use this (the owner, 2026-10-11, step 4 spec §13 Q2: a card
+  // is weak while its recall is low now, not forever after one forget):
+  //   "new"      never reviewed
+  //   "weak"     relearning, or recall now under 70%, or forgotten twice or more with recall under 85%
+  //   "getting"  still learning, or recall under 90% ("getting there")
+  //   "solid"    anything else
+  static func toneOf(_ c: Card, _ now: Double) -> String {
+    let s = c.srs
+    if s.state == "new" { return "new" }
+    if s.state == "relearning" { return "weak" }
+    let r = recallAt(c, now)
+    if let r, r < 0.7 || (s.lapses >= 2 && r < 0.85) { return "weak" }
+    if s.state == "learning" || r == nil || r! < 0.9 { return "getting" }
+    return "solid"
+  }
+
   // ---------- exam date ----------
   // A deck can have an exam day ("2026-10-12"). From EXAM_DAYS before it, cards come up as soon as your memory of them
   // slips under a goal that rises from the deck's own to EXAM_GOAL on the day, so the cards you'd forget by then come up

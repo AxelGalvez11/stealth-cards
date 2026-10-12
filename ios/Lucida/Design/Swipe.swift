@@ -15,6 +15,14 @@ import UIKit
 struct BackSwipe: UIViewRepresentable {
   /// False while something else is on top (a sheet, a full screen, a dragged deck), so the edge doesn't pop a page behind it.
   let canPop: () -> Bool
+  /// A page whose content pans (a Mind map's stage, spec §5.3): only a swipe that starts within `edge` points of the left edge goes back, and
+  /// iOS 26's swipe from anywhere in the content doesn't (the page's Back pill stays).
+  static var edgeOnly = false {
+    didSet { if #available(iOS 26.0, *) { navRef?.interactiveContentPopGestureRecognizer?.isEnabled = !edgeOnly } }
+  }
+  static let edge: CGFloat = 24
+  /// The stack the pages are in (to turn iOS 26's content swipe off and on).
+  static weak var navRef: UINavigationController?
   func makeCoordinator() -> Pop { Pop() }
   func makeUIView(context: Context) -> Finder { let v = Finder(); v.pop = context.coordinator; return v }
   func updateUIView(_ v: Finder, context: Context) {
@@ -35,7 +43,9 @@ struct BackSwipe: UIViewRepresentable {
         #endif
         return false
       }
-      let yes = canPop()
+      var yes = canPop()
+      // (on a page whose content pans, only from the very edge, and never iOS 26's swipe from the middle of the page)
+      if yes && BackSwipe.edgeOnly, let v = g.view, g.location(in: v).x > BackSwipe.edge { yes = false }
       #if DEBUG
       PopAudit.shared.note(yes ? "yes" : "no: something is over the page")
       #endif
@@ -55,6 +65,8 @@ struct BackSwipe: UIViewRepresentable {
         while let n = r {
           if let nav = (n as? UIViewController)?.navigationController ?? n as? UINavigationController, let g = nav.interactivePopGestureRecognizer {
             self?.pop?.nav = nav; g.delegate = self?.pop; g.isEnabled = true
+            BackSwipe.navRef = nav
+            if #available(iOS 26.0, *) { nav.interactiveContentPopGestureRecognizer?.isEnabled = !BackSwipe.edgeOnly }
             return
           }
           r = n.next

@@ -8,7 +8,7 @@ import { MOCK_METHOD, SAMPLE, SAMPLE_WAVE } from './mock.mjs';
 import { DRAG_METHOD } from './drag.mjs';
 import { MOTION, EASE, MOTION_CSS, TILE_HOVER } from './motion.mjs';
 import { pagesBoards, pageBoards, deckPagesBlock, deckPagesJs, PAGES_VIEWS, NOTE_VIEWS, PAGE_VIEWS } from './pages.mjs';
-import { MINDMAP_VIEWS, MAPS_METHOD, MAP_ART_METHOD, MAP_CSS, mapLayoutsBoard, mapMotion } from './maps.mjs';
+import { MINDMAP_VIEWS, MAPS_METHOD, MAP_ART_METHOD, MAPVIEW_METHOD, MAP_CSS, mapLayoutsBoard, mapMotion } from './maps.mjs';
 import { WALL_CARDS } from './wall.mjs';
 import { SHARE_METHOD } from './share.mjs';
 import { PRIVACY, TERMS, UPDATED } from './legal.mjs';
@@ -95,7 +95,7 @@ skinFor(k) {
 }
 ${GEN_METHOD}
 ${MOCK_METHOD}
-${logic.includes('this.rich(') ? RICH_METHOD : ''}${logic.includes('this.drag(') ? '\n' + DRAG_METHOD : ''}${logic.includes('this.shareOrCopy(') ? '\n' + SHARE_METHOD : ''}${logic.includes('this.md(') || logic.includes('this.notes(') ? '\n' + GUIDE_METHOD : ''}${logic.includes('this.notes(') ? '\n' + NOTES_METHOD : ''}${logic.includes('this.mockMaterials(') ? '\n' + (logic.includes('this.newDeckDb(') ? NEW_DECK_METHOD : '') + MATERIALS_MOCK : ''}${logic.includes('this.dg(') ? '\n' + DIAGRAM_METHOD : ''}${logic.includes('this.maps(') ? '\n' + MAPS_METHOD : ''}${logic.includes('this.mapArt(') ? '\n' + MAP_ART_METHOD : ''}
+${logic.includes('this.rich(') ? RICH_METHOD : ''}${logic.includes('this.drag(') ? '\n' + DRAG_METHOD : ''}${logic.includes('this.shareOrCopy(') ? '\n' + SHARE_METHOD : ''}${logic.includes('this.md(') || logic.includes('this.notes(') ? '\n' + GUIDE_METHOD : ''}${logic.includes('this.notes(') ? '\n' + NOTES_METHOD : ''}${logic.includes('this.mockMaterials(') ? '\n' + (logic.includes('this.newDeckDb(') ? NEW_DECK_METHOD : '') + MATERIALS_MOCK : ''}${logic.includes('this.dg(') ? '\n' + DIAGRAM_METHOD : ''}${logic.includes('this.maps(') ? '\n' + MAPS_METHOD : ''}${logic.includes('this.mapArt(') ? '\n' + MAP_ART_METHOD : ''}${logic.includes('this.mapview(') ? '\n' + MAPVIEW_METHOD : ''}
 ${logic}
 }
 </script>

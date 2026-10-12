@@ -1878,6 +1878,7 @@ mapArt() { return Component._mapArt || (Component._mapArt = (function makeMapArt
       let out = '<title>' + esc(n.label || (n.level === 0 ? o.title || '' : '')) + '</title><rect x="' + ins + '" y="' + ins + '" width="' + r1(n.w - 2 * ins) + '" height="' + r1(n.h - 2 * ins) + '" rx="' + r1(rx - ins) + '" fill="' + fill + '"' + stroke + '/>';
       const tw = n.folded ? n.w - CHIP : n.w, tx = n.folded && left ? CHIP + tw / 2 : tw / 2;
       if (hidden) out += '<text x="' + r1(tx) + '" y="' + r1(n.h / 2 + 5.5) + '" text-anchor="middle" font-size="16" font-weight="600" fill="' + t.muted + '">?</text>';
+      else if (o.editing && o.editing.id === n.id && o.editing.bare) { /* (the app's own field is over the box: web/mapview.js) */ }
       else if (o.editing && o.editing.id === n.id) {
         const text = o.editing.text || '', w = o.units ? o.units(text) * [8.6, 7.4, 6.9][lv] : text.length * 7;
         out += '<text x="' + PAD_X + '" y="' + r1(n.h / 2 + SIZE[lv] * 0.36) + '" font-size="' + SIZE[lv] + '" font-weight="' + WEIGHT[lv] + '" fill="' + ink + '">' + esc(text) + '</text>'
@@ -2061,7 +2062,7 @@ mapArt() { return Component._mapArt || (Component._mapArt = (function makeMapArt
     const PILL = (on, lab) => ({ label: lab, pressed: on ? 'true' : 'false', bg: on ? t.inv : 'transparent', fg: on ? t.invText : t.muted });
     // The Cards popover (a sheet on a phone): the linked cards, Link a card (best matches first, no AI) and Study. On a computer it
     // opens beside the idea, on its outer side, from the idea's middle.
-    const linked = selCards.map(id => S.cards.find(x => x.id === id)).filter(Boolean).map(x => ({ front: x.front, back: x.back, weak: x.tone === 'weak' }));
+    const linked = selCards.map(id => S.cards.find(x => x.id === id)).filter(Boolean).map(x => ({ front: x.front, back: x.back, weak: x.tone === 'weak', unlink: noop }));
     const matches = selNode ? maps.matchCards(selNode.label, S.cards).filter(id => !selCards.includes(id)).slice(0, 3).map(id => S.cards.find(x => x.id === id)).map(x => ({ front: x.front, back: x.back, weak: x.tone === 'weak', link: noop })) : [];
     const sr = sel ? R(sel) : { x: 0, y: 0, w: 0, h: 0, side: 1 }, POPW = 360, POPH = 476;
     const hang = selNode && ((selNode.cardIds || []).length || selNode.note) && lNode && !(lNode.kids > 0 && !lNode.folded) ? 44 * c.z : 0;
@@ -2081,13 +2082,14 @@ mapArt() { return Component._mapArt || (Component._mapArt = (function makeMapArt
     const missedCards = MISSED.reduce((n, id) => n + ((by0.get(id) || { n: {} }).n.cardIds || []).length, 0);
     // The outline: one row per idea, bound to its id (the ids themselves never show).
     const rows = [];
-    (function walk(n, level) {
+    (function walk(n, level, setsize, pos) {
       const kids = Array.isArray(n.children) ? n.children : [], f = folds[n.id] !== undefined && folds[n.id] !== null ? !!folds[n.id] : !!n.folded;
       rows.push({ id: n.id, label: n.label || title, level: String(level + 1), pad: (phone ? 12 : 16) + level * (phone ? 22 : 26) + 'px', root: level === 0, hasKids: kids.length > 0, open: kids.length > 0 && !f, turn: f ? '0deg' : '90deg', expanded: kids.length ? (f ? 'false' : 'true') : null,
         hasNote: !!n.note, note: n.note || '', cards: (n.cardIds || []).length ? plural(n.cardIds.length, 'card') : '', hasCards: !!(n.cardIds || []).length, folded: f, inside: f ? plural(kids.length, 'idea') + ' inside' : '',
-        bg: n.id === sel ? t.surf : 'transparent', selected: n.id === sel ? 'true' : 'false', size: level === 0 ? (phone ? '20px' : '22px') : level === 1 ? '16px' : '15px', weight: level < 2 ? 600 : 400 });
-      if (!f) for (const k of kids) walk(k, level + 1);
-    })(data.root, 0);
+        bg: n.id === sel ? t.surf : 'transparent', selected: n.id === sel ? 'true' : 'false', size: level === 0 ? (phone ? '20px' : '22px') : level === 1 ? '16px' : '15px', weight: level < 2 ? 600 : 400,
+        setsize: String(setsize), posinset: String(pos), shows: true, editing: false, field: '', pick: noop, toggle: noop });
+      if (!f) kids.forEach((k, i) => walk(k, level + 1, kids.length, i + 1));
+    })(data.root, 0, 1, 1);
     const rr = R(data.root.id);
     const toggle = k => () => set({ [k]: !(k === 'outline' ? outline : k === 'weak' ? weakOn : k === 'sheet' ? sheetOpen : st[k]) });
     const card = sel && selNode ? { front: selNode.label, back: (selNode.children || []).map(x => '- ' + x.label).join('\n') || selNode.note || '' } : null;
@@ -2100,24 +2102,30 @@ mapArt() { return Component._mapArt || (Component._mapArt = (function makeMapArt
       seg: [{ ...PILL(!outline, 'Map'), pick: () => set({ outline: false }) }, { ...PILL(outline, 'Outline'), pick: () => set({ outline: true }) }],
       hasWeak: v !== 'new', weakLabel: 'Weak spots · ' + study.weak, weakPressed: weakOn ? 'true' : 'false', weakBg: weakOn ? t.inv : t.bg, weakFg: weakOn ? t.invText : t.text, toggleWeak: toggle('weak'),
       weakTog: tog(weakOn), outlineTog: tog(outline), toggleOutline: toggle('outline'), outlinePressed: outline ? 'true' : 'false',
+      zoomIn: noop, zoomOut: noop, fit: noop, addIdea: noop, endTest: noop, treeKey: noop, treeRef: noop, editRef: noop, editKey: noop, editInput: noop, editBlur: noop, foldAllDo: noop, makeAgain: noop,
+      mark: { missed: () => set({ shown: false }), knew: () => set({ shown: false }) },
       zoom: Math.round(c.z * 100) + '%', showZoom: !outline && !make && !(v === 'test done' && st.done !== false), noop, hasTest: v !== 'new', testBg: sheetOpen ? t.surf : t.inv, testFg: sheetOpen ? t.text : t.invText, openTest: toggle('sheet'), testExpanded: sheetOpen ? 'true' : 'false',
       // the idea bar, and its ⋯ (Start folded, Test this branch, Delete)
       bar: { open: barOpen, label: selNode ? selNode.label : '', hasNote: !!(selNode && selNode.note), note: selNode && selNode.note ? selNode.note : '', addNote: !(selNode && selNode.note),
         cardsLine: selCards.length ? plural(selCards.length, 'card') + (selWeak ? ' · ' + selWeak + ' weak' : '') : 'No cards yet', cardsWeak: selWeak > 0,
         canFold: !!lNode && lNode.kids > 0, foldLabel: lNode && lNode.folded ? 'Unfold' : 'Fold', keyboard: phone && v === 'writing an idea', idle: !(phone && v === 'writing an idea'), field: v === 'writing an idea' ? 'ATP synth' : selNode ? selNode.label : '',
-        openCards: () => set({ cards: true }), deselect: () => set({ sel: '', ideaMore: false }), more: () => set({ ideaMore: !st.ideaMore }), moreExpanded: ideaMore ? 'true' : 'false' },
+        openCards: () => set({ cards: true }), deselect: () => set({ sel: '', ideaMore: false }), more: () => set({ ideaMore: !st.ideaMore }), moreExpanded: ideaMore ? 'true' : 'false',
+        noteEditing: false, editable: true, setLabel: noop, labelKey: noop, labelBlur: noop, editNote: noop, setNote: noop, noteBlur: noop, noteRef: noop, addIdea: noop, makeCard: noop, fold: noop, keyOutdent: noop, keyIndent: noop, keyUp: noop, keyDown: noop, keyDone: noop },
       ideaMenu: { open: ideaMore, title: selNode ? selNode.label : '', startsFolded: !!(selNode && selNode.folded), foldedAttr: selNode && selNode.folded ? 'true' : 'false', canFold: !!lNode && lNode.kids > 0, close: () => set({ ideaMore: false }),
-        testBranch: () => set({ ideaMore: false, sheet: true, hide: 'branch' }) },
-      fresh: { open: v === 'new', x: r1(Math.max(16, rr.x + rr.w / 2 - 230)) + 'px', y: r1(rr.y + rr.h + 22) + 'px' },
-      cardsPop: { open: !!selNode && cardsOpen, x: r1(popX) + 'px', y: r1(popY) + 'px', title: selNode ? selNode.label : '', linked, hasLinked: linked.length > 0, matches, studyLabel: selCards.length === 1 ? 'Study this card' : 'Study these ' + selCards.length + ' cards', close: () => set({ cards: false }) },
-      legend: { open: weakOn && !outline, rows: legend },
+        testBranch: () => set({ ideaMore: false, sheet: true, hide: 'branch' }), toggleFolded: noop, remove: noop },
+      fresh: { fromCards: noop, aiLeft: 'Lucida AI (2 left today)', open: v === 'new', x: r1(Math.max(16, rr.x + rr.w / 2 - 230)) + 'px', y: r1(rr.y + rr.h + 22) + 'px' },
+      cardsPop: { open: !!selNode && cardsOpen, x: r1(popX) + 'px', y: r1(popY) + 'px', title: selNode ? selNode.label : '', linked, hasLinked: linked.length > 0, matches, studyLabel: selCards.length === 1 ? 'Study this card' : 'Study these ' + selCards.length + ' cards', close: () => set({ cards: false }),
+        matchLabel: 'Best matches in Cell Biology', none: false, canStudy: true, search: noop, study: noop },
+      legend: { open: weakOn && !outline, rows: legend, test: noop },
       sheet: { open: sheetOpen, hide, show, start: () => set({ sheet: false }), close: () => set({ sheet: false }) },
       progress: { line: doneN + ' of ' + testN + ' · ' + plural(missedN, 'missed', 'missed') },
-      markBar: { open: v === 'testing' && !phone, label: current ? label(current) : '' },
+      markBar: { open: v === 'testing' && !phone, label: current ? label(current) : '', hint: 'Did you know it? 1 is Missed, 2 Knew it.', shown: true, hidden: false, show: noop },
       one: { open: v === 'one at a time', crumbs, shown, hidden: !shown, show: () => set({ shown: true }), again: () => set({ shown: false }) },
       testBar: { open: phone && v === 'testing' },
-      done: { open: v === 'test done' && st.done !== false, title: 'You knew ' + (testN - MISSED.length) + ' of ' + testN, missed: missedList, again: 'Test the ' + MISSED.length + ' again', study: 'Study their ' + plural(missedCards, 'card'), close: () => set({ done: false }) },
-      live: { open: v === 'changed by your AI' && st.live !== false, line: by + ' added ' + plural(added.length, 'idea') + ' · v' + version, dismiss: () => set({ live: false }) },
+      done: { open: v === 'test done' && st.done !== false, title: 'You knew ' + (testN - MISSED.length) + ' of ' + testN, missed: missedList, again: 'Test the ' + MISSED.length + ' again', study: 'Study their ' + plural(missedCards, 'card'), close: () => set({ done: false }),
+        hasMissed: true, hasAgain: true, hasStudy: true, hasNone: false, retest: noop, studyCards: noop },
+      live: { open: v === 'changed by your AI' && st.live !== false, line: by + ' added ' + plural(added.length, 'idea') + ' · v' + version, dismiss: () => set({ live: false }), versions: noop, top: '16px', maxW: '640px' },
+      toast: { open: false, line: '', undo: noop, close: noop, bottom: '16px' },
       rows, foldAll: (L.nodes.some(n => n.folded) ? 'Unfold all' : 'Fold to main ideas'),
       bottom: phone && !barOpen && v !== 'testing' && v !== 'one at a time', kbPanel: dark ? te.surf : t.surf2, kbKey: dark ? te.surf2 : t.bg,
       ideas: study.ideas, weak: study.weak,
@@ -2125,7 +2133,7 @@ mapArt() { return Component._mapArt || (Component._mapArt = (function makeMapArt
       check: { overlaps: overlaps(L), clashes: clashes(L, data, { ...art, small: phone ? small : Math.max(small, r1(11 / c.z)), chip: phone ? chip : Math.max(chip, r1(11 / c.z)) }) }
     };
   }
-  return { draw, preview, previewModel, overlaps, clashes, cam, frame, fitIn, tonesOf, studyOf, index, model, refOf, markOf, raisedOf, stages: STAGES };
+  return { draw, preview, previewModel, overlaps, clashes, cam, frame, fitIn, tonesOf, studyOf, index, model, refOf, markOf, raisedOf, boxesOf, extrasOf, branchOf, stages: STAGES };
 })({"title":"The cell at a glance","deck":"Cell Biology","data":{"root":{"id":"cell","label":"The cell","children":[{"id":"nucleus","label":"Nucleus","children":[{"id":"dna","label":"Holds the DNA"},{"id":"nucleolus","label":"Nucleolus makes ribosomes","cardIds":["cm3"]},{"id":"pores","label":"Nuclear pores let mRNA out"}]},{"id":"mito","label":"Mitochondria","note":"Most ATP is made on the inner membrane, by ATP synthase.","cardIds":["cm1"],"children":[{"id":"krebs","label":"Krebs cycle in the matrix","cardIds":["c1"]},{"id":"etc","label":"Electron transport on the inner membrane","cardIds":["cm2"]},{"id":"cristae","label":"Cristae fold the inner membrane"},{"id":"mtdna","label":"Has its own DNA"}]},{"id":"er","label":"ER and Golgi","children":[{"id":"rough-er","label":"Rough ER makes proteins","cardIds":["cm5"]},{"id":"smooth-er","label":"Smooth ER makes lipids"},{"id":"golgi","label":"Golgi packs and ships"}]},{"id":"membrane","label":"Cell membrane","children":[{"id":"bilayer","label":"Phospholipid bilayer"},{"id":"pumps","label":"Channels and pumps","cardIds":["cm4"]},{"id":"mosaic","label":"Fluid mosaic"}]},{"id":"ribosomes","label":"Ribosomes","children":[{"id":"make-proteins","label":"Make proteins"},{"id":"free-or-rough","label":"Free or on the rough ER"}]},{"id":"lysosomes","label":"Lysosomes","children":[{"id":"waste","label":"Break down waste"}]}]}},"changed":{"root":{"id":"cell","label":"The cell","children":[{"id":"nucleus","label":"Nucleus","children":[{"id":"dna","label":"Holds the DNA"},{"id":"nucleolus","label":"Nucleolus makes ribosomes","cardIds":["cm3"]},{"id":"pores","label":"Nuclear pores let mRNA out"}]},{"id":"mito","label":"Mitochondria","note":"Most ATP is made on the inner membrane, by ATP synthase.","cardIds":["cm1"],"children":[{"id":"krebs","label":"Krebs cycle in the matrix","cardIds":["c1"]},{"id":"etc","label":"Electron transport on the inner membrane","cardIds":["cm2"]},{"id":"cristae","label":"Cristae fold the inner membrane"},{"id":"mtdna","label":"Has its own DNA"}]},{"id":"er","label":"ER and Golgi","children":[{"id":"rough-er","label":"Rough ER makes proteins","cardIds":["cm5"]},{"id":"smooth-er","label":"Smooth ER makes lipids"},{"id":"golgi","label":"Golgi packs and ships"}]},{"id":"membrane","label":"Cell membrane","children":[{"id":"bilayer","label":"Phospholipid bilayer"},{"id":"pumps","label":"Channels and pumps","cardIds":["cm4"]},{"id":"mosaic","label":"Fluid mosaic"}]},{"id":"ribosomes","label":"Ribosomes","children":[{"id":"make-proteins","label":"Make proteins"},{"id":"free-or-rough","label":"Free or on the rough ER"}]},{"id":"lysosomes","label":"Lysosomes","children":[{"id":"waste","label":"Break down waste"}]},{"id":"cytoskeleton","label":"Cytoskeleton","children":[{"id":"microtubules","label":"Microtubules move things"},{"id":"actin","label":"Actin filaments"},{"id":"shape","label":"Holds the cell’s shape"}]}]}},"cards":[{"id":"c1","front":"Where does the Krebs cycle happen?","back":"The mitochondrial matrix","tone":"weak"},{"id":"cm1","front":"Which organelle makes most of the ATP?","back":"The mitochondrion","tone":"solid"},{"id":"cm2","front":"Where does electron transport happen?","back":"The inner mitochondrial membrane","tone":"weak"},{"id":"cm3","front":"What does the nucleolus make?","back":"Ribosomes","tone":"getting"},{"id":"cm4","front":"What moves ions against their gradient?","back":"Pumps","tone":"solid"},{"id":"cm5","front":"Which ER makes proteins?","back":"The rough ER","tone":"new"},{"id":"cm6","front":"What does cyanide block?","back":"Complex IV","tone":"weak"},{"id":"cm7","front":"What is the last electron acceptor?","back":"Oxygen","tone":"solid"}],"marks":{"nucleus":[1,0,1,1791655200000],"dna":[1,0,1,1791655200000],"pores":[1,0,1,1791655200000],"mito":[1,0,1,1791655200000],"krebs":[1,0,1,1791655200000],"cristae":[1,0,1,1791655200000],"mtdna":[1,0,1,1791655200000],"er":[1,0,1,1791655200000],"membrane":[1,0,1,1791655200000],"bilayer":[1,0,1,1791655200000],"pumps":[1,0,1,1791655200000],"ribosomes":[1,0,1,1791655200000],"make-proteins":[1,0,1,1791655200000],"lysosomes":[1,0,1,1791655200000],"etc":[0,2,0,1791655200000],"smooth-er":[0,1,0,1791655200000],"nucleolus":[1,1,1,1791655200000]}})); }
 
 constructor(props) { super(props); this.state = { hist: null }; }

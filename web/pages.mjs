@@ -49,7 +49,14 @@ const refuseUnready = kind => { if (!PAGE_READY.has(kind)) throw new PageError(n
 // web/maps.js cleans the map kinds' data. It's loaded here if it's there (and works), so this file runs before it is written too.
 let maps = null;
 try { const m = await import('./maps.js'); maps = m.default || m; if (typeof maps.normalize !== 'function') maps = null; } catch { maps = null; }
-const MAP_KINDS = new Set(['mindmap', 'diagram']);
+export const MAP_KINDS = new Set(['mindmap', 'diagram']);
+// The engine itself, for the other server files (null while web/maps.js isn't there).
+export const mapsEngine = () => maps;
+// What an AI write that says nothing about itself changed, in words ('Added 3 ideas under Mitochondria'), from the two versions.
+function autoSummary(kind, before, after) {
+  if (!maps || !MAP_KINDS.has(kind) || !before) return '';
+  try { const s = maps.summaryOf(maps.diff(kind, before, after)); return s === 'No changes' ? '' : s; } catch { return ''; }
+}
 // A new page's data when none is sent (maps.js's emptyOf when it's there).
 const EMPTY = { note: { blocks: [] }, mindmap: { root: { id: 'root', label: '' } }, diagram: { direction: 'down', nodes: [], edges: [] } };
 export const emptyOf = kind => JSON.parse(JSON.stringify((maps && typeof maps.emptyOf === 'function' && MAP_KINDS.has(kind) && maps.emptyOf(kind)) || EMPTY[kind] || {}));
@@ -67,6 +74,8 @@ export function cleanData(kind, data, prev, { ai = false, title = '' } = {}) {
   if (kind === 'note') {
     const n = typeof data === 'string' ? markdownToNote(data, prev) : data && typeof data.markdown === 'string' && !Array.isArray(data.blocks) ? markdownToNote(data.markdown, prev) : normalizeNote(data || {});
     out = { blocks: n.blocks };
+    // (what Note cleaning repaired comes back too, said as a sentence)
+    if (Array.isArray(n.warnings) && n.warnings.length) warnings = n.warnings.slice(0, 10).map(w => { const t = String(w); return t[0].toUpperCase() + t.slice(1) + (/[.!?]$/.test(t) ? '' : '.'); });
   } else {
     if (noteShaped(data)) throw shapeError(kind, ai);
     if (data == null) data = emptyOf(kind);
@@ -76,6 +85,7 @@ export function cleanData(kind, data, prev, { ai = false, title = '' } = {}) {
       catch (e) {
         if (e instanceof TypeError || e instanceof RangeError || e instanceof ReferenceError) throw e;
         // (a kind web/maps.js can't read yet, the diagram until step 4b: its data is kept as an object, below)
+        if (e.code === 'shape') throw shapeError(kind, ai);
         if (e.code !== 'kind') throw new PageError(e.message, 400, e.code ? { code: e.code } : {});
       }
     }
@@ -120,14 +130,16 @@ async function prune(uid, id, version, pro) {
 
 // A new page in a deck or a folder (the caller has checked the deck or folder is the person's own and may be written). `ready`
 // (the app and AI apps) refuses a kind that isn't in PAGE_READY.
-export async function create(uid, { scope, scopeId, kind, title, data, parent = '', who = 'you', ai = false, summary = '', pro, ready = false }) {
+// `cleaned`: the data went through cleanData's rules already, with `ai` (mcp.mjs cleans a map first to check its card ids): it is
+// taken as it is now, so what that AI write cleared stays cleared.
+export async function create(uid, { scope, scopeId, kind, title, data, parent = '', who = 'you', ai = false, summary = '', pro, ready = false, cleaned = false }) {
   if (!SCOPES.includes(scope)) throw new PageError('A page belongs to a deck or a folder.');
   if (ready) refuseUnready(kind);
   if (!KINDS.includes(kind)) throw new PageError('A page is one of: ' + KINDS.join(', ') + '.');
   const have = await list(uid, scope, scopeId);
   if (have.length >= limits(pro).perScope) throw new PageError(pro === false ? 'Free holds ' + PAGES.free.perScope + ' pages in a ' + scope + '. Go Pro for more: lucida.cards/pricing' : 'A ' + scope + ' holds up to ' + PAGES.pro.perScope + ' pages.', 402);
   if (parent && !have.some(p => p.id === parent)) throw new PageError('The page to put it inside isn’t in that ' + scope + '.');
-  const c = cleanData(kind, data, undefined, { ai, title: cleanTitle(title) });
+  const c = cleanData(kind, data, undefined, { ai: ai && !cleaned, title: cleanTitle(title) });
   const r = { id: newId(), owner: owner(uid), scope, scope_id: String(scopeId), parent: parent || '', pos: have.length ? Math.max(...have.map(p => p.pos || 0)) + 1 : 0, kind, title: cleanTitle(title, kind), data: c.data, size: c.size, version: 1, updated_by: who, updated_ai: !!ai, created_at: now(), updated_at: now() };
   await ask('/pages', { method: 'POST', body: r });
   await keepVersion(uid, r, { who, ai, summary: summary || 'Made the page' });
@@ -138,7 +150,7 @@ const withWarnings = (p, w) => (w && w.length ? { ...p, warnings: w } : p);
 
 // A save: new data and/or title, made from `baseVersion`. Refused with the page as it is now when that isn't its version.
 // `ready` (the app and AI apps) refuses a page whose kind isn't in PAGE_READY.
-export async function update(uid, id, { baseVersion, title, data, who = 'you', ai = false, summary = '', pro, ready = false }) {
+export async function update(uid, id, { baseVersion, title, data, who = 'you', ai = false, summary = '', pro, ready = false, cleaned = false }) {
   const cur = await mustGet(uid, id);
   if (ready) refuseUnready(cur.kind);
   const base = Number(baseVersion);
@@ -148,7 +160,9 @@ export async function update(uid, id, { baseVersion, title, data, who = 'you', a
   const patch = { version: cur.version + 1, updated_by: who, updated_ai: !!ai, updated_at: now() };
   if (title !== undefined) patch.title = cleanTitle(title, cur.kind);
   let warnings = [];
-  if (data !== undefined) { const c = cleanData(cur.kind, data, cur.data, { ai, title: patch.title ?? cur.title }); patch.data = c.data; patch.size = c.size; warnings = c.warnings; }
+  if (data !== undefined) { const c = cleanData(cur.kind, data, cur.data, { ai: ai && !cleaned, title: patch.title ?? cur.title }); patch.data = c.data; patch.size = c.size; warnings = c.warnings; }
+  // An AI write that doesn't say what it changed gets the words of what changed (the app writes its own at flush).
+  if (ai && !String(summary || '').trim() && patch.data) summary = autoSummary(cur.kind, cur.data, patch.data);
   const got = await ask('/pages?id=eq.' + val(id) + '&owner=eq.' + val(owner(uid)) + '&version=eq.' + base, { method: 'PATCH', body: patch, prefer: 'return=representation' });
   const r = got && got[0];
   if (!r) throw conflict((await row(uid, id)) || cur);

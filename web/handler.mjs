@@ -29,6 +29,7 @@ import { cookies } from './auth.mjs';
 import { isDev, afterSaving, pageScope, touchDeck } from './store.mjs';
 import * as pages from './pages.mjs';
 import { moveGuide } from './guidemove.mjs';
+import { moveMaps, mapsToMove } from './mapmove.mjs';
 import { reserve, lookup, release, rtOf, listen, pass } from './rooms.mjs';
 import { publicLd } from './jsonld.mjs';
 
@@ -130,11 +131,15 @@ async function publicPage(req, res, path) {
   res.end(html);
 }
 
+// Actions the server applies itself after its own checks (the moves into Pages, a deleted page's leftovers); /api/action refuses them from an app.
+const SERVER_ONLY = new Set(['guide.moved', 'diagrams.moved', 'page.gone']);
+
 // /api/pages (in the library's request, which they only read: whether the deck or folder is yours to write in, and your plan).
-//   GET  /api/pages?scope=deck&id=<deck>     the pages, without their data
+//   GET  /api/pages?scope=deck&id=<deck>     the pages, without their data (a map page with `tested`: when the learner last tested themselves on it)
 //   GET  /api/pages/<id>                      one page with its data;  /api/pages/<id>/versions  its versions;  …/versions/<n>  one of them
 //   POST /api/pages {op:'create', scope, id, kind, title, data, parent} | {op:'update', page, baseVersion, title?, data?}
 //                   | {op:'move', page, parent?, pos?} | {op:'delete', page} | {op:'restore', page, version, baseVersion}
+// A save answers with the page as saved, and `warnings` beside it when cleaning repaired something (pages.mjs cleanData).
 // A save made from an older version answers 409 with the page as it is now (`current`). Making or writing a page of a kind the
 // apps can't show yet (not in pages.PAGE_READY) is refused (code 'ready'), and a Note's blocks sent to a page of another kind too
 // (code 'shape': an older app that opens every page as a Note).
@@ -146,9 +151,11 @@ async function pagesApi(req, res, path, body, uid) {
       if (!m) return send(res, 404, { error: 'Not found' });
       if (!m[1]) {
         const sc = q.get('scope') ? pageScope(q.get('scope'), q.get('id') || '', { read: true }) : null;
-        // a deck's Guide moves into its Pages the first time they're asked for (guidemove.mjs)
-        if (sc && sc.scope === 'deck') await moveGuide(state().decks.find(d => d.id === sc.id), pages.onceFor(req));
-        return send(res, 200, { pages: await pages.list(uid, sc && sc.scope, sc && sc.id), rev: await pages.rev(uid) });
+        // a deck's Guide, and the mind maps made from its cards, move into its Pages the first time they're asked for (guidemove.mjs, mapmove.mjs)
+        if (sc && sc.scope === 'deck') { const d = state().decks.find(x => x.id === sc.id), once = pages.onceFor(req); await moveGuide(d, once); await moveMaps(d, once); }
+        // (a map page's row says when the learner last tested themselves on it: 'Mind map · tested Tue', store.mjs Test me marks)
+        const marks = state().mapMarks || {}, tested = p => (pages.MAP_KINDS.has(p.kind) && Object.hasOwn(marks, p.id) && marks[p.id] && +marks[p.id].at ? { tested: +marks[p.id].at } : {});
+        return send(res, 200, { pages: (await pages.list(uid, sc && sc.scope, sc && sc.id)).map(p => ({ ...p, ...tested(p) })), rev: await pages.rev(uid) });
       }
       if (m[2]) return send(res, 200, await pages.version(uid, m[1], +m[2]));
       if (path.endsWith('/versions')) return send(res, 200, { versions: await pages.versions(uid, m[1]) });
@@ -169,6 +176,9 @@ async function pagesApi(req, res, path, body, uid) {
     });
     // a shared deck shares its pages too (social.mjs, when the library is saved)
     if (out && out.scope === 'deck' && a.op !== 'move') touchDeck(out.scopeId, who);
+    // a map page's Test me marks go with it (outside `once`, so a library save that is tried again drops them again)
+    // (and the old Figures mind map it was moved from, store.mjs page.gone)
+    if (out && a.op === 'delete') apply({ type: 'page.gone', pageId: out.id });
     return send(res, 200, out);
   } catch (e) { return fail(e); }
 }
@@ -181,6 +191,9 @@ async function api(req, res, path, body, me, uid) {
       // Your classes and their assignments, and (if you share it) your progress on them (classes.mjs).
       await classes.sync(uid).catch(e => console.error('class sync', e));
     }
+    // The mind maps made from a deck's cards move into its Pages here too (mapmove.mjs, once per deck), so the Figures the app shows
+    // already say which page each became (an old ?diagram= link then opens the page).
+    { const once = pages.onceFor(req); for (const d of state().decks.filter(mapsToMove)) await moveMaps(d, once).catch(e => console.error('map move', e.message)); }
     return send(res, 200, view(me));
   }
   // The study network (social.mjs): sharing, studying and copying decks, suggestions, follows, saves, news. Changes to
@@ -213,7 +226,16 @@ async function api(req, res, path, body, me, uid) {
   }
   if (path === '/api/action' && req.method === 'POST') {
     try {
-      const a = JSON.parse(body), result = apply(a);
+      const a = JSON.parse(body);
+      // (the actions only the server applies, after its own checks: an app sending one is refused)
+      if (!a || typeof a !== 'object' || SERVER_ONLY.has(a.type)) return send(res, 400, { error: 'Unknown action ' + (a && a.type) });
+      // (a Test me save is kept under the page's own deck or folder, whatever the app said, so its marks go with them)
+      if (a.type === 'mapmarks.save') {
+        const p = /^p[a-z0-9]{6,24}$/.test(String(a.pageId || '')) ? await pages.get(uid, String(a.pageId)) : null;
+        if (!p || !pages.MAP_KINDS.has(p.kind)) return send(res, 400, { error: 'No such page' });
+        a.deckId = p.scopeId;
+      }
+      const result = apply(a);
       // Delete my data takes you off the study network too: profile, follows, saves, News, suggestions, classes, shared decks.
       if (a && a.type === 'data.reset') afterSaving(() => social.forget(uid));
       return send(res, 200, { result, state: view(me) });

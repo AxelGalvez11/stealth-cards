@@ -39,6 +39,8 @@ final class PagesStore: ObservableObject {
   private var versAsked: Set<String> = []
   private var asked: Set<String> = []
   private var conflicts: [String: Conflict] = [:]
+  /// A Mind map's data put on top of a merge (or theirs, when this change couldn't be), for the open map to take before its next change.
+  private var rebased: [String: String] = [:]
   private var queue: [String: Q] = [:]
   /// What went wrong with a page's last save when there's nothing left to send (until the next change).
   private var errs: [String: String] = [:]
@@ -107,6 +109,8 @@ final class PagesStore: ObservableObject {
     return Saving(busy: q.busy || q.timer != nil, err: q.err, saved: q.saved)
   }
   func conflict(_ id: String) -> Conflict? { conflicts[id] }
+  /// The data a merge left a page with while more was waiting here (taken once): the open map shows it and makes its next change on it.
+  func takeRebased(_ id: String) -> String? { rebased.removeValue(forKey: id) }
   func clearConflict(_ id: String) { conflicts[id] = nil; changed() }
   /// Its versions, newest first (nil until they arrive).
   func versions(_ id: String) -> [PageVersion]? {
@@ -166,18 +170,24 @@ final class PagesStore: ObservableObject {
       var body: [String: Any] = ["op": "update", "page": id, "baseVersion": q.base]
       if let title { body["title"] = title }
       if let data { body["data"] = PageJSON.object(data) ?? PageEmpty.of(kind) }
+      // (a Mind map's version says what changed: maps.summaryOf(maps.diff(…)), "Added 3 ideas under Mitochondria")
+      if let data, kind == "mindmap" { let s = MapEngine.shared.summary(kind, q.baseData, data); if !s.isEmpty && s != "No changes" { body["summary"] = s } }
       var (st, j) = try await api.pages("", body: body)
       var lost = ""
+      /// What a merged save sent (what's written here meanwhile was made from it: it's put on top of the merged page below).
+      var sentMerged: String? = nil
       if st == 409, j["code"] as? String == "conflict", let curJ = j["current"] as? [String: Any] {
         let cur = PageInfo(json: curJ)
         let how = PageMerge.of(cur.kind)
-        if data != nil && how == nil {
-          // no merge for this kind: theirs stays, and nothing written here goes over it
+        let merged: String? = data.flatMap { d in how.flatMap { $0(q.baseData, d, cur.data) } }
+        if data != nil && merged == nil {
+          // no merge for this kind (or it failed): theirs stays, and nothing written here goes over it
           lost = "Your change wasn’t saved: " + (cur.by.isEmpty ? "someone" : cur.by) + " changed this page (v\(cur.version))."
           q.data = nil; q.title = nil; mds[id] = nil
+          if byId[id]?.kind == "mindmap" { rebased[id] = cur.data }
           (st, j) = (200, curJ)
         } else {
-          let merged = data.flatMap { d in how.map { $0(q.baseData, d, cur.data) } }
+          sentMerged = merged != nil ? data : nil
           var again: [String: Any] = ["op": "update", "page": id, "baseVersion": cur.version, "summary": "Kept what you wrote, with " + (cur.by.isEmpty ? "the other" : cur.by) + "’s change"]
           if let title { again["title"] = title }
           if let merged { again["data"] = PageJSON.object(merged) ?? PageEmpty.of(cur.kind) }
@@ -196,6 +206,12 @@ final class PagesStore: ObservableObject {
       }
       var p = PageInfo(json: j)
       q.base = p.version; q.baseData = p.data
+      if let sent = sentMerged, let waiting = q.data {
+        // (typed while the merge went out: on top of the merged page too, or theirs would go with the next save, which meets no conflict)
+        if let r = PageMerge.rebase(p.kind, sent: sent, waiting: waiting, merged: p.data) { q.data = r }
+        else { q.data = nil; lost = "Your last change wasn’t saved: " + (p.by.isEmpty ? "someone" : p.by) + " changed this page." }
+        if p.kind == "note" { mds[id] = nil } else { rebased[id] = q.data ?? p.data }
+      }
       if let d = q.data { p.data = d }
       if let t = q.title { p.title = t }
       byId[id] = p
@@ -272,7 +288,7 @@ final class PagesStore: ObservableObject {
 enum NotePagesSample {
   static let deck = "cell"
   static let note = "ps1"
-  static let md = "# Cellular respiration\n\nCells turn glucose into ATP in three stages. Most of the ATP comes from the last one, on the inner membrane of the mitochondrion.\n\n:::chain\nGlycolysis\nPyruvate\nAcetyl-CoA\nKrebs cycle\nElectron transport\n:::\n\n:::trap\nGlycolysis happens in the cytoplasm, not the mitochondrion, and needs no oxygen.\n:::\n\n:::pearl\nOxygen is the last electron acceptor: no O₂, no electron transport, almost no ATP.\n:::\n\n:::mnemonic\n“Can I Keep Selling Seashells For Money, Officer?”: the Krebs cycle’s steps in order.\n:::\n\n## Where each stage happens\n\n| Stage | Where | ATP made |\n| --- | --- | --- |\n| Glycolysis | Cytoplasm | 2 |\n| Krebs cycle | Matrix | 2 |\n| Electron transport | Inner membrane | ~34 |\n\n:::toggle Why does cyanide stop it?\nIt blocks complex IV, so oxygen can’t take the electrons and the chain stops.\n:::\n\n## From your cards\n\n::card c1\n"
+  static let md = "# Cellular respiration\n\nCells turn glucose into ATP in three stages. Most of the ATP comes from the last one, on the inner membrane of the mitochondrion.\n\n:::chain\nGlycolysis\nPyruvate\nAcetyl-CoA\nKrebs cycle\nElectron transport\n:::\n\n:::trap\nGlycolysis happens in the cytoplasm, not the mitochondrion, and needs no oxygen.\n:::\n\n:::pearl\nOxygen is the last electron acceptor: no O₂, no electron transport, almost no ATP.\n:::\n\n:::mnemonic\n“Can I Keep Selling Seashells For Money, Officer?”: the Krebs cycle’s steps in order.\n:::\n\n## Where each stage happens\n\n| Stage | Where | ATP made |\n| --- | --- | --- |\n| Glycolysis | Cytoplasm | 2 |\n| Krebs cycle | Matrix | 2 |\n| Electron transport | Inner membrane | ~34 |\n\n:::toggle Why does cyanide stop it?\nIt blocks complex IV, so oxygen can’t take the electrons and the chain stops.\n:::\n\n## The whole picture\n\n::page ps2\n\n## From your cards\n\n::card c1\n"
   static func fill(_ lists: inout [String: [PageInfo]], _ byId: inout [String: PageInfo], _ vers: inout [String: [PageVersion]]) {
     let day = 864e5, now = Date().timeIntervalSince1970 * 1000
     let rows: [(String, String, String, Bool, Int, Bool)] = [
@@ -285,6 +301,9 @@ enum NotePagesSample {
     lists["deck|" + deck] = list
     var p = list[1]; p.scopeId = deck; p.data = GuideEngine.shared.markdownToNote(md, previous: nil)
     byId[note] = p
+    // the Mind map "The cell at a glance" (design/maps.mjs MAP_SAMPLE), for PhonePageMindmap and the map inside the Note
+    var mp = list[2]; mp.scopeId = deck; mp.data = MapDemo.sample.data.text
+    byId[mp.id] = mp
     vers[note] = [PageVersion(version: 12, by: "you", ai: false, at: now - day, summary: "Added the table of stages"),
                   PageVersion(version: 11, by: "Claude", ai: true, at: now - 9e7, summary: "Added the trap and the pearl, linked 2 weak cards"),
                   PageVersion(version: 9, by: "ChatGPT", ai: true, at: now - 3e8, summary: "Made the page from Lecture 14 slides.pdf")]

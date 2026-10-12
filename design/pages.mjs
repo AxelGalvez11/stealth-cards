@@ -10,10 +10,13 @@
 // Step 4a (design/specs/step4-maps.md, design/maps.mjs) adds the Mind map: New page's second step for it, its rows' last test, a map
 // shown inside a Note (drawn by the real engine, web/maps.js), and the Mind map page itself in WebPage / PhonePage.
 import { MINDMAP_VIEWS, MAP_SAMPLE, MAP_ICONS as EXTRA_ICONS, mapPage } from './maps.mjs';
+import { PAGE_READY } from '../web/pages.mjs';
 export const PAGES_VIEWS = ['List', 'New page menu', 'New mind map', 'Empty deck'];
 export const NOTE_VIEWS = ['Reading', 'A map inside', 'Make a card from a block', 'Older versions', 'Changed by your AI'];
-// The kinds the apps can show (web/pages.mjs PAGE_READY), and the ones these boards draw ahead of them for the owner to approve.
-const READY = ['note'], DESIGN_READY = ['note', 'mindmap'];
+// The kinds the apps can show (web/pages.mjs PAGE_READY, the one list), and the ones these boards draw ahead of them for the owner to
+// approve. LUCIDA_PAGES_READY (a comma list, like "note,mindmap") builds the app's screens with more kinds, to try one on this computer
+// before PAGE_READY has it; without it they go by PAGE_READY.
+const READY = process.env.LUCIDA_PAGES_READY ? process.env.LUCIDA_PAGES_READY.split(',').map(x => x.trim()).filter(Boolean) : [...PAGE_READY], DESIGN_READY = ['note', 'mindmap'];
 // A Mind map row's second line: when it was last tested (S.mapMarks, no page fetch), as 'Mind map · tested yesterday'.
 const TESTED_JS = `const dayWord = ms => { const d = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(ms).setHours(0, 0, 0, 0)) / 864e5); return d <= 0 ? 'today' : d === 1 ? 'yesterday' : d < 7 ? new Date(ms).toLocaleDateString('en-US', { weekday: 'short' }) : new Date(ms).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
     const testedLine = (kind, mk) => kind === 'mindmap' ? ' · ' + (mk && mk.at ? 'tested ' + dayWord(mk.at) : 'not tested yet') : '';`;
@@ -282,7 +285,7 @@ export function pageBoards(H) {
   const MW = mapPage(H, false), MP = mapPage(H, true);
   const item = (handler, ic, label, danger) => `<button type="button" role="menuitem" onClick="{{${handler}}}" style="height: 40px; padding: 0 10px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px; background: transparent; color: ${danger ? '{{t.again}}' : '{{t.text}}'}; font: inherit; font-size: 14px; font-weight: 500; text-align: left; cursor: pointer;">${icon(ic, 16, 2)}<span>${label}</span></button>`;
   const more = `<sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}"><div style="position: relative; flex-shrink: 0;"><button type="button" onClick="{{toggleMore}}" aria-label="More" aria-haspopup="menu" aria-expanded="{{moreExpanded}}" style="${PILL} width: 36px; padding: 0; justify-content: center; background: {{moreBg}}; color: {{t.text}};">${icon('more', 18, 2)}</button>
-      <sc-if value="{{moreOpen}}" hint-placeholder-val="{{ false }}"><div role="menu" aria-label="More" data-sc-pop style="position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; width: 220px; box-sizing: border-box; padding: 6px; border-radius: 18px; background: {{t.bg}}; box-shadow: 0 0 0 1px {{t.line}}, 0 18px 44px rgba(0,0,0,.22); display: flex; flex-direction: column; gap: 2px;"><sc-if value="{{mp.on}}" hint-placeholder-val="{{ false }}">${item('mp.noop', 'fold', '{{mp.foldAll}}')}${item('mp.noop', 'sparkle', 'Make again from the cards')}</sc-if>${item('openHist', 'history', 'Versions')}${item('deletePage', 'bin', 'Delete page', true)}</div></sc-if></div></sc-if>`;
+      <sc-if value="{{moreOpen}}" hint-placeholder-val="{{ false }}"><div role="menu" aria-label="More" data-sc-pop style="position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; width: 220px; box-sizing: border-box; padding: 6px; border-radius: 18px; background: {{t.bg}}; box-shadow: 0 0 0 1px {{t.line}}, 0 18px 44px rgba(0,0,0,.22); display: flex; flex-direction: column; gap: 2px;"><sc-if value="{{mp.on}}" hint-placeholder-val="{{ false }}">${item('mp.foldAllDo', 'fold', '{{mp.foldAll}}')}${item('mp.makeAgain', 'sparkle', 'Make again from the cards')}</sc-if>${item('openHist', 'history', 'Versions')}${item('deletePage', 'bin', 'Delete page', true)}</div></sc-if></div></sc-if>`;
   const verBtn = phone => `<button type="button" onClick="{{toggleHist}}" aria-pressed="{{histPressed}}" style="${PILL} background: {{histBg}}; color: {{t.text}};"><span style="display: flex;">${icon('history', 14, 2)}</span>${phone ? 'v{{version}}' : '{{versionLine}}'}</button>`;
   const saving = `<span aria-live="polite" style="flex-shrink: 0; font-size: 13px; color: {{saveColor}}; white-space: nowrap;">{{saveLabel}}</span>`;
   const header = phone => `<header style="height: ${phone ? 52 : 64}px; flex-shrink: 0; box-sizing: border-box; padding: 0 ${phone ? 12 : 20}px 0 ${phone ? 12 : 24}px; display: flex; align-items: center; gap: 8px; ${phone ? '' : 'border-bottom: 1px solid {{t.line}};'}">
@@ -306,7 +309,7 @@ export function pageBoards(H) {
       <sc-for list="{{vers}}" as="v" hint-placeholder-count="3"><div style="padding: 12px 14px; border-radius: 16px; background: {{v.bg}}; display: flex; flex-direction: column; gap: 4px;"><div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 14px; font-weight: 600;">v{{v.n}}</span><sc-if value="{{v.ai}}" hint-placeholder-val="{{ false }}"><span style="display: flex; color: {{t.muted}};">${icon('sparkle', 12, 2)}</span></sc-if><span style="flex-grow: 1; min-width: 0; font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{v.who}} · {{v.when}}</span><sc-if value="{{v.old}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{v.restore}}" aria-label="Restore version {{v.n}}" class="sc-press" style="${PILL} height: 28px; padding: 0 12px; font-size: 12px; background: {{t.inv}}; color: {{t.invText}};">Restore</button></sc-if></div><sc-if value="{{v.hasWhat}}" hint-placeholder-val="{{ true }}"><span style="font-size: 13px; line-height: 1.45; color: {{t.muted}};">{{v.what}}</span></sc-if></div></sc-for>
     </aside></sc-if>`;
   const status = `<sc-if value="{{statusOpen}}" hint-placeholder-val="{{ false }}"><div style="padding: 60px 0; text-align: center; font-size: 15px; color: {{t.muted}};">{{statusLine}}</div></sc-if>`;
-  const body = phone => `${banner}<sc-if value="{{showPage}}" hint-placeholder-val="{{ true }}">${title(phone)}<div ref="{{nbRef}}" data-sc-own style="${NOTES_VARS()}"></div></sc-if>${status}`;
+  const body = phone => `${banner}<sc-if value="{{showPage}}" hint-placeholder-val="{{ true }}">${title(phone)}<div ref="{{nbRef}}" data-sc-own style="${NOTES_VARS()} --gd-inv: {{t.inv}}; --gd-inv-text: {{t.invText}};"></div></sc-if>${status}`;
   // A page of a kind this app can't show yet (an older app, or a kind still to come): it says so, with Back; never an empty Note.
   const update = phone => `<sc-if value="{{updateOn}}" hint-placeholder-val="{{ false }}"><div role="status" style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: ${phone ? '40px 28px 120px' : '40px'}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center;">
       <span aria-hidden="true" style="width: 64px; height: 64px; border-radius: 32px; background: {{t.surf}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center;">${icon('update', 26, 2)}</span>
@@ -338,7 +341,7 @@ ${sidebar('Library')}
   </div>`;
   const logic = isPhone => `
 constructor(props) { super(props); this.state = { hist: null, more: false, make: null }; }
-componentWillUnmount() { const db = this.props.db; if (db && !db.mock && this.props.pageId) db.pages.flush(this.props.pageId); }
+componentWillUnmount() { const db = this.props.db; if (db && !db.mock && this.props.pageId) { this.mapview().leave(this.props.pageId); db.pages.flush(this.props.pageId); } }
 renderVals() {
   ${T}${DB_JS}
   const p = this.props, st = this.state, mock = !!db.mock, view = mock ? p.view || 'Writing' : '', id = p.pageId || '';
@@ -351,7 +354,7 @@ renderVals() {
     : { id: 'ps1', kind: 'note', scope: 'deck', scopeId: 'cell', title: 'Cellular respiration', version: 12, by: 'you', ai: false, updated: Date.now() - 864e5 };
   const loading = pg === undefined, missing = pg === null, ok = !!pg;
   const ready = ok && (mock ? !NU && ${JSON.stringify(DESIGN_READY)}.includes(pg.kind) : ${JSON.stringify(READY)}.includes(pg.kind));
-  const isNote = ready && pg.kind === 'note', isMap = ready && pg.kind === 'mindmap' && !!mm, needsUpdate = ok && !ready;
+  const isNote = ready && pg.kind === 'note', isMap = ready && pg.kind === 'mindmap' && (!!mm || !mock), needsUpdate = ok && !ready;
   const KINDS = ${JSON.stringify(Object.fromEntries(PAGE_KINDS.map(k => [k.kind, k.name])))};
   const deck = ok && pg.scope === 'deck' ? db.deck(pg.scopeId) : null, folder = ok && pg.scope === 'folder' ? (db.folders() || []).find(f => f.id === pg.scopeId) : null;
   const scopeName = deck ? deck.name : folder ? folder.name : 'Library', canEdit = ok && (mock || (deck ? db.guide(deck.id).can : !!folder));
@@ -361,25 +364,40 @@ renderVals() {
   const who = x => (!x || x === 'you' ? 'You' : x), ago = ms => { const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : new Date(ms).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
   const cf = mock ? (view === 'Changed by your AI' ? { by: 'Claude', ai: true, theirs: 13, mine: 14 } : null) : db.pages.conflict(id);
   const hist = st.hist === null ? view === 'Versions' : st.hist;
+  // The app's Mind map (web/mapview.js): the same values the canvas's states give the markup, from the page, the deck's cards (each with
+  // its tone, sched.toneOf) and the last Test me marks (S.mapMarks). Its edits go to the page's saving (web/pagesclient.js).
+  const aiLeft = (() => { const left = mock ? 2 : db.diagrams && typeof db.diagrams.left === 'function' ? db.diagrams.left() : null; return typeof left === 'number' ? 'Lucida AI (' + left + ' left today)' : 'Lucida AI'; })();
+  const mv = !mock && isMap ? this.mapview().model({ key: id, data: pg.data, version: pg.version, by: who(pg.by), ai: !!pg.ai, title: pg.title || '', editable: canEdit, phone: ${isPhone ? 'true' : 'false'}, t,
+      cards: db.mapCards ? db.mapCards(pg.scope, pg.scopeId) : [], marks: ((db.mapMarks && db.mapMarks(id)) || {}).n || {}, deckName: scopeName, conflict: cf, clearConflict: () => db.pages.clearConflict(id),
+      query: { idea: p.idea || '', test: p.test || '' }, aiLeft, making: !!st.make, rerender: () => this.forceUpdate(),
+      onEdit: canEdit ? (data, summary, own, x) => db.pages.edit(id, { data, summary: own ? summary : undefined, hold: !!(x && x.hold), ...(x && x.title && !pg.title ? { title: x.title } : {}) }) : undefined,
+      onMakeCard: canEdit && deck ? m => { this._front = undefined; this._back = undefined; this._focusFront = true; this.setState({ make: m }); } : undefined,
+      onStudy: set => db.act.go('/review?set=' + encodeURIComponent(set)),
+      onTest: (results, ids) => { if (db.act.saveMapMarks) db.act.saveMapMarks({ pageId: id, deckId: pg.scopeId, results, ids }).catch(() => {}); },
+      onToast: m => db.say(m), onVersions: () => this.setState({ hist: true, more: false }), onDone: () => this.setState({ more: false }),
+      onFromCards: canEdit && deck && db.diagrams ? () => { db.diagrams.openSheet(deck.id); db.diagrams.setType('mindmap'); db.act.go('/deck/' + deck.id + '?tab=pages'); } : undefined }) : null;
+  const MM = mm || mv;
   const vl = mock && mm ? [{ version: mm.page.version, by: mm.page.by === 'You' ? 'you' : 'Claude', ai: mm.page.ai, at: Date.now() - 864e5, summary: mm.page.version === 4 ? 'Added “Cytoskeleton” and 3 ideas under it' : mm.page.version === 1 ? '' : 'Linked 6 cards and set “ER and Golgi” to start folded' }, { version: 2, by: 'you', ai: false, at: Date.now() - 2e8, summary: 'Added 3 ideas under “Cell membrane”' }, { version: 1, by: 'Claude', ai: true, at: Date.now() - 3e8, summary: 'Made the map from 42 cards: All cards' }].slice(0, mm.page.version === 1 ? 1 : 3)
     : mock ? [{ version: 12, by: 'you', ai: false, at: Date.now() - 864e5, summary: 'Added the table of stages' }, { version: 11, by: 'Claude', ai: true, at: Date.now() - 9e7, summary: 'Added the trap and the pearl, linked 2 weak cards' }, { version: 9, by: 'ChatGPT', ai: true, at: Date.now() - 3e8, summary: 'Made the page from Lecture 14 slides.pdf' }] : hist && ok ? db.pages.versions(id) : null;
-  const make = st.make || (mock && view === 'Make a card' ? { front: '', back: 'Glycolysis happens in the cytoplasm, not the mitochondrion, and needs no oxygen.' } : mm && mm.make ? mm.make : null);
+  const make = st.make || (mock && view === 'Make a card' ? { front: '', back: 'Glycolysis happens in the cytoplasm, not the mitochondrion, and needs no oxygen.' } : mm && mm.make ? { ...mm.make, label: mm.bar.label } : null);
   const plain = s => String(s || '').split('\\n').filter(l => !/^:::|^::(card|page) /.test(l)).map(l => l.replace(/^#+\\s*|^\\s*[-*+]\\s+|^\\s*\\d+\\.\\s+/, '').replace(/\\*\\*|__|\`/g, '')).join(' ').replace(/\\s+/g, ' ').trim();
-  const cardInfo = cid => { const c = mock ? { front: 'Where does the Krebs cycle happen?', back: 'The mitochondrial matrix', srs: { lapses: 2 } } : db.card(cid); return c ? { front: plain(c.front || c.text), back: plain(c.back), weak: !!c.srs && ((c.srs.lapses || 0) > 0 || c.srs.state === 'relearning') } : null; };
+  const cardInfo = cid => { const c = mock ? { front: 'Where does the Krebs cycle happen?', back: 'The mitochondrial matrix', srs: { lapses: 2 } } : db.card(cid); return c ? { front: plain(c.front || c.text), back: plain(c.back), weak: !mock && db.cardTone ? db.cardTone(cid) === 'weak' : !!c.srs && ((c.srs.lapses || 0) > 0 || c.srs.state === 'relearning') } : null; };
   // (a page shown inside: its title, kind and version, and a map's preview and study (§9.1: the topic and its main ideas, at 11 px or
   // more, and how many ideas and weak ones); notes.js draws them above its row once it lets them through)
   // (the canvas's sample has its cards' tones; the app's weak count comes with its study block, so here it's the ideas alone)
-  const mapInfo = (data, title) => { if (!data || !data.root) return {}; const M = this.maps(), A = this.mapArt(), ST = mock ? A.studyOf(M, data) : { ideas: M.countOf('mindmap', data), tones: new Map() };
-    return { preview: A.previewModel(M, data, { w: ${isPhone ? 350 : 620}, h: ${isPhone ? 120 : 150}, side: 'both', tones: ST.tones, title, least: ${isPhone ? 12 : 11} }), study: mock ? { ideas: ST.ideas, weak: ST.weak } : { ideas: ST.ideas } }; };
-  const pageInfo = pid => { if (mock) return { title: ${JSON.stringify(MAP_SAMPLE.title)}, kind: 'Mind map', version: 3, ...mapInfo(${JSON.stringify(MAP_SAMPLE.data)}, ${JSON.stringify(MAP_SAMPLE.title)}) }; const x = db.pages.page(pid); return x ? { title: x.title || 'Untitled', kind: KINDS[x.kind] || 'Page', version: x.version, ...(x.kind === 'mindmap' ? mapInfo(x.data, x.title) : {}) } : x === undefined ? { title: 'One moment…', kind: '' } : null; };
+  const mapInfo = (data, title, x) => { if (!data || !data.root) return {}; const M = this.maps(), A = this.mapArt();
+    const tn = mock ? null : this.mapview().tones(data, db.mapCards ? db.mapCards(x.scope, x.scopeId) : [], ((db.mapMarks && db.mapMarks(x.id)) || {}).n || {});
+    const ST = mock ? A.studyOf(M, data) : { ideas: M.countOf('mindmap', data), weak: [...tn.values()].filter(v => v === 'weak').length, tones: tn };
+    return { preview: A.previewModel(M, data, { w: ${isPhone ? 350 : 620}, h: ${isPhone ? 120 : 150}, side: 'both', tones: ST.tones, title, least: ${isPhone ? 12 : 11} }), study: { ideas: ST.ideas, weak: ST.weak } }; };
+  const pageInfo = pid => { if (mock) return { title: ${JSON.stringify(MAP_SAMPLE.title)}, kind: 'Mind map', version: 3, ...mapInfo(${JSON.stringify(MAP_SAMPLE.data)}, ${JSON.stringify(MAP_SAMPLE.title)}) }; const x = db.pages.page(pid); return x ? { title: x.title || 'Untitled', kind: KINDS[x.kind] || 'Page', version: x.version, ...(x.kind === 'mindmap' ? mapInfo(x.data, x.title, x) : {}) } : x === undefined ? { title: 'One moment…', kind: '' } : null; };
   // (the pages and cards the Note shows, as far as they're known: when one arrives or changes, those rows draw again)
-  const refs = mock || !ok ? '' : (md.match(/^::(?:page|card) [A-Za-z0-9_-]+$/gm) || []).map(l => { const [k, rid] = l.slice(2).split(' '); const x = k === 'page' ? db.pages.page(rid) : db.card(rid); return rid + ':' + (x === undefined ? 'u' : x ? (x.title || x.front || '') + (x.srs ? x.srs.lapses : '') : 'n'); }).join('|');
+  const refs = mock || !ok ? '' : (md.match(/^::(?:page|card) [A-Za-z0-9_-]+$/gm) || []).map(l => { const [k, rid] = l.slice(2).split(' '); const x = k === 'page' ? db.pages.page(rid) : db.card(rid); return rid + ':' + (x === undefined ? 'u' : x ? (x.title || x.front || '') + (x.version ? 'v' + x.version : '') + (x.srs ? x.srs.lapses + (x.srs.state || '') : '') : 'n'); }).join('|');
   const image = s => (/^\\/media\\/[\\w-]+\\.(png|jpe?g|gif|webp)$/i.test(s) ? s : '');
   // (the Make a card sheet is raised over the page: a gray a step above it in the dark)
   const te = this.mapArt().raisedOf(t);
   return { t, te, ...chrome, dark: !!p.dark, dim: !!p.dim, canEdit, scopeName, backHref, title: ok ? pg.title : '', readOnly: ok && !canEdit, version: ok ? pg.version : '',
-    mp: isMap ? mm : { on: false }, noteOn: !isMap && !needsUpdate, updateOn: needsUpdate, updateTitle: needsUpdate ? 'This ' + (KINDS[pg.kind] || 'page') + ' needs a newer Lucida.' : '', updateLine: 'Update to open it. Nothing on it is lost.',
-    makeTitle: isMap ? 'New card from this idea' : 'New card from this block', makeRows: isMap ? 5 : 3, makeNote: isMap ? 'It’s linked to “' + mm.bar.label + '” once it’s added.' : 'Or ask your AI to make cards from this page.',
+    mp: isMap && MM ? MM : { on: false }, noteOn: !isMap && !needsUpdate, updateOn: needsUpdate, updateTitle: needsUpdate ? 'This ' + (KINDS[pg.kind] || 'page') + ' needs a newer Lucida.' : '', updateLine: 'Update to open it. Nothing on it is lost.',
+    makeTitle: isMap ? 'New card from this idea' : 'New card from this block', makeRows: isMap ? 5 : 3, makeNote: isMap ? 'It’s linked to “' + ((make && make.label) || (MM && MM.bar.label) || '') + '” once it’s added.' : 'Or ask your AI to make cards from this page.',
     versionLine: ok ? 'v' + pg.version + ' · ' + who(pg.by) + ', ' + ago(pg.updated) : '',
     saveLabel: sv.err ? 'Not saved: ' + sv.err : sv.busy ? 'Saving…' : '', saveColor: sv.err ? t.again : t.muted,
     setTitle: e => { if (mock || !canEdit) return; db.pages.edit(id, { title: e && e.target ? e.target.value : '' }); },
@@ -390,19 +408,23 @@ renderVals() {
     histOpen: hist, histPressed: hist ? 'true' : 'false', histBg: hist ? t.surf : 'transparent', toggleHist: () => this.setState({ hist: !hist, more: false }), openHist: () => this.setState({ hist: true, more: false }), histLoading: hist && vl === null,
     vers: (vl || []).map((v, i) => ({ n: v.version, who: who(v.by), ai: !!v.ai, when: ago(v.at), what: v.summary || '', hasWhat: !!v.summary, old: i > 0, bg: i ? t.surf : 'transparent',
       restore: async () => { if (mock) return; await db.pages.restore(id, v.version); this.setState({ hist: false }); } })),
-    deletePage: async () => { this.setState({ more: false }); if (mock || !(await db.ask({ title: 'Delete the page “' + (pg.title || 'Untitled') + '”?', action: 'Delete page', danger: true }))) return; await db.pages.remove(id); db.act.go(backHref, true); },
+    deletePage: async () => { this.setState({ more: false }); if (mock || !(await db.ask({ title: 'Delete the page “' + (pg.title || 'Untitled') + '”?', action: 'Delete page', danger: true }))) return; await db.pages.remove(id); if (pg.kind !== 'note' && db.act.dropMapMarks) db.act.dropMapMarks(id).catch(() => {}); db.act.go(backHref, true); },
     makeOpen: !!make, makeFront: make ? make.front : '', makeBack: make ? make.back : '',
     setFront: e => { this._front = e && e.target ? e.target.value : ''; }, setBack: e => { this._back = e && e.target ? e.target.value : ''; },
     frontRef: el => { if (el && this._focusFront) { this._focusFront = false; el.focus(); } },
     closeMake: () => this.setState({ make: null }),
-    addCard: async () => { if (mock || !deck) return this.setState({ make: null }); const front = (this._front ?? make.front).trim(), back = (this._back ?? make.back).trim(); if (!front || !back) return db.say('A card needs a front and a back.'); await db.act.addCard(deck.id, { kind: 'basic', front, back }); this.setState({ make: null }); db.say('Added to ' + deck.name + '.'); },
+    addCard: async () => { if (mock || !deck) return this.setState({ make: null }); const front = (this._front ?? make.front).trim(), back = (this._back ?? make.back).trim(); if (!front || !back) return db.say('A card needs a front and a back.');
+      const r = await db.act.addCard(deck.id, { kind: 'basic', front, back }), cid = r && r.ids && r.ids[0];
+      // (a card made from an idea is linked to it, in one version)
+      if (make.nodeId && cid) this.mapview().link(id, make.nodeId, cid, 'Made a card from “' + make.label + '” and linked it');
+      this.setState({ make: null }); db.say(make.nodeId && cid ? 'Added to ' + deck.name + ' and linked to “' + make.label + '”.' : 'Added to ' + deck.name + '.'); },
     nbRef: el => { if (!el || !isNote) return; this._nbc = this.notes().mount(el, { md, refs, titled: true, key: (mock ? 'canvas|' + view + '|' : 'page|') + id, editable: canEdit, phone: ${isPhone ? 'true' : 'false'}, outline: true, image,
-      card: cardInfo, page: pageInfo, onOpenPage: pid => { if (!mock) db.act.go(db.href('page', pid)); }, onOpenCard: cid => { if (!mock && deck) db.act.go('/deck/' + deck.id + '/card/' + cid); },
+      card: cardInfo, page: pageInfo, onOpenPage: pid => { if (!mock) db.act.go(db.href('page', pid)); }, onTestPage: pid => { if (!mock) db.act.go(db.href('page', pid) + '?test=weak'); }, onOpenCard: cid => { if (!mock && deck) db.act.go('/deck/' + deck.id + '/card/' + cid); },
       onMakeCard: canEdit && deck ? b => { this._front = undefined; this._back = undefined; this._focusFront = true; this.setState({ make: { front: '', back: plain(b && b.markdown) } }); } : undefined,
       onChange: canEdit && !mock ? v => db.pages.editMarkdown(id, v) : undefined }); }
   };
 }`;
-  const props = { ...DARK, view: { editor: 'enum', default: 'Writing', options: PAGE_VIEWS }, pageId: { editor: 'string', default: '' }, fresh: { editor: 'boolean', default: false } };
+  const props = { ...DARK, view: { editor: 'enum', default: 'Writing', options: PAGE_VIEWS }, pageId: { editor: 'string', default: '' }, fresh: { editor: 'boolean', default: false }, idea: { editor: 'string', default: '' }, test: { editor: 'string', default: '' } };
   return {
     'WebPage': ['Web · A page (a Note or a Mind map)', web, { props, logic: logic(false), css: GUIDE_CSS + MAP_CSS, w: W, h: HH }],
     'PhonePage': ['iPhone · A page (a Note or a Mind map)', phone, { props, logic: logic(true), css: GUIDE_CSS + MAP_CSS, w: PW, h: PH }]

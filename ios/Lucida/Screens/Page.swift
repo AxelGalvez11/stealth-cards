@@ -14,8 +14,9 @@ struct PageScreen: View {
   var body: some View { PageBody(id: id, pages: store.pages) }
 }
 
-/// The design screens' states (`-state`): the canvas's PAGE_VIEWS.
-enum PageSampleView { static let all = ["Writing", "Versions", "Changed by your AI", "Make a card"] }
+/// The design screens' states (`-state`): the canvas's PAGE_VIEWS (design/pages.mjs, through Generated): the Note's, 'Needs an update', and the
+/// Mind map's (design/maps.mjs MINDMAP_VIEWS, on PhonePageMindmap).
+enum PageSampleView { static let all = Generated.pageViews }
 
 private struct PageBody: View {
   @Environment(\.theme) private var t
@@ -23,6 +24,8 @@ private struct PageBody: View {
   @EnvironmentObject private var nav: Nav
   let id: String
   @ObservedObject var pages: PagesStore
+  /// The maps the Note shows, worked out off the main thread: one arriving draws its row again.
+  @ObservedObject private var mapRefs = MapRefs.shared
   @StateObject private var keyboard = Keyboard()
   @StateObject private var notes = NotesPage()
   @StateObject private var scroll = NotesScroll()
@@ -37,6 +40,8 @@ private struct PageBody: View {
   @State private var picking = false
   @State private var pictureAfter: String? = nil
   @FocusState private var titleOn: Bool
+  /// A Mind map page's state (Screens/MapModel.swift).
+  @StateObject private var map = MapModel()
   private var view: String { store.demo ? (Board.arg("-state").flatMap { PageSampleView.all.contains($0) ? $0 : nil } ?? "Writing") : "" }
 
   // ---------- what shows ----------
@@ -51,18 +56,50 @@ private struct PageBody: View {
   private func now() -> Now {
     var n = Now(page: pages.page(id))
     n.missing = n.page == nil && pages.isMissing(id); n.loading = n.page == nil && !n.missing
+    // (a design screen's Mind map states: the sample's version and title as the board has them)
+    if store.demo, var p = n.page, p.kind == "mindmap" {
+      if view.hasSuffix("changed by your AI") { p.version = 4 } else if view.hasSuffix("· new") { p.version = 1; p.title = "Membrane transport"; p.by = "you"; p.ai = false }
+      n.page = p
+    }
     if let p = n.page {
       n.deckId = p.scope == "deck" ? (store.demo ? "cell" : p.scopeId) : ""
       n.deckName = n.deckId.isEmpty ? "Library" : store.deck(n.deckId).name
-      n.ready = PageKind.canShow(p.kind)
+      n.ready = PageKind.canShow(p.kind) && !(store.demo && view == "Needs an update")
       n.canEdit = n.ready && (store.demo || (!n.deckId.isEmpty && store.guide(n.deckId).can))
-      n.md = n.ready ? pages.markdown(id) : ""
+      n.md = n.ready && p.kind == "note" ? pages.markdown(id) : ""
     }
     return n
   }
 
   var body: some View {
-    let n = now(), histOpen = hist ?? (view == "Versions")
+    let n = now()
+    if let p = n.page, n.ready, p.kind == "mindmap" { mapBody(n, p) } else { noteBody(n) }
+  }
+
+  // ---------- a Mind map (Screens/MapPage.swift), under the same header ----------
+  private func mapBody(_ n: Now, _ p: PageInfo) -> some View {
+    let histOpen = hist ?? false
+    return GeometryReader { geo in
+      ZStack(alignment: .bottom) {
+        MapPageBody(m: map, pages: pages, page: p, title: $title, canEdit: n.canEdit, header: AnyView(header(n, histOpen)),
+                    openVersions: { withAnimation(Motion.pop) { hist = true; more = false } })
+        if histOpen { versions(n).padding(.top, Screen.top(52) + 52).transition(Motion.still ? .identity : .opacity).zIndex(10) }
+        if more { moreMenu(n).zIndex(11) }
+      }
+      .foregroundStyle(t.text)
+      .background(t.bg)
+      .frame(width: geo.size.width, height: UIScreen.main.bounds.height, alignment: .top)
+      .offset(y: -geo.frame(in: .global).minY)
+    }
+    .ignoresSafeArea(.all, edges: [.top, .bottom])
+    .toolbar(.hidden, for: .navigationBar)
+    .onAppear { if loaded != id { loaded = id; title = p.title } }
+    .onChange(of: p.title) { _, v in if v != title && !store.demo { title = v } }
+    .onDisappear { if !store.demo { Task { await pages.flush(id) } } }
+  }
+
+  @ViewBuilder private func noteBody(_ n: Now) -> some View {
+    let histOpen = hist ?? (view == "Versions")
     let keys = n.canEdit && !histOpen && make == nil && (notes.editing != nil || notes.linking)
     let under = keyboard.height > 0 ? keyboard.height : store.demo ? 0 : GuideScreen.safeBottom
     GeometryReader { geo in
@@ -132,6 +169,7 @@ private struct PageBody: View {
     ZStack(alignment: .topTrailing) {
       Color.black.opacity(0.001).contentShape(Rectangle()).onTapGesture { withAnimation(Motion.leave) { more = false } }
       VStack(spacing: 2) {
+        if n.page?.kind == "mindmap" { menuItem("fold", map.anyFolded ? "Unfold all" : "Fold to main ideas") { withAnimation(Motion.leave) { more = false }; map.foldAll() } }
         menuItem("history", "Versions") { withAnimation(Motion.pop) { more = false; hist = true } }
         menuItem("bin", "Delete page", danger: true) { more = false; askDelete(n) }
       }
@@ -181,20 +219,19 @@ private struct PageBody: View {
   /// editor is never mounted for it, so nothing on it can be saved from here.
   private func needsUpdate(_ n: Now, _ p: PageInfo) -> some View {
     VStack(spacing: 14) {
-      Icon(PageKind.icon(p.kind), 22, 2).foregroundStyle(t.text).frame(width: 52, height: 52).background(Circle().fill(t.bg))
-      Text("This " + PageKind.name(p.kind) + " needs a newer Lucida. Update to open it.")
-        .css(17, .semibold, lh: 1.35).multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+      Icon("update", 26, 2).foregroundStyle(t.text).frame(width: 64, height: 64).background(Circle().fill(t.surf)).accessibilityHidden(true)
+      Text("This " + PageKind.name(p.kind) + " needs a newer Lucida.")
+        .css(20, .semibold, ls: -0.02, lh: 1.3).multilineTextAlignment(.center).frame(maxWidth: 320).fixedSize(horizontal: false, vertical: true)
         .accessibilityIdentifier("page.needsUpdate")
+      Text("Update to open it. Nothing on it is lost.").css(15, lh: 1.5).foregroundStyle(t.muted).multilineTextAlignment(.center).frame(maxWidth: 360)
       Button { back(n) } label: {
-        Text("Back").css(14, .semibold).foregroundStyle(t.invText).padding(.horizontal, 18).frame(height: 40).background(Capsule().fill(t.inv))
+        HStack(spacing: 6) { Icon("back", 14, 2.2); Text("Back to " + n.deckName).css(15, .semibold).lineLimit(1) }
+          .foregroundStyle(t.invText).padding(.horizontal, 20).frame(height: 48).background(Capsule().fill(t.inv))
       }
-      .buttonStyle(.press).accessibilityLabel("Back to " + n.deckName).padding(.top, 4)
+      .buttonStyle(.press).accessibilityLabel("Back to " + n.deckName).padding(.top, 6)
     }
-    .frame(maxWidth: .infinity)
-    .padding(.horizontal, 24).padding(.vertical, 40)
-    .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(t.surf))
-    .padding(.horizontal, 16).padding(.top, 24)
-    .frame(maxHeight: .infinity, alignment: .top)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .padding(.horizontal, 28).padding(.top, 40).padding(.bottom, 120)
     .accessibilityElement(children: .contain)
   }
 
@@ -300,12 +337,14 @@ private struct PageBody: View {
   private func start(_ n: Now) {
     hooks.image = GuideImages.own
     hooks.card = { [store] cid in PageBody.cardInfo(store, cid) }
-    hooks.pageRef = { [pages] pid in
-      if store.demo { return .page(title: "The cell at a glance", kind: "Mind map") }
+    hooks.pageRef = { [pages, store] pid in
+      if store.demo { return PageBody.mapRef(store, PageInfo(id: pid, kind: "mindmap", title: MapDemo.sample.title, version: 3, data: MapDemo.sample.data.text)) }
       if pages.isMissing(pid) { return .missing }
-      return pages.page(pid).map { .page(title: $0.title, kind: PageKind.name($0.kind)) } ?? .loading
+      guard let p = pages.page(pid) else { return .loading }
+      return PageBody.mapRef(store, p)
     }
     hooks.openPage = { [nav] pid in if !store.demo { notes.flush(); nav.page(pid) } }
+    hooks.testPage = { [nav] pid in if !store.demo { notes.flush(); MapModel.openWithTest = pid; nav.page(pid) } }
     hooks.openCard = { [nav] cid in if !store.demo, !n.deckId.isEmpty { nav.newCard(deckId: n.deckId, cardId: cid) } }
     if view == "Make a card" { make = (front: "", back: "Glycolysis happens in the cytoplasm, not the mitochondrion, and needs no oxygen.") }
     load(n)
@@ -337,7 +376,13 @@ private struct PageBody: View {
     nav.ask("Delete the page “\(name)”?", action: "Delete page", danger: true) {
       guard !store.demo else { return }
       Task {
-        do { try await pages.remove(id); if n.deckId.isEmpty { nav.back() } else { nav.backToPages(deckId: n.deckId) } }
+        do {
+          let kind = n.page?.kind ?? "note"
+          try await pages.remove(id)
+          // (a Mind map's Test me marks go with it)
+          if kind == "mindmap" { await store.send("mapmarks.drop", ["pageId": id]) }
+          if n.deckId.isEmpty { nav.back() } else { nav.backToPages(deckId: n.deckId) }
+        }
         catch { store.error = (error as? LocalizedError)?.errorDescription ?? "Couldn’t delete the page." }
       }
     }
@@ -351,12 +396,21 @@ private struct PageBody: View {
     for line in md.components(separatedBy: "\n") where line.hasPrefix("::card ") || line.hasPrefix("::page ") {
       let rid = String(line.dropFirst(7)).trimmingCharacters(in: .whitespaces)
       if line.hasPrefix("::page ") {
-        out.append(rid + ":" + (pages.isMissing(rid) ? "n" : pages.page(rid).map { $0.title } ?? "u"))
+        out.append(rid + ":" + (pages.isMissing(rid) ? "n" : pages.page(rid).map { $0.title + "|v\($0.version)|\($0.data.isEmpty)" } ?? "u") + (store.lib.mapMarks[rid].map { "|\($0.at)" } ?? ""))
       } else if let c = store.lib.cards.first(where: { $0.id == rid }) {
         out.append(rid + ":" + c.front + c.text + c.back + "\(c.srs.lapses)" + c.srs.state)
       } else { out.append(rid + ":n") }
     }
+    // (a map's picture that just arrived from MapRefs)
+    if out.contains(where: { $0.contains("|v") }) { out.append("maps\(mapRefs.stamp)") }
     return out.joined(separator: "|")
+  }
+  /// A page a Note shows: a Mind map with its picture (the boards' model; MapRefs works it out off the main thread and keeps it), its ideas and
+  /// its weak ones; another kind with its title and kind.
+  static func mapRef(_ store: Store, _ p: PageInfo) -> NotePageRef {
+    guard p.kind == "mindmap", PageKind.canShow("mindmap") else { return .page(title: p.title, kind: PageKind.name(p.kind)) }
+    guard !p.data.isEmpty else { return .loading }
+    return MapRefs.shared.ref(store, p)
   }
   /// A card of the deck as the Note shows it: its front and back as words, and whether it's weak (missed before, or being learned again).
   static func cardInfo(_ store: Store, _ cid: String) -> NoteCardInfo? {
@@ -436,5 +490,59 @@ private struct PageMakeSheet: View {
     .padding(.horizontal, 14).padding(.vertical, 10)
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(t.surf))
+  }
+}
+
+/// The Mind maps a Note shows (§9.1): each one's picture, idea count and weak ones, worked out on MapEngine's queue (maps.js's layout and the tones
+/// in JavaScriptCore, never on the main thread while the Note draws) and kept by what it is made from: the page's version and data, its Test me
+/// marks, and the tones of its own linked cards (so a review or a save elsewhere in the library doesn't make every map be laid out again). Until
+/// a new one arrives the Note shows the one before ("One moment…" the first time); `stamp` goes up when one arrives, and the Note draws again.
+@MainActor
+final class MapRefs: ObservableObject {
+  static let shared = MapRefs()
+  @Published private(set) var stamp = 0
+  private var done: [String: NotePageRef] = [:], last: [String: NotePageRef] = [:], going: Set<String> = []
+  private var trees: [String: MapTree] = [:]
+
+  func ref(_ store: Store, _ p: PageInfo) -> NotePageRef {
+    let dk = p.id + "|\(p.version)|" + String(p.data.hashValue)
+    let tree: MapTree
+    if let t = trees[dk] { tree = t } else { tree = MapTree(p.data); if trees.count > 40 { trees = [:] }; trees[dk] = tree }
+    let cards: [String: String], marks: [String: [Double]]
+    if store.demo {
+      cards = Dictionary(MapDemo.sample.cards.map { ($0.id, $0.tone) }, uniquingKeysWith: { a, _ in a }); marks = MapDemo.sample.marks
+    } else {
+      // (its linked cards of its deck, or of its folder's decks, none still waiting for review: the cards the map itself goes by)
+      let linked = Set(tree.order.flatMap { tree[$0]?.cardIds ?? [] }), now = nowMs()
+      let decks = Set(p.scope == "folder" ? store.lib.decks.filter { $0.folder == p.scopeId }.map(\.id) : [p.scopeId])
+      var c: [String: String] = [:]
+      if !linked.isEmpty { for x in store.lib.cards where linked.contains(x.id) && decks.contains(x.deckId) && !x.pending { c[x.id] = Sched.toneOf(x, now) } }
+      cards = c; marks = store.lib.mapMarks[p.id]?.n ?? [:]
+    }
+    let key = dk + "|\(store.demo ? 0 : store.lib.mapMarks[p.id]?.at ?? 0)|" + cards.sorted { $0.key < $1.key }.map { $0.key + ":" + $0.value }.joined(separator: ",")
+    if let hit = done[key] { last[p.id] = hit; return hit }
+    let data = p.data, title = p.title, id = p.id
+    let make: @Sendable () -> NotePageRef = {
+      let tones = MapEngine.shared.ideaTones(tree, cards: cards, marks: marks)
+      let L = MapEngine.shared.layout("mindmap", data, folds: MapPreview.folds(tree), side: "both", scale: 1, title: title)
+      let pv = L.map { MapPreview.model($0, w: 340, h: 120, least: 12, tones: tones) }
+      return NotePageRef.map(title: title, preview: pv, ideas: tree.order.count, weak: tones.values.filter { $0 == "weak" }.count)
+    }
+    // (a design screen's one sample map is drawn at once, as the board is)
+    if store.demo { let r = make(); done[key] = r; return r }
+    if !going.contains(key) {
+      going.insert(key)
+      MapEngine.shared.queue.async {
+        let r = make()
+        DispatchQueue.main.async {
+          MainActor.assumeIsolated {
+            self.going.remove(key)
+            if self.done.count > 40 { self.done = [:] }
+            self.done[key] = r; self.last[id] = r; self.stamp &+= 1
+          }
+        }
+      }
+    }
+    return last[p.id] ?? .loading
   }
 }

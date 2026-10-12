@@ -2966,7 +2966,7 @@ notes() { return Component._nb || (Component._nb = (function makeNotes(G) {
     quote: '<path d="M6 7v10M11 9h8M11 15h6"/>', hr: '<path d="M4 12h16"/>', code: '<path d="M9 8l-4 4 4 4M15 8l4 4-4 4"/>',
     image: '<rect x="3.5" y="5" width="17" height="14" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M5 17l4.5-4.5 3 3L15 13l4 4"/>', table: '<rect x="3.5" y="5" width="17" height="14" rx="2.5"/><path d="M3.5 10h17M10 10v9"/>',
     callout: '<rect x="3.5" y="5" width="17" height="14" rx="3.5"/><path d="M8 10h8M8 14h5"/>', chain: '<rect x="2.5" y="8.5" width="7" height="7" rx="3.5"/><rect x="14.5" y="8.5" width="7" height="7" rx="3.5"/><path d="M10.5 12h3"/>',
-    card: '<rect x="3.5" y="5.5" width="17" height="13" rx="3"/><path d="M12 5.5v13"/>', page: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
+    card: '<rect x="3.5" y="5.5" width="17" height="13" rx="3"/><path d="M12 5.5v13"/>', mindmap: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8.4 11.1 16 6.9M8.6 12h7.4M8.4 12.9 16 17.1"/>', page: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
     down: '<path d="M6 9l6 6 6-6"/>', close: '<path d="M6 6l12 12M18 6L6 18"/>', num: '<path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 5.5l1.5-1V9M3.8 14.2a1.4 1.4 0 1 1 2.2 1.4L4 18h2.4" stroke-width="1.5"/>'
   };
   const svg = (k, s = 16, w = 2) => '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + w + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + SVG[k] + '</svg>';
@@ -3117,7 +3117,93 @@ notes() { return Component._nb || (Component._nb = (function makeNotes(G) {
       try { v = f(b.ref); } catch (e) { v = null; }
       if (!v || typeof v !== 'object') return null;
       const s = (x, n) => String(x == null ? '' : x).slice(0, n);
-      return b.k === 'card' ? { front: s(v.front, 400), back: s(v.back, 400), weak: !!v.weak } : { title: s(v.title, 200), kind: s(v.kind, 40) };
+      if (b.k === 'card') return { front: s(v.front, 400), back: s(v.back, 400), weak: !!v.weak };
+      const out = { title: s(v.title, 200), kind: s(v.kind, 40) }, int = x => (typeof x === 'number' && isFinite(x) && x >= 0 ? Math.min(1e6, Math.floor(x)) : 0);
+      if (int(v.version)) out.version = int(v.version);
+      if (v.study && typeof v.study === 'object') out.study = { ideas: int(v.study.ideas), weak: int(v.study.weak) };
+      const pv = previewOf(v.preview);
+      if (pv) out.preview = pv;
+      return out;
+    }
+    // A map's picture as the page around gave it, kept only as numbers, short words and paths of numbers (nothing in it is markup).
+    function previewOf(p) {
+      if (!p || typeof p !== 'object') return null;
+      const num = x => (typeof x === 'number' && isFinite(x) ? Math.round(x * 10) / 10 : 0), w = num(p.w), h = num(p.h);
+      if (!(w > 0 && h > 0 && w < 4000 && h < 4000)) return null;
+      const nodes = (Array.isArray(p.nodes) ? p.nodes : []).slice(0, 300).filter(n => n && typeof n === 'object').map(n => ({ x: num(n.x), y: num(n.y), w: Math.max(0, num(n.w)), h: Math.max(0, num(n.h)),
+        level: Math.max(0, Math.min(8, Math.floor(num(n.level)))), side: num(n.side) < 0 ? -1 : 1, folded: n.folded === true, hidden: Math.max(0, Math.floor(num(n.hidden))),
+        tone: n.tone === 'weak' || n.tone === 'getting' || n.tone === 'solid' ? n.tone : '', lines: (Array.isArray(n.lines) ? n.lines : []).slice(0, 2).map(l => String(l == null ? '' : l).slice(0, 48)) }));
+      const links = (Array.isArray(p.links) ? p.links : []).slice(0, 300).map(d => String(d)).filter(d => d.length < 400 && /^[MCLZ0-9 .,\-]+$/.test(d));
+      const c = p.cut && typeof p.cut === 'object' ? p.cut : {};
+      return { w, h, scale: Math.max(0.05, Math.min(1, num(p.scale) || 1)), nodes, links, cut: { left: c.left === true, right: c.right === true, top: c.top === true, bottom: c.bottom === true } };
+    }
+    // The picture, in the note's colors (NOTES_VARS, and the page's --gd-inv and --gd-inv-text): the topic inverted, main ideas on the
+    // second surface, the rest outlined; the weak-spots tints and dot; a folded idea's "+N". No rings, knobs or blanks, and no pointer.
+    const NS = 'http://www.w3.org/2000/svg', MAP_SIZE = [15, 13.5, 12.5], MAP_WEIGHT = [600, 600, 500], TINT = { weak: 'var(--nb-trapbg)', getting: 'var(--nb-mnembg)', solid: 'var(--nb-pearlbg)' }, INK = { weak: 'var(--nb-trap)', getting: 'var(--nb-mnem)', solid: 'var(--nb-pearl)' };
+    function mapSvg(P) {
+      const s = P.scale, r = v => Math.round(v * 10) / 10, mk = (tag, attrs, style) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, String(attrs[k])); if (style) e.setAttribute('style', style); return e; };
+      const root = mk('svg', { width: '100%', height: P.h, viewBox: '0 0 ' + P.w + ' ' + P.h, preserveAspectRatio: 'xMidYMid slice', 'aria-hidden': 'true', focusable: 'false' }, 'display: block; font-family: inherit;');
+      const lines = mk('g', { fill: 'none', 'stroke-width': r(1.5 * Math.max(s, 0.6)), 'stroke-linecap': 'round' }, 'stroke: var(--gd-line);');
+      for (const d of P.links) lines.appendChild(mk('path', { d }));
+      root.appendChild(lines);
+      for (const n of P.nodes) {
+        const lv = Math.min(n.level, 2), tint = TINT[n.tone], inv = n.level === 0 && !tint, fs = r(MAP_SIZE[lv] * s), left = n.side < 0, cw = 26 * s;
+        const g = mk('g', { transform: 'translate(' + n.x + ' ' + n.y + ')' });
+        const fill = tint || (inv ? 'var(--gd-inv, var(--gd-text))' : n.level === 1 ? 'var(--nb-surf2)' : 'var(--nb-bg)');
+        const stroke = tint ? INK[n.tone] : n.level >= 2 ? 'var(--gd-line)' : 'none';
+        g.appendChild(mk('rect', { width: n.w, height: n.h, rx: r((n.level === 0 ? Math.min(16, n.h / s / 2) : 10) * s), 'stroke-width': r(1.5 * Math.max(s, 0.6)) }, 'fill: ' + fill + '; stroke: ' + stroke + ';' + (tint ? ' stroke-opacity: .6;' : '')));
+        const tw = n.folded ? n.w - cw : n.w, tx = n.folded && left ? cw + tw / 2 : tw / 2, lh = n.lines.length ? (n.h - 18 * s - (n.level === 0 ? 6 * s : 0)) / n.lines.length : 0, top = n.h / 2 - ((n.lines.length - 1) * lh) / 2;
+        const text = mk('text', { 'text-anchor': 'middle', 'font-size': fs, 'font-weight': MAP_WEIGHT[lv] }, 'fill: ' + (inv ? 'var(--gd-inv-text, var(--nb-bg))' : 'var(--gd-text)') + ';');
+        n.lines.forEach((l, i) => { const t = mk('tspan', { x: r(tx), y: r(top + i * lh + fs * 0.36) }); t.textContent = l; text.appendChild(t); });
+        g.appendChild(text);
+        if (n.folded) {
+          const cx = left ? 4 * s : n.w - cw + 2 * s;
+          g.appendChild(mk('rect', { x: r(cx), y: r(n.h / 2 - 9 * s), width: r(20 * s), height: r(18 * s), rx: r(9 * s) }, 'fill: var(--nb-surf);'));
+          const t = mk('text', { x: r(cx + 10 * s), y: r(n.h / 2 + 4 * s), 'text-anchor': 'middle', 'font-size': r(11 * s), 'font-weight': 600 }, 'fill: var(--gd-muted);');
+          t.textContent = '+' + n.hidden; g.appendChild(t);
+        }
+        if (n.tone === 'weak') g.appendChild(mk('circle', { cx: r(n.w - 9 * s), cy: r(9 * s), r: r(3.5 * Math.max(s, 0.7)) }, 'fill: var(--nb-trap);'));
+        root.appendChild(g);
+      }
+      // (a cut edge fades into the box)
+      const c = P.cut, defs = mk('defs', {});
+      const fade = (id, x1, y1, x2, y2, x, y, w, h) => {
+        const lg = mk('linearGradient', { id, x1, y1, x2, y2 });
+        lg.appendChild(mk('stop', { offset: 0 }, 'stop-color: var(--nb-surf);')); lg.appendChild(mk('stop', { offset: 1 }, 'stop-color: var(--nb-surf); stop-opacity: 0;'));
+        defs.appendChild(lg); root.appendChild(mk('rect', { x, y, width: w, height: h, fill: 'url(#' + id + ')' }));
+      };
+      const uid = 'nbmf' + (++fadeIds);
+      root.appendChild(defs);
+      if (c.left) fade(uid + 'l', 0, 0, 1, 0, 0, 0, 36, P.h);
+      if (c.right) fade(uid + 'r', 1, 0, 0, 0, P.w - 36, 0, 36, P.h);
+      if (c.top) fade(uid + 't', 0, 0, 0, 1, 0, 0, P.w, 28);
+      if (c.bottom) fade(uid + 'b', 0, 1, 0, 0, 0, P.h - 28, P.w, 28);
+      return root;
+    }
+    let fadeIds = 0;
+    // A map shown in the note: its picture, then its title, 'Mind map · 23 ideas · 3 weak' and Test me (the rest of the box opens it).
+    function mapRef(b, v) {
+      const box = el('div', 'nb-ref nb-ref-map', { 'data-ref': b.ref });
+      box.style.cssText = 'flex-direction: column; align-items: stretch; padding: 0; gap: 0; cursor: pointer;';
+      const pic = el('div', 'nb-ref-pic', { 'aria-hidden': 'true' });
+      pic.style.cssText = 'position: relative; height: ' + (o.phone ? 120 : 150) + 'px; background: var(--nb-surf); pointer-events: none; overflow: hidden;';
+      pic.appendChild(mapSvg(v.preview));
+      const foot = el('div', 'nb-ref-foot');
+      foot.style.cssText = 'display: flex; align-items: center; gap: 10px; padding: ' + (o.phone ? '8px 8px 8px 14px' : '10px 10px 10px 16px') + ';';
+      const words = el('span');
+      words.style.cssText = 'flex-grow: 1; min-width: 0; display: flex; ' + (o.phone ? 'flex-direction: column; gap: 1px;' : 'align-items: baseline; gap: 10px;');
+      const name = el('span', 'nb-ref-title', { text: v.title || 'Untitled' });
+      name.style.cssText = 'flex-grow: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
+      const sd = v.study || { ideas: 0, weak: 0 }, meta = el('span', 'nb-ref-kind', { text: (v.kind || 'Mind map') + ' · ' + sd.ideas + ' idea' + (sd.ideas === 1 ? '' : 's') + (sd.weak ? ' · ' : '') });
+      meta.style.cssText = 'white-space: nowrap;';
+      if (sd.weak) { const wk = el('span', '', { text: sd.weak + ' weak' }); wk.style.cssText = 'color: var(--nb-trap); font-weight: 600;'; meta.appendChild(wk); }
+      words.append(name, meta);
+      const test = el('button', 'nb-ref-test', { type: 'button', text: 'Test me', 'aria-label': 'Test me on the weak ideas of ' + (v.title || 'this map') });
+      test.style.cssText = 'flex-shrink: 0; height: ' + (o.phone ? 44 : 32) + 'px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--gd-inv, var(--gd-text)); color: var(--gd-inv-text, var(--nb-bg)); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;';
+      const ic = el('span', 'nb-ref-ic', { html: svg('mindmap', 16, 2) });
+      foot.append(ic, words, test);
+      box.append(pic, foot);
+      return box;
     }
     // Words as text nodes (a link is an <a> only when reading), a line break as <br>, and a last <br> that holds an empty line open (it counts for nothing).
     function fillText(tx, rs, hl) {
@@ -3171,6 +3257,7 @@ notes() { return Component._nb || (Component._nb = (function makeNotes(G) {
         if (v.weak) box.appendChild(el('span', 'nb-ref-weak', { text: 'Weak spot' }));
         return box;
       }
+      if (v.preview) return mapRef(b, v);
       box.append(el('span', 'nb-ref-ic', { html: svg('page', 16, 2) }), el('span', 'nb-ref-title', { text: v.title || 'Untitled' }), el('span', 'nb-ref-kind', { text: (v.kind || 'Page') + ' · open' }));
       return box;
     }
@@ -3951,7 +4038,9 @@ notes() { return Component._nb || (Component._nb = (function makeNotes(G) {
       if (box) { ev.preventDefault(); const i = by(row.getAttribute('data-id')), b = st.blocks[i]; return commit(put(st.blocks, i, { ...b, on: !b.on }), st.sel, 'check'); }
       if (more) { ev.preventDefault(); return tableMore(row.getAttribute('data-id'), more.getAttribute('data-act')); }
       if (row && row.classList.contains('nb-virtual')) { ev.preventDefault(); const i = by(row.getAttribute('data-for')), b = st.blocks[i]; if (!b) return; const p = withId({ k: 'p', d: b.d + 1, r: [] }); return commit([...st.blocks.slice(0, i + 1), p, ...st.blocks.slice(i + 1)], caret(p.id, 0), 'line'); }
-      // a card or a page shown in the note: the first press picks it (Backspace takes it away), a press on it picked opens it
+      // a map's Test me opens it testing its weak ideas; a card or a page shown in the note: the first press picks it (Backspace takes it
+      // away), a press on it picked opens it
+      if (row && t.closest && t.closest('.nb-ref-test')) { ev.preventDefault(); return testRef(st.blocks[by(row.getAttribute('data-id'))]); }
       if (row && t.closest && t.closest('.nb-ref') && st.bsel === row.getAttribute('data-id')) { ev.preventDefault(); return openRef(st.blocks[by(st.bsel)]); }
       if (row && ATOM[(st.blocks[by(row.getAttribute('data-id'))] || {}).k] && !(t.closest && t.closest('.nb-cell'))) { ev.preventDefault(); return pick(row.getAttribute('data-id')); }
       // a press below the last line: write at the end (a new line when the last one isn't empty text)
@@ -3974,6 +4063,7 @@ notes() { return Component._nb || (Component._nb = (function makeNotes(G) {
       const t = ev.target, ln = !o.editable && t.closest ? t.closest('a.nb-a') : null;
       if (ln && (ln.getAttribute('href') || '')[0] === '#') { ev.preventDefault(); return jump(ln.getAttribute('href')); }
       const ref = !o.editable && t.closest ? t.closest('.nb-ref') : null;
+      if (ref && t.closest('.nb-ref-test')) { const r = ref.closest('.nb-row'), b = r && st.blocks[by(r.getAttribute('data-id'))]; if (b) { ev.preventDefault(); return testRef(b); } }
       if (ref) { const r = ref.closest('.nb-row'), b = r && st.blocks[by(r.getAttribute('data-id'))]; if (b) { ev.preventDefault(); return openRef(b); } }
       if (o.editable || !o.onOpen) return;
       if (t.closest && (t.closest('a') || t.closest('.nb-tg') || t.closest('.nb-fold'))) return;
@@ -3982,6 +4072,10 @@ notes() { return Component._nb || (Component._nb = (function makeNotes(G) {
       const p = s && s.rangeCount && docEl.contains(s.anchorNode) ? posOf(s.anchorNode, s.anchorOffset) : null, row = t.closest && t.closest('.nb-row');
       const id = p ? p.id : row ? row.getAttribute('data-id') : '', i = id ? by(id) : st.blocks.length - 1;
       o.onOpen({ i: i == null ? 0 : i, off: p && !p.cell ? p.off : 0 });
+    }
+    function testRef(b) {
+      if (!b || b.k !== 'page' || !lookup(b)) return;
+      if (typeof o.onTestPage === 'function') o.onTestPage(b.ref); else if (typeof o.onOpenPage === 'function') o.onOpenPage(b.ref);
     }
     function openRef(b) {
       if (!b || !lookup(b)) return;                     // (one that isn't found opens nothing)

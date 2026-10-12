@@ -47,9 +47,9 @@ enum PageKind {
     K(kind: "diagram", name: "Diagram", icon: "share", line: "Boxes and arrows, laid out for you"),
     K(kind: "canvas", name: "Canvas", icon: "grid", line: "A board to pin notes, cards and pictures on"),
     K(kind: "doc", name: "Doc", icon: "file", line: "A PDF to read beside the cards")]
-  /// The kinds this build can show and write (web/pages.mjs PAGE_READY when it was built). A page of any other kind, a kind that came after this build
-  /// too, shows "Needs an update" and is never opened as a Note or saved from here.
-  static let ready: Set<String> = ["note"]
+  /// The kinds this build can show and write (web/pages.mjs PAGE_READY when it was built: Generated.pageReady, which the app sets here as it starts).
+  /// A page of any other kind, a kind that came after this build too, shows "Needs an update" and is never opened or saved from here.
+  static var ready: Set<String> = ["note"]
   static func canShow(_ kind: String) -> Bool { ready.contains(kind) }
   static func name(_ kind: String) -> String { all.first { $0.kind == kind }?.name ?? "Page" }
   static func icon(_ kind: String) -> String { all.first { $0.kind == kind }?.icon ?? "file" }
@@ -85,10 +85,18 @@ enum PageEmpty {
 /// here (or first).
 enum PageMerge {
   /// The merge for a kind (pagesclient's MERGE): a Note's is here; the map kinds' come with MapEngine (web/maps.js). A kind with none never sends what was
-  /// written here over the other's (Data/Pages.swift keeps theirs).
-  static func of(_ kind: String) -> ((String, String, String) -> String)? {
-    kind == "note" ? { merge(base: $0, mine: $1, theirs: $2) } : nil
+  /// written here over the other's (Data/Pages.swift keeps theirs). The merge answers nil when it couldn't merge: that is the same as no merge (theirs
+  /// stays and the saving line says this change wasn't saved, as pagesclient.js does), never theirs passed off as both.
+  static func of(_ kind: String) -> ((String, String, String) -> String?)? {
+    if kind == "note" { return { merge(base: $0, mine: $1, theirs: $2) } }
+    // A Mind map: web/maps.js's own merge (§8.3), the same as the web's, through MapEngine.
+    if kind == "mindmap" && MapEngine.shared.ok { return { base, mine, theirs in MapEngine.shared.merge("mindmap", base: base, mine: mine, theirs: theirs)?.data } }
+    return nil
   }
+  /// What was written here while a merged save was going out was made from what that save sent (`sent`), not from the merged page the server now holds:
+  /// it goes on top of the merged one the same way (sent is the base, the waiting change is mine, the merged page theirs), so the next save, which no
+  /// longer meets a conflict, doesn't take the other writer's change back out. nil when the kind has no merge or it failed.
+  static func rebase(_ kind: String, sent: String, waiting: String, merged: String) -> String? { of(kind).flatMap { $0(sent, waiting, merged) } }
   static func merge(base: String, mine: String, theirs: String) -> String {
     let B = Dictionary(PageJSON.blocks(base).map { (id($0), PageJSON.text($0)) }, uniquingKeysWith: { a, _ in a })
     let M = PageJSON.blocks(mine), T = PageJSON.blocks(theirs)

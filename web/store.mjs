@@ -37,6 +37,9 @@ const fresh = () => ({
   // Making cards from files, photos and topics (make.mjs): the job being made and the uploads waiting for it. And the older versions
   // of each deck's Guide (guide.save), which the app asks for one deck at a time instead of getting them all with the library.
   make: { job: '', up: [] }, guideHistory: {},
+  // What the learner recalled when they last tested themselves on each Mind map or Diagram page (Test me, step 4 §6.1): study data,
+  // never a page version (see "Test me marks" below).
+  mapMarks: {},
   folders: [], decks: [], cards: [], logs: []
   // (No practice tests since 2026-10-03, the owner: "remove practices tests altogether". A library from before keeps its old results,
   // `tests`, unused; a deck or a folder that goes still takes its results with it.)
@@ -446,6 +449,58 @@ function dropDiagramFile(g) {
   afterSaving(() => blobs.remove(uid, [name]).catch(e => console.error('diagram file', e.message)));
 }
 
+// ---------- Test me marks (step 4 §6.1 row 2) ----------
+// When the learner hides a map's words and recalls them (Test me), each idea (its id) or arrow ('e:' + from + '>' + to) gets a mark:
+//   S.mapMarks[pageId] = { deck, at, n: { key: [knew, missed, last, at] } }   (deck: the deck or folder the page is in; last: 1 knew it, 0 missed it)
+// They are the learner's study data, like reviews: saving them never makes a page version, and they sync with the library. They are
+// kept small: MAP_MARKS.pages pages (the ones tested longest ago go first) and MAP_MARKS.keys marks a page (the oldest go first), and
+// each save drops the marks of ideas the page no longer has (`ids`, every key it has now). A page's marks go with the page
+// (page.gone, which the server applies when it is deleted from the app or an AI app; an app may send mapmarks.drop too) and with its deck or folder.
+export const MAP_MARKS = { pages: 100, keys: 300 };
+const PAGE_ID = /^p[a-z0-9]{6,24}$/, MARK_KEY = /^(?:[A-Za-z0-9_-]{1,40}|e:[A-Za-z0-9_-]{1,40}>[A-Za-z0-9_-]{1,40})$/;
+const RESERVED_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const markKey = k => (typeof k === 'string' && MARK_KEY.test(k) && !RESERVED_KEYS.has(k) ? k : '');
+// A mark read safely: [knew, missed, last (1 or 0), at], or null.
+const markOf = v => (Array.isArray(v) && v.length >= 4 ? [Math.max(0, Math.floor(+v[0]) || 0), Math.max(0, Math.floor(+v[1]) || 0), v[2] ? 1 : 0, +v[3] || 0] : null);
+export function saveMarks(S, a) {
+  const pid = String(a.pageId || '');
+  if (!PAGE_ID.test(pid)) throw new Error('No such page');
+  const scope = String(a.deckId || '');
+  if (!S.decks.some(d => d.id === scope) && !S.folders.some(f => f.id === scope)) throw new Error('No such deck');
+  const all = S.mapMarks && typeof S.mapMarks === 'object' && !Array.isArray(S.mapMarks) ? S.mapMarks : (S.mapMarks = {});
+  const was = Object.hasOwn(all, pid) && all[pid] && typeof all[pid] === 'object' ? all[pid] : null, now = Date.now(), n = new Map();
+  if (was && was.n && typeof was.n === 'object') for (const k of Object.keys(was.n)) { const key = markKey(k), m = key && markOf(was.n[k]); if (m) n.set(key, m); }
+  for (const r of (Array.isArray(a.results) ? a.results : []).slice(0, MAP_MARKS.keys)) {
+    const key = markKey(r && r.id); if (!key) continue;
+    const m = n.get(key) || [0, 0, 0, 0];
+    if (r.ok) m[0]++; else m[1]++;
+    m[2] = r.ok ? 1 : 0; m[3] = now;
+    n.delete(key); n.set(key, m);
+  }
+  // (ideas the page doesn't have any more lose their marks)
+  if (Array.isArray(a.ids)) { const keep = new Set(a.ids.slice(0, 2000).map(markKey).filter(Boolean)); for (const k of [...n.keys()]) if (!keep.has(k)) n.delete(k); }
+  // (newest first: by when, then the one marked last)
+  const keys = [...n.entries()].reverse().sort((x, y) => y[1][3] - x[1][3]).slice(0, MAP_MARKS.keys);
+  const out = {}; for (const [k, m] of keys) out[k] = m;
+  all[pid] = { deck: scope, at: now, n: out };
+  // (the pages tested longest ago go first)
+  const ids = Object.keys(all);
+  if (ids.length > MAP_MARKS.pages) for (const id of ids.sort((x, y) => (+(all[y] || {}).at || 0) - (+(all[x] || {}).at || 0)).slice(MAP_MARKS.pages)) delete all[id];
+  return { pageId: pid, marks: keys.length };
+}
+// The marks of every page in a deck or folder that went.
+function dropScopeMarks(S, scopeId) {
+  const all = S.mapMarks; if (!all || typeof all !== 'object') return;
+  for (const id of Object.keys(all)) if (all[id] && all[id].deck === scopeId) delete all[id];
+}
+// One page's marks (for the AI link's study block and the Pages list), as a Map of key -> [knew, missed, last, at], or null.
+export function marksOf(pageId) {
+  const all = state().mapMarks, m = all && typeof all === 'object' && Object.hasOwn(all, String(pageId)) ? all[pageId] : null;
+  if (!m || !m.n || typeof m.n !== 'object') return null;
+  const n = new Map(); for (const k of Object.keys(m.n)) { const key = markKey(k), v = key && markOf(m.n[k]); if (v) n.set(key, v); }
+  return { at: +m.at || 0, deck: String(m.deck || ''), n };
+}
+
 // ---------- A deck's Guide (like a README) ----------
 // Markdown the deck's owner writes about it (web/guide.js draws it), and extra pages beside it, like a small wiki:
 //   deck.guide = { text, at, pages: [{ id, title, text, at }] }       (`at`: when it was last saved)
@@ -569,6 +624,7 @@ function run(a, who) {
       S.decks.forEach(d => { if (d.folder === f.id) d.folder = null; });
       // Its pages go with it (pages.mjs), once the library is saved.
       { const uid = L.uid; afterSaving(() => pages.removeScope(uid, 'folder', f.id).catch(e => console.error('folder pages', e.message))); }
+      dropScopeMarks(S, f.id);
       if (S.tests) S.tests = S.tests.filter(t => t.folderId !== f.id);
       return { id: f.id };
     }
@@ -580,6 +636,7 @@ function run(a, who) {
       for (const g of d.diagrams || []) dropDiagramFile(g);
       if (S.guideHistory) delete S.guideHistory[d.id];
       { const uid = L.uid; afterSaving(() => pages.removeScope(uid, 'deck', d.id).catch(e => console.error('deck pages', e.message))); }
+      dropScopeMarks(S, d.id);
       // A shared deck stops being shared when it goes (people who copied it keep their copies), and one you studied or
       // copied from someone stops counting you.
       if (d.share) L.touched.set(d.id, { gone: d.share.id });
@@ -787,6 +844,42 @@ function run(a, who) {
       if (!d.guideMoved) d.guideMoved = { at: Date.now(), main: String(a.main || ''), map: a.map && typeof a.map === 'object' ? { ...a.map } : {} };
       return d.guideMoved;
     }
+    // Test me marks (above): what the learner recalled on a map page, and a page's marks going with it.
+    case 'mapmarks.save': return saveMarks(S, a);
+    case 'mapmarks.drop': {
+      const pid = String(a.pageId || '');
+      if (S.mapMarks && typeof S.mapMarks === 'object' && Object.hasOwn(S.mapMarks, pid)) delete S.mapMarks[pid];
+      return {};
+    }
+    // A page was deleted (the server sends this, never an app: handler.mjs /api/pages and mcp.mjs delete_page). Its Test me marks go, and so
+    // does the old Figures mind map it was moved from (mapmove.mjs), so a deleted map doesn't come back in Figures, on the shared deck or in
+    // an older app.
+    case 'page.gone': {
+      const pid = String(a.pageId || '');
+      if (!PAGE_ID.test(pid)) return {};
+      if (S.mapMarks && typeof S.mapMarks === 'object' && Object.hasOwn(S.mapMarks, pid)) delete S.mapMarks[pid];
+      for (const d of S.decks) {
+        if (readOnly(d) || !(d.diagrams || []).some(g => g && g.kind === 'mindmap' && g.pageId === pid)) continue;
+        d.diagrams = d.diagrams.filter(g => !(g && g.kind === 'mindmap' && g.pageId === pid));
+        touch(d.id, who);
+      }
+      return {};
+    }
+    // The mind maps made from a deck's cards moved into its Pages (mapmove.mjs): which page each became (an old record keeps the first
+    // page it went to). The old records stay (an older app still shows them), each saying its page (`pageId`). A copy's shared map pages
+    // (`maps`, social.mjs) became its own pages the same way, each by its shared page id.
+    // Only the server sends it (handler.mjs refuses it from an app), and only a made mind map takes a page.
+    case 'diagrams.moved': {
+      const d = findDeck(a.deckId); if (!d) throw new Error('No such deck');
+      if (readOnly(d)) throw notYours(d);
+      const moved = d.diagramsMoved || (d.diagramsMoved = { at: Date.now(), map: {} });
+      // (what moved before keeps the page it went to)
+      for (const [g, p] of Object.entries(a.map && typeof a.map === 'object' ? a.map : {})) if (/^[\w-]{1,30}$/.test(g) && PAGE_ID.test(String(p)) && !Object.hasOwn(moved.map, g)) moved.map[g] = String(p);
+      for (const g of d.diagrams || []) if (isMadeDiagram(g) && g.kind === 'mindmap' && Object.hasOwn(moved.map, String(g.id)) && !g.pageId) g.pageId = moved.map[g.id];
+      // (a copy's shared map pages that became its own pages; one of a kind the apps can't show yet waits)
+      if (!readOnly(d) && Array.isArray(d.maps)) { const left = d.maps.filter(x => !(x && Object.hasOwn(moved.map, String(x.id)))); if (left.length) d.maps = left; else delete d.maps; }
+      return moved;
+    }
     case 'guide.save': {
       const d = findDeck(a.deckId); if (!d) throw new Error('No such deck');
       if (readOnly(d)) throw notYours(d);
@@ -851,7 +944,7 @@ function run(a, who) {
     case 'diagram.rename': {
       const d = findDeck(a.deckId); if (!d) throw new Error('No such deck');
       if (readOnly(d)) throw notYours(d);
-      const g = (d.diagrams || []).find(x => x.id === a.id); if (!g) throw new Error('That diagram is gone.');
+      const g = (d.diagrams || []).find(x => x.id === a.id); if (!g) throw new Error('That figure is gone.');
       const name = clean(a.name, 80).replace(/\s+/g, ' ').trim();
       if (!name) throw new Error('Give it a name.');
       g.name = name; g.named = true;
@@ -861,7 +954,7 @@ function run(a, who) {
     case 'diagram.delete': {
       const d = findDeck(a.deckId); if (!d) throw new Error('No such deck');
       if (readOnly(d)) throw notYours(d);
-      const g = (d.diagrams || []).find(x => x.id === a.id); if (!g) throw new Error('That diagram is gone.');
+      const g = (d.diagrams || []).find(x => x.id === a.id); if (!g) throw new Error('That figure is gone.');
       d.diagrams = d.diagrams.filter(x => x !== g);
       dropDiagramFile(g);
       if (isMadeDiagram(g)) touch(d.id, who);

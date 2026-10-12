@@ -25,6 +25,7 @@ import { schoolById, findSchools } from './schools.mjs';
 import { createHash } from 'node:crypto';
 import guide from './guide.js';
 import { sharedDiagram, diagramsCopy } from './diagrams.mjs';
+import maps from './maps.js';
 
 const MIN = 60000, DAY = 86400000;
 const nowIso = () => new Date().toISOString();
@@ -183,7 +184,8 @@ async function guideFor(uid, sh, d) {
   const g = d.guide || {}, n = (d.sources || []).length, made = (d.diagrams || []).map(sharedDiagram).filter(Boolean);
   // A deck whose Guide moved into its Pages (guidemove.mjs) shares its Note pages: the Guide's first, then the rest, as Markdown.
   const pages = d.guideMoved ? await notePagesOf(uid, d) : [{ id: 'main', title: 'Guide', text: g.text || '' }, ...(g.pages || []).map(p => ({ id: p.id, title: p.title, text: p.text || '' }))];
-  if (!pages.some(p => p.text.trim()) && !n && !made.length) return null;
+  const mapPages = await mapPagesOf(uid, d);
+  if (!pages.some(p => p.text.trim()) && !n && !made.length && !mapPages.length) return null;
   for (const p of pages) {
     const names = [...p.text.matchAll(/\]\(\/media\/([\w-]+\.\w+)(?=[\s)"'])/g)].map(m => m[1]);
     if (!names.length || !publicMedia.on() || isDev(uid) || uid === 'local') continue;
@@ -192,9 +194,56 @@ async function guideFor(uid, sh, d) {
       p.text = p.text.split('/media/' + name).join(publicMedia.url(uid, name));
     }
   }
-  // The tables and mind maps made from the deck's cards go with it (diagrams.mjs sharedDiagram); the pictures of its lectures and the ones uploaded never do.
-  return { pages, sources: n, ...(made.length ? { diagrams: made } : {}) };
+  // The tables and mind maps made from the deck's cards go with it (diagrams.mjs sharedDiagram); the pictures of its lectures and the ones uploaded never do. Its
+  // Mind map pages go too (`maps`); the old mind maps they were moved from stay in `diagrams`, so an older app still shows those.
+  return { pages, sources: n, ...(made.length ? { diagrams: made } : {}), ...(mapPages.length ? { maps: mapPages } : {}) };
 }
+// A deck's Mind map (and, later, Diagram) pages as a shared deck carries them (step 4 §7.4): at most MAP_PAGES, of the kinds the apps can show, each
+// { id, kind, title, from?, data }: the data cleaned again, its card links only to cards that go out with the deck (a card's id is its id in the shared deck;
+// cards waiting for the owner's OK don't go), and `from` the old Figures mind map it was moved from (mapmove.mjs), so a new app shows it once.
+const MAP_PAGES = 20;
+export async function mapPagesOf(uid, d) {
+  const kinds = [...pagesStore.MAP_KINDS].filter(k => pagesStore.PAGE_READY.has(k));
+  if (!kinds.length) return [];
+  const list = (await pagesStore.list(uid, 'deck', d.id)).filter(p => kinds.includes(p.kind)).slice(0, MAP_PAGES);
+  if (!list.length) return [];
+  // (`from` is the old Figures record a page was moved from: only keys of diagramsMoved.map that are this deck's records, the first one a page
+  // has, since a copy's map also says which shared page each of its pages came from)
+  const out = [], gids = new Set((d.diagrams || []).map(g => g && String(g.id))), from = new Map();
+  for (const [g, p] of Object.entries((d.diagramsMoved && d.diagramsMoved.map) || {})) if (gids.has(g) && !from.has(p)) from.set(p, g);
+  const goes = new Set(state().cards.filter(c => c.deckId === d.id && !c.pending).map(c => c.id));
+  for (const p of list) {
+    const full = await pagesStore.get(uid, p.id);
+    const data = full && mapData(full.kind, full.data, id => (goes.has(id) ? id : ''));
+    if (data) out.push({ id: p.id, kind: p.kind, title: clean(p.title, 200) || pagesStore.KIND_NAMES[p.kind], ...(from.has(p.id) ? { from: from.get(p.id) } : {}), data });
+  }
+  return out;
+}
+// A map's data cleaned again (web/maps.js normalize), each card link turned by `card` (an id, or '' to drop it). null when it can't be read.
+function mapData(kind, data, card) {
+  let out;
+  try { out = maps.normalize(kind, data).data; } catch { return null; }
+  const st = out && out.root ? [out.root] : [];
+  while (st.length) {
+    const n = st.pop();
+    if (Array.isArray(n.cardIds)) { const ids = [...new Set(n.cardIds.map(card).filter(Boolean))]; if (ids.length) n.cardIds = ids; else delete n.cardIds; }
+    for (const k of n.children || []) st.push(k);
+  }
+  return out;
+}
+// A shared deck's map pages as someone's library keeps them (`d.maps`: a deck they study shows them; a copy makes them its own pages, mapmove.mjs), or the public
+// deck page shows them: cleaned again, at most MAP_PAGES. `local` turns the shared deck's card ids into the library's (card.origin), dropping the ones it hasn't.
+export function mapsCopy(g, local = null) {
+  const out = [];
+  for (const x of (g && Array.isArray(g.maps) ? g.maps : []).slice(0, MAP_PAGES)) {
+    if (!x || typeof x !== 'object' || !pagesStore.MAP_KINDS.has(x.kind) || !/^p[a-z0-9]{6,24}$/.test(String(x.id || ''))) continue;
+    const data = mapData(x.kind, x.data, local ? id => local.get(id) || '' : id => id);
+    if (!data) continue;
+    out.push({ id: String(x.id), kind: x.kind, title: maps.plain(x.title, 200) || pagesStore.KIND_NAMES[x.kind], ...(/^[\w-]{1,30}$/.test(String(x.from || '')) ? { from: String(x.from) } : {}), data });
+  }
+  return out;
+}
+const originsOf = (S, d) => new Map(S.cards.filter(c => c.deckId === d.id && c.origin).map(c => [c.origin, c.id]));
 async function notePagesOf(uid, d) {
   const list = (await pagesStore.list(uid, 'deck', d.id)).filter(p => p.kind === 'note').slice(0, 20), main = d.guideMoved.main, out = [];
   for (const p of [...list.filter(x => x.id === main), ...list.filter(x => x.id !== main)]) {
@@ -552,6 +601,8 @@ export async function addShared(uid, me, sharedId, { copy = false, name = '', fo
   const cards = rows.map(r => fromShared(r, d.id));
   S.cards.push(...cards);
   d.cardOrder = cards.map(c => c.id);
+  // (its map pages, linked to these cards: a deck studied shows them, a copy makes them its own pages the first time its Pages are listed)
+  const mp = mapsCopy(sh.guide, originsOf(S, d)); if (mp.length) d.maps = mp;
   saved();
   afterSaving(async () => {
     await rest('/subscriptions?on_conflict=user_id,shared_id,deck_id', { method: 'POST', prefer: 'resolution=merge-duplicates', body: { user_id: sid, shared_id: sharedId, deck_id: d.id, mode: copy ? 'copy' : 'study', updates: copy ? !!updates : true, last_seen: nowIso() } });
@@ -595,12 +646,14 @@ export async function sync(uid) {
 // deck is up to date (`link.rev`); otherwise the rest waits for the next open.
 async function copyChanges(S, d, sh, cap, t0) {
   const link = d.link, since = link.rev, study = link.mode === 'study', pos = new Map();
+  let mapRow = null;
   let cur = link.cur && typeof link.cur.id === 'string' && link.cur.rev >= since ? link.cur : null, took = 0, done = false;
   if (study) {
     applyMeta(d, sh);
     const row = ((await sharedRow(sh.id, 'guide')) || {}).guide, g = guideCopy(row), dg = diagramsCopy(row);
     if (g) d.guide = g; else delete d.guide;
     if (dg.length) d.diagrams = dg; else delete d.diagrams;
+    mapRow = row;
   }
   while (true) {
     const size = Math.min(LIMITS.syncPage, cap - took);
@@ -613,6 +666,8 @@ async function copyChanges(S, d, sh, cap, t0) {
     if (part.length < size) { done = true; break; }
   }
   if (study) orderLike(S, d, pos);
+  // (the owner's map pages, linked to the cards as they are now)
+  if (study && mapRow !== null) { const mp = mapsCopy(mapRow, originsOf(S, d)); if (mp.length) d.maps = mp; else delete d.maps; }
   link.slug = sh.slug;
   if (done) { link.rev = sh.rev; delete link.cur; } else if (cur) link.cur = cur;
   return { took, done };
@@ -1054,7 +1109,7 @@ export async function deckPage({ handle, slug, id }, viewer) {
       tags: r.data.tags || [], source: r.data.source || '', trail: r.data.trail || [] })),
     moreCards: Math.max(0, (sh.card_count || 0) - rows.length),
     // The Guide (Markdown pages, the first the Guide itself) and how many Sources the deck was made from (a number only).
-    guide: sh.guide && Array.isArray(sh.guide.pages) ? { pages: sh.guide.pages.map(p => ({ id: p.id, title: p.title, text: p.text })), sources: sh.guide.sources || 0, diagrams: diagramsCopy(sh.guide) } : null,
+    guide: sh.guide && Array.isArray(sh.guide.pages) ? { pages: sh.guide.pages.map(p => ({ id: p.id, title: p.title, text: p.text })), sources: sh.guide.sources || 0, diagrams: diagramsCopy(sh.guide), maps: mapsCopy(sh.guide) } : null,
     made: vers.map(v => ({ version: v.version, kind: v.kind, summary: v.summary, ai: v.ai, at: v.created_at, by: face(faces.find(f => f.id === v.author)) || (v.author_name ? { name: v.author_name } : null), n: v.n_changes || 0 })),
     me: vid ? { owner, helper, studying: (subs.find(x => x.mode === 'study') || {}).deck_id || '', copied: (subs.find(x => x.mode === 'copy') || {}).deck_id || '', watching: subs.some(x => x.mode === 'watch'), starred: starred.length > 0, open } : null };
 }

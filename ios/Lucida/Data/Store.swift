@@ -123,7 +123,9 @@ final class Store: ObservableObject {
   /// The design screens: sample data, nothing saved.
   let demo: Bool
   @Published var props = DemoProps()
-  @Published var lib = Library() { didSet { allCardsMemo = nil; studyMemo = StudyMemo(); learnMemo = [:] } }
+  @Published var lib = Library() { didSet { allCardsMemo = nil; studyMemo = StudyMemo(); learnMemo = [:]; libStamp &+= 1 } }
+  /// Goes up with every change to the library, a local one too (what's worked out from it is kept by this: a Mind map's cards and tones).
+  private(set) var libStamp = 0
   /// A deck's cards a question can be made from, with their answers, until the library changes (LearnEngine.learnIn).
   var learnMemo: [String: [(c: Card, a: String)]] = [:]
   /// Lucida's own Learn mode questions (LearnEngine.swift wantQuiz): a batch is being written; the AI is off or today's batches are used
@@ -207,6 +209,17 @@ final class Store: ObservableObject {
 
   init(demo: Bool) {
     self.demo = demo
+    // The page kinds this build shows (web/pages.mjs PAGE_READY when it was made); the design screens also draw the approved Mind map states.
+    PageKind.ready = Set(Generated.pageReady)
+    if demo { PageKind.ready.insert("mindmap") }
+    #if DEBUG
+    // `-pageReady mindmap`: kinds the server on this Mac is trying out ahead of the release (tests flip them; the lead flips PAGE_READY).
+    if let k = Board.arg("-pageReady") { PageKind.ready.formUnion(k.split(separator: ",").map { String($0) }) }
+    #endif
+    // A Mind map's branches as a review set (Engine.setCards "page:"): the page's data and title as the app has them.
+    Engine.pageData = { [weak self] pid in MainActor.assumeIsolated { self?.pages.page(pid)?.data } }
+    Engine.pageTitle = { [weak self] pid in MainActor.assumeIsolated { self?.pages.page(pid)?.title } }
+    Engine.pageGone = { [weak self] pid in MainActor.assumeIsolated { self?.pages.isMissing(pid) ?? false } }
     if demo { phase = .ready; return }
     // A sound's waveform measured on this phone goes with its cards; another card may already have the one a file needs.
     Sound.shared.measured = { [weak self] file, w in self?.saveWave(file, w) }

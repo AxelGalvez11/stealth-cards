@@ -1,14 +1,16 @@
 // The MCP link: Claude, Cursor, or any app that speaks MCP can read and add cards. On this computer it's
 // http://localhost:3000/mcp; online each person has their own link (see handler.mjs), so an AI only sees their cards.
 // What an AI may do is set on the Connect AI page; tools it isn't allowed to use aren't offered.
-import { apply, state, blanks, mediaLeft, MEDIA_FULL, BG_KINDS, isPro, tunedW, pageScope, uidOf, touchDeck } from './store.mjs';
+import { apply, state, blanks, mediaLeft, MEDIA_FULL, BG_KINDS, isPro, tunedW, pageScope, uidOf, touchDeck, marksOf } from './store.mjs';
 import * as pages from './pages.mjs';
 import { moveGuide } from './guidemove.mjs';
+import { moveMaps } from './mapmove.mjs';
+import maps from './maps.js';
 import { noteToMarkdown } from './pageblocks.js';
 import * as social from './social.mjs';
 import { LEVELS, SUBJECTS, levelWords, subjectWords } from './school.js';
 import { dayAt } from './fsrs.js';
-import { isDue, scheduled, examStatus } from './sched.js';
+import { isDue, scheduled, examStatus, toneOf } from './sched.js';
 import { insights, history } from './insights.js';
 import { fetchMedia, speechFile } from './media.mjs';
 import R from './rich.js';
@@ -84,37 +86,194 @@ async function speakFile(words, lang, notes, room) {
 // Pages (pages.mjs).
 const CHECK_PAGE = 'The learner asked to check AI changes first, and a page can’t wait for that check. Show them what you would write in the chat instead.';
 const notReady = pages.notReady;
-// What the AI app reads about Note blocks (create_page and update_page).
-const NOTE_HELP = 'A Note’s blocks, each an object with a type (keep an existing block’s id when you change it; new ones get one): ' +
+// What is said about pages follows PAGE_READY (pages.mjs): a kind's help is in the tools only once the apps can show it, so these
+// are worked out each time the tools are listed (a test may make a kind ready for a while).
+const ready = k => pages.PAGE_READY.has(k);
+const MAP_ORDER = ['mindmap', 'diagram'];
+const mapKinds = () => MAP_ORDER.filter(ready);
+const mapsOn = () => mapKinds().length > 0;
+const orWords = list => (list.length < 2 ? list.join('') : list.slice(0, -1).join(', ') + ' or ' + list[list.length - 1]);
+const andWords = list => (list.length < 2 ? list.join('') : list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1]);
+// "a Mind map or a Diagram", "a mind map or a diagram"
+const mapNames = (lower = false) => orWords(mapKinds().map(k => 'a ' + (lower ? pages.KIND_NAMES[k].toLowerCase() : pages.KIND_NAMES[k])));
+const PLURAL = { note: 'notes', slides: 'presentations', mindmap: 'mind maps', diagram: 'diagrams', canvas: 'canvases', doc: 'docs' };
+const coming = () => andWords(pages.KINDS.filter(k => !ready(k)).map(k => PLURAL[k]));
+// What the AI app reads about Note blocks (create_page, and update_page while Notes are the only kind).
+const NOTE_HELP_HEAD = 'A Note’s blocks, each an object with a type (keep an existing block’s id when you change it; new ones get one): ' +
   '{type:"heading", level:1|2|3, text} · {type:"text", text} · {type:"list", style:"bullet"|"number"|"todo", items:[{text, checked?, items?}]} · ' +
   '{type:"callout", style:"trap"|"pearl"|"mnemonic"|"note", title?, text} (a trap: a mistake students make; a pearl: a high-yield fact; a mnemonic: a memory aid) · ' +
   '{type:"chain", steps:["Glycolysis","Pyruvate","Krebs cycle"]} (a → b → c sequence) · {type:"toggle", title, blocks:[...]} (folds; put answers and details inside) · ' +
   '{type:"table", header:["Stage","Where"], rows:[["Glycolysis","Cytoplasm"]]} · {type:"quote", text} · {type:"code", lang, text} · {type:"image", src, alt} · {type:"divider"} · ' +
-  '{type:"card", cardId} (shows one of the deck’s cards; list_cards gives ids) · {type:"embed", pageId} (shows another page inside). ' +
-  'text, title, steps and cells are Markdown inside a line (**bold**, *italic*, `code`, [links](https://…)). In Markdown instead: ":::trap", ":::pearl", ":::mnemonic", ":::note" or ":::toggle Title" then lines then ":::", ":::chain" then one step a line then ":::", and "::card <id>" or "::page <id>" on a line. ' +
+  '{type:"card", cardId} (shows one of the deck’s cards; list_cards gives ids) · {type:"embed", pageId} ';
+const NOTE_HELP_TAIL = '. text, title, steps and cells are Markdown inside a line (**bold**, *italic*, `code`, [links](https://…)). In Markdown instead: ":::trap", ":::pearl", ":::mnemonic", ":::note" or ":::toggle Title" then lines then ":::", ":::chain" then one step a line then ":::", and "::card <id>" or "::page <id>" on a line. ' +
   'Example: [{"type":"heading","level":1,"text":"Cellular respiration"},{"type":"chain","steps":["Glycolysis","Krebs cycle","Electron transport"]},{"type":"callout","style":"trap","text":"Glycolysis needs no oxygen."}]';
+const noteHelp = () => NOTE_HELP_HEAD + (mapsOn() ? '(shows another page inside; ' + mapNames(true) + ' shows as its live picture)' : '(shows another page inside)') + NOTE_HELP_TAIL;
+// Each map kind's help, written once (create_page), from design/specs/step4-maps.md §3.2.
+const MINDMAP_HELP = 'MIND MAP (kind "mindmap"): one topic in the middle, broken into its ideas (a tree). Lucida lays it out and colors it by how well the learner knows each idea, so never send positions or colors. Easiest as text: an indented list, the topic on the first line, two spaces a level; "{#id}" at the end of a line keeps that idea’s id ("{#id folded}" also starts it folded, so the learner guesses what is under it before opening it; "{#id cards:c1,c2}" links the deck’s cards that test it), and a "> " line under an idea is its note: "The cell {#cell}\n- Mitochondria {#mito cards:c1}\n  > Most ATP is made on the inner membrane.\n  - Krebs cycle in the matrix\n  - Electron transport on the inner membrane\n- Nucleus\n  - Holds the DNA". Or as data: {"root":{"id":"cell","label":"The cell","children":[{"id":"mito","label":"Mitochondria","note":"Most ATP is made on the inner membrane.","cardIds":["c1"],"children":[{"label":"Krebs cycle in the matrix"}]}]}}. An idea has a label (the one thing to recall: a term or a few words, never a sentence; up to 80 characters) and may have an id (letters, digits, - and _, up to 40; Lucida makes one when you leave it out), a note (the explanation, up to 600 characters), cardIds (up to 8 of the deck’s cards; list_cards gives ids), folded (true) and children. Up to 200 ideas, 6 levels under the topic and 20 under one idea; best is 3 to 7 main ideas with 2 to 6 under each.';
+const mindmapHelp = () => MINDMAP_HELP + (ready('diagram') ? ' Steps, causes and links across branches belong in a Diagram.' : '');
+const DIAGRAM_HELP = 'DIAGRAM (kind "diagram"): boxes and the labelled arrows between them, for steps, pathways, cycles and causes (a topic and its parts is a Mind map). Lucida lays it out in rows (a single loop as a circle) and colors it by how well the learner knows each part, so never send positions or colors. Easiest as text, one arrow a line, "A -> B : what the arrow does": "direction down\nglc(Glucose) -> pyr[Pyruvate] : is split into\npyr -> acoa[Acetyl-CoA] : is oxidized to\nacoa -> krebs[Krebs cycle] : enters\nc4[Complex IV] {cards:c7}\n> Cyanide and carbon monoxide block it.\ncn[Cyanide] -.-> c4 : blocks". Name a box once with its id touching a bracket: id[Words] (a box), id(Words) (round: a start, an end, a molecule) or id{Words} (a diamond: a question or a choice); after that, use its id. -.-> is a dashed arrow (indirect, or only sometimes). A line with only a box adds it, and " {cards:…}" at its end links the deck’s cards; a "> " line is the note of the last box on the line above. "direction right" lays it out across. Mermaid flowchart lines work too (A[Glucose] -->|is split into| B[Pyruvate]); subgraphs and styles are skipped. Words that name no box make a new box. Or as data: {"direction":"down","nodes":[{"id":"glc","label":"Glucose","shape":"round"},{"id":"pyr","label":"Pyruvate","cardIds":["c2"]}],"edges":[{"from":"glc","to":"pyr","label":"is split into"}]}. A box: id, label (up to 60 characters), shape ("box", "round" or "diamond"), note (up to 600), cardIds (up to 8). An arrow: from and to (box ids), label (a verb, up to 40 characters: "produces", "inhibits", "is converted to"; never "relates to": the learner is tested on the sentence), dashed (true). One arrow per pair of boxes and direction. Up to 80 boxes and 160 arrows.';
+const fixHelp = () => 'Lucida fixes what it can (a repeated id, ' + (ready('diagram') ? 'an arrow to a box that isn’t there, ' : '') + 'a label too long, too many ideas, card ids that aren’t the deck’s) and lists what it changed in warnings; the answer gives the page as saved, as text with every id.';
+const kindWords = () => orWords(['note', ...MAP_ORDER].filter(ready).map(k => '"' + k + '" (' + { note: 'explanations', mindmap: 'a topic broken into its ideas', diagram: 'how things lead to each other' }[k] + ')'));
+
+const LIST_PAGES_HELP = () => 'List the pages beside a deck’s (or a folder’s) cards: ' + andWords(pages.KINDS.filter(ready).map(k => PLURAL[k])) + ' (' + coming() + ' are coming). Each comes with its id, kind, title, version, who changed it last and when, and the id of the page it sits inside (pages nest)' +
+  (mapsOn() ? '; ' + mapNames(true) + ' also says when the learner last tested themselves on it' : '') + '. With no deck or folder it lists every page the learner has. Read one with get_page.';
+const GET_PAGE_HELP = () => !mapsOn()
+  ? 'Read one page: its kind, title, version (send it back as baseVersion when you change the page) and its content. A Note comes as blocks (see create_page for their shapes), or as Markdown with format "markdown". The cards a Note links to come with how the learner is doing on them (weak: they keep forgetting it), so you can tutor from the page: explain what they miss, add a trap or a pearl, or link the weak cards in. A Note lists the pages it shows inside (embeds).'
+  : 'Read one page: its kind, title, version (send it back as baseVersion when you change the page) and its content. A Note comes as blocks, or as Markdown with format "markdown". ' +
+    (ready('mindmap') ? 'A Mind map comes as text (the indented list, every idea with its {#id})' + (ready('diagram') ? '; a Diagram' : '') : 'A Diagram') + (ready('diagram') ? ' as text (its arrow lines, with ids) and as statements, one sentence an arrow ("Glucose —is split into→ Pyruvate")' : '') + '; format "json" adds the data. ' +
+    'Every page comes with how the learner is doing on it: cards (the deck’s cards it links to, each with the ideas it tests; weak: they keep forgetting it) and, on ' + mapNames(true) + ', study: what they missed when they last hid the words and tested themselves (each with its path), what no test or card covers yet, and the weakest branches. Tutor from that: quiz them on what they missed, explain an idea in its note, add the missing step, or make a card (add_cards) and link it (update_page). A Note lists the pages it shows inside (embeds).';
+const CREATE_PAGE_HELP = () => 'Make a page beside a deck’s (or a folder’s) cards, like an artifact the learner keeps and studies from. kind is ' + kindWords() + '; ' + coming() + ' are coming. Give the content one way: a Note as blocks or markdown' +
+  (mapsOn() ? '; ' + mapNames() + ' as text (simplest) or data. The learner tests themselves on ' + mapNames(true) + ' by hiding its words, so make each label the one thing worth recalling, and link the deck’s cards that test it. ' : '. ') +
+  noteHelp() + (ready('mindmap') ? ' ' + mindmapHelp() : '') + (ready('diagram') ? ' ' + DIAGRAM_HELP : '') + (mapsOn() ? ' ' + fixHelp() : '') +
+  ' A deck holds up to 25 pages on Free, 500 on Pro. Put the page inside another with inside (its id).' + (mapsOn() ? ' To show ' + mapNames(true) + ' inside a Note, put {type:"embed", pageId} in the Note: it shows a live picture of it.' : '');
+const UPDATE_PAGE_HELP = () => {
+  if (!mapsOn()) return 'Change a page: its title and/or its content (a Note’s `blocks` or `markdown`, the whole page as it should be now). Send baseVersion, the version you read with get_page: if the page changed since (the learner wrote in it, or another app did), nothing is saved and you get the page as it is now; merge your change into that and send it again with its version. Every save is a new version, and the learner can restore any older one. Keep the ids of blocks you didn’t change. ' + noteHelp();
+  const dg = ready('diagram'), mm = ready('mindmap');
+  const whose = orWords(mapKinds().map(k => 'a ' + pages.KIND_NAMES[k] + '’s'));
+  const things = andWords([mm && 'idea', dg && 'box', 'block'].filter(Boolean));
+  return 'Change a page: its title and/or its content, the whole content as it should be now (a Note’s blocks or markdown; ' + whose + ' text or data, as create_page describes). Send baseVersion, the version you read with get_page: if the page changed since (the learner wrote in it, or another app did), nothing is saved and you get the page as it is now; make your change on that and send it with its version. ' +
+    'Keep the id of every ' + things + ' you didn’t change: the learner’s test results and card links hang on them (one sent without an id is matched to the old one with the same words). ' +
+    'On ' + mapNames() + ', ' + (dg && mm ? 'an idea or box you leave out is deleted (an idea with everything under it)' : mm ? 'an idea you leave out is deleted with everything under it' : 'a box you leave out is deleted') +
+    ', but a note or cardIds you leave out of one you keep stays as it was' + (dg ? ', and so does where the learner put a box' : '') + '; send null or [] in data (in text, a lone ">" line or an empty cards:) to clear it. ' +
+    'Every save is a version the learner can restore; say what you changed in summary (Lucida writes one if you don’t). ' + fixHelp();
+};
+// The server instructions' sentence about pages.
+const PAGES_SAY = () => !mapsOn()
+  ? ' Beside a deck’s cards, the learner keeps pages you can make and change, like artifacts for studying: notes with traps, pearls, mnemonics, chains, tables, toggles and the deck’s own cards (list_pages, get_page, create_page, update_page with the baseVersion you read, delete_page). Every save is a version the learner can restore. When you tutor, read the page and the weak spots, then improve the page.'
+  : ' Beside a deck’s cards the learner keeps pages you can make and change, like artifacts for studying: ' + andWords(['notes', ready('mindmap') && 'mind maps (a topic and its ideas, each linked to the cards that test it)', ready('diagram') && 'diagrams (boxes and labelled arrows: processes, pathways, cycles)'].filter(Boolean)) +
+    ', which Lucida lays out itself (list_pages, get_page, create_page, update_page with the baseVersion you read, delete_page). The learner tests themselves on a map by hiding its words; when you tutor, read the page’s study block, quiz them on what they missed, then improve the page. Every save is a version the learner can restore.';
+// One meaning of weak everywhere (sched.js toneOf, the owner's answer to §13 Q2).
+const WEAK_SAY = ' A weak card is one whose recall is low now, not one ever forgotten.';
+
 // The old Guide tools work on the deck's Note pages once its Guide moved into them (guidemove.mjs); a deck you study keeps its owner's Guide (null).
 async function guideNotes(d, ctx) {
   const moved = await moveGuide(d, ctx.once); if (!moved) return null;
   return { main: moved.main, list: (await pages.list(uidOf(), 'deck', d.id)).filter(p => p.kind === 'note') };
 }
 const findNote = (G, x) => (!x || x === 'main' ? G.list.find(p => p.id === G.main) : G.list.find(p => p.id === x) || G.list.find(p => p.title.toLowerCase() === String(x).trim().toLowerCase()));
-const noteIn = a => (Array.isArray(a.blocks) ? { blocks: a.blocks } : a.markdown != null ? { markdown: String(a.markdown) } : { blocks: [] });
-const scopeNames = () => { const S = state(); return { deck: new Map(S.decks.map(d => [d.id, d.name])), folder: new Map(S.folders.map(f => [f.id, f.name])) }; };
-const pageLine = (p, names) => ({ id: p.id, kind: p.kind, title: p.title, version: p.version, [p.scope]: (names[p.scope] && names[p.scope].get(p.scopeId)) || p.scopeId, inside: p.parent || undefined, changed_by: p.by, changed: new Date(p.updated).toISOString() });
-// A page for the AI app: a Note's blocks (or Markdown), and how the learner is doing on the cards it links to.
-function pageOut(p, format) {
-  const out = { ...pageLine(p, scopeNames()) };
-  if (p.kind !== 'note') return { ...out, data: p.data };
-  const blocks = (p.data && p.data.blocks) || [], ids = new Set(), walk = list => { for (const b of list || []) { if (b.type === 'card' && b.cardId) ids.add(b.cardId); if (b.blocks) walk(b.blocks); } };
-  walk(blocks);
-  const cards = {};
-  for (const id of ids) {
-    const c = state().cards.find(x => x.id === id);
-    cards[id] = c ? { front: String(c.front || c.text || '').slice(0, 300), back: String(c.back || '').slice(0, 300), reviews: c.srs.reps || 0, lapses: c.srs.lapses || 0, weak: (c.srs.lapses || 0) > 0 || c.srs.state === 'relearning' } : { missing: true };
-  }
-  return { ...out, ...(format === 'markdown' ? { markdown: noteToMarkdown(p.data) } : { blocks }), ...(ids.size ? { cards } : {}) };
+// A page's content as the AI app sent it: exactly one of blocks, markdown, text (a map's outline or arrow lines; a Note's Markdown) or
+// data (a map's JSON). What pages.mjs cleanData reads for any kind: {blocks}, a string (Markdown or a map's text), or a map's data.
+const TWO_CONTENTS = 'Send the content one way: text or data (a Note: blocks or markdown), not both. Nothing was saved.';
+// A Note takes blocks or markdown (or Markdown as text), never a map's data: data that isn't {blocks} or {markdown} is refused, so it can't
+// save an empty Note over the learner's.
+const NOTE_DATA = 'This page is a Note: send its content as blocks or markdown. Nothing was saved.';
+const noteData = a => { const x = a.data; return x === undefined || x === null || (typeof x === 'object' && !Array.isArray(x) && (Array.isArray(x.blocks) || typeof x.markdown === 'string')); };
+function contentIn(a) {
+  const given = ['blocks', 'markdown', 'text', 'data'].filter(k => a[k] !== undefined && a[k] !== null);
+  if (given.length > 1) throw new Error(TWO_CONTENTS);
+  const k = given[0];
+  if (!k) return undefined;
+  if (k === 'blocks') return { blocks: Array.isArray(a.blocks) ? a.blocks : [] };
+  if (k === 'data') return a.data;
+  return String(a[k]);
 }
+const scopeNames = () => { const S = state(); return { deck: new Map(S.decks.map(d => [d.id, d.name])), folder: new Map(S.folders.map(f => [f.id, f.name])) }; };
+// When the learner last tested themselves on a map page (store.mjs Test me marks).
+const testedOn = p => { if (!pages.MAP_KINDS.has(p.kind)) return undefined; const m = marksOf(p.id); return m && m.n.size ? day(m.at) : undefined; };
+const pageLine = (p, names) => ({ id: p.id, kind: p.kind, title: p.title, version: p.version, [p.scope]: (names[p.scope] && names[p.scope].get(p.scopeId)) || p.scopeId, inside: p.parent || undefined, changed_by: p.by, changed: new Date(p.updated).toISOString(), tested: testedOn(p) });
+const pageLink = p => 'https://lucida.cards/page/' + p.id;
+// The cards a page links to (at most 100), each with how the learner is doing on it and, on a map, the ideas it tests (`on`). `ids` is
+// a Map of card id -> [idea ids] (empty for a Note's cards). weak follows sched.js toneOf, the one meaning of weak.
+function cardsFor(ids) {
+  const byId = new Map(state().cards.map(c => [c.id, c])), out = {};
+  let n = 0;
+  for (const [id, on] of ids) {
+    if (n++ >= 100) break;
+    const c = byId.get(id), o = on && on.length ? { on: on.slice(0, 20) } : {};
+    out[id] = c ? { ...o, front: String(c.front || c.text || '').slice(0, 300), back: String(c.back || '').slice(0, 300), reviews: c.srs.reps || 0, lapses: c.srs.lapses || 0, weak: toneOf(c) === 'weak' } : { ...o, missing: true };
+  }
+  return out;
+}
+// A mind map's ideas in outline order (the topic first), each with its level, its main idea and its path from the topic.
+function ideasOf(p) {
+  const root = p.data && p.data.root;
+  if (!root) return [];
+  const out = [], st = [[root, 0, null, '']];
+  while (st.length) {
+    const [n, level, main, pre] = st.pop(), label = String(n.label || (level ? '' : p.title || 'Untitled'));
+    const path = pre ? pre + ' › ' + label : label, me = { id: n.id, label, level, main: level === 1 ? n.id : main, path, cardIds: n.cardIds || [], kids: (n.children || []).length };
+    out.push(me);
+    const k = n.children || [];
+    for (let i = k.length - 1; i >= 0; i--) st.push([k[i], level + 1, me.main, path]);
+  }
+  return out;
+}
+// How the learner is doing on a map (get_page's study block, §3.6): what they missed when they last tested themselves (worst first,
+// at most 30: missed last time, then ideas whose cards are weak, then the most misses), the weakest main ideas (at most 5), and how
+// many ideas no test and no card covers yet.
+function studyOf(p, ideas) {
+  const marks = marksOf(p.id), byId = new Map(state().cards.map(c => [c.id, c])), list = ideas.filter(x => x.level > 0);
+  let tests = 0;
+  const rows = list.map((x, i) => {
+    const m = marks ? marks.n.get(x.id) : null, tones = x.cardIds.map(id => byId.get(id)).filter(Boolean).map(c => toneOf(c));
+    if (m) tests = Math.max(tests, m[0] + m[1]);
+    return { x, i, m, tone: maps.ideaTone(tones, m), weakCards: tones.includes('weak') };
+  });
+  const weak = rows.filter(r => r.tone === 'weak').sort((a, b) => ((b.m && b.m[2] === 0) - (a.m && a.m[2] === 0)) || (b.weakCards - a.weakCards) || ((b.m ? b.m[1] : 0) - (a.m ? a.m[1] : 0)) || (a.i - b.i));
+  const perMain = new Map();
+  for (const r of weak) if (r.x.main) perMain.set(r.x.main, (perMain.get(r.x.main) || 0) + 1);
+  const mains = list.filter(x => x.level === 1 && perMain.get(x.id)).map((x, i) => ({ x, i, n: perMain.get(x.id) })).sort((a, b) => b.n - a.n || a.i - b.i).slice(0, 5);
+  return {
+    last_tested: marks && marks.n.size ? day(marks.at) : undefined, tests,
+    weak: weak.slice(0, 30).map(r => ({ id: r.x.id, label: r.x.label, path: r.x.path, missed: r.m ? r.m[1] : 0, knew: r.m ? r.m[0] : 0, cards: r.x.cardIds.length ? r.x.cardIds : undefined })),
+    weak_branches: mains.map(r => ({ id: r.x.id, label: r.x.label, weak: r.n })),
+    not_tested: list.filter(x => !(marks && marks.n.has(x.id))).length,
+    no_cards: list.filter(x => !x.cardIds.length).length
+  };
+}
+// A page's embedded pages (a Note's {type:"embed", pageId} blocks), as {id: {title, kind}}.
+async function embedsOf(blocks) {
+  const ids = [], walk = list => { for (const b of list || []) { if (b && b.type === 'embed' && b.pageId && !ids.includes(b.pageId)) ids.push(b.pageId); if (b && b.blocks) walk(b.blocks); } };
+  walk(blocks);
+  if (!ids.length) return null;
+  const all = new Map((await pages.list(uidOf())).map(p => [p.id, p])), out = {};
+  for (const id of ids.slice(0, 50)) { const p = all.get(id); out[id] = p ? { title: p.title, kind: p.kind } : { missing: true }; }
+  return out;
+}
+// A page for the AI app (§3.6): a Note's blocks (or Markdown) and the pages it shows inside; a map's text with every id, its study
+// block; and for every kind the cards it links to, with how the learner is doing on them.
+async function pageOut(p, format) {
+  const out = { ...pageLine(p, scopeNames()), link: pageLink(p) };
+  if (p.kind === 'mindmap' && p.data && p.data.root) {
+    const ideas = ideasOf(p), on = new Map();
+    for (const x of ideas) for (const c of x.cardIds) { if (!on.has(c)) on.set(c, []); on.get(c).push(x.id); }
+    return { ...out, text: maps.textOf('mindmap', p.data), ideas: ideas.length, study: studyOf(p, ideas), ...(on.size ? { cards: cardsFor(on) } : {}),
+      ...(format === 'json' ? { data: p.data } : {}), to_change: 'update_page with baseVersion ' + p.version + ' and the whole map as text or data.' };
+  }
+  if (p.kind !== 'note') return { ...out, data: p.data };
+  const blocks = (p.data && p.data.blocks) || [], ids = new Map(), walk = list => { for (const b of list || []) { if (b.type === 'card' && b.cardId) ids.set(b.cardId, []); if (b.blocks) walk(b.blocks); } };
+  walk(blocks);
+  const embeds = await embedsOf(blocks);
+  return { ...out, ...(format === 'markdown' || format === 'text' ? { markdown: noteToMarkdown(p.data) } : { blocks }), ...(ids.size ? { cards: cardsFor(ids) } : {}), ...(embeds ? { embeds } : {}) };
+}
+// The deck's (or the folder's decks') card ids a map may link to; ids that aren't among them are left out of what an AI app wrote,
+// with a warning (§2.1 cardIds). An idea's card ids it had before (`prev`: the learner's, which the AI-keep rule carries over when the AI
+// app leaves them out) are never checked: only what the AI app added. Gives the data back cleaned, and the warning.
+function checkCards(scope, scopeId, data, prev) {
+  const decks = scope === 'folder' ? new Set(state().decks.filter(d => d.folder === scopeId).map(d => d.id)) : new Set([scopeId]);
+  const mine = new Set(state().cards.filter(c => decks.has(c.deckId)).map(c => c.id)), gone = [], had = new Map();
+  for (const st = prev && prev.root ? [prev.root] : []; st.length;) { const n = st.pop(); if (n && Array.isArray(n.cardIds)) had.set(n.id, new Set(n.cardIds)); for (const k of (n && n.children) || []) st.push(k); }
+  const st = data && data.root ? [data.root] : [];
+  while (st.length) {
+    const n = st.pop();
+    if (Array.isArray(n.cardIds)) { const was = had.get(n.id); const keep = n.cardIds.filter(id => mine.has(id) || (was && was.has(id)) || (gone.includes(id) ? false : (gone.push(id), false))); if (keep.length) n.cardIds = keep; else delete n.cardIds; }
+    for (const k of n.children || []) st.push(k);
+  }
+  return gone.length ? 'Left out ' + gone.length + ' card id' + (gone.length === 1 ? '' : 's') + ' that ' + (gone.length === 1 ? 'isn’t' : 'aren’t') + ' this ' + scope + '’s cards: ' + gone.slice(0, 3).join(', ') + (gone.length > 3 ? ' and ' + (gone.length - 3) + ' more' : '') + '.' : '';
+}
+// A map's content from an AI app, cleaned before it is saved, so its card ids can be checked: {data, warnings}. Throws the
+// refusal's words (a Note's blocks, something that isn't that kind). Other kinds go to pages.mjs as they came.
+function mapIn(kind, content, prev, title, scope, scopeId) {
+  if (!pages.MAP_KINDS.has(kind) || content === undefined) return null;
+  let r;
+  try { r = maps.normalize(kind, content, prev, { ai: true, title }); }
+  catch (e) { if (e.code === 'kind') return null; throw e; }
+  const data = JSON.parse(JSON.stringify(r.data)), w = checkCards(scope, scopeId, data, prev);
+  return { data, warnings: [...(r.warnings || []), ...(w ? [w] : [])] };
+}
+const merged = (a, b) => { const out = [...(a || [])]; for (const w of b || []) if (!out.includes(w)) out.push(w); return out; };
+// What a write answers (§3.5): the page as saved, its text with every id on a map, what was repaired, and where it is.
+const writeOut = (key, p, warnings, note) => ({ [key]: pageLine(p, scopeNames()), ...(p.kind === 'mindmap' && p.data && p.data.root ? { text: maps.textOf('mindmap', p.data) } : {}), ...(warnings && warnings.length ? { warnings } : {}), link: pageLink(p), note });
 const CHECK_GUIDE = 'The learner asked to check AI changes first, and a Guide can’t wait for that check. Show them the text in the chat so they can paste it into the Guide themselves.';
 // A deck's Guide as a list of pages: the Guide itself ("main") first, then its extra pages.
 const guidePages = d => { const g = d.guide || { text: '', pages: [] }; return [{ id: 'main', title: 'Guide', characters: (g.text || '').length }, ...(g.pages || []).map(p => ({ id: p.id, title: p.title, inside: p.parent || undefined, characters: (p.text || '').length }))]; };
@@ -217,9 +376,12 @@ const TOOLS = [
       const notes = new Set(), ready = [], room = { left: mediaLeft() };
       try { for (const c of list) ready.push(await withMedia(c, a.files, ctx, notes, room)); } catch (e) { return fail(e.message); }
       const check = state().ai.perms.check;
-      let d = deckBy(a.deck), made = 0;
-      for (const c of ready) { const r = apply({ type: 'card.add', deckId: d ? d.id : null, deckName: d ? null : a.deck, ...c, pending: check }, who); d = deckBy(r.deckId); made += r.ids.length; }
-      return text('Added ' + made + ' card' + (made === 1 ? '' : 's') + ' to ' + d.name + (check ? '. They wait in the deck until the learner keeps them.' : '.') + [...notes].map(n => ' ' + n).join(''));
+      let d = deckBy(a.deck);
+      const ids = [];
+      for (const c of ready) { const r = apply({ type: 'card.add', deckId: d ? d.id : null, deckName: d ? null : a.deck, ...c, pending: check }, who); d = deckBy(r.deckId); ids.push(...r.ids); }
+      // (the new cards' ids, so an AI app can link them to a page's ideas: step 4 §6.1 row 10)
+      const made = ids.length, its = made === 1 ? ' Its id: ' : ' Their ids: ';
+      return text('Added ' + made + ' card' + (made === 1 ? '' : 's') + ' to ' + d.name + '.' + its + ids.join(', ') + (mapsOn() ? ' (link ' + (made === 1 ? 'it' : 'them') + ' to a page’s ideas with update_page).' : '.') + (check ? (made === 1 ? ' It waits' : ' They wait') + ' in the deck until the learner keeps ' + (made === 1 ? 'it.' : 'them.') : '') + [...notes].map(n => ' ' + n).join(''));
     } },
   { name: 'update_card', perm: 'edit', description: 'Change a card: fix typos, give a better answer, change its tags, or give it a picture or sound. The fields you give replace the old ones. On a deck the learner studies from someone else, use suggest_changes instead.',
     inputSchema: { type: 'object', properties: { id: { type: 'string' }, front: { type: 'string' }, back: { type: 'string' }, text: { type: 'string' }, note: { type: 'string' }, tags: { type: 'array', items: { type: 'string' } }, ...MEDIA_PROPS, files: FILES }, required: ['id'] },
@@ -341,52 +503,80 @@ const TOOLS = [
       return text('Added the page “' + String(a.title).trim().slice(0, 80) + '” to ' + d.name + '. Its id is ' + r.id + '.');
     } },
   // Pages (pages.mjs): what a deck or a folder holds beside its cards, each of a kind, versioned, written by the learner and by AI apps.
-  { name: 'list_pages', perm: 'read', description: 'List the pages beside a deck’s (or a folder’s) cards: notes, and soon presentations, mind maps, diagrams, canvases and docs. Each comes with its id, kind, title, version, who changed it last and when, and the id of the page it sits inside (pages nest). With no deck or folder it lists every page the learner has. Read one with get_page.',
+  { name: 'list_pages', perm: 'read', description: LIST_PAGES_HELP,
     inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, folder: { type: 'string', description: 'Folder name or id (instead of a deck).' } } },
     run: async (a, who, ctx) => {
       let sc = null;
       try { if (a.deck || a.folder) sc = pageScope(a.folder ? 'folder' : 'deck', a.folder || a.deck, { read: true }); } catch (e) { return fail(e.message); }
-      if (sc && sc.scope === 'deck') await moveGuide(deckBy(sc.id), ctx.once);
+      // a deck's Guide, and the mind maps made from its cards, move into its Pages the first time they're asked for
+      if (sc && sc.scope === 'deck') { const d = deckBy(sc.id); await moveGuide(d, ctx.once); await moveMaps(d, ctx.once); }
       const names = scopeNames(), list = await pages.list(uidOf(), sc && sc.scope, sc && sc.id);
       return text({ pages: list.map(p => pageLine(p, names)), kinds_you_can_make: [...pages.PAGE_READY] });
     } },
-  { name: 'get_page', perm: 'read', description: 'Read one page: its kind, title, version (send it back as baseVersion when you change the page) and its content. A Note comes as blocks (see create_page for their shapes), or as Markdown with format "markdown". The cards a Note links to come with how the learner is doing on them (weak: they keep forgetting it), so you can tutor from the page: explain what they miss, add a trap or a pearl, or link the weak cards in.',
-    inputSchema: { type: 'object', properties: { page: { type: 'string', description: 'The page’s id (from list_pages).' }, format: { type: 'string', enum: ['blocks', 'markdown'], description: 'How a Note comes back. blocks (the default) keeps each block’s id.' } }, required: ['page'] },
-    run: async a => {
+  { name: 'get_page', perm: 'read', description: GET_PAGE_HELP,
+    inputSchema: { type: 'object', properties: { page: { type: 'string', description: 'The page’s id (from list_pages).' }, format: { type: 'string', enum: ['blocks', 'markdown', 'text', 'json'], description: 'How the content comes back. A Note: blocks (the default, each block with its id) or markdown (text is the same as markdown, json as blocks). A map always comes as text with its ids; json adds its data.' } }, required: ['page'] },
+    run: async (a, who, ctx) => {
       const p = await pages.get(uidOf(), a.page); if (!p) return fail('No page ' + a.page + '. list_pages gives the ids.');
-      return text(pageOut(p, a.format));
+      // (the deck's made mind maps move into its Pages on get_page too, §7.1)
+      if (p.scope === 'deck') { const d = deckBy(p.scopeId); if (d) await moveMaps(d, ctx.once); }
+      return text(await pageOut(p, a.format));
     } },
-  { name: 'create_page', perm: 'text', description: 'Make a page beside a deck’s (or a folder’s) cards, like an artifact the learner keeps and studies from. kind is "note" for now (presentations, mind maps, diagrams, canvases and docs are coming). Give the Note as `blocks` or as `markdown` (one of them). ' + NOTE_HELP + ' A deck holds up to 25 pages on Free, 500 on Pro. Put it inside another page with `inside` (its id).',
-    inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, folder: { type: 'string', description: 'Folder name or id (instead of a deck).' }, kind: { type: 'string', enum: pages.KINDS }, title: { type: 'string' },
-      blocks: { type: 'array', items: { type: 'object' }, description: 'The Note’s blocks, in order.' }, markdown: { type: 'string', description: 'The Note as Markdown instead of blocks.' }, inside: { type: 'string', description: 'The id of the page it goes inside. Leave out for the top.' } }, required: ['kind', 'title'] },
+  { name: 'create_page', perm: 'text', description: CREATE_PAGE_HELP,
+    inputSchema: () => ({ type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id.' }, folder: { type: 'string', description: 'Folder name or id (instead of a deck).' }, kind: { type: 'string', enum: pages.KINDS.filter(ready) }, title: { type: 'string' },
+      inside: { type: 'string', description: 'The id of the page it goes inside. Leave out for the top.' },
+      blocks: { type: 'array', items: { type: 'object' }, description: 'The Note’s blocks, in order.' }, markdown: { type: 'string', description: 'The Note as Markdown instead of blocks.' },
+      ...(mapsOn() ? { text: { type: 'string', description: (ready('mindmap') && ready('diagram') ? 'A Mind map as an indented list, or a Diagram as arrow lines' : ready('mindmap') ? 'A Mind map as an indented list' : 'A Diagram as arrow lines') + ' (see above). A Note’s Markdown works here too.' },
+        data: { type: 'object', description: (ready('mindmap') && ready('diagram') ? 'A Mind map’s {root} or a Diagram’s {direction, nodes, edges}.' : ready('mindmap') ? 'A Mind map’s {root}.' : 'A Diagram’s {direction, nodes, edges}.') } } : {}) }, required: ['kind', 'title'] }),
     run: async (a, who, ctx) => {
       if (state().ai.perms.check) return fail(CHECK_PAGE);
       if (!pages.PAGE_READY.has(a.kind)) return fail(notReady(a.kind));
       let sc; try { sc = pageScope(a.folder ? 'folder' : 'deck', a.folder || a.deck); } catch (e) { return fail(a.deck || a.folder ? e.message : 'Say which deck (or folder) the page goes in.'); }
       try {
-        const p = await ctx.once('create_page', () => pages.create(uidOf(), { scope: sc.scope, scopeId: sc.id, kind: a.kind, title: a.title, data: noteIn(a), parent: a.inside || '', who, ai: true, pro: isPro(), ready: true }));
+        let content = contentIn(a), warnings = [];
+        if (a.kind === 'note' && !noteData(a)) return fail(NOTE_DATA);
+        if (content === undefined && a.kind === 'note') content = { blocks: [] };
+        const m = mapIn(a.kind, content, undefined, a.title, sc.scope, sc.id);
+        if (m) { content = m.data; warnings = m.warnings; }
+        const p = await ctx.once('create_page', () => pages.create(uidOf(), { scope: sc.scope, scopeId: sc.id, kind: a.kind, title: a.title, data: content, parent: a.inside || '', who, ai: true, pro: isPro(), ready: true, cleaned: !!m }));
         if (p.scope === 'deck') touchDeck(p.scopeId, who);
-        return text({ made: pageLine(p, scopeNames()), note: 'The learner sees it in ' + sc.name + ' › Pages now. Change it with update_page and baseVersion ' + p.version + '.' });
+        return text(writeOut('made', p, merged(warnings, p.warnings), 'The learner sees it in ' + sc.name + ' › Pages now. Change it with update_page and baseVersion ' + p.version + '.'));
       } catch (e) { return fail(e.message); }
     } },
-  { name: 'update_page', perm: 'edit', description: 'Change a page: its title and/or its content (a Note’s `blocks` or `markdown`, the whole page as it should be now). Send baseVersion, the version you read with get_page: if the page changed since (the learner wrote in it, or another app did), nothing is saved and you get the page as it is now; merge your change into that and send it again with its version. Every save is a new version, and the learner can restore any older one. Keep the ids of blocks you didn’t change. ' + NOTE_HELP,
-    inputSchema: { type: 'object', properties: { page: { type: 'string', description: 'The page’s id.' }, baseVersion: { type: 'integer', description: 'The version you read (get_page’s version).' }, title: { type: 'string' },
-      blocks: { type: 'array', items: { type: 'object' } }, markdown: { type: 'string' }, summary: { type: 'string', description: 'What you changed, in a few words (the learner sees it beside the version).' } }, required: ['page', 'baseVersion'] },
+  { name: 'update_page', perm: 'edit', description: UPDATE_PAGE_HELP,
+    inputSchema: () => ({ type: 'object', properties: { page: { type: 'string', description: 'The page’s id.' }, baseVersion: { type: 'integer', description: 'The version you read (get_page’s version).' }, title: { type: 'string' },
+      summary: { type: 'string', description: 'What you changed, in a few words (the learner sees it beside the version).' },
+      blocks: { type: 'array', items: { type: 'object' } }, markdown: { type: 'string' },
+      ...(mapsOn() ? { text: { type: 'string', description: 'The whole ' + (ready('mindmap') && ready('diagram') ? 'Mind map as an indented list, or the whole Diagram as arrow lines' : ready('mindmap') ? 'Mind map as an indented list' : 'Diagram as arrow lines') + ', with the ids you read.' },
+        data: { type: 'object', description: 'The whole ' + (ready('mindmap') && ready('diagram') ? 'Mind map’s {root} or Diagram’s {direction, nodes, edges}.' : ready('mindmap') ? 'Mind map’s {root}.' : 'Diagram’s {direction, nodes, edges}.') } } : {}) }, required: ['page', 'baseVersion'] }),
     run: async (a, who, ctx) => {
       if (state().ai.perms.check) return fail(CHECK_PAGE);
       try {
-        const p = await ctx.once('update_page', () => pages.update(uidOf(), a.page, { baseVersion: a.baseVersion, title: a.title, data: a.blocks || a.markdown != null ? noteIn(a) : undefined, who, ai: true, summary: a.summary, pro: isPro(), ready: true }));
+        let content = contentIn(a), warnings = [];
+        const cur = await pages.get(uidOf(), a.page);
+        if (!cur) return fail('No page ' + a.page + '. list_pages gives the ids.');
+        if (!pages.PAGE_READY.has(cur.kind)) return fail(notReady(cur.kind));
+        if (cur.kind === 'note' && !noteData(a)) return fail(NOTE_DATA);
+        // (a map is cleaned against the page as it is now, so its card ids can be checked; a stale baseVersion is still refused below)
+        const m = Number(a.baseVersion) === cur.version ? mapIn(cur.kind, content, cur.data, a.title ?? cur.title, cur.scope, cur.scopeId) : null;
+        if (m) { content = m.data; warnings = m.warnings; }
+        const p = await ctx.once('update_page', () => pages.update(uidOf(), a.page, { baseVersion: a.baseVersion, title: a.title, data: content, who, ai: true, summary: a.summary, pro: isPro(), ready: true, cleaned: !!m }));
         if (p.scope === 'deck') touchDeck(p.scopeId, who);
-        return text({ saved: pageLine(p, scopeNames()), note: 'Saved as version ' + p.version + '.' });
+        return text(writeOut('saved', p, merged(warnings, p.warnings), 'Saved as version ' + p.version + '.'));
       } catch (e) {
-        if (e.code === 'conflict') return { content: [{ type: 'text', text: e.message }, { type: 'text', text: JSON.stringify(pageOut(e.current), null, 2) }], isError: true };
+        if (e.code === 'conflict') return { content: [{ type: 'text', text: e.message }, { type: 'text', text: JSON.stringify(await pageOut(e.current), null, 2) }], isError: true };
         return fail(e.message);
       }
     } },
   { name: 'delete_page', perm: 'del', description: 'Delete a page. Pages inside it move up to where it was. Ask the learner first.',
     inputSchema: { type: 'object', properties: { page: { type: 'string', description: 'The page’s id.' } }, required: ['page'] },
     run: async (a, who, ctx) => {
-      try { const m = await ctx.once('delete_page', () => pages.remove(uidOf(), a.page)); if (m && m.scope === 'deck') touchDeck(m.scopeId, who); return text('Deleted the page.'); } catch (e) { return fail(e.message); }
+      try {
+        const m = await ctx.once('delete_page', () => pages.remove(uidOf(), a.page));
+        if (m && m.scope === 'deck') touchDeck(m.scopeId, who);
+        // (a map page's Test me marks go with it, and the old Figures mind map it was moved from: store.mjs page.gone)
+        if (m) apply({ type: 'page.gone', pageId: m.id }, who);
+        return text('Deleted the page.');
+      } catch (e) { return fail(e.message); }
     } },
   // The study network (social.mjs): decks other people share. The learner can study one as it is, or copy it; on a deck
   // from someone else, an AI can only suggest changes, which the owner takes or skips.
@@ -468,7 +658,8 @@ const META = {
 // A tool as tools/list shows it. An app that signed in through Lucida (not a secret link) is also told which scope each tool needs.
 const listed = (t, oauth) => {
   const m = META[t.name], schemes = m && oauth ? [{ type: 'oauth2', scopes: [m.scope] }] : null, extra = { ...(t.meta || {}), ...(schemes ? { securitySchemes: schemes } : {}) };
-  return { name: t.name, ...(m ? { title: m.title } : {}), description: t.description, inputSchema: t.inputSchema,
+  const now = v => (typeof v === 'function' ? v() : v);
+  return { name: t.name, ...(m ? { title: m.title } : {}), description: now(t.description), inputSchema: now(t.inputSchema),
     ...(m ? { annotations: { title: m.title, readOnlyHint: m.ro, destructiveHint: m.destructive, idempotentHint: m.idem, openWorldHint: m.open } } : {}),
     ...(schemes ? { securitySchemes: schemes } : {}), ...(Object.keys(extra).length ? { _meta: extra } : {}) };
 };
@@ -494,7 +685,7 @@ async function handle(m, sid, ctx) {
             ' Learn mode quizzes the learner on a deck: add_quiz gives cards better questions (multiple choice with plausible wrong answers, or true or false) and an explanation. Decks can sit in folders and have a cover picture and a background (update_deck).' +
             ' A deck can have a Guide, its notes page in Markdown with toggles (":::toggle Its title" ... ":::"; get_guide, update_guide, and extra pages with list_guide_pages and add_guide_page); a shared deck shows it on its public page.' +
             ' To help with what the learner finds hard, get_weak_spots lists their weakest tags and hardest cards (with ids to quiz them or fix the cards), and get_review_history sums up their recent reviews.' +
-            ' Beside a deck’s cards, the learner keeps pages you can make and change, like artifacts for studying: notes with traps, pearls, mnemonics, chains, tables, toggles and the deck’s own cards (list_pages, get_page, create_page, update_page with the baseVersion you read, delete_page). Every save is a version the learner can restore. When you tutor, read the page and the weak spots, then improve the page.' });
+            PAGES_SAY() + WEAK_SAY });
       }
       case 'ping': return ok({});
       case 'tools/list': return ok({ tools: allowed().map(t => listed(t, ctx.oauth)) });

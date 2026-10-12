@@ -13,6 +13,9 @@ import { THEMES } from '../web/themes/index.js';
 import { PLAN_PRO_PHONE } from './site.mjs';
 import { LEVELS, YEARS, SUBJECTS } from '../web/school.js';
 import { MOTION } from './motion.mjs';
+import { PAGE_VIEWS } from './pages.mjs';
+import { MAP_SAMPLE_JSON, MAP_ICONS } from './maps.mjs';
+import { PAGE_READY } from '../web/pages.mjs';
 
 const OUT = new URL('../ios/Lucida/Design/Generated.swift', import.meta.url);
 const src = readFileSync(new URL('./build.mjs', import.meta.url), 'utf8');
@@ -25,6 +28,8 @@ const dark = evalJs(th[1]), light = evalJs(th[2]);
 const gray = evalJs(grab(/if \(d && g\) return (\{ bg: '#[0-9A-Fa-f]{6}'[^}]+\});/, 'the gray theme')[1]);
 // Icons: stroke drawings on a 24 x 24 grid.
 const I = evalJs(grab(/const I = (\{[\s\S]*?\n\});/, 'the icons')[1]);
+// The Mind map page's own icons (design/maps.mjs MAP_ICONS: fold, test, ideaAdd, outdent, indent, ...), where build.mjs has none of that name.
+for (const [k, v] of Object.entries(MAP_ICONS)) if (!(k in I)) I[k] = v;
 // The onboarding's own icons (star, sheet, paste, out, copy) go in with the rest; the two whose names the app's icons
 // already use (star and copy, drawn a little differently) as obStar and obCopy.
 for (const [k, v] of Object.entries(evalJs(grab(/const OB_I = (\{[\s\S]*?\n\});/, 'the onboarding icons')[1]))) I[k in I ? 'ob' + k[0].toUpperCase() + k.slice(1) : k] = v;
@@ -149,6 +154,13 @@ ${THEMES.map(t => `    (${str(t.key)}, ${str(t.board || '')}, ${str(t.name)}, ${
 
   /// Pro's deep stats sample (design/mock.mjs SAMPLE_INSIGHTS), by range (Week, Month, Year), as db.insights() gives them.
   static let insightsJSON = ${str(JSON.stringify(SAMPLE_INSIGHTS))}
+
+  /// The page kinds this build can show and write (web/pages.mjs PAGE_READY when it was made): Data/PageData.swift PageKind.ready.
+  static let pageReady: [String] = ${str([...PAGE_READY])}
+  /// A page's states on the design screens (design/pages.mjs PAGE_VIEWS: the Note's, 'Needs an update', and the Mind map's MINDMAP_VIEWS).
+  static let pageViews: [String] = ${str(PAGE_VIEWS)}
+  /// The Mind map sample (design/maps.mjs MAP_SAMPLE: The cell at a glance, its cards with their tones, yesterday's marks, and what Claude added).
+  static let mapSampleJSON = ${str(MAP_SAMPLE_JSON)}
 }
 `;
 writeFileSync(OUT, out);
@@ -158,4 +170,7 @@ copyFileSync(new URL('../web/guide.js', import.meta.url), new URL('../ios/Lucida
 // A Page's blocks (web/pageblocks.js: a Note's JSON <-> the Markdown the Notes editor writes) go in the same way, and run in the same JavaScriptCore as guide.js
 // (GuideEngine's pageblocks calls), so a page the iPhone saves is the JSON the web and the AI link would save. (ios/tests/pages-check.sh fails when they differ.)
 copyFileSync(new URL('../web/pageblocks.js', import.meta.url), new URL('../ios/Lucida/Resources/pageblocks.js', import.meta.url));
+// The Mind map engine (web/maps.js) goes in the same way, and runs in a JavaScriptCore of its own (Data/MapEngine.swift), so a map is cleaned,
+// laid out and merged on the iPhone exactly as on the server and the web. (ios/tests/maps-check.sh fails when the two files differ.)
+copyFileSync(new URL('../web/maps.js', import.meta.url), new URL('../ios/Lucida/Resources/maps.js', import.meta.url));
 console.log('wrote', OUT.pathname.split('/stealth-cards/')[1], Object.keys(I).length, 'icons,', PALETTE_NAMES.length, 'palettes');

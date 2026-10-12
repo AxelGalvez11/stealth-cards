@@ -186,6 +186,17 @@ struct Engine {
   /// keep forgetting, or a tag's cards you've studied.
   func setCards(_ set: String) -> [Card] {
     let byId = Dictionary(S.decks.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+    // A Mind map's branches ("page:<page id>:<idea id>[,<idea id>…]", Study this branch / Study these cards): every card linked in those
+    // branches (maps.reviewIds, in outline order), weakest recall first and new cards last, up to 100 (db.js setCards, MapSet.order). Nothing
+    // until the page's data is here.
+    if set.hasPrefix("page:") {
+      let parts = set.split(separator: ":", maxSplits: 2).map(String.init), pid = parts.count > 1 ? parts[1] : ""
+      let ideas = parts.count > 2 ? parts[2].split(separator: ",").filter { !$0.isEmpty }.map(String.init) : nil
+      guard let data = Engine.pageData(pid), !data.isEmpty else { return [] }
+      let cardBy = Dictionary(S.cards.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+      let cs = MapEngine.shared.reviewIds(data, ideas).compactMap { cardBy[$0] }.filter { Engine.studyable($0) && byId[$0.deckId] != nil }
+      return MapSet.order(cs, isNew: { $0.srs.state == "new" }, recall: { Sched.recallAt($0, now) })
+    }
     var last: [String: Int] = [:]
     if set == "hard" { for l in S.logs { if let r = l.rating, r != 0 { last[l.cardId] = r } } }
     func pick(_ c: Card) -> Bool {
@@ -198,8 +209,19 @@ struct Engine {
     let by = { (c: Card) in Sched.recallAt(c, now) ?? 1 }
     return Array(cs.enumerated().sorted { by($0.element) != by($1.element) ? by($0.element) < by($1.element) : $0.offset < $1.offset }.map(\.element).prefix(50))
   }
+  /// A page's data (JSON text) as the app has it, for a `page:` set (Store sets it to PagesStore.page; nil while it's loading).
+  static var pageData: (String) -> String? = { _ in nil }
+  /// A page's title, for a `page:` set's name.
+  static var pageTitle: (String) -> String? = { _ in nil }
+  /// Whether a page isn't there any more (nil title and this: gone; nil title without it: still on its way).
+  static var pageGone: (String) -> Bool = { _ in false }
   static func setName(_ set: String?) -> String {
     guard let set else { return "" }
+    if set.hasPrefix("page:") {
+      let parts = set.split(separator: ":", maxSplits: 2).map(String.init), pid = parts.count > 1 ? parts[1] : ""
+      let ideas = parts.count > 2 ? parts[2].split(separator: ",").filter { !$0.isEmpty }.map(String.init) : nil
+      return MapSet.name(data: Engine.pageData(pid), title: Engine.pageTitle(pid), ideas: ideas, gone: Engine.pageGone(pid))
+    }
     return set == "hard" ? "Hardest cards" : set == "leech" ? "Cards you keep forgetting" : set.hasPrefix("tag:") ? String(set.dropFirst(4)) : ""
   }
 
