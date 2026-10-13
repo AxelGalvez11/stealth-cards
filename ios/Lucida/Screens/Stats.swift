@@ -1,4 +1,4 @@
-// iPhone · Stats (PhoneStats, PhoneStatsEmpty, and Pro's tabs, StatsDeep.swift): your streak and numbers, the days you
+// iPhone · Stats (PhoneStats, PhoneStatsEmpty, and the deep tabs, StatsDeep.swift): your streak and numbers, the days you
 // studied, and the cards due each day ahead; then Memory, Weak spots, and Pace.
 import SwiftUI
 
@@ -38,7 +38,7 @@ struct StatsScreen: View {
   @Environment(\.theme) private var t
   @EnvironmentObject private var store: Store
   @EnvironmentObject private var nav: Nav
-  /// Overview, Memory, Weak spots, and Pace: all of them Pro (on Free, each shows the upgrade card).
+  /// Overview, Memory, Weak spots, and Pace: all of them free.
   @State private var tab = "Overview"
 
   var body: some View {
@@ -48,10 +48,8 @@ struct StatsScreen: View {
       if !s.empty {
         Segmented(options: ["Overview", "Memory", "Weak spots", "Pace"].map { ($0, $0) }, current: tab, height: 34, size: 13, gap: 2, hPad: 4) { tab = $0 }
       }
-      // On Free every tab is the upgrade card, reviews or not; "No reviews yet" is only for Pro (as on the web: /stats is StatsEmpty for Pro
-      // until the first review).
-      if !store.isPro { StatsUpgrade(shop: store.shop) }
-      else if s.empty || tab == "Overview" { overview(s) }
+      // No reviews yet: no tabs, just the empty card (as on the web: /stats is StatsEmpty until the first review).
+      if s.empty || tab == "Overview" { overview(s) }
       else { DeepStats(tab: tab, goal: s.goal) }
     }
     .foregroundStyle(t.text)

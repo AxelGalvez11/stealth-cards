@@ -54,7 +54,7 @@ export const CONNECT = {
         '“What’s due today? Quiz me on it.”',
         '“Turn these lecture notes into fill-in-the-blank cards.” (paste the notes)',
         '“Write Learn mode questions for my Cell Biology deck.”',
-        '“Which topics am I weakest at?” (Lucida Pro)',
+        '“Which topics am I weakest at?”',
         '“Find a public MCAT chemistry deck and add it to my library.”']
     ] },
     { h: 'What your AI can do', body: [
@@ -64,7 +64,7 @@ export const CONNECT = {
         'Change cards and decks, and write Learn mode questions.',
         'Delete cards, but only if you turn that on.',
         'Find decks other people share, add them to your library, and suggest changes to them.'],
-      'You choose what it may do in Settings, then Connect AI. “Let me check AI cards first” holds every new card and change until you keep it. Two tools, what you’re weakest at and your review history, are part of Lucida Pro.'
+      'You choose what it may do in Settings, then Connect AI. “Let me check AI cards first” holds every new card and change until you keep it.'
     ] },
     { h: 'Limits', body: [
       ['list',

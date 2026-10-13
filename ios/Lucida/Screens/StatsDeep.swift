@@ -1,7 +1,7 @@
-// iPhone · Stats, Pro's deep tabs (PhoneStatsMemory, PhoneStatsWeak, PhoneStatsPace, PhoneStatsUpgrade): what you remember
+// iPhone · Stats, the deep tabs (PhoneStatsMemory, PhoneStatsWeak, PhoneStatsPace): what you remember
 // (week by week, by tag, this month against last), what you're weak at (weakest tags and hardest cards, each with a way to
 // study just those; the cards you keep forgetting; how hard your cards are), and your pace (time per card, what's coming,
-// how your gaps grow, exams). On Free, the tabs show a Go Pro card.
+// how your gaps grow, exams). All free.
 import SwiftUI
 
 /// The numbers the deep tabs show, worked out like the board does (its renderVals).
@@ -411,91 +411,5 @@ struct MiniBars: View {
         ForEach(Array(cols.enumerated()), id: \.offset) { _, b in Text(b.label).css(10, mono: true).foregroundStyle(t.muted).lineLimit(1).frame(maxWidth: .infinity) }
       }
     }
-  }
-}
-
-/// On Free, the deep tabs are this: a sky with three sample cards, what Pro adds, and the price (statsUpgrade).
-struct StatsUpgrade: View {
-  @Environment(\.theme) private var t
-  @EnvironmentObject private var nav: Nav
-  @EnvironmentObject private var store: Store
-  /// The App Store's offers, watched: they often arrive after the card is up, and its prices show then.
-  @ObservedObject var shop: Shop
-  var body: some View {
-    // (The canvas shows its sample prices; the app shows the App Store's own, once it has them, and Go Pro until then.)
-    let offers = store.demo ? [] : shop.offers.sorted { $0.id == "monthly" && $1.id != "monthly" }
-    let sky = t.gray ? (top: 0x1B2A48, mid: 0x1F2B45, low: 0x212637) : t.dark ? (top: 0x081733, mid: 0x0D2148, low: 0x0A1530) : (top: 0x86BDF3, mid: 0xC9E2FB, low: 0xEDF5FE)
-    let stops: [Gradient.Stop] = [.init(color: Color(hex: UInt32(sky.top)), location: 0), .init(color: Color(hex: UInt32(sky.mid)), location: 0.58),
-                                  .init(color: Color(hex: UInt32(sky.low)), location: 0.82), .init(color: t.bg, location: 1)]
-    VStack(spacing: 0) {
-      LinearGradient(stops: stops, startPoint: .top, endPoint: .bottom)
-        .frame(height: 170)
-        .overlay { samples.scaleEffect(0.66).offset(y: 170 * 0.04) }
-        .clipped().accessibilityHidden(true)
-      VStack(alignment: .leading, spacing: 18) {
-        VStack(alignment: .leading, spacing: 8) {
-          HStack(spacing: 10) { Text("See how you’re doing").css(22, .semibold, ls: -0.03).lineLimit(1).fixedSize(); ProBadge() }
-          WebText(text: "Your streak and reviews, what you remember, what you’re weak at and why, and what to study next.", size: 15, lh: 1.5, color: t.muted)
-        }
-        VStack(alignment: .leading, spacing: 10) {
-          ForEach(["Your streak, reviews and what you remember", "Your weakest tags and hardest cards", "Time per card and exam readiness"], id: \.self) { x in
-            HStack(spacing: 10) {
-              Icon("check", 13, 2.6).foregroundStyle(.white).frame(width: 22, height: 22)
-                .background(Circle().fill(LinearGradient(colors: [Color(hex: 0x7E94FB), Color(hex: 0x2CB2EA)], startPoint: .topLeading, endPoint: .bottomTrailing)))
-              Text(x).css(15)
-            }
-          }
-        }
-        let line = store.demo ? "Yearly works out to $4.17 a month. Cancel anytime." : shop.yearlyLine
-        if !line.isEmpty { WebText(text: line, size: 14, color: t.muted) }
-        // Each price is its own button, so paying never picks yearly for you (it opens Go Pro with that one picked).
-        HStack(spacing: 10) {
-          if store.demo || offers.count > 1 {
-            ForEach(store.demo ? [("monthly", "$5.99 a month"), ("yearly", "$49.99 a year")] : offers.map { ($0.id, $0.price + " " + $0.per) }, id: \.0) { id, label in
-              Button { shop.pick = id; nav.goPro() } label: {
-                Text(label).css(15, .semibold).foregroundStyle(id == "yearly" ? t.invText : t.text).frame(maxWidth: .infinity).frame(height: 52).background(Capsule().fill(id == "yearly" ? t.inv : t.surf))
-              }.buttonStyle(.press)
-            }
-          } else {
-            Button { nav.goPro() } label: {
-              Text("Go Pro").css(15, .semibold).foregroundStyle(t.invText).frame(maxWidth: .infinity).frame(height: 52).background(Capsule().fill(t.inv))
-            }.buttonStyle(.press)
-          }
-        }
-      }
-      .foregroundStyle(t.text)
-      .padding(.horizontal, 20).padding(.bottom, 20).padding(.top, -6)
-    }
-    .background(t.bg)
-    .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
-    .overlay(RoundedRectangle(cornerRadius: 32, style: .continuous).strokeBorder(t.line, lineWidth: 1))
-  }
-
-  /// Three sample cards, a little tilted: a weak tag, a chart, and the time a card takes.
-  private var samples: some View {
-    HStack(spacing: 14) {
-      VStack(alignment: .leading, spacing: 8) {
-        Text("Reactions").css(13, .semibold)
-        ZStack(alignment: .leading) { Capsule().fill(Color(hex: 0xEDEDED)); GeometryReader { g in Capsule().fill(Color(hex: 0xE5484D)).frame(width: g.size.width * 0.71) } }.frame(height: 7)
-        Text("71%").css(12, .semibold, mono: true).foregroundStyle(Color(hex: 0xD92D20))
-      }
-      .padding(.horizontal, 16).padding(.vertical, 14).frame(width: 150, alignment: .leading)
-      .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.white).boxShadow(Color(hex: 0x14165A, opacity: 0.45), y: 16, blur: 32, spread: -16, radius: 18))
-      .rotationEffect(.degrees(-5))
-      HStack(alignment: .bottom, spacing: 6) {
-        ForEach([0.40, 0.58, 0.50, 0.72, 0.88], id: \.self) { f in RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Color(hex: 0x7282F0)).frame(maxWidth: .infinity).frame(height: 68 * f) }
-      }
-      .padding(14).frame(width: 120, height: 96)
-      .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.white).boxShadow(Color(hex: 0x14165A, opacity: 0.45), y: 16, blur: 32, spread: -16, radius: 18))
-      VStack(alignment: .leading, spacing: 2) {
-        Text("8.2 s").css(26, .semibold, ls: -0.03)
-        Text("a card").css(12).foregroundStyle(Color(hex: 0x666666))
-      }
-      .padding(.horizontal, 16).padding(.vertical, 14).frame(width: 120, alignment: .leading)
-      .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.white).boxShadow(Color(hex: 0x14165A, opacity: 0.45), y: 16, blur: 32, spread: -16, radius: 18))
-      .rotationEffect(.degrees(5))
-    }
-    .foregroundStyle(Color.black)
-    .fixedSize()
   }
 }

@@ -1,4 +1,4 @@
-// Deep stats (Pro), ported from web/insights.js: what you remember, what you're weak at and why, and what's coming. Worked
+// Deep stats, ported from web/insights.js: what you remember, what you're weak at and why, and what's coming. Worked
 // out from a library's cards and review logs, the same way as the web's Stats page. Plain numbers and ids; the Stats page
 // puts words to them. It also reads the canvas's sample (design/mock.mjs SAMPLE_INSIGHTS) for the design screens.
 import Foundation

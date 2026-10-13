@@ -176,7 +176,7 @@ function resolve(path, q) {
   }
   // Sorting into piles doesn't grade, so that session ends on its own page.
   if (path === '/review/done') return { name: P + (db.session().onlyPiles ? 'DonePiles' : 'Done') };
-  if (path === '/stats') return { name: P + (db.hasReviews() || !db.pro() ? 'Stats' : 'StatsEmpty') };   // Free: the upgrade card even before any reviews
+  if (path === '/stats') return { name: P + (db.hasReviews() ? 'Stats' : 'StatsEmpty') };
   if (path === '/connect') return { name: P + 'Connect', props: narrow.matches ? {} : { back: settingsFrom || '/library' } };
   // Settings is a page of its own: the sections down the left and the chosen one on the right (/settings is Account, and /settings/<section> is
   // the others), so Back and links work. A narrow screen shows the list of sections as one page, and each section as a page of its own.

@@ -1110,10 +1110,10 @@ const COVER_LOGIC = `
     communitySw: sw(!!(netRow && netRow.maintained === 'community')), toggleCommunity: () => shareSet({ maintained: netRow && netRow.maintained === 'community' ? 'creator' : 'community' }).catch(() => {}),
     shareErr: cs.shareErr || '', hasShareErr: !!cs.shareErr,
     shareCounts: netRow ? [kfmt(netRow.learners) + ' studying', kfmt(netRow.copies) + (netRow.copies === 1 ? ' copy' : ' copies'), kfmt(netRow.stars) + (netRow.stars === 1 ? ' save' : ' saves')].join(' · ') : db.mock ? '214 studying · 86 copies · 1.3k saves' : '',
-    // The hardest cards (Pro): the ones people miss most, counted without names.
-    ...(() => { const pro = db.pro ? db.pro() : true, st = pro && shr ? (db.mock ? { hardest: [{ text: 'Which enzyme is the rate-limiting step of glycolysis?', missed: 41 }, { text: 'What does the electron transport chain pump across the inner membrane?', missed: 28 }, { text: 'The citric acid cycle produces NADH and ___.', missed: 19 }] } : db.net.stats(shr.id)) : null;
+    // The hardest cards: the ones people miss most, counted without names.
+    ...(() => { const st = shr ? (db.mock ? { hardest: [{ text: 'Which enzyme is the rate-limiting step of glycolysis?', missed: 41 }, { text: 'What does the electron transport chain pump across the inner membrane?', missed: 28 }, { text: 'The citric acid cycle produces NADH and ___.', missed: 19 }] } : db.net.stats(shr.id)) : null;
       const list = ((st && st.hardest) || []).slice(0, 3);
-      return { hardest: list.map(h => ({ text: h.text, missed: h.missed + '% missed' })), hasHardest: list.length > 0, hardPro: !pro && !!shr, hardProHref: db.mock ? 'Pricing.dc.html' : 'https://lucida.cards/pricing' }; })(),
+      return { hardest: list.map(h => ({ text: h.text, missed: h.missed + '% missed' })), hasHardest: list.length > 0 }; })(),
     sugLabel: openN ? plural(openN, 'suggestion') : 'Suggestions', hasOpenSug: openN > 0, suggestionsHref: db.mock ? 'WebSuggestions.dc.html' : '/deck/' + dk.id + '/suggestions',
     historyHref: goTo(shr ? shr.url + '/history' : '', 'WebHistory'), pageHref: goTo(shr ? shr.url : '', 'WebPublicDeck'), shareChip: shr ? shr.label : '',
     fromWho: person(lk ? { name: lk.owner.name, handle: lk.owner.handle, color: 3 } : null), fromTitle: lk ? (lk.mode === 'copy' ? 'Copied from ' : 'From ') + lk.owner.name : '',
@@ -1209,7 +1209,6 @@ const deckShareBody = phone => `<sc-if value="{{isLinked}}" hint-placeholder-val
           <div style="display: flex; align-items: center; gap: 8px; height: 46px; flex-shrink: 0; box-sizing: border-box; padding: 0 6px 0 16px; border-radius: 16px; background: {{t.surf}};"><span style="display: flex; color: {{t.muted}};">${svg(I.link, 16, 1.8)}</span><span style="flex-grow: 1; min-width: 0; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{shareLink}}</span><button type="button" onClick="{{copyShareLink}}" style="height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">{{copyLabel}}</button></div>
           <span style="font-size: 13px; color: {{t.muted}};">{{shareCounts}}</span>
           <sc-if value="{{hasHardest}}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 6px;"><span style="font-size: 13px; font-weight: 600;">Hardest cards</span><sc-for list="{{hardest}}" as="h" hint-placeholder-count="3"><div style="display: flex; align-items: center; gap: 12px; min-height: 40px; box-sizing: border-box; padding: 0 14px; border-radius: 14px; background: {{t.surf}};"><span style="flex-grow: 1; min-width: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{h.text}}</span><span style="flex-shrink: 0; font-size: 12px; font-weight: 600; color: {{t.again}};">{{h.missed}}</span></div></sc-for></div></sc-if>
-          <sc-if value="{{hardPro}}" hint-placeholder-val="{{ false }}"><div style="display: flex; align-items: center; gap: 12px; min-height: 44px;"><span style="flex-grow: 1; font-size: 14px; font-weight: 600;">Hardest cards</span><a href="{{hardProHref}}" style="height: 34px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 13px; font-weight: 600;">Go Pro</a></div></sc-if>
           <div style="display: flex; gap: 6px; flex-wrap: wrap;"><a href="{{pageHref}}" style="height: 34px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600;">${svg(I.globe, 14, 2)}Its page</a><a href="{{suggestionsHref}}" style="height: 34px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600;">${svg(I.message, 14, 2)}{{sugLabel}}</a><a href="{{historyHref}}" style="height: 34px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: {{t.surf}}; font-size: 13px; font-weight: 600;">${svg(I.history, 14, 2)}History</a></div>
           <label style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">About this deck</span><textarea onChange="{{setAbout}}" onBlur="{{saveAbout}}" maxlength="300" rows="2" placeholder="What it covers, who it’s for" style="box-sizing: border-box; padding: 12px 16px; border: 0; outline: 0; border-radius: 16px; background: {{t.surf}}; color: {{t.text}}; font: inherit; font-size: ${phone ? 16 : 15}px; line-height: 1.4; resize: none;">{{aboutText}}</textarea></label>
           <sc-if value="{{labelsShow}}" hint-placeholder-val="{{ true }}"><div style="display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Labels</span><span style="margin-top: -4px; font-size: 12px; color: {{t.muted}};">People can find your deck by these.</span>
@@ -3280,12 +3279,12 @@ const HEAT_LOGIC = weeks => `
   const cell = lv => ({ c: scale[lv], edge: lv ? 'none' : 'inset 0 0 0 1px ' + t.line });
   const heat = Array.from({ length: ${weeks} * 7 }, (_, i) => { const v = (i * 37 + (i % 7) * 11) % 13; return cell(v < 3 ? 0 : v < 6 ? 1 : v < 9 ? 2 : v < 11 ? 3 : 4); });
   const legend = [0, 1, 2, 3, 4].map(cell);`;
-// ---------- Deep stats (Pro) ----------
+// ---------- Deep stats ----------
 // Past Overview, the Stats page's tabs answer the owner's note ("what am I weak at, why, and what should I study
 // next?"): Memory (what you remember, week by week and by tag, and what's improving or slipping), Weak spots (your
 // weakest tags and hardest cards, each with a way to study just those), and Pace (time per card, the reviews coming up,
 // how your gaps grow, and how ready you are for an exam). Calm boxes with one idea each, and a plain line when there
-// isn't enough to show yet. On Free, those tabs show what Pro adds.
+// isn't enough to show yet. All of Stats is free (the owner, 2026-10-12: "Stats are a free feature").
 const statBox = (inner, extra = '', phone = false) => `<div style="background: {{t.surf}}; border-radius: ${phone ? 28 : 18}px; padding: ${phone ? '18px' : '22px 24px'}; box-sizing: border-box; display: flex; flex-direction: column; gap: ${phone ? 12 : 14}px; min-width: 0; ${extra}">${inner}</div>`;
 const boxHead = (title, sub = '', phone = false) => phone
   ? `<div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 600;">${title}</span>${sub ? `<span style="font-size: 12px; color: {{t.muted}};">${sub}</span>` : ''}</div>`
@@ -3319,25 +3318,6 @@ const MOVES = `<sc-if value="{{mem.moves.some}}" hint-placeholder-val="{{ true }
 // An exam's readiness: cards seen, learned, and how much you'd remember on the day.
 const examBlock = phone => `<div style="display: flex; flex-direction: column; gap: 10px; padding-top: 4px;"><div style="display: flex; ${phone ? 'flex-direction: column; gap: 2px;' : 'align-items: baseline; justify-content: space-between; gap: 12px;'}"><span style="font-size: 15px; font-weight: 600;">{{e.name}}</span><span style="font-size: 13px; color: {{t.muted}};">{{e.line}}</span></div><div style="display: grid; grid-template-columns: repeat(${phone ? 1 : 3}, minmax(0, 1fr)); gap: ${phone ? 10 : 20}px;"><sc-for list="{{e.stats}}" as="k" hint-placeholder-count="3"><div style="display: flex; flex-direction: column; gap: 6px;"><span style="display: flex; justify-content: space-between; gap: 8px; font-size: 13px;"><span style="color: {{t.muted}};">{{k.label}}</span><span style="font-family: ${MONO}; font-weight: 600;">{{k.pct}}</span></span><span style="position: relative; height: 8px; border-radius: 4px; background: {{t.surf2}};"><span style="position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: {{k.c}}; width: {{k.w}};"></span></span></div></sc-for></div></div>`;
 const statTabs = (h, full) => `<div role="tablist" aria-label="Stats" style="display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: {{t.surf}};"><sc-for list="{{tabs}}" as="m" hint-placeholder-count="4"><button type="button" role="tab" aria-selected="{{m.current}}" onClick="{{m.pick}}" style="height: ${h}px; ${full ? 'flex: 1 1 0; min-width: 0; padding: 0 4px;' : 'padding: 0 16px;'} border: 0; border-radius: 999px; background: {{m.bg}}; color: {{m.fg}}; box-shadow: {{m.sh}}; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">{{m.label}}</button></sc-for></div>`;
-// On Free: a sky with a few of Pro's numbers floating in it, what the tabs show, and the two prices.
-const statsSky = (h, s) => `<div aria-hidden="true" style="position: relative; height: ${h}px; background: linear-gradient(180deg, {{sky.top}} 0%, {{sky.mid}} 58%, {{sky.low}} 82%, {{t.bg}} 100%); overflow: hidden;">
-    <div style="position: absolute; left: 50%; top: 54%; transform: translate(-50%, -50%) scale(${s}); display: flex; align-items: center; gap: 14px; color: #000000;">
-      <div style="width: 150px; box-sizing: border-box; padding: 14px 16px; border-radius: 18px; background: #FFFFFF; box-shadow: 0 16px 32px -16px rgba(20,22,90,.45); transform: rotate(-5deg); display: flex; flex-direction: column; gap: 8px;"><span style="font-size: 13px; font-weight: 600;">Reactions</span><span style="position: relative; height: 7px; border-radius: 4px; background: #EDEDED;"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 71%; border-radius: 4px; background: #E5484D;"></span></span><span style="font-family: ${MONO}; font-size: 12px; font-weight: 600; color: #D92D20;">71%</span></div>
-      <div style="width: 120px; height: 96px; box-sizing: border-box; padding: 14px; border-radius: 18px; background: #FFFFFF; box-shadow: 0 16px 32px -16px rgba(20,22,90,.45); display: flex; align-items: flex-end; gap: 6px;">${[40, 58, 50, 72, 88].map(v => `<span style="flex: 1 1 0; height: ${v}%; border-radius: 4px; background: #7282F0;"></span>`).join('')}</div>
-      <div style="width: 120px; box-sizing: border-box; padding: 14px 16px; border-radius: 18px; background: #FFFFFF; box-shadow: 0 16px 32px -16px rgba(20,22,90,.45); transform: rotate(5deg); display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 26px; font-weight: 600; letter-spacing: -.03em;">8.2 s</span><span style="font-size: 12px; color: #666666;">a card</span></div>
-    </div>
-  </div>`;
-// Each price is its own button, like Learn mode's (the owner: "the pricing is confusing because it only has the yearly
-// subscription no monthly option").
-const priceBtn = (label, href, inv) => `<a href="${href}" class="sc-press" style="flex: 1 1 0; height: 52px; border-radius: 999px; background: ${inv ? '{{t.inv}}' : '{{t.surf}}'}; color: ${inv ? '{{t.invText}}' : '{{t.text}}'}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600;">${label}</a>`;
-// The sky behind it (Learn mode's on Free has the same one): day, night, or dusk for gray dark mode.
-const STATS_SKY = `(this.props.dark && this.props.dim ? { top: '${SKY_DUSK.top}', mid: '${SKY_DUSK.mid}', low: '${SKY_DUSK.low}' } : this.props.dark ? { top: '#081733', mid: '#0D2148', low: '#0A1530' } : { top: '#86BDF3', mid: '#C9E2FB', low: '#EDF5FE' })`;
-const statsUpgradeBody = (pad, fs = 26) => `<div style="box-sizing: border-box; padding: 0 ${pad}px ${pad}px; margin-top: -6px; display: flex; flex-direction: column; gap: 18px;">
-      <div style="display: flex; flex-direction: column; gap: 8px;"><span style="display: flex; align-items: center; gap: 10px; font-size: ${fs}px; font-weight: 600; letter-spacing: -.03em; white-space: nowrap;">See how you’re doing${PRO_BADGE}</span><span style="font-size: 15px; line-height: 1.5; color: {{t.muted}};">Your streak and reviews, what you remember, what you’re weak at and why, and what to study next.</span></div>
-      <div style="display: flex; flex-direction: column; gap: 10px; font-size: 15px;">${['Your streak, reviews and what you remember', 'Your weakest tags and hardest cards', 'Time per card and exam readiness'].map(x => `<span style="display: flex; align-items: center; gap: 10px;"><span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 11px; background: linear-gradient(135deg, #7E94FB, #2CB2EA); color: #FFFFFF; display: flex; align-items: center; justify-content: center;">${svg(I.check, 13, 2.6)}</span>${x}</span>`).join('')}</div>
-      <div style="font-size: 14px; color: {{t.muted}};">Yearly works out to $4.17 a month. Cancel anytime.</div>
-      <div style="display: flex; gap: 10px;">${priceBtn('$5.99 a month', '{{monthlyHref}}', false)}${priceBtn('$49.99 a year', '{{yearlyHref}}', true)}</div>
-    </div>`;
 
 // The deep tabs, on the web.
 const WEB_DEEP = `<sc-if value="{{isMemory}}" hint-placeholder-val="{{ false }}">
@@ -3366,8 +3346,7 @@ const WEB_DEEP = `<sc-if value="{{isMemory}}" hint-placeholder-val="{{ false }}"
       ${statBox(boxHead('How your gaps are growing', '{{pace.gapSub}}') + boxEmpty('pace.gaps') + `<sc-if value="{{pace.gaps.some}}" hint-placeholder-val="{{ true }}">${vBars('pace.gaps.bars', 12, 8, 130)}</sc-if>`)}
     </div>
     ${statBox(boxHead('Exams') + boxEmpty('pace.exams') + `<sc-for list="{{pace.exams.rows}}" as="e" hint-placeholder-count="1">${examBlock(false)}</sc-for>`, 'flex-shrink: 0;')}
-  </sc-if>
-  <sc-if value="{{upgrade}}" hint-placeholder-val="{{ false }}"><div style="flex-grow: 1; display: flex; align-items: center; justify-content: center;"><div role="region" aria-label="Stats" style="width: 560px; border-radius: 36px; overflow: hidden; background: {{t.bg}}; box-shadow: 0 0 0 1px {{t.line}}, 0 24px 64px -28px rgba(0,0,0,.3);">${statsSky(220, 1)}${statsUpgradeBody(32)}</div></div></sc-if>`;
+  </sc-if>`;
 
 // The deep tabs, on the iPhone: the same boxes, one under another.
 const PHONE_DEEP = `<sc-if value="{{isMemory}}" hint-placeholder-val="{{ false }}">
@@ -3388,12 +3367,11 @@ const PHONE_DEEP = `<sc-if value="{{isMemory}}" hint-placeholder-val="{{ false }
     ${statBox(boxHead('Reviews coming up', '{{pace.aheadSub}}', true) + boxEmpty('pace.ahead') + `<sc-if value="{{pace.ahead.some}}" hint-placeholder-val="{{ true }}">${vBars('pace.ahead.bars', 8, 6, 90)}</sc-if>`, '', true)}
     ${statBox(boxHead('How your gaps are growing', '{{pace.gapSub}}', true) + boxEmpty('pace.gaps') + `<sc-if value="{{pace.gaps.some}}" hint-placeholder-val="{{ true }}">${vBars('pace.gaps.bars', 8, 6, 90)}</sc-if>`, '', true)}
     ${statBox(boxHead('Exams', '', true) + boxEmpty('pace.exams') + `<sc-for list="{{pace.exams.rows}}" as="e" hint-placeholder-count="1">${examBlock(true)}</sc-for>`, '', true)}
-  </sc-if>
-  <sc-if value="{{upgrade}}" hint-placeholder-val="{{ false }}"><div role="region" aria-label="Stats" style="border-radius: 32px; overflow: hidden; background: {{t.bg}}; box-shadow: 0 0 0 1px {{t.line}};">${statsSky(170, .66)}${statsUpgradeBody(20, 22)}</div></sc-if>`;
+  </sc-if>`;
 
 // Their values: the tabs, and each deep tab's numbers in words (db.insights, or the canvas's sample).
 const DEEP_JS = phone => `
-  const tab = this.state.tab || this.props.tab || 'Overview', pro = db.pro(), deep = tab !== 'Overview';
+  const tab = this.state.tab || this.props.tab || 'Overview', deep = tab !== 'Overview';
   const board = n => '${phone ? 'Phone' : 'Web'}' + n + '.dc.html';
   const seg = on => ({ current: on ? 'true' : 'false', bg: on ? t.bg : 'transparent', fg: on ? t.text : t.muted, sh: on ? '0 1px 3px rgba(0,0,0,.14)' : 'none' });
   const tabs = ['Overview', 'Memory', 'Weak spots', 'Pace'].map(l => ({ label: l, ...seg(l === tab), pick: () => this.setState({ tab: l }) }));
@@ -3405,7 +3383,7 @@ const DEEP_JS = phone => `
   const bar = v => (v == null ? 'transparent' : v >= goal ? '#30A46C' : v >= goal - 5 ? '#F5A524' : '#E5484D'), ink = v => (v == null ? t.muted : v >= goal ? t.good : v >= goal - 5 ? t.hard : t.again);
   const fcs = this.props.dark ? ['#2A3374', '#3A4BB0', '#5569E4', '#8C9AFC'] : ['#C9CFFC', '#9DA9F8', '#7282F0', '#4353E0'];
   const shade = (v, top) => fcs[!top ? 0 : v >= top ? 3 : v >= top * .66 ? 2 : v >= top * .33 ? 1 : 0];
-  const X = deep && pro ? db.insights(rg) : null;
+  const X = deep ? db.insights(rg) : null;
   const deepVals = {};
   if (X) {
     const m = X.memory, w = X.weak, p = X.pace, span = { Week: 'This week', Month: 'This month', Year: 'This year' }[rg];
@@ -3459,9 +3437,7 @@ const DEEP_JS = phone => `
         rows: p.exams.map(e => ({ name: e.name, line: e.line, stats: [['Seen', e.total ? e.seen / e.total : 0], ['Learned', e.total ? e.learned / e.total : 0], ['Likely to remember', e.likely]]
           .map(([label, v]) => ({ label, pct: Math.round(v * 100) + '%', w: Math.round(v * 100) + '%', c: label === 'Likely to remember' ? bar(Math.round(v * 100)) : '#7282F0' })) })) } } });
   }
-  const upgrade = !pro;
-  Object.assign(deepVals, { tabs, tab, isOverview: !deep && pro, isMemory: deep && pro && tab === 'Memory', isWeak: deep && pro && tab === 'Weak spots', isPace: deep && pro && tab === 'Pace', upgrade,
-    sky: ${STATS_SKY}, monthlyHref: db.mock ? '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' : '/pro?plan=monthly', yearlyHref: db.mock ? '${phone ? 'PricingPhone' : 'Pricing'}.dc.html' : '/pro?plan=yearly' });`;
+  Object.assign(deepVals, { tabs, tab, isOverview: !deep, isMemory: tab === 'Memory', isWeak: tab === 'Weak spots', isPace: tab === 'Pace' });`;
 const webStats = webRoot(`${sidebar('Stats')}
 <main style="flex-grow: 1; box-sizing: border-box; padding: 36px 48px; display: flex; flex-direction: column; gap: 24px; min-width: 0;">
   <div style="display: flex; align-items: center; gap: 12px;">
@@ -4271,7 +4247,7 @@ const sNamed = (title, items, hole = '') => `<div style="display: flex; flex-dir
 // Settings › Look › Theme: the theme you use, and on Free, that themes are part of Pro.
 const THEME_ROW = board => sRow(`<span style="display: inline-flex; align-items: center; gap: 8px;"><span>Theme</span><sc-if value="{{themeLocked}}" hint-placeholder-val="{{ false }}">${PRO_BADGE}</sc-if></span>`, sVal('{{themeName}}'), { href: board + '.dc.html' });
 const PRO_PILL = `<a href="{{proHref}}" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; background: {{t.inv}}; color: {{t.invText}}; font-size: 14px; font-weight: 600; white-space: nowrap;">Go Pro</a>`;
-const planGroups = group => `<sc-if value="{{planFree}}" hint-placeholder-val="{{ false }}">${group([sRow('Free', PRO_PILL, { sub: 'Pro adds Stats, exam tools, and more' })])}</sc-if>
+const planGroups = group => `<sc-if value="{{planFree}}" hint-placeholder-val="{{ false }}">${group([sRow('Free', PRO_PILL, { sub: 'Pro adds exam tools and more' })])}</sc-if>
       <sc-if value="{{planWebOnly}}" hint-placeholder-val="{{ false }}">${group([sRow(`<span style="display: inline-flex; align-items: center; gap: 8px;">Lucida ${PRO_BADGE}</span>`, '', { sub: '{{planSub}}' })])}</sc-if>
       <sc-if value="{{planPro}}" hint-placeholder-val="{{ true }}">${group([
         sRow(`<span style="display: inline-flex; align-items: center; gap: 8px;">Lucida ${PRO_BADGE}</span>`, '', { sub: '{{planSub}}' }),
@@ -5805,7 +5781,7 @@ const REASONS = [
   ['connect', 'You stay in charge', 'Choose what your AI may do, and check its cards before they join a deck.'],
   ['upload', 'Bring your cards', 'Import from Anki, Quizlet, or a CSV file.'],
   ['decks', 'Decks with their own look', 'Every deck gets its own gradient, or a photo of your choice.'],
-  ['today', 'A few minutes a day', 'Your Library shows what’s due and how long it takes, and Stats (Pro) keeps your streak.'],
+  ['today', 'A few minutes a day', 'Your Library shows what’s due and how long it takes, and Stats keeps your streak.'],
   ['list', 'Your cards stay yours', 'Export every deck, card, and review whenever you want.']
 ];
 const landing = (L, w, hgt) => { const phone = L === LAND.phone; return `<div class="sp-c" style="position: relative; isolation: isolate; width: ${w}px; height: ${hgt}px; box-sizing: border-box; font-family: ${FONT}; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; ${HEAD_VARS}">
@@ -6246,10 +6222,10 @@ renderVals() {
 }`;
 
 // ---------- Pricing (lucida.cards/pricing) ----------
-// Free keeps every card, Learn mode, and sharing. Pro ($5.99 a month or $49.99 a year, since 2026-09-25; it was $39) is
+// Free keeps every card, Learn mode, sharing, and Stats. Pro ($5.99 a month or $49.99 a year, since 2026-09-25; it was $39) is
 // the power tools for a student with thousands of cards and an exam coming (the owner picked this 2026-09-29, and made
-// Learn mode free): exam tools, stats on what you're weak at, unlimited pictures and sounds, themes, stats on decks you
-// share, more explanations. Drawn for computers and phones like the landing page, with the same sky.
+// Learn mode free, then Stats on 2026-10-12): exam tools, unlimited pictures and sounds, themes, more explanations. Drawn
+// for computers and phones like the landing page, with the same sky.
 const planList = (items, check) => `<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 15px; line-height: 1.35;">${items.map(x => `<li style="display: flex; align-items: flex-start; gap: 10px;"><span style="margin-top: 1px; flex-shrink: 0; display: flex; ${check}">${svg(I.check, 17, 2.2)}</span>${x}</li>`).join('')}</ul>`;
 const planPrice = (price, per, note) => `<div style="display: flex; flex-direction: column; gap: 6px;"><div style="display: flex; align-items: baseline; gap: 8px;"><span style="font-size: 56px; font-weight: 600; letter-spacing: -.04em; line-height: 1;">${price}</span><span style="font-size: 16px; opacity: .75;">${per}</span></div><span style="min-height: 20px; font-size: 14px; opacity: .75;">${note}</span></div>`;
 // Pro's price and Go Pro for one way of paying. Both are drawn, and the Monthly/Yearly switch shows one (on the site, a
@@ -8763,13 +8739,14 @@ const PHOTO_PROP = { editor: 'enum', default: 'Color', options: ['Color', 'Googl
 const BOOL = { editor: 'boolean', default: false };
 // (moreOpen: the ⋯ menu on someone else's page; block: its Block question; blocked: a person you blocked, with Unblock.)
 const PROFILE_PROPS = { ...DARK, grain: MESH('Iris').grain, tab: { editor: 'enum', default: 'Decks', options: ['Decks', 'Saved', 'Suggestions'] }, pick: { editor: 'enum', default: 'None', options: ['None', 'School'] }, editOpen: BOOL, loading: BOOL, signedOut: BOOL, empty: BOOL, report: BOOL, moreOpen: BOOL, block: BOOL, blocked: BOOL };
-// Pro's states on the canvas: Free (what Pro adds), the Stats page's tabs, All cards' filters, a paused card, and Tune to
-// you's states in Settings. Deck settings can open with the goal stepped from 90% to 95%.
+// Pro's states on the canvas: Free (what Pro adds), All cards' filters, a paused card, and Tune to you's states in Settings.
+// Deck settings can open with the goal stepped from 90% to 95%.
 const FREE_PROP = { editor: 'boolean', default: false };
 const PRO_DECK_PROPS = { free: FREE_PROP };
 // The deck page's Guide and Sources: with both, with the Guide's extra pages, a long Guide, a source opened, nothing yet, or a deck you only study.
 const GUIDE_STATE = { section: { editor: 'enum', default: 'Cards', options: ['Cards', 'Notes', 'Pages', 'Diagrams', 'Sources'] }, guide: { editor: 'enum', default: 'Guide and sources', options: GUIDE_STATES }, sourceOpen: { editor: 'string', default: '' }, sourceAt: { editor: 'string', default: '' } };
-const STATS_PROPS = { tab: { editor: 'enum', default: 'Overview', options: ['Overview', 'Memory', 'Weak spots', 'Pace'] }, free: FREE_PROP };
+// The Stats page on any of its tabs (all of them free).
+const STATS_PROPS = { tab: { editor: 'enum', default: 'Overview', options: ['Overview', 'Memory', 'Weak spots', 'Pace'] } };
 const TUNE_PROP = { editor: 'enum', default: 'On', options: ['On', 'Off', 'Not enough reviews', 'Tuning'] };
 const EDITOR_CSS = RICH_CSS + OCC_EDIT_CSS;
 // Settings' plan on the canvas (Tweaks): Free, Pro (billed by Stripe), Pro ending, or Pro billed by Apple (the plan line says so, and
@@ -8915,7 +8892,7 @@ const files = {
   'IconOptions': ['Web · Icon options', iconOptions, { props: DARK, logic: iconOptionsLogic, w: W, h: H }],
   'WebDecksEmpty': ['Web · Library · no decks yet', webDecksEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
   'WebDeckEmpty': ['Web · Deck page · a new deck, nothing in it yet', attrOf('WebDeck', W, H, 'empty="{{yes}}" menu="{{menu}}" dark="{{dark}}" dim="{{dim}}" grain="{{grain}}"'), { props: { ...DARK, grain: MESH('Iris').grain, menu: EMPTY_MENU_PROP }, logic: `renderVals() { return { yes: true, menu: this.props.menu || '', dark: !!this.props.dark, dim: !!this.props.dim, grain: String(this.props.grain ?? 0.7) }; }`, w: W, h: H }],
-  'WebStatsEmpty': ['Web · Stats · no reviews yet (Pro)', webStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
+  'WebStatsEmpty': ['Web · Stats · no reviews yet', webStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: W, h: H }],
   'WebDeck': ['Web · Deck page', webDeck, { props: { ...DARK, grain: MESH('Iris').grain, menu: DECK_MENU_PROP, calendar: { editor: 'enum', default: '', options: ['', 'Exam date'] }, settingsOpen: { editor: 'boolean', default: false }, settingsTab: { editor: 'enum', default: 'General', options: ['General', 'Studying', 'Sharing'] }, ...SHARE_PROPS, ...PRO_DECK_PROPS, ...GUIDE_STATE }, logic: deckLogic, css: NOTE_TREE_CSS + NUM_CSS + PARALLAX_CSS + DRAG_CSS + GUIDE_CSS + DIAGRAM_CSS, w: W, h: H }],
   'WebEditor': ['Web · Card editor', webEditor, { props: { ...DARK, cardType: { editor: 'enum', default: 'Basic', options: ['Basic', 'Blank', 'Image', 'Audio'] }, recording: { editor: 'boolean', default: false }, slashDemo: { editor: 'boolean', default: false } }, logic: EDITOR_LOGIC, css: EDITOR_CSS, w: W, h: H }],
   'WebEditorSlash': ['Web · Card editor · / menu', attrOf('WebEditor', W, H, 'slash-demo="{{yes}}"'), { logic: darkLogic, css: EDITOR_CSS, w: W, h: H }],
@@ -8943,10 +8920,9 @@ const files = {
   'WebDone': ['Web · Session done', webDone, { props: DARK, logic: doneLogic(300, 22), w: W, h: H }],
   'WebDonePiles': ['Web · Session done · piles', webDonePiles, { props: DARK, logic: donePilesLogic(false), w: W, h: H }],
   'WebStats': ['Web · Stats', webStats, { props: { ...DARK, ...STATS_PROPS }, logic: statsLogic, w: W, h: H }],
-  'WebStatsMemory': ['Web · Stats · Memory (Pro)', attrOf('WebStats', W, H, 'tab="Memory"'), { logic: darkLogic, w: W, h: H }],
-  'WebStatsWeak': ['Web · Stats · Weak spots (Pro)', attrOf('WebStats', W, H, 'tab="Weak spots"'), { logic: darkLogic, w: W, h: H }],
-  'WebStatsPace': ['Web · Stats · Pace (Pro)', attrOf('WebStats', W, H, 'tab="Pace"'), { logic: darkLogic, w: W, h: H }],
-  'WebStatsUpgrade': ['Web · Stats · on Free (all of Stats is Pro)', attrOf('WebStats', W, H, 'free="{{yes}}"'), { logic: darkLogic, w: W, h: H }],
+  'WebStatsMemory': ['Web · Stats · Memory', attrOf('WebStats', W, H, 'tab="Memory"'), { logic: darkLogic, w: W, h: H }],
+  'WebStatsWeak': ['Web · Stats · Weak spots', attrOf('WebStats', W, H, 'tab="Weak spots"'), { logic: darkLogic, w: W, h: H }],
+  'WebStatsPace': ['Web · Stats · Pace', attrOf('WebStats', W, H, 'tab="Pace"'), { logic: darkLogic, w: W, h: H }],
   'WebConnectConsent': ['Web · An AI app asks to connect (Allow or Cancel)', webConnectConsent, { props: CONSENT_PROPS, logic: consentLogic, w: W, h: H }],
   'WebConnect': ['Web · Connect AI', webConnect, { props: { ...DARK, ...MESH('Apricot'), noApps: BOOL }, logic: connectLogic, w: W, h: H }],
   'WebReviewDark': ['Web · Review (dark)', darkOf('WebReview', W, H), { logic: darkLogic, css: REVIEW_CSS, w: W, h: H }],
@@ -9011,7 +8987,7 @@ const files = {
   'PhoneLibraryFolderMenu': ['iPhone · Library · a folder · its ⋯ menu open (New deck, Rename, Remove folder)', attrOf('PhoneLibrary', PW, PH, 'folder="f1" folder-menu="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
   'PhoneLibraryNewFolder': ['iPhone · Library · New folder popup', attrOf('PhoneLibrary', PW, PH, 'naming="{{yes}}"'), { logic: darkLogic, css: DRAG_CSS, w: PW, h: PH }],
   'PhoneDeckMoveTray': ['iPhone · Deck · Move to tray (while a card is dragged)', attrOf('PhoneDeck', PW, PH, 'tray-open="{{yes}}"'), { logic: darkLogic, css: NUM_CSS + DRAG_CSS, w: PW, h: PH }],
-  'PhoneStatsEmpty': ['iPhone · Stats · no reviews yet (Pro)', phoneStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: PW, h: PH }],
+  'PhoneStatsEmpty': ['iPhone · Stats · no reviews yet', phoneStatsEmpty, { props: { ...DARK, grain: MESH('Iris').grain }, logic: emptyLogic(), w: PW, h: PH }],
   'PhoneNewDeck': ['iPhone · New deck', phoneNewDeck, { props: { ...DARK, grain: MESH('Iris').grain }, logic: NEW_DECK_LOGIC, css: NUM_CSS + COVER_FADE_CSS, w: PW, h: PH }],
   'PhoneImport': ['iPhone · Import cards (paste or choose a file, the deck, Import; its Tweak shows each state)', phoneImport, { props: { ...DARK, grain: MESH('Iris').grain, state: { editor: 'enum', default: 'Deck chosen', options: IMPORT_STATES } }, logic: IMPORT_LOGIC(true), w: PW, h: PH }],
   'PhoneInbox': ['iPhone · Check AI cards', phoneInbox, { props: DARK, logic: phoneInboxLogic, css: REVIEW_CSS, w: PW, h: PH }],
@@ -9081,10 +9057,9 @@ const files = {
   'SiteConnect': ['Connect Lucida to your AI · lucida.cards/connect', legalPage(CONNECT, LEGAL_H.Connect, { top: guideFigs('figsTop'), after: { Claude: guideFigs('figsClaude') } }), { props: DARK, logic: guideLogic(), css: SITE_CSS, w: W, h: LEGAL_H.Connect }],
   'LandingPhone': ['Landing page · lucida.cards on a phone', landing(LAND.phone, PW, LANDING_PHONE_H), { props: { ...DARK, grain: MESH('Iris').grain }, logic: landingLogic(true), css: WALL_CSS + DEMO_CSS + SKY_CSS + HEAD_CSS + NO_RISE, w: PW, h: LANDING_PHONE_H }],
   'PhoneStats': ['iPhone · Stats', phoneStats, { props: { ...DARK, ...STATS_PROPS }, logic: phoneStatsLogic, w: PW, h: PH }],
-  'PhoneStatsMemory': ['iPhone · Stats · Memory (Pro)', attrOf('PhoneStats', PW, PH, 'tab="Memory"'), { logic: darkLogic, w: PW, h: PH }],
-  'PhoneStatsWeak': ['iPhone · Stats · Weak spots (Pro)', attrOf('PhoneStats', PW, PH, 'tab="Weak spots"'), { logic: darkLogic, w: PW, h: PH }],
-  'PhoneStatsPace': ['iPhone · Stats · Pace (Pro)', attrOf('PhoneStats', PW, PH, 'tab="Pace"'), { logic: darkLogic, w: PW, h: PH }],
-  'PhoneStatsUpgrade': ['iPhone · Stats · on Free (all of Stats is Pro)', attrOf('PhoneStats', PW, PH, 'free="{{yes}}"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneStatsMemory': ['iPhone · Stats · Memory', attrOf('PhoneStats', PW, PH, 'tab="Memory"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneStatsWeak': ['iPhone · Stats · Weak spots', attrOf('PhoneStats', PW, PH, 'tab="Weak spots"'), { logic: darkLogic, w: PW, h: PH }],
+  'PhoneStatsPace': ['iPhone · Stats · Pace', attrOf('PhoneStats', PW, PH, 'tab="Pace"'), { logic: darkLogic, w: PW, h: PH }],
   'PhoneStatsWeakDark': ['iPhone · Stats · Weak spots (dark)', `<div style="width: ${PW}px; height: ${PH}px; overflow: hidden; background: #000000;"><dc-import name="PhoneStats" tab="Weak spots" dark="{{yes}}" hint-size="${PW}px,${PH}px"></dc-import></div>`, { logic: darkLogic, w: PW, h: PH }],
   'PhoneStatsPaceGray': ['iPhone · Stats · Pace (dark, gray)', `<div style="width: ${PW}px; height: ${PH}px; overflow: hidden; background: #1E1E20;"><dc-import name="PhoneStats" tab="Pace" dark="{{yes}}" dim="{{yes}}" hint-size="${PW}px,${PH}px"></dc-import></div>`, { logic: darkLogic, w: PW, h: PH }],
   'PhoneConnectConsent': ['iPhone · An AI app asks to connect (Allow or Cancel)', phoneConnectConsent, { props: CONSENT_PROPS, logic: consentLogic, w: PW, h: PH }],

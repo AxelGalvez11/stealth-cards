@@ -131,7 +131,7 @@ final class Store: ObservableObject {
   /// Lucida's own Learn mode questions (LearnEngine.swift wantQuiz): a batch is being written; the AI is off or today's batches are used
   /// (no more asking until the app opens again); and when to try again after something went wrong.
   var quizBusy = false, quizOff = false, quizRetryAt = 0.0
-  /// Things the Pro study tools work out from the library (deep stats, review histories, a goal's cost), until it changes.
+  /// Things the study tools work out from the library (deep stats, review histories, a goal's cost), until it changes.
   var studyMemo = StudyMemo()
   /// Tune to you in progress (0 to 1), and what went wrong the last time.
   @Published var tuning: Double? = nil
@@ -234,7 +234,7 @@ final class Store: ObservableObject {
     return props.plan == "Free" || props.free ? Plan() : Plan(pro: true, every: "year", until: "2027-09-24T12:00:00Z", ending: props.plan == "Pro, ending",
                                                                by: ["Pro, billed by Apple": "apple", "Pro, billed on the web": "stripe"][props.plan] ?? "")
   }
-  /// Pro's tools (an exam date, tuning, deep stats): on for Pro. A copy of the server on your own computer has nobody
+  /// Pro's tools (an exam date, tuning): on for Pro. A copy of the server on your own computer has nobody
   /// signed in, and everything is on there unless it runs as the Free app (like db.js isPro()).
   var isPro: Bool { demo ? !props.free && props.plan != "Free" : lib.pro && (lib.me == nil || plan.pro) && !lib.settings.viewFree }
 

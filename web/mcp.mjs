@@ -25,8 +25,6 @@ const deckBy = x => state().decks.find(d => d.id === x) || state().decks.find(d 
 // Due now, the way the app sees it: paused cards never are, and an exam date brings cards up early (sched.js).
 const dueNow = c => { const d = deckBy(c.deckId); return scheduled(d) ? isDue(c, d, Date.now()) : false; };
 const isNew = c => c.srs.state === 'new' && !c.paused && !c.pending;
-// Pro's deeper tools answer this on Free.
-const PRO_TOOL = 'This is part of Lucida Pro. The learner can go Pro at lucida.cards/pricing to get it.';
 const day = t => { const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 const examOut = d => { const x = d.exam && examStatus(state().cards.filter(c => c.deckId === d.id), d, Date.now()); return x ? { date: d.exam, days_left: x.days, cards_to_review_first: x.toReview, not_studied_yet: x.total - x.seen } : undefined; };
 const forgotten = c => ((c.srs.lapses || 0) ? c.srs.lapses : undefined);
@@ -291,7 +289,7 @@ const TOOLS = [
       return text({ total: cs.length, cards: cs.slice(0, Math.min(500, a.limit || 50)).map(cardOut) }); } },
   { name: 'get_due_cards', perm: 'read', description: 'Get the cards that are due for review now, for quizzing the learner (20 by default). Paused cards are never due, and before a deck’s exam date the cards the learner would forget by then count as due early.', inputSchema: { type: 'object', properties: { deck: { type: 'string' }, limit: { type: 'number' } } },
     run: a => { const d = a.deck ? deckBy(a.deck) : null; const cs = state().cards.filter(c => (!d || c.deckId === d.id) && dueNow(c)); return text({ due: cs.length, cards: cs.slice(0, a.limit || 20).map(cardOut) }); } },
-  { name: 'get_stats', perm: 'read', description: 'Get how studying is going: reviews in the last 30 days, how much is remembered, the streak, and totals. With Lucida Pro it also says how often cards are forgotten, the time per card, cards forgotten too often, exam readiness, and whether scheduling is tuned to the learner.', inputSchema: { type: 'object', properties: {} },
+  { name: 'get_stats', perm: 'read', description: 'Get how studying is going: reviews in the last 30 days, how much is remembered, the streak and totals, how often cards are forgotten, the time per card, cards forgotten too often, exam readiness, and whether scheduling is tuned to the learner.', inputSchema: { type: 'object', properties: {} },
     run: () => { const S = state(), since = Date.now() - 30 * 86400000, logs = S.logs.filter(l => l.at >= since && l.rating && l.was === 'review' && !l.kind);
       const days = new Set(S.logs.map(l => dayAt(l.at)));
       let streak = 0, t = dayAt(Date.now());
@@ -300,7 +298,6 @@ const TOOLS = [
       const out = { decks: S.decks.length, cards: S.cards.length, reviews_last_30_days: S.logs.filter(l => l.at >= since && !l.kind).length,
         remembered_last_30_days: logs.length ? Math.round(logs.filter(l => l.rating > 1).length / logs.length * 100) + '%' : 'no reviews yet', streak_days: streak,
         paused_cards: S.cards.filter(c => c.paused).length };
-      if (!isPro()) return text(out);
       const x = insights(S, { days: 30 }), tm = x.pace.time, tune = S.settings.tune;
       return text({ ...out, forgot_last_30_days: x.weak.forgot.of ? x.weak.forgot.pct + '% of reviews of learned cards' : 'no reviews yet',
         seconds_per_card: tm.perCard == null ? undefined : Math.round(tm.perCard * 10) / 10, right_answers_per_minute: tm.rightPerMin == null ? undefined : Math.round(tm.rightPerMin * 10) / 10,
@@ -308,7 +305,7 @@ const TOOLS = [
         cards_forgotten_too_often: x.weak.leeches.length, typical_gap_days: x.pace.gapNow == null ? undefined : Math.round(x.pace.gapNow),
         reviews_next_7_days: x.pace.ahead[0].n, exams: x.pace.exams.length ? x.pace.exams.map(e => ({ deck: e.name, date: e.date, days_left: e.days, cards_to_review_first: e.toReview, seen: e.seen + ' of ' + e.total, likely_to_remember: Math.round(e.likely * 100) + '%' })) : undefined,
         scheduling: tunedW() ? 'tuned to the learner’s ' + (tune.reviews || tune.n) + ' reviews' : 'standard FSRS parameters' }); } },
-  { name: 'get_weak_spots', perm: 'read', pro: true, description: 'Find what the learner is weakest at: the tags remembered least, the hardest cards (forgotten most, most difficult), and cards forgotten so often they may need rewording (some may be paused). Every card comes with its id. Part of Lucida Pro.',
+  { name: 'get_weak_spots', perm: 'read', description: 'Find what the learner is weakest at: the tags remembered least, the hardest cards (forgotten most, most difficult), and cards forgotten so often they may need rewording (some may be paused). Every card comes with its id.',
     inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id. Leave out for every deck.' }, days: { type: 'number', description: 'How far back to look at reviews for the tags, 7 to 365. Default 90.' }, limit: { type: 'number', description: 'Cards in each list, up to 50. Default 10.' } } },
     run: a => {
       const d = a.deck ? deckBy(a.deck) : null; if (a.deck && !d) return fail('No deck called ' + a.deck);
@@ -318,7 +315,7 @@ const TOOLS = [
         weakest_tags: x.weak.weakTags.map(g => ({ tag: g.tag, remembered: g.pct + '%', reviews: g.n, cards: g.cards })),
         hardest_cards: x.weak.hardest.slice(0, n).map(h => ({ ...cardOut(cardBy(h.id)), forgotten: h.lapses, difficulty: h.d, remember_now: h.recall == null ? undefined : Math.round(h.recall * 100) + '%' })),
         leeches: x.weak.leeches.slice(0, n).map(h => ({ ...cardOut(cardBy(h.id)), forgotten: h.lapses })), leech_count: x.weak.leeches.length }); } },
-  { name: 'get_review_history', perm: 'read', pro: true, description: 'Get the learner’s recent reviews summed up day by day and deck by deck: reviews, percent right, minutes, new cards learned, and Learn mode answers. Part of Lucida Pro.',
+  { name: 'get_review_history', perm: 'read', description: 'Get the learner’s recent reviews summed up day by day and deck by deck: reviews, percent right, minutes, new cards learned, and Learn mode answers.',
     inputSchema: { type: 'object', properties: { deck: { type: 'string', description: 'Deck name or id. Leave out for every deck.' }, days: { type: 'number', description: 'How many days back, 1 to 365. Default 30.' } } },
     run: a => {
       const d = a.deck ? deckBy(a.deck) : null; if (a.deck && !d) return fail('No deck called ' + a.deck);
@@ -692,7 +689,6 @@ async function handle(m, sid, ctx) {
       case 'tools/call': {
         const p = m.params || {}, t = allowed().find(x => x.name === p.name);
         if (!t) return ok(fail(TOOLS.some(x => x.name === p.name) ? 'The learner turned this off on the Connect AI page.' : 'Unknown tool ' + p.name));
-        if (t.pro && !isPro()) return ok(fail(PRO_TOOL));
         return ok(await t.run(p.arguments || {}, sessions.get(sid) || lastClient.get(ctx.uid || '') || 'AI', ctx));
       }
       default: return err(-32601, 'Method not found: ' + m.method);

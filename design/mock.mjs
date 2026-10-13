@@ -83,7 +83,7 @@ export const LIVE_SAMPLE = {
   board: [['Maya', 3420, 1], ['Jordan', 3210, 2], ['Kai', 2980, -1], ['Priya', 2860, 0], ['Leo', 2640, 3], ['Sofia', 2210, -1], ['Ethan', 1980, 0], ['Ana', 1640, 0], ['Zoe', 1420, 1], ['Omar', 1210, -1], ['Lina', 980, 0], ['Noah', 620, 0]],
   final: [['Maya', 9610], ['Jordan', 8940], ['Kai', 8120], ['Priya', 7860], ['Leo', 7420], ['Sofia', 6980], ['Ethan', 6540], ['Ana', 6110]]
 };
-// Deep stats (Pro), as db.insights(range) gives them (web/insights.js): the sample decks' memory by week and by tag,
+// Deep stats, as db.insights(range) gives them (web/insights.js): the sample decks' memory by week and by tag,
 // weak spots, and pace, around the sample's Tuesday, September 22, 2026. Kept out of SAMPLE, which the iPhone app copies.
 const WEEK = 7 * 86400000, MONDAY = new Date(2026, 8, 21).getTime();
 const weeks = vals => vals.map((v, i) => ({ start: MONDAY - (vals.length - 1 - i) * WEEK, ...v }));

@@ -1,4 +1,4 @@
-// What the Pro study tools add to the store (web/db.js): a memory goal's cost in reviews a day, an exam date, pausing cards,
+// What the Pro study tools and Stats add to the store (web/db.js): a memory goal's cost in reviews a day, an exam date, pausing cards,
 // Tune to you, and deep stats. Each answers the same question the canvas board's sample answers, so the design screens and
 // the app run the same screens.
 import SwiftUI

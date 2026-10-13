@@ -34,10 +34,10 @@
       "h2": "Plan the schedule around your exams",
       "bullets": [
         "**New cards a day** starts at 20. Raise it slowly: each new card adds reviews later, and Anki’s manual warns that adding new cards while you’re behind can make a backlog worse.",
-        "**Tag your cards** by system or topic (cardio, renal, biostatistics). Tags give you Learn mode sets, and on Pro the Stats page ranks tags by how much you remember (a tag needs about 8 reviews first) and lists your hardest cards and the cards you keep forgetting.",
+        "**Tag your cards** by system or topic (cardio, renal, biostatistics). Tags give you Learn mode sets, and the Stats page ranks tags by how much you remember (a tag needs about 8 reviews first) and lists your hardest cards and the cards you keep forgetting.",
         "**Put an exam date on each deck (Pro).** From 30 days out, cards you’d probably forget by exam day come up early, and Stats shows how much of the deck you’d likely remember on the day.",
-        "**Let your AI quiz you on weak spots (Pro).** It can read your weak tags and hardest cards and write new questions for them.",
-        "**On Free,** your Library shows what’s due and how long it takes, which is enough to pick a pace. The Stats page is part of Pro."
+        "**Let your AI quiz you on weak spots.** It can read your weak tags and hardest cards and write new questions for them.",
+        "**On Free,** your Library shows what’s due and how long it takes, and Stats shows the cards due each day ahead, which is enough to pick a pace."
       ]
     },
     {
@@ -89,7 +89,7 @@
     },
     {
       "q": "Is Lucida free for medical students?",
-      "a": "Yes. Unlimited decks and cards, FSRS, Learn mode, image occlusion, sharing and live games are free. Pro ($5.99 a month or $49.99 a year, as of September 2026) adds Stats, exam dates and more."
+      "a": "Yes. Unlimited decks and cards, FSRS, Learn mode, Stats, image occlusion, sharing and live games are free. Pro ($5.99 a month or $49.99 a year, as of September 2026) adds exam dates and more."
     },
     {
       "q": "Can I share decks with classmates?",

@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Checks for the iPhone app's Pro study tools (exam dates, pausing cards, Tune to you, deep stats).
+# Checks for the iPhone app's study tools (Pro's exam dates, pausing cards and Tune to you, and the deep stats).
 #
 #   ios/tests/run.sh parity
 #       The app's Swift ports against the web app's own code (web/db.js, fsrs.js, sched.js, insights.js, tune.js), on a seeded

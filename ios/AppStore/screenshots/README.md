@@ -9,7 +9,7 @@ the status bar at 9:41, full signal and a full battery. No text is put on top of
 | `2-study.png` | `PhoneReviewFour` | Studying a card, with Forgot, Hard, Good and Easy and when each brings it back |
 | `3-learn.png` | `PhoneQuizAnswered` | Learn mode: a multiple-choice question, what was right, and why |
 | `4-deck.png` | `PhoneDeck` | A deck: Flashcards (with what's due) and Learn, its tabs (Sources, Cards, Notes, Diagrams) and its cards |
-| `5-stats.png` | `PhoneStatsMemory` | Stats: how much you remember, week by week and by tag (Pro) |
+| `5-stats.png` | `PhoneStatsMemory` | Stats: how much you remember, week by week and by tag |
 | `6-discover.png` | `PhoneDiscover` | Discover: decks other people shared |
 | `7-shared-deck.png` | `PhonePublicDeck` | A shared deck: Study, Copy, Save, and the people who work on it |
 | `8-go-pro.png` | `PhoneGoPro` | Go Pro: monthly or yearly, what Pro adds, Restore purchases (also the review picture for the subscriptions) |

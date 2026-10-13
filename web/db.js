@@ -1231,7 +1231,7 @@ export async function createDb({ onChange, go, ask = async () => false, say = ()
       return { pro: isPro(), on: !!(t && t.on && t.w), tuned: !!(t && t.w), reviews: h.reviews, need: TUNE_MIN, can: h.reviews >= TUNE_MIN && h.items >= TUNE_ITEMS,
         busy: !!tuning, progress: tuning ? tuning.p : 0, error: tuneError, n: t ? t.reviews || t.n || 0 : 0 };
     },
-    // Deep stats (Pro): insights.js's numbers, with each card's words and deck.
+    // Deep stats: insights.js's numbers, with each card's words and deck.
     insights: range => {
       const k = 'ins' + range;
       if (memo[k]) return memo[k];

@@ -141,10 +141,10 @@ a picture of the screen whenever a check fails).
 
 The scheduling rules are ports of the web app's: `Data/FSRS.swift` (with a person's tuned parameters), `Sched.swift` (paused
 cards, exam dates, cards you keep forgetting, what a goal costs), `Tune.swift` (Tune to you: the same fit as web/tune.js),
-and `Insights.swift` (Stats' Memory, Weak spots, and Pace). `Screens/StudyPlan.swift` is Deck settings → Studying's Pro
+and `Insights.swift` (Stats' Memory, Weak spots, and Pace, which are free). `Screens/StudyPlan.swift` is Deck settings → Studying's Pro
 part, `StatsDeep.swift` the deep tabs, `TuneRow.swift` Settings' Tune to you. Boards: `PhoneDeckSettingsStudy`,
 `PhoneDeckSettingsStudyFree`, `PhoneStatsMemory`, `PhoneStatsWeak`, `PhoneStatsPace`,
-`PhoneStatsUpgrade`, `PhoneEditorPaused`, `PhoneSettingsFree` (a board's `-tune Off|"Not enough
+`PhoneEditorPaused`, `PhoneSettingsFree` (a board's `-tune Off|"Not enough
 reviews"|Tuning` shows the other states of Tune to you).
 
 More launch arguments (debug builds): `-open statsdeep -tab Memory` (or `Weak spots`, `Pace`) opens Stats on that tab;

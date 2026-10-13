@@ -10,7 +10,7 @@
 //      clearing, and the server keeps one row for each original purchase, so a second "purchase 0" would count as Amy's.)
 //   3  Pro bought on the web says Billed on the web, with no Manage plan, no Cancel Pro, and nothing to buy.
 //   4  Before the subscriptions are on the App Store (a store with no products) Go Pro says so plainly, with Restore purchases.
-//   5  Every Go Pro opens the same sheet: Stats' upgrade card (with the App Store's prices on its buttons) and Settings › Theme.
+//   5  Stats is free: its Weak spots on Free shows them, with no Go Pro; and Settings › Theme's Go Pro opens the same sheet.
 // Run it with ios/tools/e2e-store.sh (it starts a fresh server with the test mode on). It only runs when LUCIDA_STORE is set.
 import XCTest
 
@@ -141,7 +141,7 @@ final class StoreTests: AppCase {
     check(gone(app.staticTexts["goPro.title"]), "Close closes it")
   }
 
-  // ---------- 5: every Go Pro opens the same sheet ----------
+  // ---------- 5: Stats is free, and Theme's Go Pro opens the same sheet ----------
   func test5OtherGoPros() throws {
     try XCTSkipIf(api("x", "GET", "/api/rev").status != 200, "No server at " + Self.server)
     let who = "freeeli" + run
@@ -152,20 +152,13 @@ final class StoreTests: AppCase {
       act(who, "review.grade", ["cardId": id, "rating": 3])
     }
     var app = storeLaunch(who, ["-open", "statsdeep", "-tab", "Weak spots"], reset: true)
-    check(wait(text(app, "See what you’re weak at"), 20), "Stats’ Weak spots on Free shows its upgrade card")
-    check(wait(buttonStarting(app, "$5.99")) && buttonStarting(app, "$49.99").exists, "its two buttons show the App Store’s prices")
-    check(buttonStarting(app, "$5.99").label == "$5.99 a month" && buttonStarting(app, "$49.99").label == "$49.99 a year", "(“\(buttonStarting(app, "$5.99").label)” and “\(buttonStarting(app, "$49.99").label)”)")
-    check(any(app, "Yearly works out to $4.17 a month. Cancel anytime.").exists, "and what a year comes to a month")
-    buttonStarting(app, "$5.99").tap()
-    check(wait(app.staticTexts["goPro.title"]) && wait(app.staticTexts["goPro.price"], 20), "the monthly price opens Go Pro")
-    check(app.buttons["goPro.pick.monthly"].isSelected && shown(app) == "$5.99 a month", "with Monthly picked")
-    app.buttons["Close"].firstMatch.tap()
-    check(gone(app.staticTexts["goPro.title"]), "Close closes it")
+    check(wait(text(app, "Weakest tags"), 20) && text(app, "Hardest cards").exists, "Stats’ Weak spots on Free shows Eli’s weak spots")
+    check(!button(app, "Go Pro").exists && !buttonStarting(app, "$5.99").exists, "with no Go Pro and no prices (Stats is free)")
     app.terminate()
     app = storeLaunch(who, ["-open", "themes"])
     check(wait(text(app, "Themes are part of Pro")), "Settings › Theme on Free says themes are part of Pro")
     check(any(app, "Yearly works out to $4.17 a month").exists, "with the App Store’s price worked out")
     tap(button(app, "Go Pro"), "Go Pro")
-    check(wait(app.staticTexts["goPro.title"]), "its Go Pro opens the same sheet")
+    check(wait(app.staticTexts["goPro.title"]) && wait(app.staticTexts["goPro.price"], 20), "its Go Pro opens the same sheet, with the App Store’s price")
   }
 }

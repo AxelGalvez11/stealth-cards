@@ -17,7 +17,7 @@
 import * as pagesStore from './pages.mjs';
 import { noteToMarkdown } from './pageblocks.js';
 import { rest, val, qval, inList, like, publicMedia, cloud } from './supa.mjs';
-import { state, saved, onSave, onReviewed, afterSaving, withLibrary, withCredit, apply, uidOf, makeDeck, newId, isDev, isPro, cleanBoxes } from './store.mjs';
+import { state, saved, onSave, onReviewed, afterSaving, withLibrary, withCredit, apply, uidOf, makeDeck, newId, isDev, cleanBoxes } from './store.mjs';
 import { deckCards } from './order.js';
 import { newCard } from './fsrs.js';
 import { levelOf, subjectOf, yearOf } from './school.js';
@@ -1211,8 +1211,6 @@ export async function search(q, viewer, filters = {}) {
 // only ever rewrites their own row), added up here. The hardest cards are the ones missed most, once seen 3 times.
 onReviewed(r => rest('/card_stats', { method: 'POST', prefer: 'resolution=merge-duplicates', body: { shared_id: r.sharedId, user_id: socialId(uidOf()), card_id: r.card, reviews: r.reviews, misses: r.misses, updated_at: nowIso() } }));
 export async function creatorStats(uid, sharedId) {
-  // Hardest cards are part of Lucida Pro, like the rest of Pro (store.mjs isPro).
-  if (!isPro()) throw err('Hardest cards are part of Lucida Pro: lucida.cards/pricing', 402);
   const sh = await sharedRow(sharedId, 'id,owner,helpers');
   const sid = socialId(uid);
   if (!sh || (sh.owner !== sid && !(sh.helpers || []).some(h => h.id === sid))) throw Object.assign(new Error('Only its owner sees this.'), { status: 403 });

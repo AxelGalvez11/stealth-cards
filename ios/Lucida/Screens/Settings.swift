@@ -268,7 +268,7 @@ struct SettingsScreen: View {
       }
     } else {
       group("Plan") {
-        row("Free", sub: "Pro adds Stats, exam tools, and more") {
+        row("Free", sub: "Pro adds exam tools and more") {
           Button { nav.goPro() } label: {
             Text("Go Pro").css(14, .semibold).foregroundStyle(t.invText).padding(.horizontal, 16).frame(height: 36).background(Capsule().fill(t.inv))
           }

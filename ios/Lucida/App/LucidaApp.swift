@@ -157,7 +157,7 @@ struct RootView: View {
           case let o where o.hasPrefix("theme:"): nav.path = [.settings, .themes, .theme(String(o.dropFirst(6)))]
           case "cards": nav.tab = .library; nav.libCards = true
           case "stats": nav.tab = .stats
-          // Stats on one of Pro's tabs: `-open stats -tab Memory` (or Weak spots, Pace).
+          // Stats on one of its deep tabs: `-open stats -tab Memory` (or Weak spots, Pace).
           case "statsdeep": nav.tab = .stats; store.props.statsTab = Board.arg("-tab") ?? "Memory"
           // Connect AI is a page inside Settings: Settings › Connect AI.
           case "connect": nav.path = [.settings, .connect]
@@ -277,7 +277,6 @@ extension Board {
     case "PhoneStatsMemory": store.props.statsTab = "Memory"; nav.tab = .stats
     case "PhoneStatsWeak": store.props.statsTab = "Weak spots"; nav.tab = .stats
     case "PhoneStatsPace": store.props.statsTab = "Pace"; nav.tab = .stats
-    case "PhoneStatsUpgrade": store.props.free = true; store.props.statsTab = "Weak spots"; nav.tab = .stats
     case "PhoneStatsEmpty": store.props.noStats = true; nav.tab = .stats
     case "PhoneDecksEmpty": store.props.newUser = true; nav.tab = .library
     case "PhoneLibrary": nav.tab = .library

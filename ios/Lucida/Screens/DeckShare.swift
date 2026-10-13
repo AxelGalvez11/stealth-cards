@@ -78,7 +78,7 @@ extension Store {
 let UPDATE_KIND = ["new": "New card", "answer": "Answer", "question": "Question", "typo": "Small fix", "media": "Picture or sound", "edit": "Note or tags", "remove": "Removed"]
 
 /// Deck settings → Sharing (deckShareBody). A deck of yours: who can see it, its link, how many study, copy, and save it,
-/// its hardest cards (Pro), its page, suggestions, and History, a line about it, (when it's public) its labels (level, subject, and
+/// its hardest cards, its page, suggestions, and History, a line about it, (when it's public) its labels (level, subject, and
 /// school, which Discover narrows by), and helpers who fix cards directly. A deck from someone else: whose it is, and a copy's Get
 /// updates switch, or making a deck you study your own.
 struct DeckShareTab: View {
@@ -201,31 +201,20 @@ struct DeckShareTab: View {
       Text([NetFmt.k(row.learners) + " studying", NetFmt.k(row.copies) + (row.copies == 1 ? " copy" : " copies"), NetFmt.k(row.stars) + (row.stars == 1 ? " save" : " saves")].joined(separator: " · "))
         .css(13).foregroundStyle(t.muted).lineLimit(1).line(13)
     }
-    // The hardest cards (Pro): the ones people miss most, counted without names.
-    if store.isPro {
-      let hard = Array((store.netStats(shr.id)?.hardest ?? []).prefix(3))
-      if !hard.isEmpty {
-        VStack(alignment: .leading, spacing: 6) {
-          label("Hardest cards")
-          ForEach(Array(hard.enumerated()), id: \.offset) { _, h in
-            HStack(spacing: 12) {
-              Text(h.text).css(13).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
-              Text("\(h.missed)% missed").css(12, .semibold).foregroundStyle(t.again).fixedSize()
-            }
-            .padding(.horizontal, 14).frame(minHeight: 40)
-            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(t.surf))
+    // The hardest cards: the ones people miss most, counted without names.
+    let hard = Array((store.netStats(shr.id)?.hardest ?? []).prefix(3))
+    if !hard.isEmpty {
+      VStack(alignment: .leading, spacing: 6) {
+        label("Hardest cards")
+        ForEach(Array(hard.enumerated()), id: \.offset) { _, h in
+          HStack(spacing: 12) {
+            Text(h.text).css(13).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
+            Text("\(h.missed)% missed").css(12, .semibold).foregroundStyle(t.again).fixedSize()
           }
+          .padding(.horizontal, 14).frame(minHeight: 40)
+          .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(t.surf))
         }
       }
-    } else {
-      HStack(spacing: 12) {
-        Text("Hardest cards").css(14, .semibold).frame(maxWidth: .infinity, alignment: .leading)
-        Button { nav.goPro() } label: {
-          Text("Go Pro").css(13, .semibold).foregroundStyle(t.invText).padding(.horizontal, 14).frame(height: 34).background(Capsule().fill(t.inv))
-        }
-        .buttonStyle(.press)
-      }
-      .frame(minHeight: 44)
     }
     FlowLayout(spacing: 6, lineSpacing: 6) {
       SmallButton(label: "Its page", icon: "globe") { go { nav.deckPage(shr.url) } }

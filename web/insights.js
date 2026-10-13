@@ -1,4 +1,4 @@
-// Deep stats (Pro): what you remember, what you're weak at and why, and what's coming. Worked out from a library's cards
+// Deep stats: what you remember, what you're weak at and why, and what's coming. Worked out from a library's cards
 // and review logs, the same way for the Stats page (db.js) and for AI apps (mcp.mjs get_weak_spots, get_review_history,
 // get_stats). Plain numbers and ids; the page and the AI tools put words to them.
 import { dayAt } from './fsrs.js';

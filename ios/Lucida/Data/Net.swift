@@ -214,7 +214,7 @@ struct MinePage: Decodable {
   init(from d: Decoder) throws { let c = try d.container(keyedBy: CodingKeys.self); handle = c.v(.handle, ""); decks = c.v(.decks, []) }
 }
 
-/// How people do on a shared deck of yours (Pro): its hardest cards, the share of times each was missed.
+/// How people do on a shared deck of yours: its hardest cards, the share of times each was missed.
 struct CreatorStats: Decodable {
   struct Hard: Decodable {
     var card = "", text = "", missed = 0

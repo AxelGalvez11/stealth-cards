@@ -36,8 +36,8 @@ export const SOCIALS = [['tiktok', 'TikTok', 'https://www.tiktok.com/@lucidacard
 export const PRICE = { monthly: '5.99', yearly: '49.99', currency: 'USD' };
 // How long a make may be, in words (the numbers come from web/plans.mjs, which the apps and the server read, so a change there changes this page).
 const LONG = m => (m % 60 === 0 ? m / 60 + (m === 60 ? ' hour' : ' hours') : m + ' minutes');
-export const PLAN_FREE = ['Unlimited decks and cards', 'Make cards from files, photos, recordings and links: ' + MAKE.free.perDay + ' a day', 'Your own AI makes cards and quizzes too', 'Reviews planned by spaced repetition', 'Learn mode', 'Share decks and study anyone’s', 'Live games with friends', 'Up to 100 pictures and sounds', 'Photo covers for decks', 'Import and export anytime'];
-export const PLAN_PRO = ['Make cards from bigger sources: ' + MAKE.pro.perDay + ' a day, up to ' + MAKE.pro.pages + ' pages or ' + LONG(MAKE.pro.minutes), 'Exam dates: ready in time for the test', 'Stats: your streak, memory and weak spots', 'Unlimited pictures and sounds', 'Themes for cards, covers and your profile', 'The hardest cards on decks you share', 'Your own colors', 'Natural voices for sound cards', 'More AI explanations'];
+export const PLAN_FREE = ['Unlimited decks and cards', 'Make cards from files, photos, recordings and links: ' + MAKE.free.perDay + ' a day', 'Your own AI makes cards and quizzes too', 'Reviews planned by spaced repetition', 'Learn mode', 'Stats: your streak, memory and weak spots', 'Share decks and study anyone’s', 'Live games with friends', 'Up to 100 pictures and sounds', 'Photo covers for decks', 'Import and export anytime'];
+export const PLAN_PRO = ['Make cards from bigger sources: ' + MAKE.pro.perDay + ' a day, up to ' + MAKE.pro.pages + ' pages or ' + LONG(MAKE.pro.minutes), 'Exam dates: ready in time for the test', 'Unlimited pictures and sounds', 'Themes for cards, covers and your profile', 'Your own colors', 'Natural voices for sound cards', 'More AI explanations'];
 // What the iPhone app's paywall lists: the same, less what the iPhone app doesn't have yet (natural voices for sound cards, which only the web has).
 export const PLAN_PRO_PHONE = PLAN_PRO.filter(x => x !== 'Natural voices for sound cards');
 export const PRICING_FAQ = [
@@ -65,7 +65,7 @@ export const FIXED = [
   { slug: '', kind: 'home', board: 'Landing', file: 'landing.html', updated: '2026-09-29', crumb: 'Home', h1: 'Flashcards your AI can make.',
     title: 'Lucida · Flashcards your AI can make', description: 'Ask Claude or ChatGPT to turn a lecture into flashcards. Lucida keeps them in your decks and brings each one back right before you’d forget it.' },
   { slug: 'pricing', kind: 'pricing', board: 'Pricing', file: 'pricing.html', updated: '2026-09-29', crumb: 'Pricing', h1: 'Simple pricing.',
-    title: 'Lucida pricing: free, or Pro at $' + PRICE.monthly + ' a month', description: 'Lucida is free: unlimited decks and cards, Learn mode and sharing. Pro adds Stats, exam dates, themes and unlimited pictures and sounds.' },
+    title: 'Lucida pricing: free, or Pro at $' + PRICE.monthly + ' a month', description: 'Lucida is free: unlimited decks and cards, Learn mode, Stats and sharing. Pro adds exam dates, themes and unlimited pictures and sounds.' },
   { slug: 'privacy', kind: 'legal', board: 'Privacy', file: 'privacy.html', updated: iso(PRIVACY.updated || LEGAL_UPDATED), crumb: 'Privacy', h1: 'Privacy Policy',
     title: 'Privacy Policy · Lucida', description: 'What Lucida keeps, why we keep it, who helps us run it, and how you can export or delete your data.' },
   { slug: 'terms', kind: 'legal', board: 'Terms', file: 'terms.html', updated: iso(LEGAL_UPDATED), crumb: 'Terms', h1: 'Terms of Service',
@@ -293,13 +293,13 @@ const SAMPLES = [
     description: 'Lucida plans every review with FSRS, so the cards you forget come back sooner and the ones you know come back later.',
     lead: 'Lucida plans every review with FSRS, an open-source scheduler. Cards you forgot come back soon, and cards you knew come back much later.',
     sections: [{ h2: 'Flip, rate, remember', paras: ['Tap a card to see the answer, then say how well you knew it. Lucida picks the day it comes back: soon if you forgot, much later if it was easy.'], bullets: [] },
-      { h2: 'A few minutes a day', paras: ['Your Library shows what’s due and how long it takes, and Stats (Pro) keeps your streak.'], bullets: ['Hard cards come back sooner.', 'Easy cards wait longer.'] }],
+      { h2: 'A few minutes a day', paras: ['Your Library shows what’s due and how long it takes, and Stats keeps your streak.'], bullets: ['Hard cards come back sooner.', 'Easy cards wait longer.'] }],
     faq: [{ q: 'Do I need Pro for spaced repetition?', a: 'No. Reviews planned by spaced repetition are free.' }] },
   { slug: 'for/students', kind: 'use', title: 'Lucida for students', h1: 'Lucida for students', updated: '2026-09-29',
     description: 'Ask your AI to turn a lecture into flashcards, then review them a few minutes a day. Free to start.',
     lead: 'Share a lecture or your notes with Claude or ChatGPT and ask for flashcards. They land in your decks in Lucida, ready to study.',
     sections: [{ h2: 'Cards from your lecture', paras: ['Paste your Lucida link into your AI once. Then share a lecture and ask for flashcards.'], bullets: [] }],
-    faq: [{ q: 'Is Lucida free?', a: 'Yes. Unlimited decks and cards are free. Pro adds exam tools, stats and themes.' }] }
+    faq: [{ q: 'Is Lucida free?', a: 'Yes. Unlimited decks and cards, Learn mode and Stats are free. Pro adds exam tools and themes.' }] }
 ].map(p => ({ table: null, sections: [], faq: [], sources: [], related: [], keywords: [], published: '', ...p, sample: true }));
 
 // Every page of the site that has data: the files, then the made-up ones, in a steady order, each with its address,

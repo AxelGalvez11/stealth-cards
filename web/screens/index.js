@@ -890,7 +890,7 @@ export default [
  },
  {
   "name": "PhoneStatsEmpty",
-  "title": "iPhone · Stats · no reviews yet (Pro)",
+  "title": "iPhone · Stats · no reviews yet",
   "w": 390,
   "h": 844
  },
@@ -902,13 +902,13 @@ export default [
  },
  {
   "name": "PhoneStatsMemory",
-  "title": "iPhone · Stats · Memory (Pro)",
+  "title": "iPhone · Stats · Memory",
   "w": 390,
   "h": 844
  },
  {
   "name": "PhoneStatsPace",
-  "title": "iPhone · Stats · Pace (Pro)",
+  "title": "iPhone · Stats · Pace",
   "w": 390,
   "h": 844
  },
@@ -919,14 +919,8 @@ export default [
   "h": 844
  },
  {
-  "name": "PhoneStatsUpgrade",
-  "title": "iPhone · Stats · on Free (all of Stats is Pro)",
-  "w": 390,
-  "h": 844
- },
- {
   "name": "PhoneStatsWeak",
-  "title": "iPhone · Stats · Weak spots (Pro)",
+  "title": "iPhone · Stats · Weak spots",
   "w": 390,
   "h": 844
  },
@@ -2678,7 +2672,7 @@ export default [
  },
  {
   "name": "WebStatsEmpty",
-  "title": "Web · Stats · no reviews yet (Pro)",
+  "title": "Web · Stats · no reviews yet",
   "w": 1440,
   "h": 900
  },
@@ -2690,13 +2684,13 @@ export default [
  },
  {
   "name": "WebStatsMemory",
-  "title": "Web · Stats · Memory (Pro)",
+  "title": "Web · Stats · Memory",
   "w": 1440,
   "h": 900
  },
  {
   "name": "WebStatsPace",
-  "title": "Web · Stats · Pace (Pro)",
+  "title": "Web · Stats · Pace",
   "w": 1440,
   "h": 900
  },
@@ -2707,14 +2701,8 @@ export default [
   "h": 900
  },
  {
-  "name": "WebStatsUpgrade",
-  "title": "Web · Stats · on Free (all of Stats is Pro)",
-  "w": 1440,
-  "h": 900
- },
- {
   "name": "WebStatsWeak",
-  "title": "Web · Stats · Weak spots (Pro)",
+  "title": "Web · Stats · Weak spots",
   "w": 1440,
   "h": 900
  },

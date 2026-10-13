@@ -23,7 +23,7 @@ leave out other apps' and exams' names.
 
 ## Description
 
-(Under 4000 characters, 1743 used. Paste as it is; the capital-letter lines are plain text headings.)
+(Under 4000 characters, 1682 used. Paste as it is; the capital-letter lines are plain text headings.)
 
 ```
 Lucida is a flashcard app that remembers for you.
@@ -45,7 +45,7 @@ SHARE DECKS
 Share a deck with a link or with everyone. Find decks other people made, follow them, study them or copy them. Suggest a change to a deck you study, and take or skip the changes people suggest to yours.
 
 LUCIDA PRO
-Lucida is free: unlimited decks and cards, photo covers, Learn mode and sharing. Pro adds exam dates, stats on what you're weak at, the hardest cards on decks you share, themes for your cards, covers and profile, your own colors, unlimited pictures and sounds, and more AI explanations.
+Lucida is free: unlimited decks and cards, photo covers, Learn mode, Stats and sharing. Pro adds exam dates, themes for your cards, covers and profile, your own colors, unlimited pictures and sounds, and more AI explanations.
 
 Pro is a subscription, monthly or yearly. Payment is charged to your Apple Account when you confirm the purchase. The subscription renews automatically unless you cancel it at least 24 hours before the end of the current period, and your account is charged for renewal within 24 hours before the period ends. Manage or cancel it in Settings on your iPhone: tap your name, then Subscriptions.
 
@@ -67,8 +67,8 @@ One group, "Lucida Pro". The app reads the prices from the App Store itself; it 
 
 | Reference name | Product ID | Duration | Price (US) | Display name | Description |
 | --- | --- | --- | --- | --- | --- |
-| Lucida Pro Monthly | `cards.lucida.pro.monthly` | 1 month | $5.99 | Lucida Pro, monthly | Exam dates, deeper stats, themes and more |
-| Lucida Pro Yearly | `cards.lucida.pro.yearly` | 1 year | $49.99 | Lucida Pro, yearly | Exam dates, deeper stats, themes and more |
+| Lucida Pro Monthly | `cards.lucida.pro.monthly` | 1 month | $5.99 | Lucida Pro, monthly | Exam dates, themes and more |
+| Lucida Pro Yearly | `cards.lucida.pro.yearly` | 1 year | $49.99 | Lucida Pro, yearly | Exam dates, themes and more |
 
 The same ids are in `ios/Lucida/Lucida.storekit` (what the tests buy with) and `web/apple.mjs` (what the server accepts). The review
 screenshot for each subscription can be `screenshots/` picture 8, the Go Pro sheet.

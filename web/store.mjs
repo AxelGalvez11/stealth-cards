@@ -171,8 +171,8 @@ export const readMedia = name => (cloud() ? files.get(lib().uid, name) : readFil
 export const hasMedia = name => (cloud() ? files.has(lib().uid, name) : access(join(MEDIA, name)).then(() => true, () => false));
 export const mediaLink = (name, uid) => (cloud() ? files.link(uid, name) : Promise.resolve(null));
 export const state = () => lib().S;
-// Pro's scheduling tools (an exam date, tuning, the rule for cards you keep forgetting) and deep stats: on for Pro and on
-// this computer, off on Free.
+// Pro's scheduling tools (an exam date, tuning, the rule for cards you keep forgetting): on for Pro and on this computer,
+// off on Free. (Stats are free.)
 export const isPro = () => lib().pro !== false && !lib().S.settings.viewFree;
 const PRO_ONLY = ' part of Lucida Pro: lucida.cards/pricing';
 const needPro = what => { if (!isPro()) throw new Error(what + PRO_ONLY); };

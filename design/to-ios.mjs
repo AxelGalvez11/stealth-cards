@@ -1,6 +1,6 @@
 // Copies what the iPhone app (ios/) shares with the design canvas into Swift: the theme colors, the icons, the gradient
 // palettes (plus the site's Midnight, for the Learn sheet's deep top), the onboarding's icons and moving background, tag colors, the sign-in wall's cards, and the canvas's sample data
-// (its sample sound's waveform, Pro's deep stats, and the study network's sample: net-sample.mjs), the themes' list,
+// (its sample sound's waveform, the deep stats, and the study network's sample: net-sample.mjs), the themes' list,
 // and the motion timings (motion.mjs); and copies the Guide's engine (web/guide.js) into the app's resources. Run it after changing any of those.
 import { readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import { PALETTES, PALETTE_NAMES, SITE_PALETTES } from './surfaces.mjs';
@@ -152,7 +152,7 @@ ${THEMES.map(t => `    (${str(t.key)}, ${str(t.board || '')}, ${str(t.name)}, ${
   /// The sample sound's waveform (design/mock.mjs SAMPLE_WAVE): 96 peaks, 0 to 1.
   static let sampleWave: [Double] = ${str(SAMPLE_WAVE)}
 
-  /// Pro's deep stats sample (design/mock.mjs SAMPLE_INSIGHTS), by range (Week, Month, Year), as db.insights() gives them.
+  /// The deep stats sample (design/mock.mjs SAMPLE_INSIGHTS), by range (Week, Month, Year), as db.insights() gives them.
   static let insightsJSON = ${str(JSON.stringify(SAMPLE_INSIGHTS))}
 
   /// The page kinds this build can show and write (web/pages.mjs PAGE_READY when it was made): Data/PageData.swift PageKind.ready.
