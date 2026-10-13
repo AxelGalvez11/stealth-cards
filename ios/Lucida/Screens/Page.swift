@@ -6,6 +6,8 @@
 // while it was being written, both are kept and a line says so. The page saves as it's typed (Data/Pages.swift, like web/pagesclient.js).
 // A page of a kind this build can't show (not in PageKind.ready: a Mind map, a Diagram, or a kind that came later) says it needs a newer Lucida, with Back:
 // it is never opened in the Notes editor, and nothing on it is saved from here.
+// A Note opens to read (the owner, 2026-10-12: "for notes on iPhone can you add an edit and read mode"): a tap on a line doesn't bring up the
+// keyboard, links and the pages and cards it shows still open. Edit writes in it, Done reads it again; a page just made, or an empty one, opens to write.
 import SwiftUI
 
 struct PageScreen: View {
@@ -39,6 +41,8 @@ private struct PageBody: View {
   @State private var aa = false
   @State private var picking = false
   @State private var pictureAfter: String? = nil
+  /// Reading the Note (Edit writes in it); decided once a page is here.
+  @State private var reading = false
   @FocusState private var titleOn: Bool
   /// A Mind map page's state (Screens/MapModel.swift).
   @StateObject private var map = MapModel()
@@ -100,7 +104,7 @@ private struct PageBody: View {
 
   @ViewBuilder private func noteBody(_ n: Now) -> some View {
     let histOpen = hist ?? (view == "Versions")
-    let keys = n.canEdit && !histOpen && make == nil && (notes.editing != nil || notes.linking)
+    let keys = writes(n) && !histOpen && make == nil && (notes.editing != nil || notes.linking)
     let under = keyboard.height > 0 ? keyboard.height : store.demo ? 0 : GuideScreen.safeBottom
     GeometryReader { geo in
       ZStack(alignment: .bottom) {
@@ -140,7 +144,7 @@ private struct PageBody: View {
     return HStack(spacing: 8) {
       Button { back(n) } label: {
         HStack(spacing: 6) { Icon("back", 14, 2.2); Text(n.deckName).css(13, .semibold).lineLimit(1) }
-          .foregroundStyle(t.text).padding(.leading, 10).padding(.trailing, 14).frame(height: 36).frame(maxWidth: 170, alignment: .leading)
+          .foregroundStyle(t.text).padding(.leading, 10).padding(.trailing, 14).frame(height: 36).frame(maxWidth: 150, alignment: .leading)
           .background(Capsule().fill(t.surf)).fixedSize(horizontal: true, vertical: false)
       }
       .buttonStyle(.press).accessibilityLabel("Back to " + n.deckName).accessibilityIdentifier("backButton")
@@ -148,11 +152,22 @@ private struct PageBody: View {
       let label = sv.err.isEmpty ? (sv.busy ? "Saving…" : "") : sv.err.hasPrefix("Your change") ? sv.err : "Not saved: " + sv.err
       if !label.isEmpty { Text(label).css(13).foregroundStyle(sv.err.isEmpty ? t.muted : t.again).lineLimit(1).accessibilityIdentifier("saveLabel") }
       if let p = n.page {
-        Button { withAnimation(Motion.pop) { hist = !histOpen; more = false } } label: {
-          HStack(spacing: 6) { Icon("history", 14, 2); Text("v\(p.version)").css(13, .semibold).monospacedDigit() }
-            .foregroundStyle(t.text).padding(.horizontal, 14).frame(height: 36).background(Capsule().fill(histOpen ? t.surf : .clear))
+        // (reading: v12 · Edit · ⋯; writing: Saving… · Done · ⋯, the versions in ⋯)
+        let note = n.ready && p.kind == "note"
+        if !(note && writes(n)) {
+          Button { withAnimation(Motion.pop) { hist = !histOpen; more = false } } label: {
+            HStack(spacing: 6) { Icon("history", 14, 2); Text("v\(p.version)").css(13, .semibold).monospacedDigit() }
+              .foregroundStyle(t.text).padding(.horizontal, 14).frame(height: 36).background(Capsule().fill(histOpen ? t.surf : .clear))
+          }
+          .buttonStyle(.press).accessibilityLabel("Versions, version \(p.version)").accessibilityAddTraits(histOpen ? .isSelected : []).accessibilityIdentifier("page.versions")
         }
-        .buttonStyle(.press).accessibilityLabel("Versions, version \(p.version)").accessibilityAddTraits(histOpen ? .isSelected : []).accessibilityIdentifier("page.versions")
+        if note && n.canEdit {
+          Button { setReading(!reading) } label: {
+            HStack(spacing: 6) { if reading { Icon("pencil", 14, 2) }; Text(reading ? "Edit" : "Done").css(13, .semibold) }
+              .foregroundStyle(reading ? t.text : t.invText).padding(.horizontal, 14).frame(height: 36).background(Capsule().fill(reading ? t.surf : t.inv))
+          }
+          .buttonStyle(.press).accessibilityLabel(reading ? "Edit this page" : "Done editing").accessibilityIdentifier("page.mode")
+        }
         if n.canEdit {
           Button { withAnimation(Motion.pop) { more.toggle() } } label: {
             Icon("more", 18, 2).foregroundStyle(t.text).frame(width: 36, height: 36).background(Circle().fill(more ? t.surf : .clear))
@@ -196,13 +211,13 @@ private struct PageBody: View {
 
   // ---------- the page ----------
   private func pageArea(_ n: Now, _ p: PageInfo, keys: Bool) -> some View {
-    let setup = NotesSetup(colors: NotesColors(t, code: t.surf), editable: n.canEdit, hooks: hooks, refs: refs(n.md))
+    let setup = NotesSetup(colors: NotesColors(t, code: t.surf), editable: writes(n), hooks: hooks, refs: refs(n.md))
     let heads = notes.outline, railOn = !keys && keyboard.height == 0 && heads.count >= 2
     return ScrollView(showsIndicators: false) {
       VStack(alignment: .leading, spacing: 0) {
         conflictLine(n)
         titleField(n)
-        NotesView(page: notes, setup: setup, below: n.canEdit ? 32 : 0)
+        NotesView(page: notes, setup: setup, below: writes(n) ? 32 : 0)
       }
       .padding(.top, 10).padding(.trailing, 20).padding(.leading, 30).padding(.bottom, 120)
       .environment(\.notesScroll, scroll)
@@ -237,7 +252,7 @@ private struct PageBody: View {
 
   /// The title: a field of its own over the Note (Enter goes on to the Note's first line); reading, the title as a heading.
   @ViewBuilder private func titleField(_ n: Now) -> some View {
-    if n.canEdit {
+    if writes(n) {
       TextField("", text: $title, prompt: Text("Untitled").foregroundStyle(PLACEHOLDER))
         .font(.geist(28, .semibold)).kerning(-0.84).foregroundStyle(t.text)
         .focused($titleOn).submitLabel(.next)
@@ -359,10 +374,19 @@ private struct PageBody: View {
     if loaded == id { notes.reload(n.md); return }
     loaded = id
     title = p.title
+    reading = n.canEdit && (store.demo ? view == "Reading" || view == "Versions" : nav.pageFresh != id && !n.md.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
     notes.onChange = { [pages, id] md in if n.canEdit && !store.demo { pages.editMarkdown(id, md) } }
-    notes.load(n.md, key: (store.demo ? "canvas|" + view + "|" : "page|") + id, editable: n.canEdit, blank: n.canEdit, titled: true)
+    notes.load(n.md, key: (store.demo ? "canvas|" + view + "|" : "page|") + id, editable: writes(n), blank: n.canEdit, titled: true)
     // (a page just made opens with the caret in its title)
     if nav.pageFresh == id { nav.pageFresh = ""; DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { titleOn = true } }
+  }
+  /// Whether the Note is being written in: the person may, and it isn't being read.
+  private func writes(_ n: Now) -> Bool { n.canEdit && !reading }
+  /// Edit and Done: Done sends what was written and puts the keyboard away.
+  private func setReading(_ on: Bool) {
+    if on { titleOn = false; Keyboard.hide() }
+    withAnimation(Motion.fade) { notes.setEditable(!on); reading = on; more = false; make = nil }
+    if on && !store.demo { Task { await pages.flush(id) } }
   }
   private func back(_ n: Now) {
     notes.flush()

@@ -211,6 +211,15 @@ final class NotesPage: ObservableObject {
     reveal(b.id)
     focus = NotesFocus(id: b.id, at: max(0, min(off, b.length)))
   }
+  /// Reading or writing the same words (a page's Edit and Done): what's open and folded stays, and what was written is sent first.
+  func setEditable(_ on: Bool) {
+    guard on != editable else { return }
+    if !on { flush() }
+    editable = on; editing = nil; focus = nil; picked = nil; linking = false; editingCell = nil; makeAt = nil
+    // (a blank page being written gets its empty line, as load's)
+    if on && blocks.isEmpty { blocks = titled ? [NoteBlock("p")] : [NoteBlock("h", level: 1), NoteBlock("p")] }
+    objectWillChange.send()
+  }
   /// The same page read again only when its words changed from somewhere else (an older version brought back).
   func reload(_ md: String) { if md != sent && md != markdown { load(md, key: key, editable: editable, blank: false) } }
 

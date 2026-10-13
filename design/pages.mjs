@@ -277,7 +277,9 @@ renderVals() {
 // makes a card from it. When the learner's AI changed the page while it was being written, both are kept and a line says so.
 const NOTE_SAMPLE_MD = '# Cellular respiration\n\nCells turn glucose into ATP in three stages. Most of the ATP comes from the last one, on the inner membrane of the mitochondrion.\n\n:::chain\nGlycolysis\nPyruvate\nAcetyl-CoA\nKrebs cycle\nElectron transport\n:::\n\n:::trap\nGlycolysis happens in the cytoplasm, not the mitochondrion, and needs no oxygen.\n:::\n\n:::pearl\nOxygen is the last electron acceptor: no O₂, no electron transport, almost no ATP.\n:::\n\n:::mnemonic\n“Can I Keep Selling Seashells For Money, Officer?”: the Krebs cycle’s steps in order.\n:::\n\n## Where each stage happens\n\n| Stage | Where | ATP made |\n| --- | --- | --- |\n| Glycolysis | Cytoplasm | 2 |\n| Krebs cycle | Matrix | 2 |\n| Electron transport | Inner membrane | ~34 |\n\n:::toggle Why does cyanide stop it?\nIt blocks complex IV, so oxygen can’t take the electrons and the chain stops.\n:::\n\n## The whole picture\n\n::page ps2\n\n## From your cards\n\n::card c1\n';
 // A page of a kind this app can't show yet says so (and never opens as an empty Note); the Mind map's states follow (design/maps.mjs).
-export const PAGE_VIEWS = ['Writing', 'Versions', 'Changed by your AI', 'Make a card', 'Needs an update', ...MINDMAP_VIEWS];
+// On a phone a Note opens to read: Edit writes in it, Done reads it again (the owner, 2026-10-12: "for notes on iPhone can you add an edit
+// and read mode"). 'Reading' is that; 'Versions' is opened from it.
+export const PAGE_VIEWS = ['Writing', 'Reading', 'Versions', 'Changed by your AI', 'Make a card', 'Needs an update', ...MINDMAP_VIEWS];
 export function pageBoards(H) {
   const { svg, I, FONT, T, DB_JS, DARK, W, HH, PW, PH, sidebar, NOTES_VARS, GUIDE_CSS, MAP_CSS } = H;
   const icon = (name, size = 16, w = 2) => svg(I[name] || EXTRA_ICONS[name], size, w);
@@ -288,13 +290,15 @@ export function pageBoards(H) {
       <sc-if value="{{moreOpen}}" hint-placeholder-val="{{ false }}"><div role="menu" aria-label="More" data-sc-pop style="position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; width: 220px; box-sizing: border-box; padding: 6px; border-radius: 18px; background: {{t.bg}}; box-shadow: 0 0 0 1px {{t.line}}, 0 18px 44px rgba(0,0,0,.22); display: flex; flex-direction: column; gap: 2px;"><sc-if value="{{mp.on}}" hint-placeholder-val="{{ false }}">${item('mp.foldAllDo', 'fold', '{{mp.foldAll}}')}${item('mp.makeAgain', 'sparkle', 'Make again from the cards')}</sc-if>${item('openHist', 'history', 'Versions')}${item('deletePage', 'bin', 'Delete page', true)}</div></sc-if></div></sc-if>`;
   const verBtn = phone => `<button type="button" onClick="{{toggleHist}}" aria-pressed="{{histPressed}}" style="${PILL} background: {{histBg}}; color: {{t.text}};"><span style="display: flex;">${icon('history', 14, 2)}</span>${phone ? 'v{{version}}' : '{{versionLine}}'}</button>`;
   const saving = `<span aria-live="polite" style="flex-shrink: 0; font-size: 13px; color: {{saveColor}}; white-space: nowrap;">{{saveLabel}}</span>`;
+  // (a phone's Note: Edit while reading, Done while writing)
+  const modeBtn = `<sc-if value="{{modeOn}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{toggleMode}}" aria-label="{{modeAria}}" class="sc-press" style="${PILL} background: {{modeBg}}; color: {{modeFg}};"><sc-if value="{{reading}}" hint-placeholder-val="{{ false }}"><span style="display: flex;">${icon('pencil', 14, 2)}</span></sc-if>{{modeLabel}}</button></sc-if>`;
   const header = phone => `<header style="height: ${phone ? 52 : 64}px; flex-shrink: 0; box-sizing: border-box; padding: 0 ${phone ? 12 : 20}px 0 ${phone ? 12 : 24}px; display: flex; align-items: center; gap: 8px; ${phone ? '' : 'border-bottom: 1px solid {{t.line}};'}">
-      <a href="{{backHref}}" aria-label="Back to {{scopeName}}" style="${PILL} max-width: ${phone ? 170 : 280}px; padding: 0 14px 0 10px; background: {{t.surf}}; color: {{t.text}};">${icon('back', 14, 2.2)}<span style="min-width: 0; overflow: hidden; text-overflow: ellipsis;">{{scopeName}}</span></a>
-      <span style="flex-grow: 1;"></span>${saving}${phone ? '' : `<sc-if value="{{mp.on}}" hint-placeholder-val="{{ false }}">${MW.testPill}</sc-if>`}${verBtn(phone)}${more}
+      <a href="{{backHref}}" aria-label="Back to {{scopeName}}" style="${PILL} max-width: ${phone ? 150 : 280}px; padding: 0 14px 0 10px; background: {{t.surf}}; color: {{t.text}};">${icon('back', 14, 2.2)}<span style="min-width: 0; overflow: hidden; text-overflow: ellipsis;">{{scopeName}}</span></a>
+      <span style="flex-grow: 1;"></span>${saving}${phone ? `<sc-if value="{{verOn}}" hint-placeholder-val="{{ true }}">${verBtn(true)}</sc-if>${modeBtn}` : `<sc-if value="{{mp.on}}" hint-placeholder-val="{{ false }}">${MW.testPill}</sc-if>${verBtn(false)}`}${more}
     </header>`;
   const banner = `<sc-if value="{{conflictOpen}}" hint-placeholder-val="{{ false }}"><div role="status" style="margin-bottom: 18px; padding: 12px 14px; border-radius: 16px; background: {{t.surf}}; display: flex; align-items: center; gap: 10px; font-size: 14px;"><span style="display: flex;">${icon('sparkle', 15, 2)}</span><span style="flex-grow: 1; line-height: 1.45;">{{conflictLine}}</span><button type="button" onClick="{{openHist}}" class="sc-press" style="${PILL} height: 30px; font-size: 12px; background: {{t.bg}}; color: {{t.text}};">Versions</button><button type="button" onClick="{{dismissConflict}}" aria-label="Dismiss" style="${PILL} width: 30px; height: 30px; padding: 0; justify-content: center; background: transparent; color: {{t.muted}};">${icon('close', 14, 2)}</button></div></sc-if>`;
   const TITLE = phone => `display: block; width: 100%; box-sizing: border-box; margin: 0 0 ${phone ? 10 : 14}px; padding: 0; border: 0; outline: 0; background: transparent; color: {{t.text}}; font: inherit; font-size: ${phone ? 28 : 36}px; font-weight: 600; letter-spacing: -.03em;`;
-  const title = phone => `<sc-if value="{{canEdit}}" hint-placeholder-val="{{ true }}"><input type="text" value="{{title}}" onChange="{{setTitle}}" ref="{{titleRef}}" aria-label="Page title" placeholder="Untitled" autocomplete="off" style="${TITLE(phone)}"></sc-if><sc-if value="{{readOnly}}" hint-placeholder-val="{{ false }}"><h1 style="${TITLE(phone)}">{{title}}</h1></sc-if>`;
+  const title = phone => `<sc-if value="{{canWrite}}" hint-placeholder-val="{{ true }}"><input type="text" class="sc-big" value="{{title}}" onChange="{{setTitle}}" ref="{{titleRef}}" aria-label="Page title" placeholder="Untitled" autocomplete="off" style="${TITLE(phone)}"></sc-if><sc-if value="{{readOnly}}" hint-placeholder-val="{{ false }}"><h1 style="${TITLE(phone)}">{{title}}</h1></sc-if>`;
   const makeSheet = phone => `<sc-if value="{{makeOpen}}" hint-placeholder-val="{{ false }}"><div role="dialog" aria-label="New card from this block" data-sc-pop style="${phone ? 'position: absolute; left: 0; right: 0; bottom: 0; border-radius: 24px 24px 0 0; padding: 18px 16px 34px;' : 'position: absolute; right: 24px; bottom: 24px; width: 380px; border-radius: 20px; padding: 16px;'} z-index: 60; box-sizing: border-box; background: {{te.bg}}; box-shadow: 0 0 0 1px {{te.line}}, 0 18px 44px rgba(0,0,0,.22); display: flex; flex-direction: column; gap: 10px;">${phone ? '<span aria-hidden="true" style="align-self: center; width: 36px; height: 5px; margin: -8px 0 -2px; border-radius: 3px; background: {{te.line}};"></span>' : ''}
       <span style="font-size: ${phone ? 17 : 15}px; font-weight: 600;">{{makeTitle}}</span>
       <label style="padding: 10px 14px; border-radius: 14px; background: {{te.surf}}; display: flex; flex-direction: column; gap: 4px;"><span style="font-size: ${phone ? 13 : 12}px; font-weight: 600; color: {{t.muted}};">Front</span><textarea rows="2" onChange="{{setFront}}" ref="{{frontRef}}" placeholder="A question" style="border: 0; outline: 0; resize: none; background: transparent; color: {{t.text}}; font: inherit; font-size: ${phone ? 16 : 15}px;">{{makeFront}}</textarea></label>
@@ -358,8 +362,12 @@ renderVals() {
   const KINDS = ${JSON.stringify(Object.fromEntries(PAGE_KINDS.map(k => [k.kind, k.name])))};
   const deck = ok && pg.scope === 'deck' ? db.deck(pg.scopeId) : null, folder = ok && pg.scope === 'folder' ? (db.folders() || []).find(f => f.id === pg.scopeId) : null;
   const scopeName = deck ? deck.name : folder ? folder.name : 'Library', canEdit = ok && (mock || (deck ? db.guide(deck.id).can : !!folder));
+  // (a phone's Note opens to read, so a tap on a line doesn't bring up the keyboard; a page just made, or an empty one, opens to write)
+  const mdNow = mock ? '' : isNote ? db.pages.markdown(id) : '', modeKey = id + '|' + view;
+  if (${isPhone ? 'true' : 'false'} && isNote && this._modeFor !== modeKey) { this._modeFor = modeKey; this._reading = mock ? view === 'Reading' || view === 'Versions' : !p.fresh && !!mdNow.trim(); }
+  const reading = ${isPhone ? 'true' : 'false'} && isNote && canEdit && !!this._reading, canWrite = canEdit && !reading;
   const backHref = mock ? '${isPhone ? 'PhoneDeck' : 'WebDeck'}.dc.html' : deck ? '/deck/' + deck.id + '?tab=pages' : '/library';
-  const md = mock ? ${JSON.stringify(NOTE_SAMPLE_MD)} : isNote ? db.pages.markdown(id) : '';
+  const md = mock ? ${JSON.stringify(NOTE_SAMPLE_MD)} : mdNow;
   const sv = mock ? { busy: false, err: '', saved: 0 } : db.pages.saving(id);
   const who = x => (!x || x === 'you' ? 'You' : x), ago = ms => { const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : new Date(ms).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
   const cf = mock ? (view === 'Changed by your AI' ? { by: 'Claude', ai: true, theirs: 13, mine: 14 } : null) : db.pages.conflict(id);
@@ -395,7 +403,11 @@ renderVals() {
   const image = s => (/^\\/media\\/[\\w-]+\\.(png|jpe?g|gif|webp)$/i.test(s) ? s : '');
   // (the Make a card sheet is raised over the page: a gray a step above it in the dark)
   const te = this.mapArt().raisedOf(t);
-  return { t, te, ...chrome, dark: !!p.dark, dim: !!p.dim, canEdit, scopeName, backHref, title: ok ? pg.title : '', readOnly: ok && !canEdit, version: ok ? pg.version : '',
+  return { t, te, ...chrome, dark: !!p.dark, dim: !!p.dim, canEdit, canWrite, scopeName, backHref, title: ok ? pg.title : '', readOnly: ok && !canWrite, version: ok ? pg.version : '',
+    reading, modeOn: ${isPhone ? 'true' : 'false'} && isNote && canEdit, verOn: !(isNote && canEdit && !reading), modeLabel: reading ? 'Edit' : 'Done', modeAria: reading ? 'Edit this page' : 'Done editing',
+    modeBg: reading ? t.surf : t.inv, modeFg: reading ? t.text : t.invText,
+    toggleMode: () => { if (!reading) { const a = typeof document !== 'undefined' && document.activeElement; if (a && a.blur) a.blur(); if (this._nbc) this._nbc.flush(); if (!mock) db.pages.flush(id); }
+      this._reading = !reading; this.setState({ more: false, make: null }); },
     mp: isMap && MM ? MM : { on: false }, noteOn: !isMap && !needsUpdate, updateOn: needsUpdate, updateTitle: needsUpdate ? 'This ' + (KINDS[pg.kind] || 'page') + ' needs a newer Lucida.' : '', updateLine: 'Update to open it. Nothing on it is lost.',
     makeTitle: isMap ? 'New card from this idea' : 'New card from this block', makeRows: isMap ? 5 : 3, makeNote: isMap ? 'It’s linked to “' + ((make && make.label) || (MM && MM.bar.label) || '') + '” once it’s added.' : 'Or ask your AI to make cards from this page.',
     versionLine: ok ? 'v' + pg.version + ' · ' + who(pg.by) + ', ' + ago(pg.updated) : '',
@@ -418,10 +430,10 @@ renderVals() {
       // (a card made from an idea is linked to it, in one version)
       if (make.nodeId && cid) this.mapview().link(id, make.nodeId, cid, 'Made a card from “' + make.label + '” and linked it');
       this.setState({ make: null }); db.say(make.nodeId && cid ? 'Added to ' + deck.name + ' and linked to “' + make.label + '”.' : 'Added to ' + deck.name + '.'); },
-    nbRef: el => { if (!el || !isNote) return; this._nbc = this.notes().mount(el, { md, refs, titled: true, key: (mock ? 'canvas|' + view + '|' : 'page|') + id, editable: canEdit, phone: ${isPhone ? 'true' : 'false'}, outline: true, image,
+    nbRef: el => { if (!el || !isNote) return; this._nbc = this.notes().mount(el, { md, refs, titled: true, key: (mock ? 'canvas|' + view + '|' : 'page|') + id, editable: canWrite, phone: ${isPhone ? 'true' : 'false'}, outline: true, image,
       card: cardInfo, page: pageInfo, onOpenPage: pid => { if (!mock) db.act.go(db.href('page', pid)); }, onTestPage: pid => { if (!mock) db.act.go(db.href('page', pid) + '?test=weak'); }, onOpenCard: cid => { if (!mock && deck) db.act.go('/deck/' + deck.id + '/card/' + cid); },
-      onMakeCard: canEdit && deck ? b => { this._front = undefined; this._back = undefined; this._focusFront = true; this.setState({ make: { front: '', back: plain(b && b.markdown) } }); } : undefined,
-      onChange: canEdit && !mock ? v => db.pages.editMarkdown(id, v) : undefined }); }
+      onMakeCard: canWrite && deck ? b => { this._front = undefined; this._back = undefined; this._focusFront = true; this.setState({ make: { front: '', back: plain(b && b.markdown) } }); } : undefined,
+      onChange: canWrite && !mock ? v => db.pages.editMarkdown(id, v) : undefined }); }
   };
 }`;
   const props = { ...DARK, view: { editor: 'enum', default: 'Writing', options: PAGE_VIEWS }, pageId: { editor: 'string', default: '' }, fresh: { editor: 'boolean', default: false }, idea: { editor: 'string', default: '' }, test: { editor: 'string', default: '' } };
